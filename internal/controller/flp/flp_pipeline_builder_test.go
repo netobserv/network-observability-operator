@@ -8,9 +8,12 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/internal/controller/flp/fmstatus"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -156,6 +159,31 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	assert.Equal("namespace_egress_bytes_total", names[0])
 	assert.Equal("namespace_ingress_bytes_total", names[1])
 	assert.Equal("netobserv_", cfs.Parameters[5].Encode.Prom.Prefix)
+}
+
+func TestMergeMetricsConfiguration_WithFlowMetrics(t *testing.T) {
+	assert := assert.New(t)
+
+	metrics := metricslatest.FlowMetricList{
+		Items: []metricslatest.FlowMetric{
+			{
+				ObjectMeta: v1.ObjectMeta{Name: "te-st"},
+				Spec:       metricslatest.FlowMetricSpec{Type: metricslatest.CounterMetric},
+			},
+		},
+	}
+
+	cfg := getConfig()
+	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{"namespace_ingress_bytes_total"}
+	fmstatus.Reset()
+
+	b := monoBuilderWithMetrics("namespace", &cfg, &metrics)
+	scm, _, dcm, err := b.configMaps()
+	assert.NoError(err)
+	cfs, _ := validatePipelineConfig(t, scm, dcm)
+	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
+	assert.Equal([]string{"namespace_ingress_bytes_total", "te_st"}, names)
+	assert.Equal("netobserv_te_st", metrics.Items[0].Status.PrometheusName)
 }
 
 func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
