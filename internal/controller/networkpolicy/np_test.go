@@ -97,6 +97,8 @@ func TestNpBuilder(t *testing.T) {
 	assert.Equal([]networkingv1.NetworkPolicyIngressRule{
 		{From: []networkingv1.NetworkPolicyPeer{
 			{PodSelector: &metav1.LabelSelector{}},
+		}},
+		{From: []networkingv1.NetworkPolicyPeer{
 			{NamespaceSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"kubernetes.io/metadata.name": "netobserv-privileged",
@@ -104,6 +106,19 @@ func TestNpBuilder(t *testing.T) {
 			}},
 		}},
 	}, np.Spec.Ingress)
+
+	assert.Equal([]networkingv1.NetworkPolicyEgressRule{
+		{To: []networkingv1.NetworkPolicyPeer{
+			{PodSelector: &metav1.LabelSelector{}},
+		}},
+		{To: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "netobserv-privileged",
+				},
+			}},
+		}},
+	}[1], np.Spec.Egress[1])
 
 	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
@@ -119,6 +134,8 @@ func TestNpBuilder(t *testing.T) {
 	assert.Equal([]networkingv1.NetworkPolicyIngressRule{
 		{From: []networkingv1.NetworkPolicyPeer{
 			{PodSelector: &metav1.LabelSelector{}},
+		}},
+		{From: []networkingv1.NetworkPolicyPeer{
 			{NamespaceSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"kubernetes.io/metadata.name": "netobserv-privileged",
@@ -140,6 +157,33 @@ func TestNpBuilder(t *testing.T) {
 			}},
 		}},
 	}, np.Spec.Ingress)
+
+	assert.Equal([]networkingv1.NetworkPolicyEgressRule{
+		{To: []networkingv1.NetworkPolicyPeer{
+			{PodSelector: &metav1.LabelSelector{}},
+		}},
+		{To: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "netobserv-privileged",
+				},
+			}},
+		}},
+		{To: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "foo",
+				},
+			}},
+		}},
+		{To: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "bar",
+				},
+			}},
+		}},
+	}, np.Spec.Egress)
 
 	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
