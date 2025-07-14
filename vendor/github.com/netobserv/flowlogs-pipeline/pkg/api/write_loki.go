@@ -44,6 +44,8 @@ type WriteLoki struct {
 	// scales of '1ms' (one millisecond) or just '1' (one nanosecond)
 	// Default value is '1s'
 	TimestampScale string `yaml:"timestampScale,omitempty" json:"timestampScale,omitempty" doc:"timestamp units scale (e.g. for UNIX = 1s)"`
+	Format         string `yaml:"format,omitempty" json:"format,omitempty" doc:"the format of each line: printf (writes using golang's default map printing), fields (writes one key and value field per line) or json (default)"`
+	Reorder        bool   `yaml:"reorder,omitempty" json:"reorder,omitempty" doc:"reorder json map keys"`
 }
 
 func (w *WriteLoki) SetDefaults() {
@@ -70,6 +72,9 @@ func (w *WriteLoki) SetDefaults() {
 	}
 	if w.TimestampScale == "" {
 		w.TimestampScale = "1s"
+	}
+	if w.Format == "" {
+		w.Format = "json"
 	}
 }
 

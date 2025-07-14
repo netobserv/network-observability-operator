@@ -22,7 +22,7 @@ const (
 	FileLoopType    = "file_loop"
 	FileChunksType  = "file_chunks"
 	SyntheticType   = "synthetic"
-	CollectorType   = "collector"
+	CollectorType   = "collector" // deprecated: use 'ipfix' instead
 	StdinType       = "stdin"
 	GRPCType        = "grpc"
 	FakeType        = "fake"
@@ -53,7 +53,7 @@ type API struct {
 	PromEncode         PromEncode        `yaml:"prom" doc:"## Prometheus encode API\nFollowing is the supported API format for prometheus encode:\n"`
 	KafkaEncode        EncodeKafka       `yaml:"kafka" doc:"## Kafka encode API\nFollowing is the supported API format for kafka encode:\n"`
 	S3Encode           EncodeS3          `yaml:"s3" doc:"## S3 encode API\nFollowing is the supported API format for S3 encode:\n"`
-	IngestCollector    IngestCollector   `yaml:"collector" doc:"## Ingest collector API\nFollowing is the supported API format for the NetFlow / IPFIX collector:\n"`
+	IngestIpfix        IngestIpfix       `yaml:"ipfix" doc:"## Ingest NetFlow/IPFIX API\nFollowing is the supported API format for the NetFlow / IPFIX collector:\n"`
 	IngestKafka        IngestKafka       `yaml:"kafka" doc:"## Ingest Kafka API\nFollowing is the supported API format for the kafka ingest:\n"`
 	IngestGRPCProto    IngestGRPCProto   `yaml:"grpc" doc:"## Ingest GRPC from Network Observability eBPF Agent\nFollowing is the supported API format for the Network Observability eBPF ingest:\n"`
 	IngestStdin        IngestStdin       `yaml:"stdin" doc:"## Ingest Standard Input\nFollowing is the supported API format for the standard input ingest:\n"`
@@ -62,6 +62,7 @@ type API struct {
 	TransformNetwork   TransformNetwork  `yaml:"network" doc:"## Transform Network API\nFollowing is the supported API format for network transformations:\n"`
 	WriteLoki          WriteLoki         `yaml:"loki" doc:"## Write Loki API\nFollowing is the supported API format for writing to loki:\n"`
 	WriteStdout        WriteStdout       `yaml:"stdout" doc:"## Write Standard Output\nFollowing is the supported API format for writing to standard output:\n"`
+	WriteIPFIX         WriteIpfix        `yaml:"ipfix" doc:"## Write IPFIX\nFollowing is the supported API format for writing to an IPFIX collector:\n"`
 	ExtractAggregate   Aggregates        `yaml:"aggregates" doc:"## Aggregate metrics API\nFollowing is the supported API format for specifying metrics aggregations:\n"`
 	ConnectionTracking ConnTrack         `yaml:"conntrack" doc:"## Connection tracking API\nFollowing is the supported API format for specifying connection tracking:\n"`
 	ExtractTimebased   ExtractTimebased  `yaml:"timebased" doc:"## Time-based Filters API\nFollowing is the supported API format for specifying metrics time-based filters:\n"`

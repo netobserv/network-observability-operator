@@ -30,8 +30,8 @@ type EncodeOtlpMetrics struct {
 	*OtlpConnectionInfo `json:",inline" doc:"OpenTelemetry connection info; includes:"`
 	Prefix              string       `yaml:"prefix,omitempty" json:"prefix,omitempty" doc:"prefix added to each metric name"`
 	Metrics             MetricsItems `yaml:"metrics,omitempty" json:"metrics,omitempty" doc:"list of metric definitions, each includes:"`
-	PushTimeInterval    Duration     `yaml:"pushTimeInterval,omitempty" json:"pushTimeInterval,omitempty" doc:"how often should metrics be sent to collector:"`
-	ExpiryTime          Duration     `yaml:"expiryTime,omitempty" json:"expiryTime,omitempty" doc:"time duration of no-flow to wait before deleting data item"`
+	PushTimeInterval    Duration     `yaml:"pushTimeInterval,omitempty" json:"pushTimeInterval,omitempty" doc:"how often should metrics be sent to collector (default: 20s)"`
+	ExpiryTime          Duration     `yaml:"expiryTime,omitempty" json:"expiryTime,omitempty" doc:"time duration of no-flow to wait before deleting data item (default: 2m)"`
 }
 
 type OtlpConnectionInfo struct {

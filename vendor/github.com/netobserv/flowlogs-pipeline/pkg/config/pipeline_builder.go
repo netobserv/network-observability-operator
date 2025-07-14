@@ -52,8 +52,11 @@ const PresetIngesterStage = "preset-ingester"
 
 // NewPipeline creates a new pipeline from an existing ingest
 func NewPipeline(name string, ingest *Ingest) (PipelineBuilderStage, error) {
-	if ingest.Collector != nil {
-		return NewCollectorPipeline(name, *ingest.Collector), nil
+	if ingest.Ipfix != nil {
+		return NewIPFIXPipeline(name, *ingest.Ipfix), nil
+	}
+	if ingest.Collector != nil { // for retro-compatibility
+		return NewIPFIXPipeline(name, *ingest.Collector), nil
 	}
 	if ingest.GRPC != nil {
 		return NewGRPCPipeline(name, *ingest.GRPC), nil
@@ -64,13 +67,13 @@ func NewPipeline(name string, ingest *Ingest) (PipelineBuilderStage, error) {
 	return PipelineBuilderStage{}, errors.New("missing ingest params")
 }
 
-// NewCollectorPipeline creates a new pipeline from an `IngestCollector` initial stage (listening for NetFlows / IPFIX)
+// NewCollectorPipeline creates a new pipeline from an `IngestIpfix` initial stage (listening for NetFlows / IPFIX)
 //
 //nolint:golint,gocritic
-func NewCollectorPipeline(name string, ingest api.IngestCollector) PipelineBuilderStage {
+func NewIPFIXPipeline(name string, ingest api.IngestIpfix) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
-		config: []StageParam{NewCollectorParams(name, ingest)},
+		config: []StageParam{NewIPFIXParams(name, ingest)},
 	}
 	return PipelineBuilderStage{pipeline: &p, lastStage: name}
 }
