@@ -200,7 +200,7 @@ func PtrInt32(i *int32) int32 {
 	return *i
 }
 
-func AddOwnedLabel(obj client.Object) {
+func AddManagedLabel(obj client.Object) {
 	// set netobserv-managed label to true so users can easily switch to false if they want to skip ownership
 	labels := obj.GetLabels()
 	if labels == nil {
@@ -210,16 +210,20 @@ func AddOwnedLabel(obj client.Object) {
 	obj.SetLabels(labels)
 }
 
-func SkipOwnership(obj client.Object) bool {
-	// ownership is ignored if netobserv-managed label is explicitly set to false
+func IsManaged(obj client.Object) bool {
 	labels := obj.GetLabels()
-	return labels != nil && labels[netobservManagedLabel] == "false"
+	if labels == nil {
+		return false
+	}
+	return labels[netobservManagedLabel] == "true"
 }
 
 func IsOwned(obj client.Object) bool {
-	if SkipOwnership(obj) {
-		return false
+	// ownership is forced if netobserv-managed label is explicitly set to true
+	if IsManaged(obj) {
+		return true
 	}
+	// else we check for owner references
 	refs := obj.GetOwnerReferences()
 	return len(refs) > 0 && strings.HasPrefix(refs[0].APIVersion, flowslatest.GroupVersion.Group)
 }

@@ -278,7 +278,7 @@ func flowCollectorCertificatesSpecs() {
 				}
 				return test.VolumeNames(plugin.Spec.Template.Spec.Volumes)
 			}, timeout, interval).Should(ContainElements(
-				"console-serving-cert",
+				"netobserv-plugin-cert",
 				"config-volume",
 				"loki-certs-ca",
 				"loki-status-certs-ca",

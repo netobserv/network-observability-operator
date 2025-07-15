@@ -18,7 +18,7 @@ func TestStatusWorkflow(t *testing.T) {
 	sm.SetFailure("AnError", "bad one")
 
 	conds := s.getConditions()
-	assert.Len(t, conds, 3)
+	assert.Len(t, conds, 4)
 	assertHasCondition(t, conds, "Ready", "Failure", metav1.ConditionFalse)
 	assertHasCondition(t, conds, "WaitingFlowCollectorLegacy", "CreatingDaemonSet", metav1.ConditionTrue)
 	assertHasCondition(t, conds, "WaitingMonitoring", "AnError", metav1.ConditionTrue)
@@ -31,7 +31,7 @@ func TestStatusWorkflow(t *testing.T) {
 	sm.SetUnknown()
 
 	conds = s.getConditions()
-	assert.Len(t, conds, 3)
+	assert.Len(t, conds, 4)
 	assertHasCondition(t, conds, "Ready", "Pending", metav1.ConditionFalse)
 	assertHasCondition(t, conds, "WaitingFlowCollectorLegacy", "DaemonSetNotReady", metav1.ConditionTrue)
 	assertHasCondition(t, conds, "WaitingMonitoring", "Unused", metav1.ConditionUnknown)
@@ -44,7 +44,7 @@ func TestStatusWorkflow(t *testing.T) {
 	sm.SetUnused("message")
 
 	conds = s.getConditions()
-	assert.Len(t, conds, 3)
+	assert.Len(t, conds, 4)
 	assertHasCondition(t, conds, "Ready", "Ready", metav1.ConditionTrue)
 	assertHasCondition(t, conds, "WaitingFlowCollectorLegacy", "Ready", metav1.ConditionFalse)
 	assertHasCondition(t, conds, "WaitingMonitoring", "ComponentUnused", metav1.ConditionUnknown)
@@ -57,7 +57,7 @@ func TestStatusWorkflow(t *testing.T) {
 	sm.SetReady()
 
 	conds = s.getConditions()
-	assert.Len(t, conds, 3)
+	assert.Len(t, conds, 4)
 	assertHasCondition(t, conds, "Ready", "Ready", metav1.ConditionTrue)
 	assertHasCondition(t, conds, "WaitingFlowCollectorLegacy", "Ready", metav1.ConditionFalse)
 	assertHasCondition(t, conds, "WaitingMonitoring", "Ready", metav1.ConditionFalse)
