@@ -2857,6 +2857,9 @@ spec:
     - jsonPath: .status.conditions[?(@.type=="Ready")].reason
       name: Status
       type: string
+    - jsonPath: .status.conditions[?(@.type=="ConfigurationIssue")].message
+      name: Warnings
+      type: string
     name: v1beta2
     schema:
       openAPIV3Schema:
