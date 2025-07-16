@@ -38,7 +38,7 @@ func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
 	rec := monolithReconciler{
 		Instance:         cmn,
 		daemonSet:        cmn.Managed.NewDaemonSet(monoName),
-		promService:      cmn.Managed.NewService(monoPromService),
+		promService:      cmn.Managed.NewService(constants.FLPMetricsSvcName),
 		serviceAccount:   cmn.Managed.NewServiceAccount(monoName),
 		staticConfigMap:  cmn.Managed.NewConfigMap(monoConfigMap),
 		dynamicConfigMap: cmn.Managed.NewConfigMap(monoDynConfigMap),

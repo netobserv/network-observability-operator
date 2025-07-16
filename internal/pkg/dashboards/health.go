@@ -2,8 +2,10 @@ package dashboards
 
 import (
 	"fmt"
+	"strings"
 
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 )
 
 func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
@@ -39,6 +41,11 @@ func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 		netobsNs,
 		nsFlowsMetric,
 	)
+	metricServices := []string{
+		constants.FLPMetricsSvcName,
+		constants.FLPTransfoMetricsSvcName,
+		constants.EBPFAgentMetricsSvcName,
+	}
 	d.Rows = append(d.Rows,
 		NewRow("Flowlogs-pipeline statistics", false, "250px", []Panel{
 			NewPanel("Flows per second", metricslatest.ChartTypeLine, "", 4,
@@ -68,7 +75,12 @@ func CreateHealthDashboard(netobsNs, nsFlowsMetric string) (string, error) {
 				NewTarget(`topk(10,sum(rate(netobserv_node_flows_total{SrcK8S_HostName!=""}[1m])) by (SrcK8S_HostName))`, "From {{SrcK8S_HostName}}"),
 				NewTarget(`topk(10,sum(rate(netobserv_node_flows_total{DstK8S_HostName!=""}[1m])) by (DstK8S_HostName))`, "To {{DstK8S_HostName}}"),
 			),
-			NewPanel("Metrics cardinality", metricslatest.ChartTypeLine, "", 4, NewTarget(`count({__name__=~"netobserv_.*"}) by (job)`, "{{job}}")),
+			NewPanel("Metrics cardinality", metricslatest.ChartTypeLine, "", 4,
+				NewTarget(
+					fmt.Sprintf(`sum(scrape_samples_post_metric_relabeling{job=~"%s"}) by (job)`, strings.Join(metricServices, "|")),
+					"{{job}}",
+				),
+			),
 		}),
 	)
 

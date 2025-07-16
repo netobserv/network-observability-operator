@@ -16,11 +16,10 @@ import (
 )
 
 const (
-	transfoName           = constants.FLPName + "-transformer"
+	transfoName           = constants.FLPTransfoName
 	transfoShortName      = constants.FLPShortName + "transfo"
 	transfoConfigMap      = transfoName + "-config"
 	transfoDynConfigMap   = transfoName + "-config-dynamic"
-	transfoPromService    = transfoName + "-prom"
 	transfoServiceMonitor = transfoName + "-monitor"
 	transfoPromRule       = transfoName + "-alert"
 )
@@ -37,7 +36,7 @@ type transfoBuilder struct {
 
 func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
 	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
-	promTLS, err := getPromTLS(desired, transfoPromService)
+	promTLS, err := getPromTLS(desired, constants.FLPTransfoMetricsSvcName)
 	if err != nil {
 		return transfoBuilder{}, err
 	}
@@ -134,7 +133,7 @@ func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Config
 func (b *transfoBuilder) promService() *corev1.Service {
 	return promService(
 		b.desired,
-		transfoPromService,
+		constants.FLPTransfoMetricsSvcName,
 		b.info.Namespace,
 		transfoName,
 	)
@@ -174,7 +173,7 @@ func (b *transfoBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	return serviceMonitor(
 		b.desired,
 		transfoServiceMonitor,
-		transfoPromService,
+		constants.FLPTransfoMetricsSvcName,
 		b.info.Namespace,
 		transfoName,
 		b.version,

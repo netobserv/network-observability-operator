@@ -16,6 +16,9 @@ const (
 	FLPName                  = "flowlogs-pipeline"
 	FLPShortName             = "flp"
 	FLPPortName              = "flp" // must be <15 chars
+	FLPMetricsSvcName        = FLPName + "-prom"
+	FLPTransfoName           = FLPName + "-transformer"
+	FLPTransfoMetricsSvcName = FLPTransfoName + "-prom"
 	FLPMetricsPort           = 9401
 	PluginName               = "netobserv-plugin"
 	PluginShortName          = "plugin"
@@ -24,7 +27,7 @@ const (
 	EBPFAgentName                     = "netobserv-ebpf-agent"
 	EBPFAgentMetricsSvcName           = "ebpf-agent-svc-prom"
 	EBPFAgentMetricsSvcMonitoringName = "ebpf-agent-svc-monitor"
-	EBPFAgentPromoAlertRule           = "ebpf-agent-prom-alert"
+	EBPFAgentPromAlertRule            = "ebpf-agent-prom-alert"
 	EBPFPrivilegedNSSuffix            = "-privileged"
 	EBPFServiceAccount                = EBPFAgentName
 	EBPFSecurityContext               = EBPFAgentName
