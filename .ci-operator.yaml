@@ -1,4 +1,5 @@
+# Inspired from https://github.com/openshift/cluster-openshift-controller-manager-operator/blob/master/.ci-operator.yaml
 build_root_image:
   namespace: openshift
   name: release
-  tag: rhel-9-release-golang-1.22-openshift-4.17
+  tag: rhel-9-release-golang-1.24-openshift-4.20 
