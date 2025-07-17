@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/logr v1.4.3
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
-	github.com/netobserv/flowlogs-pipeline v1.9.0-crc0.0.20250709062052-5895dcb07239
+	github.com/netobserv/flowlogs-pipeline v1.9.1-community
 	github.com/netobserv/netobserv-ebpf-agent v1.9.1-community
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
