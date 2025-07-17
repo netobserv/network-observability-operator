@@ -60,7 +60,7 @@ type HotReloadStruct struct {
 
 type Health struct {
 	Address string
-	Port    string
+	Port    int
 }
 
 type Profile struct {
@@ -75,7 +75,7 @@ type MetricsSettings struct {
 	DisableGlobalServer    bool   `yaml:"disableGlobalServer,omitempty" json:"disableGlobalServer,omitempty" doc:"disabling the global metrics server makes operational metrics unavailable. If prometheus-encoding stages are defined, they need to contain their own metrics server parameters."`
 	Prefix                 string `yaml:"prefix,omitempty" json:"prefix,omitempty" doc:"prefix for names of the operational metrics"`
 	NoPanic                bool   `yaml:"noPanic,omitempty" json:"noPanic,omitempty"`
-	SuppressGoMetrics      bool   `yaml:"suppressGoMetrics,omitempty" json:"suppressGoMetrics,omitempty" doc:"filter out Go and process metrics"`
+	SuppressDefaultMetrics bool   `yaml:"suppressDefaultMetrics,omitempty" json:"suppressDefaultMetrics,omitempty" doc:"filter out default Prometheus metrics such as Go and process metrics"`
 }
 
 // PerfSettings allows setting some internal configuration parameters
@@ -102,7 +102,8 @@ type StageParam struct {
 type Ingest struct {
 	Type      string               `yaml:"type" json:"type"`
 	File      *File                `yaml:"file,omitempty" json:"file,omitempty"`
-	Collector *api.IngestCollector `yaml:"collector,omitempty" json:"collector,omitempty"`
+	Collector *api.IngestIpfix     `yaml:"collector,omitempty" json:"collector,omitempty"` // deprecated: use 'ipfix' instead
+	Ipfix     *api.IngestIpfix     `yaml:"ipfix,omitempty" json:"ipfix,omitempty"`
 	Kafka     *api.IngestKafka     `yaml:"kafka,omitempty" json:"kafka,omitempty"`
 	GRPC      *api.IngestGRPCProto `yaml:"grpc,omitempty" json:"grpc,omitempty"`
 	Synthetic *api.IngestSynthetic `yaml:"synthetic,omitempty" json:"synthetic,omitempty"`

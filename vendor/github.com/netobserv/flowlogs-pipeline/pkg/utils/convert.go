@@ -217,6 +217,21 @@ func ConvertToInt(unk interface{}) (int, error) {
 	}
 }
 
+func ConvertToUint(unk interface{}) (uint, error) {
+	switch i := unk.(type) {
+	case uint64:
+		return uint(i), nil
+	case uint32:
+		return uint(i), nil
+	case uint16:
+		return uint(i), nil
+	case uint:
+		return uint(i), nil
+	default:
+		return 0, fmt.Errorf("can't convert %v to uint", i)
+	}
+}
+
 func ConvertToBool(unk interface{}) (bool, error) {
 	switch i := unk.(type) {
 	case string:

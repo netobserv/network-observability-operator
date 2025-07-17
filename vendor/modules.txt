@@ -158,16 +158,25 @@ github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 ## explicit
 github.com/mwitkow/go-conntrack
-# github.com/netobserv/flowlogs-pipeline v1.9.0-crc0.0.20250528065622-289da648f066
+# github.com/netobserv/flowlogs-pipeline v1.9.0-crc0.0.20250709062052-5895dcb07239
 ## explicit; go 1.23.0
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/config
 github.com/netobserv/flowlogs-pipeline/pkg/dsl
 github.com/netobserv/flowlogs-pipeline/pkg/utils
 github.com/netobserv/flowlogs-pipeline/pkg/utils/filters
-# github.com/netobserv/netobserv-ebpf-agent v1.9.0-crc0.0.20250610144135-d64c5d99f2da
+# github.com/netobserv/netobserv-ebpf-agent v1.9.1-community
 ## explicit; go 1.23.0
 github.com/netobserv/netobserv-ebpf-agent/pkg/config
+# github.com/netsampler/goflow2 v1.3.7
+## explicit; go 1.18
+github.com/netsampler/goflow2/decoders/netflow
+github.com/netsampler/goflow2/decoders/netflow/templates
+github.com/netsampler/goflow2/decoders/netflowlegacy
+github.com/netsampler/goflow2/decoders/sflow
+github.com/netsampler/goflow2/decoders/utils
+github.com/netsampler/goflow2/pb
+github.com/netsampler/goflow2/producer
 # github.com/onsi/ginkgo/v2 v2.23.4
 ## explicit; go 1.23.0
 github.com/onsi/ginkgo/v2

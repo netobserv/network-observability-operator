@@ -26,6 +26,12 @@ type TransformNetwork struct {
 	DirectionInfo NetworkTransformDirectionInfo `yaml:"directionInfo,omitempty" json:"directionInfo,omitempty" doc:"information to reinterpret flow direction (optional, to use with reinterpret_direction rule)"`
 }
 
+func (tn *TransformNetwork) Preprocess() {
+	for i := range tn.Rules {
+		tn.Rules[i].preprocess()
+	}
+}
+
 func (tn *TransformNetwork) GetServiceFiles() (string, string) {
 	p := tn.ProtocolsFile
 	if p == "" {
@@ -73,6 +79,12 @@ type NetworkTransformRule struct {
 	DecodeTCPFlags  *NetworkGenericRule           `yaml:"decode_tcp_flags,omitempty" json:"decode_tcp_flags,omitempty" doc:"Decode bitwise TCP flags into a string"`
 }
 
+func (r *NetworkTransformRule) preprocess() {
+	if r.Kubernetes != nil {
+		r.Kubernetes.preprocess()
+	}
+}
+
 type K8sInfraRule struct {
 	NamespaceNameFields []K8sReference `yaml:"namespaceNameFields,omitempty" json:"namespaceNameFields,omitempty" doc:"entries for namespace and name input fields"`
 	Output              string         `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
@@ -86,14 +98,58 @@ type K8sReference struct {
 }
 
 type K8sRule struct {
-	IPField         string `yaml:"ipField,omitempty" json:"ipField,omitempty" doc:"entry IP input field"`
-	InterfacesField string `yaml:"interfacesField,omitempty" json:"interfacesField,omitempty" doc:"entry Interfaces input field"`
-	UDNsField       string `yaml:"udnsField,omitempty" json:"udnsField,omitempty" doc:"entry UDNs input field"`
-	MACField        string `yaml:"macField,omitempty" json:"macField,omitempty" doc:"entry MAC input field"`
-	Output          string `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
-	Assignee        string `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
-	LabelsPrefix    string `yaml:"labels_prefix,omitempty" json:"labels_prefix,omitempty" doc:"labels prefix to use to copy input lables, if empty labels will not be copied"`
-	AddZone         bool   `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"if true the rule will add the zone"`
+	IPField         string        `yaml:"ipField,omitempty" json:"ipField,omitempty" doc:"entry IP input field"`
+	InterfacesField string        `yaml:"interfacesField,omitempty" json:"interfacesField,omitempty" doc:"entry Interfaces input field"`
+	UDNsField       string        `yaml:"udnsField,omitempty" json:"udnsField,omitempty" doc:"entry UDNs input field"`
+	MACField        string        `yaml:"macField,omitempty" json:"macField,omitempty" doc:"entry MAC input field"`
+	Output          string        `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	Assignee        string        `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
+	LabelsPrefix    string        `yaml:"labels_prefix,omitempty" json:"labels_prefix,omitempty" doc:"labels prefix to use to copy input lables, if empty labels will not be copied"`
+	AddZone         bool          `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"if true the rule will add the zone"`
+	OutputKeys      K8SOutputKeys `yaml:"-" json:"-"`
+}
+
+type K8SOutputKeys struct {
+	Namespace   string
+	Name        string
+	Kind        string
+	OwnerName   string
+	OwnerKind   string
+	NetworkName string
+	HostIP      string
+	HostName    string
+	Zone        string
+}
+
+func (r *K8sRule) preprocess() {
+	if r.Assignee == "otel" {
+		// NOTE: Some of these fields are taken from opentelemetry specs.
+		// See https://opentelemetry.io/docs/specs/semconv/resource/k8s/
+		// Other fields (not specified in the specs) are named similarly
+		r.OutputKeys = K8SOutputKeys{
+			Namespace:   r.Output + "k8s.namespace.name",
+			Name:        r.Output + "k8s.name",
+			Kind:        r.Output + "k8s.type",
+			OwnerName:   r.Output + "k8s.owner.name",
+			OwnerKind:   r.Output + "k8s.owner.type",
+			NetworkName: r.Output + "k8s.net.name",
+			HostIP:      r.Output + "k8s.host.ip",
+			HostName:    r.Output + "k8s.host.name",
+			Zone:        r.Output + "k8s.zone",
+		}
+	} else {
+		r.OutputKeys = K8SOutputKeys{
+			Namespace:   r.Output + "_Namespace",
+			Name:        r.Output + "_Name",
+			Kind:        r.Output + "_Type",
+			OwnerName:   r.Output + "_OwnerName",
+			OwnerKind:   r.Output + "_OwnerType",
+			NetworkName: r.Output + "_NetworkName",
+			HostIP:      r.Output + "_HostIP",
+			HostName:    r.Output + "_HostName",
+			Zone:        r.Output + "_Zone",
+		}
+	}
 }
 
 type SecondaryNetwork struct {

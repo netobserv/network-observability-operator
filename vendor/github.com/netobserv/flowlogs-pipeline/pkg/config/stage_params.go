@@ -21,8 +21,8 @@ import (
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 )
 
-func NewCollectorParams(name string, ingest api.IngestCollector) StageParam {
-	return StageParam{Name: name, Ingest: &Ingest{Type: api.CollectorType, Collector: &ingest}}
+func NewIPFIXParams(name string, ingest api.IngestIpfix) StageParam {
+	return StageParam{Name: name, Ingest: &Ingest{Type: api.IpfixType, Ipfix: &ingest}}
 }
 
 func NewGRPCParams(name string, ingest api.IngestGRPCProto) StageParam {

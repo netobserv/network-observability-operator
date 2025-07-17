@@ -140,6 +140,13 @@ type Agent struct {
 	// Sampling holds the rate at which packets should be sampled and sent to the target collector.
 	// E.g. if set to 100, one out of 100 packets, on average, will be sent to the target collector.
 	Sampling int `env:"SAMPLING" envDefault:"0"`
+	// TCAttachMode defines the eBPF attach mode on traffic controller: tcx (default), tc or any.
+	// 'tcx' is recommended but may not be available on older linux kernels.
+	// 'any' will try 'tcx' and fall back on 'tc' without retries.
+	TCAttachMode string `env:"TC_ATTACH_MODE" envDefault:"tcx"`
+	// TCAttachRetries defines the number of retries in case of attach/detach failures.
+	// Valid only for 'tc' and 'tcx' attach modes.
+	TCAttachRetries int `env:"TC_ATTACH_RETRIES" envDefault:"4"`
 	// ListenInterfaces specifies the mechanism used by the agent to listen for added or removed
 	// network interfaces. Accepted values are "watch" (default) or "poll".
 	// If the value is "watch", interfaces are traced immediately after they are created. This is
@@ -210,6 +217,10 @@ type Agent struct {
 	EnablePCA bool `env:"ENABLE_PCA" envDefault:"false"`
 	// MetricsEnable enables http server to collect ebpf agent metrics, default is false.
 	MetricsEnable bool `env:"METRICS_ENABLE" envDefault:"false"`
+	// Metrics verbosity level. From more to less verbose: trace!, debug, info (default).
+	// Warning: 'trace!' level generates unbounded metrics cardinality, which increases memory
+	// and CPU usage of the eBPF Agent and the Prometheus server.
+	MetricsLevel string `env:"METRICS_LEVEL" envDefault:"info"`
 	// MetricsServerAddress is the address of the server that collects ebpf agent metrics.
 	MetricsServerAddress string `env:"METRICS_SERVER_ADDRESS"`
 	// MetricsPort is the port of the server that collects ebpf agent metrics.

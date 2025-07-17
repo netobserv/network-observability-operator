@@ -1,7 +1,7 @@
 package utils
 
 type tcpFlag struct {
-	value uint16
+	value uint
 	name  string
 }
 
@@ -18,8 +18,26 @@ var tcpFlags = []tcpFlag{
 	{value: 512, name: "FIN_ACK"},
 	{value: 1024, name: "RST_ACK"},
 }
+var flagsMap map[string]uint
 
-func DecodeTCPFlags(bitfield uint16) []string {
+func init() {
+	flagsMap = make(map[string]uint, len(tcpFlags))
+	for _, flag := range tcpFlags {
+		flagsMap[flag.name] = flag.value
+	}
+}
+
+func EncodeTCPFlags(flags []string) uint {
+	var bf uint
+	for _, flag := range flags {
+		if v, ok := flagsMap[flag]; ok {
+			bf |= v
+		}
+	}
+	return bf
+}
+
+func DecodeTCPFlags(bitfield uint) []string {
 	var values []string
 	for _, flag := range tcpFlags {
 		if bitfield&flag.value != 0 {
