@@ -22,7 +22,6 @@ def dump_manifest(pathn, manifest):
 timestamp = int(os.getenv('EPOC_TIMESTAMP'))
 datetime_time = datetime.fromtimestamp(timestamp)
 version = os.getenv('VERSION')
-replaces = os.getenv('REPLACES')
 desc_file_name = os.getenv('IN_CSV_DESC')
 csv = load_manifest(os.getenv('TARGET_CSV_FILE'))
 created_at = datetime_time.strftime('%Y-%m-%dT%H:%M:%S')
@@ -91,6 +90,5 @@ for relatedImage in csv['spec']['relatedImages']:
       relatedImage["image"] = console_compat_image
 
 csv['spec']['version'] = version
-csv['spec']['replaces'] = 'network-observability-operator.v{}'.format(replaces)
 
 dump_manifest(os.getenv('TARGET_CSV_FILE'), csv)
