@@ -37,7 +37,7 @@ spec:
   pipelineRef:
     name: build-bundle-pipeline
   taskRunTemplate:
-    serviceAccountName: build-pipeline-network-observability-operator-bundle-ystream
+    serviceAccountName: build-pipeline-network-observability-operator-bundle-zstream
   workspaces:
   - name: workspace
     volumeClaimTemplate:

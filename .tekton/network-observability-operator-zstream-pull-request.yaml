@@ -39,5 +39,5 @@ spec:
   pipelineRef:
     name: build-pipeline
   taskRunTemplate:
-    serviceAccountName: build-pipeline-network-observability-operator-ystream
+    serviceAccountName: build-pipeline-network-observability-operator-zstream
 status: {}
