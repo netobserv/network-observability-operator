@@ -19,7 +19,6 @@ const (
 	monoShortName      = constants.FLPShortName
 	monoConfigMap      = monoName + "-config"
 	monoDynConfigMap   = monoName + "-config-dynamic"
-	monoPromService    = monoName + "-prom"
 	monoServiceMonitor = monoName + "-monitor"
 	monoPromRule       = monoName + "-alert"
 )
@@ -36,7 +35,7 @@ type monolithBuilder struct {
 
 func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (monolithBuilder, error) {
 	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
-	promTLS, err := getPromTLS(desired, monoPromService)
+	promTLS, err := getPromTLS(desired, constants.FLPMetricsSvcName)
 	if err != nil {
 		return monolithBuilder{}, err
 	}
@@ -132,7 +131,7 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 func (b *monolithBuilder) promService() *corev1.Service {
 	return promService(
 		b.desired,
-		monoPromService,
+		constants.FLPMetricsSvcName,
 		b.info.Namespace,
 		monoName,
 	)
@@ -152,7 +151,7 @@ func (b *monolithBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	return serviceMonitor(
 		b.desired,
 		monoServiceMonitor,
-		monoPromService,
+		constants.FLPMetricsSvcName,
 		b.info.Namespace,
 		monoName,
 		b.version,

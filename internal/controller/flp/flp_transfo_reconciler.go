@@ -39,7 +39,7 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 	rec := transformerReconciler{
 		Instance:         cmn,
 		deployment:       cmn.Managed.NewDeployment(transfoName),
-		promService:      cmn.Managed.NewService(transfoPromService),
+		promService:      cmn.Managed.NewService(constants.FLPTransfoMetricsSvcName),
 		hpa:              cmn.Managed.NewHPA(transfoName),
 		serviceAccount:   cmn.Managed.NewServiceAccount(transfoName),
 		staticConfigMap:  cmn.Managed.NewConfigMap(transfoConfigMap),

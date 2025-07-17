@@ -125,7 +125,7 @@ func NewAgentController(common *reconcilers.Instance) *AgentController {
 		agent.serviceMonitor = common.Managed.NewServiceMonitor(constants.EBPFAgentMetricsSvcMonitoringName)
 	}
 	if common.ClusterInfo.HasPromRule() {
-		agent.prometheusRule = common.Managed.NewPrometheusRule(constants.EBPFAgentPromoAlertRule)
+		agent.prometheusRule = common.Managed.NewPrometheusRule(constants.EBPFAgentPromAlertRule)
 	}
 	return &agent
 }

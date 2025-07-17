@@ -138,7 +138,7 @@ func (c *AgentController) agentPrometheusRule(target *flowslatest.FlowCollectorE
 
 	prometheusRuleObject := monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.EBPFAgentPromoAlertRule,
+			Name: constants.EBPFAgentPromAlertRule,
 			Labels: map[string]string{
 				"app": constants.EBPFAgentName,
 			},
