@@ -109,7 +109,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 
 func getBuilder(spec *flowslatest.FlowCollectorSpec, lk *helper.LokiConfig) builder {
 	info := reconcilers.Common{Namespace: testNamespace, Loki: lk, ClusterInfo: &cluster.Info{}}
-	b := newBuilder(info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: testImage}, status.Instance{}), spec)
+	b := newBuilder(info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: testImage}, status.Instance{}), spec, constants.PluginName)
 	_, _, _ = b.configMap(context.Background()) // build configmap to update builder's volumes
 	return b
 }
@@ -124,8 +124,8 @@ func TestContainerUpdateCheck(t *testing.T) {
 	}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
 	builder := getBuilder(&spec, &loki)
-	old := builder.deployment("digest")
-	nEw := builder.deployment("digest")
+	old := builder.deployment(constants.PluginName, "digest")
+	nEw := builder.deployment(constants.PluginName, "digest")
 	report := helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "no change")
@@ -135,7 +135,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 		corev1.ResourceCPU:    resource.MustParse("500m"),
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
-	nEw = builder.deployment("digest")
+	nEw = builder.deployment(constants.PluginName, "digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "req/limit changed")
@@ -143,7 +143,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	// new image
 	builder.info.Images[reconcilers.MainImage] = "quay.io/netobserv/network-observability-console-plugin:latest"
-	nEw = builder.deployment("digest")
+	nEw = builder.deployment(constants.PluginName, "digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Image changed")
@@ -151,7 +151,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	// new pull policy
 	spec.ConsolePlugin.ImagePullPolicy = string(corev1.PullAlways)
-	nEw = builder.deployment("digest")
+	nEw = builder.deployment(constants.PluginName, "digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Pull policy changed")
@@ -159,7 +159,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 
 	// new log level
 	spec.ConsolePlugin.LogLevel = "debug"
-	nEw = builder.deployment("digest")
+	nEw = builder.deployment(constants.PluginName, "digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Args changed")
@@ -176,7 +176,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 			},
 		}}}
 	builder = getBuilder(&spec, &loki)
-	nEw = builder.deployment("digest")
+	nEw = builder.deployment(constants.PluginName, "digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Volumes changed")
@@ -185,7 +185,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	// new loki cert name
 	loki.LokiManualParams.TLS.CACert.Name = "cm-name-2"
 	builder = getBuilder(&spec, &loki)
-	nEw = builder.deployment("digest")
+	nEw = builder.deployment(constants.PluginName, "digest")
 	report = helper.NewChangeReport("")
 	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "Volumes changed")
@@ -194,7 +194,7 @@ func TestContainerUpdateCheck(t *testing.T) {
 	// test again no change
 	loki.LokiManualParams.TLS.CACert.Name = "cm-name-2"
 	builder = getBuilder(&spec, &loki)
-	nEw = builder.deployment("digest")
+	nEw = builder.deployment(constants.PluginName, "digest")
 	report = helper.NewChangeReport("")
 	assert.False(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
 	assert.Contains(report.String(), "no change")
@@ -373,8 +373,8 @@ func TestBuiltService(t *testing.T) {
 	loki := helper.LokiConfig{LokiManualParams: flowslatest.LokiManualParams{IngesterURL: "http://foo:1234"}}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
 	builder := getBuilder(&spec, &loki)
-	old := builder.mainService()
-	nEw := builder.mainService()
+	old := builder.mainService(constants.PluginName)
+	nEw := builder.mainService(constants.PluginName)
 	report := helper.NewChangeReport("")
 	assert.Equal(helper.ServiceChanged(old, nEw, &report), false)
 	assert.Contains(report.String(), "no change")
@@ -389,14 +389,14 @@ func TestLabels(t *testing.T) {
 	builder := getBuilder(&spec, &loki)
 
 	// Deployment
-	depl := builder.deployment("digest")
+	depl := builder.deployment(constants.PluginName, "digest")
 	assert.Equal("netobserv-plugin", depl.Labels["app"])
 	assert.Equal("netobserv-plugin", depl.Spec.Template.Labels["app"])
 	assert.Equal("dev", depl.Labels["version"])
 	assert.Equal("dev", depl.Spec.Template.Labels["version"])
 
 	// Service
-	svc := builder.mainService()
+	svc := builder.mainService(constants.PluginName)
 	assert.Equal("netobserv-plugin", svc.Labels["app"])
 	assert.Equal("netobserv-plugin", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
@@ -407,30 +407,30 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	// equals specs
-	autoScalerSpec, plugin := getAutoScalerSpecs()
+	autoScaler, plugin := getAutoScalerSpecs()
 	report := helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), false)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), false)
 	assert.Contains(report.String(), "no change")
 
 	// wrong max replicas
-	autoScalerSpec, plugin = getAutoScalerSpecs()
-	autoScalerSpec.Spec.MaxReplicas = 10
+	autoScaler, plugin = getAutoScalerSpecs()
+	autoScaler.Spec.MaxReplicas = 10
 	report = helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Max replicas changed")
 
 	// missing min replicas
-	autoScalerSpec, plugin = getAutoScalerSpecs()
-	autoScalerSpec.Spec.MinReplicas = nil
+	autoScaler, plugin = getAutoScalerSpecs()
+	autoScaler.Spec.MinReplicas = nil
 	report = helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Min replicas changed")
 
 	// missing metrics
-	autoScalerSpec, plugin = getAutoScalerSpecs()
-	autoScalerSpec.Spec.Metrics = []ascv2.MetricSpec{}
+	autoScaler, plugin = getAutoScalerSpecs()
+	autoScaler.Spec.Metrics = []ascv2.MetricSpec{}
 	report = helper.NewChangeReport("")
-	assert.Equal(helper.AutoScalerChanged(&autoScalerSpec, plugin.Autoscaler, &report), true)
+	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Metrics changed")
 }
 

@@ -99,13 +99,13 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 	}
 	desiredNs := buildNamespace(ns, r.mgr.Config.DownstreamDeployment)
 	// always add owned label to desired namespace as we expect it to be created
-	helper.AddOwnedLabel(desiredNs)
+	helper.AddManagedLabel(desiredNs)
 	if nsExist == nil {
 		err = r.Create(ctx, desiredNs)
 		if err != nil {
 			return err
 		}
-	} else if !helper.SkipOwnership(nsExist) && !helper.IsSubSet(nsExist.ObjectMeta.Labels, desiredNs.ObjectMeta.Labels) {
+	} else if helper.IsManaged(nsExist) && !helper.IsSubSet(nsExist.ObjectMeta.Labels, desiredNs.ObjectMeta.Labels) {
 		err = r.Update(ctx, desiredNs)
 		if err != nil {
 			return err

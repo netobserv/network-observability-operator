@@ -17,6 +17,7 @@ import (
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -145,6 +146,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 			FlowlogsPipelineImage: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
 			ConsolePluginImage:    "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
 			DownstreamDeployment:  false,
+			Namespace:             "main-namespace",
 		},
 		&ctrl.Options{
 			Scheme: scheme.Scheme,
@@ -175,6 +177,40 @@ func TeardownEnvTest(testEnv *envtest.Environment, cancel context.CancelFunc) {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+}
+
+func CreateFakeController(ctx context.Context, k8sClient client.Client) {
+	created := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "netobserv-controller-manager",
+			Namespace: "main-namespace",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"controller": "dummy",
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"controller": "dummy",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "controller",
+							Image: "nginx:latest",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Create
+	Eventually(k8sClient.Create(ctx, created)).Should(Succeed())
 }
 
 func GetCR(ctx context.Context, k8sClient client.Client, key types.NamespacedName) *flowsv1beta2.FlowCollector {

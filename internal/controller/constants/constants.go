@@ -12,6 +12,7 @@ type RoleName string
 const (
 	DefaultOperatorNamespace = "netobserv"
 	OperatorName             = "netobserv-operator"
+	ControllerName           = "netobserv-controller-manager"
 	WebhookPort              = 9443
 	FLPName                  = "flowlogs-pipeline"
 	FLPShortName             = "flp"
@@ -21,6 +22,7 @@ const (
 	FLPTransfoMetricsSvcName = FLPTransfoName + "-prom"
 	FLPMetricsPort           = 9401
 	PluginName               = "netobserv-plugin"
+	StaticPluginName         = "netobserv-plugin-static"
 	PluginShortName          = "plugin"
 
 	// EBPFAgentName and other constants for it
