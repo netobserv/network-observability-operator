@@ -1475,6 +1475,7 @@ type FlowCollectorStatus struct {
 // +kubebuilder:printcolumn:name="Sampling (EBPF)",type="string",JSONPath=`.spec.agent.ebpf.sampling`
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=`.status.conditions[?(@.type=="Ready")].reason`
+// +kubebuilder:printcolumn:name="Warnings",type="string",JSONPath=`.status.conditions[?(@.type=="ConfigurationIssue")].message`
 // +kubebuilder:storageversion
 // `FlowCollector` is the schema for the network flows collection API, which pilots and configures the underlying deployments.
 type FlowCollector struct {
