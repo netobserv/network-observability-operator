@@ -19,7 +19,7 @@ resources:
   path: github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2
   version: v1beta2
   webhooks:
-    conversion: true
+    conversion: false
     validation: true
     webhookVersion: v1
 - controller: true

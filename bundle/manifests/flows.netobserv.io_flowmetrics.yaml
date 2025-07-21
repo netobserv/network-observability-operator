@@ -6,16 +6,6 @@ metadata:
   creationTimestamp: null
   name: flowmetrics.flows.netobserv.io
 spec:
-  conversion:
-    strategy: Webhook
-    webhook:
-      clientConfig:
-        service:
-          name: netobserv-webhook-service
-          namespace: netobserv
-          path: /convert
-      conversionReviewVersions:
-      - v1
   group: flows.netobserv.io
   names:
     kind: FlowMetric

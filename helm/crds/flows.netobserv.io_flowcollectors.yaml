@@ -51,6 +51,10 @@ spec:
                 More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             metadata:
+              properties:
+                name:
+                  pattern: ^cluster$
+                  type: string
               type: object
             spec:
               description: |-

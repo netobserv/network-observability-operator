@@ -24,8 +24,6 @@ patches:
   target:
     kind: CustomResourceDefinition
     name: flowcollectors.flows.netobserv.io
-- path: patches/webhook_in_flowcollectors.yaml
-- path: patches/webhook_in_flowmetrics.yaml
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
 configurations:
