@@ -1,11 +1,11 @@
 # Do not remove comment lines, they are there to reduce conflicts
 # Operator
-export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:0013b2f8de5ad64dd03950e7aa244c30657ea75c11953887e5d41a1448f84ddc'
+export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:c3b0748ae9de5cecbc175d631f9d787feef49ee40bc1ad37698a440f1ce14475'
 # eBPF agent
-export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:d1208c12bb37331362596d8b227cb315369f8e878dd240af3798e929fa88fbf8'
+export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:cec69ff2d71e6bc77a83de09991c551fe7c22e7ce0daf4d3af5c820bcf1704e7'
 # Flowlogs-pipeline
-export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:3154e141ff2d3b4b87227acf2833d8d7d4cc8e108b1041c795dd0ca8c9beefb9'
+export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:5541908823c4f0e44f7e060f51c07272d89142a931b08aa46cf58258bb7c64f9'
 # Console plugin
-export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:306bda0e578781b1c73d424ba9f4f081b28ead3bef802fe8c68b6b4787336e8f'
+export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:ea99641802f895273808335266e5baea19b0084605460a4516e9448eb0ab2ef1'
 # Compatibility Console plugin
-export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:4feb0af0383b67298e6b3bc18168b0c5a21e2920e34763017c64c071d7bb3a4d'
+export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:bc8be831e62e3087c47130ebd2aab2cb41716ef7481dee934e2b3ffb34c8c1d1'
