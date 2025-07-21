@@ -21,9 +21,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.33.2
+	k8s.io/api v0.33.3
 	k8s.io/apiextensions-apiserver v0.33.2
-	k8s.io/apimachinery v0.33.2
+	k8s.io/apimachinery v0.33.3
 	k8s.io/client-go v0.33.2
 	k8s.io/kube-aggregator v0.33.2
 	k8s.io/utils v0.0.0-20250502105355-0f33e8f1c979
