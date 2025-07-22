@@ -64,7 +64,7 @@ type MetricFilter struct {
 // To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
 type FlowMetricSpec struct {
 	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
-	// +kubebuilder:validation:Pattern:="^[a-zA-Z_][a-zA-Z0-9:_]*$"
+	// +kubebuilder:validation:Pattern:="^[a-zA-Z_][a-zA-Z0-9:_]*$|^$"
 	// +optional
 	MetricName string `json:"metricName"`
 
