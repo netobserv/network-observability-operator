@@ -399,12 +399,16 @@ func flowMetricToFLP(fm *metricslatest.FlowMetric) (*api.MetricsItem, error) {
 	if metricName == "" {
 		metricName = helper.PrometheusMetricName(fm.Name)
 	}
+	remap := make(map[string]string, len(fm.Spec.Remap))
+	for k, v := range fm.Spec.Remap {
+		remap[k] = string(v)
+	}
 	m := &api.MetricsItem{
 		Name:     metricName,
 		Type:     api.MetricEncodeOperationEnum(strings.ToLower(string(fm.Spec.Type))),
 		Filters:  []api.MetricsFilter{},
 		Labels:   fm.Spec.Labels,
-		Remap:    fm.Spec.Remap,
+		Remap:    remap,
 		Flatten:  fm.Spec.Flatten,
 		ValueKey: fm.Spec.ValueField,
 	}

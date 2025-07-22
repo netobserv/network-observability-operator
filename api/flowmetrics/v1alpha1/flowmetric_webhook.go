@@ -62,7 +62,7 @@ func (r *FlowMetricWebhook) ValidateDelete(_ context.Context, _ runtime.Object) 
 	return nil, nil
 }
 
-func checkFlowMetricCartinality(fMetric *FlowMetric) admission.Warnings {
+func checkFlowMetricCardinality(fMetric *FlowMetric) admission.Warnings {
 	w := admission.Warnings{}
 	r, err := cardinality.CheckCardinality(fMetric.Spec.Labels...)
 	if err != nil {
@@ -140,6 +140,6 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warni
 			schema.GroupKind{Group: GroupVersion.Group, Kind: FlowMetric{}.Kind},
 			fMetric.Name, allErrs)
 	}
-	w := checkFlowMetricCartinality(fMetric)
+	w := checkFlowMetricCardinality(fMetric)
 	return w, nil
 }

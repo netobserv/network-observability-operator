@@ -124,7 +124,7 @@ func (in *FlowMetricSpec) DeepCopyInto(out *FlowMetricSpec) {
 	}
 	if in.Remap != nil {
 		in, out := &in.Remap, &out.Remap
-		*out = make(map[string]string, len(*in))
+		*out = make(map[string]Label, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}

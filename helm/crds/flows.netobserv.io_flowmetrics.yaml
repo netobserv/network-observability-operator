@@ -193,9 +193,11 @@ spec:
                   type: array
                 metricName:
                   description: Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
+                  pattern: ^[a-zA-Z_][a-zA-Z0-9:_]*$
                   type: string
                 remap:
                   additionalProperties:
+                    pattern: ^[a-zA-Z_][a-zA-Z0-9_]*$
                     type: string
                   description: Set the `remap` property to use different names for the generated metric labels than the flow fields. Use the origin flow fields as keys, and the desired label names as values.
                   type: object
