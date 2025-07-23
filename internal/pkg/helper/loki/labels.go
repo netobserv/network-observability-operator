@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 )
 
 //go:embed loki-labels.json
@@ -40,15 +39,15 @@ func GetLabels(desired *flowslatest.FlowCollectorFLP) ([]string, error) {
 	}
 	labels := labelsPerType[Default]
 
-	if helper.IsConntrack(desired) {
+	if desired.HasConntrack() {
 		labels = append(labels, labelsPerType[Conntrack]...)
 	}
 
-	if helper.IsMultiClusterEnabled(desired) {
+	if desired.IsMultiClusterEnabled() {
 		labels = append(labels, labelsPerType[MultiCluster]...)
 	}
 
-	if helper.IsZoneEnabled(desired) {
+	if desired.IsZoneEnabled() {
 		labels = append(labels, labelsPerType[Zones]...)
 	}
 

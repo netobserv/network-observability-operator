@@ -216,7 +216,7 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 		})
 	}
 
-	if !helper.UseTestConsolePlugin(b.desired) {
+	if !b.desired.UseTestConsolePlugin() {
 		volumes = append(volumes, corev1.Volume{
 			Name: fmt.Sprintf("%s-cert", name),
 			VolumeSource: corev1.VolumeSource{
@@ -325,7 +325,7 @@ func (b *builder) metricsService() *corev1.Service {
 }
 
 func (b *builder) getLokiConfig() (cfg.LokiConfig, error) {
-	if !helper.UseLoki(b.desired) {
+	if !b.desired.UseLoki() {
 		// Empty config/URL will disable Loki in the console plugin
 		return cfg.LokiConfig{}, nil
 	}
@@ -378,7 +378,7 @@ func (b *builder) getLokiConfig() (cfg.LokiConfig, error) {
 }
 
 func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
-	if !helper.UsePrometheus(b.desired) {
+	if !b.desired.UsePrometheus() {
 		return cfg.PrometheusConfig{}
 	}
 
@@ -423,7 +423,7 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 
 	config.TokenPath = b.volumes.AddToken(constants.PluginName)
 
-	includeList := metrics.GetIncludeList(b.desired)
+	includeList := b.desired.GetIncludeList()
 	allMetrics := metrics.GetDefinitions(b.desired, true)
 	for i := range allMetrics {
 		mSpec := allMetrics[i].Spec
@@ -442,35 +442,35 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 }
 
 func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
-	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsPktDropEnabled() {
 		fconf.Features = append(fconf.Features, "pktDrop")
 	}
 
-	if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsDNSTrackingEnabled() {
 		fconf.Features = append(fconf.Features, "dnsTracking")
 	}
 
-	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsFlowRTTEnabled() {
 		fconf.Features = append(fconf.Features, "flowRTT")
 	}
 
-	if helper.IsNetworkEventsEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsNetworkEventsEnabled() {
 		fconf.Features = append(fconf.Features, "networkEvents")
 	}
 
-	if helper.IsPacketTranslationEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsPacketTranslationEnabled() {
 		fconf.Features = append(fconf.Features, "packetTranslation")
 	}
 
-	if helper.IsUDNMappingEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsUDNMappingEnabled() {
 		fconf.Features = append(fconf.Features, "udnMapping")
 	}
 
-	if helper.IsUDNMappingEnabled(&b.desired.Agent.EBPF) || helper.HasSecondaryIndexes(&b.desired.Processor) {
+	if b.desired.Agent.EBPF.IsUDNMappingEnabled() || b.desired.Processor.HasSecondaryIndexes() {
 		fconf.Features = append(fconf.Features, "multiNetworks")
 	}
 
-	if helper.IsIPSecEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsIPSecEnabled() {
 		fconf.Features = append(fconf.Features, "ipsec")
 	}
 
@@ -478,14 +478,14 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 	fconf.PortNaming = b.desired.ConsolePlugin.PortNaming
 	fconf.QuickFilters = b.desired.ConsolePlugin.QuickFilters
 	fconf.AlertNamespaces = []string{b.info.Namespace}
-	fconf.Sampling = helper.GetSampling(b.desired)
-	if helper.IsMultiClusterEnabled(&b.desired.Processor) {
+	fconf.Sampling = b.desired.GetSampling()
+	if b.desired.Processor.IsMultiClusterEnabled() {
 		fconf.Features = append(fconf.Features, "multiCluster")
 	}
-	if helper.IsZoneEnabled(&b.desired.Processor) {
+	if b.desired.Processor.IsZoneEnabled() {
 		fconf.Features = append(fconf.Features, "zones")
 	}
-	if helper.IsSubnetLabelsEnabled(&b.desired.Processor) {
+	if b.desired.Processor.IsSubnetLabelsEnabled() {
 		fconf.Features = append(fconf.Features, "subnetLabels")
 	}
 	return nil
@@ -499,7 +499,7 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 			Port: int(*b.advanced.Port),
 		},
 	}
-	if helper.UseTestConsolePlugin(b.desired) {
+	if b.desired.UseTestConsolePlugin() {
 		config.Server.AuthCheck = "none"
 	} else {
 		config.Server.CertPath = "/var/serving-cert/tls.crt"
