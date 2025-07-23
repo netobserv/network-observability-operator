@@ -288,5 +288,74 @@ func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSp
 			errs = append(errs, fmt.Errorf("cannot parse spec.processor.filters[%d].query: %w", i, err))
 		}
 	}
+	if r.Spec.Processor.Metrics.AlertGroups != nil {
+		for i, group := range *r.Spec.Processor.Metrics.AlertGroups {
+			if _, msg := group.IsAllowed(&r.Spec); len(msg) > 0 {
+				warnings = append(warnings, msg)
+			}
+			for j, alert := range group.Alerts {
+				_, err := strconv.ParseFloat(alert.Threshold, 64)
+				if err != nil {
+					errs = append(
+						errs,
+						fmt.Errorf(`cannot parse threshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, i, j, alert.Threshold),
+					)
+				}
+			}
+		}
+	}
+	metrics := fc.GetIncludeList()
+	alertGroups := fc.GetFLPAlerts()
+	for _, g := range alertGroups {
+		for _, a := range g.Alerts {
+			reqMetrics1, reqMetrics2 := GetElligibleMetricsForAlert(g.Name, &a)
+			// At least one metric from reqMetrics1 should be present, same for reqMetrics2
+			w1 := checkAlertRequiredMetrics(g.Name, &a, reqMetrics1, metrics)
+			warnings = append(warnings, w1...)
+			w2 := checkAlertRequiredMetrics(g.Name, &a, reqMetrics2, metrics)
+			warnings = append(warnings, w2...)
+		}
+	}
 	return warnings, errs
+}
+
+func checkAlertRequiredMetrics(alertName FLPAlertGroupName, alertDef *FLPAlert, required, actual []string) admission.Warnings {
+	for _, m := range required {
+		if slices.Contains(actual, m) {
+			return nil
+		}
+	}
+	return admission.Warnings{fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", alertName, alertDef.Grouping, strings.Join(required, ","))}
+}
+
+func GetElligibleMetricsForAlert(alertName FLPAlertGroupName, alertDef *FLPAlert) ([]string, []string) {
+	var gr []string
+	switch alertDef.Grouping {
+	case GroupingPerNode:
+		gr = []string{"node"}
+	case GroupingPerNamespace:
+		gr = []string{"namespace", "workload"}
+	case GroupingPerWorkload:
+		gr = []string{"workload"}
+	default: // global => any of the metric can work
+		gr = []string{"namespace", "workload", "node"}
+	}
+	var metricPatterns, totalMetricPatterns []string
+	switch alertName {
+	case AlertTooManyDrops:
+		metricPatterns = []string{"%s_drop_packets_total"}
+		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
+	}
+	var metrics, totalMetrics []string
+	for _, p := range metricPatterns {
+		for _, g := range gr {
+			metrics = append(metrics, fmt.Sprintf(p, g))
+		}
+	}
+	for _, p := range totalMetricPatterns {
+		for _, g := range gr {
+			totalMetrics = append(totalMetrics, fmt.Sprintf(p, g))
+		}
+	}
+	return metrics, totalMetrics
 }

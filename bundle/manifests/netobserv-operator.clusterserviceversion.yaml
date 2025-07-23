@@ -616,6 +616,8 @@ spec:
         path: processor.filters
       - displayName: Log types
         path: processor.logTypes
+      - displayName: Alert groups
+        path: processor.metrics.alertGroups
       - displayName: Disable alerts
         path: processor.metrics.disableAlerts
       - displayName: Include list

@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 )
 
 //go:embed loki-labels.json
@@ -47,19 +46,19 @@ func GetLabels(desired *flowslatest.FlowCollectorSpec) ([]string, error) {
 	}
 	labels = addExcluding(labels, labelsPerType[Default], excluding)
 
-	if helper.IsConntrack(&desired.Processor) {
+	if desired.Processor.HasConntrack() {
 		labels = addExcluding(labels, labelsPerType[Conntrack], excluding)
 	}
 
-	if helper.IsMultiClusterEnabled(&desired.Processor) {
+	if desired.Processor.IsMultiClusterEnabled() {
 		labels = addExcluding(labels, labelsPerType[MultiCluster], excluding)
 	}
 
-	if helper.IsZoneEnabled(&desired.Processor) {
+	if desired.Processor.IsZoneEnabled() {
 		labels = addExcluding(labels, labelsPerType[Zones], excluding)
 	}
 
-	if helper.IsUDNMappingEnabled(&desired.Agent.EBPF) {
+	if desired.Agent.EBPF.IsUDNMappingEnabled() {
 		labels = addExcluding(labels, labelsPerType[UDN], excluding)
 	}
 

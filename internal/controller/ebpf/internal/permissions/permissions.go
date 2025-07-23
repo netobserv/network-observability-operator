@@ -159,7 +159,7 @@ func (c *Reconciler) reconcileOpenshiftPermissions(
 	} else {
 		scc.AllowedCapabilities = GetAllowedCapabilities(desired)
 	}
-	if helper.IsEbpfManagerEnabled(desired) {
+	if desired.IsEbpfManagerEnabled() {
 		rlog.Info("Using Ebpf Manager setting up custom SecurityContextConstraints")
 		scc.RequiredDropCapabilities = []v1.Capability{"ALL"}
 	}

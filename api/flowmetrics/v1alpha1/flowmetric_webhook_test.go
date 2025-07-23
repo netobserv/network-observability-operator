@@ -16,6 +16,35 @@ func TestFlowMetric(t *testing.T) {
 		expectedError string
 	}{
 		{
+			desc: "Valid FlowMetric",
+			m: &FlowMetric{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test1",
+					Namespace: "test-namespace",
+				},
+				Spec: FlowMetricSpec{
+					Filters: []MetricFilter{
+						{
+							Field: "DstK8S_Zone",
+						},
+						{
+							Field: "NetworkEvents>Type",
+							Value: "acl",
+						},
+					},
+					Labels: []string{
+						"DstK8S_Zone",
+						"NetworkEvents>Name",
+					},
+					ValueField: "Bytes",
+					Flatten:    []string{"NetworkEvents"},
+					Remap:      map[string]Label{"NetworkEvents>Name": "name"},
+					Buckets:    []string{"0.01", "0.5", "1", "10"},
+				},
+			},
+			expectedError: "",
+		},
+		{
 			desc: "Invalid FlowMetric Filter",
 			m: &FlowMetric{
 				ObjectMeta: metav1.ObjectMeta{
@@ -33,23 +62,6 @@ func TestFlowMetric(t *testing.T) {
 			expectedError: "invalid filter field",
 		},
 		{
-			desc: "Valid FlowMetric Filter",
-			m: &FlowMetric{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test1",
-					Namespace: "test-namespace",
-				},
-				Spec: FlowMetricSpec{
-					Filters: []MetricFilter{
-						{
-							Field: "DstK8S_Zone",
-						},
-					},
-				},
-			},
-			expectedError: "",
-		},
-		{
 			desc: "Invalid FlowMetric Label",
 			m: &FlowMetric{
 				ObjectMeta: metav1.ObjectMeta{
@@ -65,34 +77,6 @@ func TestFlowMetric(t *testing.T) {
 			expectedError: "invalid label name",
 		},
 		{
-			desc: "Valid FlowMetric Label",
-			m: &FlowMetric{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test1",
-					Namespace: "test-namespace",
-				},
-				Spec: FlowMetricSpec{
-					Labels: []string{
-						"DstK8S_Zone",
-					},
-				},
-			},
-			expectedError: "",
-		},
-		{
-			desc: "Valid valueField",
-			m: &FlowMetric{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test1",
-					Namespace: "test-namespace",
-				},
-				Spec: FlowMetricSpec{
-					ValueField: "Bytes",
-				},
-			},
-			expectedError: "",
-		},
-		{
 			desc: "Invalid valueField",
 			m: &FlowMetric{
 				ObjectMeta: metav1.ObjectMeta{
@@ -106,25 +90,17 @@ func TestFlowMetric(t *testing.T) {
 			expectedError: "invalid value field",
 		},
 		{
-			desc: "Valid nested fields",
+			desc: "Invalid buckets",
 			m: &FlowMetric{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test1",
 					Namespace: "test-namespace",
 				},
 				Spec: FlowMetricSpec{
-					Labels:  []string{"NetworkEvents>Name"},
-					Flatten: []string{"NetworkEvents"},
-					Filters: []MetricFilter{
-						{
-							Field: "NetworkEvents>Type",
-							Value: "acl",
-						},
-					},
-					Remap: map[string]Label{"NetworkEvents>Name": "name"},
+					Buckets: []string{"a", ""},
 				},
 			},
-			expectedError: "",
+			expectedError: `spec.buckets: Invalid value: []string{"a", ""}: cannot be parsed as a float: "a"`,
 		},
 	}
 

@@ -556,18 +556,6 @@ type MetricsServerConfig struct {
 	TLS ServerTLS `json:"tls"`
 }
 
-// Name of a processor alert.
-// Possible values are:<br>
-// - `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-// - `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
-// +kubebuilder:validation:Enum:="NetObservNoFlows";"NetObservLokiError"
-type FLPAlert string
-
-const (
-	AlertNoFlows   FLPAlert = "NetObservNoFlows"
-	AlertLokiError FLPAlert = "NetObservLokiError"
-)
-
 // Metric name. More information in https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md.
 // +kubebuilder:validation:Enum:="namespace_egress_bytes_total";"namespace_egress_packets_total";"namespace_ingress_bytes_total";"namespace_ingress_packets_total";"namespace_flows_total";"node_egress_bytes_total";"node_egress_packets_total";"node_ingress_bytes_total";"node_ingress_packets_total";"node_flows_total";"workload_egress_bytes_total";"workload_egress_packets_total";"workload_ingress_bytes_total";"workload_ingress_packets_total";"workload_flows_total";"namespace_drop_bytes_total";"namespace_drop_packets_total";"node_drop_bytes_total";"node_drop_packets_total";"workload_drop_bytes_total";"workload_drop_packets_total";"namespace_rtt_seconds";"node_rtt_seconds";"workload_rtt_seconds";"namespace_dns_latency_seconds";"node_dns_latency_seconds";"workload_dns_latency_seconds";"node_network_policy_events_total";"namespace_network_policy_events_total";"workload_network_policy_events_total";"node_ipsec_flows_total";"node_to_node_ingress_flows_total"
 type FLPMetric string
@@ -591,12 +579,19 @@ type FLPMetrics struct {
 	// +optional
 	IncludeList *[]FLPMetric `json:"includeList,omitempty"`
 
-	// `disableAlerts` is a list of alerts that should be disabled.
+	// `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
 	// Possible values are:<br>
 	// `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
 	// `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
+	// TODO: add full list of default alerts
 	// +optional
-	DisableAlerts []FLPAlert `json:"disableAlerts"`
+	DisableAlerts []FLPAlertGroupName `json:"disableAlerts"`
+
+	// `alertGroups` is a list of alerts to be created for Prometheus AlertManager, organized by group.
+	// Alerts enabled by default are: TODO
+	// More information, with full list of available alerts: TODO
+	// +optional
+	AlertGroups *[]FLPAlertGroup `json:"alertGroups"`
 }
 
 type FLPLogTypes string

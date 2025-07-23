@@ -69,27 +69,27 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *f
 		traceValue = append(traceValue, uint8(1))
 	}
 
-	if helper.IsDNSTrackingEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsDNSTrackingEnabled() {
 		enableDNSValue = append(enableDNSValue, uint8(1))
 	}
 
-	if helper.IsFlowRTTEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsFlowRTTEnabled() {
 		enableRTTValue = append(enableRTTValue, uint8(1))
 	}
 
-	if helper.IsEBPFFlowFilterEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsEBPFFlowFilterEnabled() {
 		enableFLowFilterValue = append(enableFLowFilterValue, uint8(1))
 	}
 
-	if helper.IsNetworkEventsEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsNetworkEventsEnabled() {
 		enableNetworkEvents = append(enableNetworkEvents, uint8(1))
 	}
 
-	if helper.IsPacketTranslationEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsPacketTranslationEnabled() {
 		enablePktTranslation = append(enablePktTranslation, uint8(1))
 	}
 
-	if helper.IsIPSecEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsIPSecEnabled() {
 		enableIPSecValue = append(enableIPSecValue, uint8(1))
 	}
 
@@ -165,7 +165,7 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *f
 		},
 	}
 
-	if helper.IsFlowRTTEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsFlowRTTEnabled() {
 		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
 				Name: "tcp_rcv_fentry",
@@ -184,7 +184,7 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *f
 		}...)
 	}
 
-	if helper.IsNetworkEventsEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsNetworkEventsEnabled() {
 		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
 				Name: "network_events_monitoring",
@@ -200,7 +200,7 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *f
 		}...)
 	}
 
-	if helper.IsPktDropEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsPktDropEnabled() {
 		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
 				Name: "kfree_skb",
@@ -216,7 +216,7 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *f
 		}...)
 	}
 
-	if helper.IsPacketTranslationEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsPacketTranslationEnabled() {
 		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
 				Name: "track_nat_manip_pkt",
@@ -232,7 +232,7 @@ func prepareBpfApplication(bpfApp *bpfmaniov1alpha1.ClusterBpfApplication, fc *f
 		}...)
 	}
 
-	if helper.IsIPSecEnabled(&fc.Spec.Agent.EBPF) {
+	if fc.Spec.Agent.EBPF.IsIPSecEnabled() {
 		bpfApp.Spec.Programs = append(bpfApp.Spec.Programs, []bpfmaniov1alpha1.ClBpfApplicationProgram{
 			{
 				Name: "xfrm_input_kprobe",
