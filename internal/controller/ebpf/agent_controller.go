@@ -174,7 +174,7 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return err
 	}
 
-	if helper.IsAgentFeatureEnabled(&target.Spec.Agent.EBPF, flowslatest.EbpfManager) {
+	if target.Spec.Agent.EBPF.IsAgentFeatureEnabled(flowslatest.EbpfManager) {
 		if err := c.bpfmanAttachNetobserv(ctx, target); err != nil {
 			return fmt.Errorf("failed to attach netobserv: %w", err)
 		}
@@ -252,7 +252,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	volumeMounts := c.volumes.GetMounts()
 	volumes := c.volumes.GetVolumes()
 
-	if helper.IsPrivileged(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsPrivileged() {
 		volume := corev1.Volume{
 			Name: bpfNetNSMountName,
 			VolumeSource: corev1.VolumeSource{
@@ -271,7 +271,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
 	// EBPF Manager takes care of mounting the kernel debug volume.
-	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.PacketDrop) && !helper.IsEbpfManagerEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsAgentFeatureEnabled(flowslatest.PacketDrop) && !coll.Spec.Agent.EBPF.IsEbpfManagerEnabled() {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use PacketsDrop feature privileged mode needs to be enabled")
 		} else {
@@ -294,8 +294,8 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 	}
 
-	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.NetworkEvents) ||
-		helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.UDNMapping) {
+	if coll.Spec.Agent.EBPF.IsAgentFeatureEnabled(flowslatest.NetworkEvents) ||
+		coll.Spec.Agent.EBPF.IsAgentFeatureEnabled(flowslatest.UDNMapping) {
 		if !coll.Spec.Agent.EBPF.Privileged {
 			rlog.Error(fmt.Errorf("invalid configuration"), "To use Network Events Monitor"+
 				"features privileged mode needs to be enabled")
@@ -336,7 +336,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 	}
 
-	if helper.IsAgentFeatureEnabled(&coll.Spec.Agent.EBPF, flowslatest.EbpfManager) {
+	if coll.Spec.Agent.EBPF.IsAgentFeatureEnabled(flowslatest.EbpfManager) {
 		volume := corev1.Volume{
 			Name: bpfmanMapsVolumeName,
 			VolumeSource: corev1.VolumeSource{
@@ -407,7 +407,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
 	config := getEnvConfig(coll, c.ClusterInfo)
 
-	if helper.UseKafka(&coll.Spec) {
+	if coll.Spec.UseKafka() {
 		config = append(config,
 			corev1.EnvVar{Name: envExport, Value: exportKafka},
 			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
@@ -435,7 +435,7 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				corev1.EnvVar{Name: envKafkaTLSUserKeyPath, Value: userKeyPath},
 			)
 		}
-		if helper.UseSASL(&coll.Spec.Kafka.SASL) {
+		if coll.Spec.Kafka.SASL.UseSASL() {
 			sasl := &coll.Spec.Kafka.SASL
 			// Annotate pod with secret reference so that it is reloaded if modified
 			d1, d2, err := c.Watcher.ProcessSASL(ctx, c.Client, sasl, c.PrivilegedNamespace())
@@ -655,34 +655,34 @@ func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1
 		})
 	}
 
-	if helper.IsFlowRTTEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsFlowRTTEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableFlowRTT,
 			Value: "true",
 		})
 	}
 
-	if helper.IsNetworkEventsEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsNetworkEventsEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableNetworkEvents,
 			Value: "true",
 		})
 	}
 
-	if helper.IsUDNMappingEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsUDNMappingEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableUDNMapping,
 			Value: "true",
 		})
 	}
 
-	if helper.IsPacketTranslationEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsPacketTranslationEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnablePacketTranslation,
 			Value: "true",
 		})
 	}
-	if helper.IsEbpfManagerEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsEbpfManagerEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableEbpfMgr,
 			Value: "true",
@@ -700,35 +700,35 @@ func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1
 		}
 	}
 
-	if helper.IsPktDropEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsPktDropEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnablePktDrop,
 			Value: "true",
 		})
 	}
 
-	if helper.IsDNSTrackingEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsDNSTrackingEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableDNSTracking,
 			Value: "true",
 		})
 	}
 
-	if helper.IsIPSecEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsIPSecEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableIPsec,
 			Value: "true",
 		})
 	}
 
-	if helper.IsEBPFMetricsEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsEBPFMetricsEnabled() {
 		config = append(config, corev1.EnvVar{
 			Name:  envEnableMetrics,
 			Value: "true",
 		})
 		config = append(config, corev1.EnvVar{
 			Name:  envMetricsPort,
-			Value: strconv.Itoa(int(helper.GetEBPFMetricsPort(&coll.Spec.Agent.EBPF))),
+			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.GetMetricsPort())),
 		})
 		config = append(config, corev1.EnvVar{
 			Name:  envMetricPrefix,
@@ -736,7 +736,7 @@ func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1
 		})
 	}
 
-	if helper.IsEBPFFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
+	if coll.Spec.Agent.EBPF.IsEBPFFlowFilterEnabled() {
 		if len(coll.Spec.Agent.EBPF.FlowFilter.Rules) != 0 {
 			if filterRules := configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.Rules); filterRules != nil {
 				config = append(config, filterRules...)
