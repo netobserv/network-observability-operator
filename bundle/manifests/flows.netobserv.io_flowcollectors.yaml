@@ -5784,21 +5784,85 @@ spec:
                     description: '`Metrics` define the processor configuration regarding
                       metrics'
                     properties:
+                      alertGroups:
+                        description: |-
+                          `alertGroups` is a list of alerts to be created for Prometheus AlertManager, organized by group.
+                          Alerts enabled by default are: TODO
+                          More information, with full list of available alerts: TODO
+                        items:
+                          properties:
+                            alerts:
+                              description: A list of alert definitions for the group
+                              items:
+                                properties:
+                                  grouping:
+                                    description: |-
+                                      Optional grouping criteria, possible values are:<br>
+                                      - `PerNode`<br>
+                                      - `PerNamespace`<br>
+                                      - `PerWorkload`<br>
+                                    enum:
+                                    - ""
+                                    - PerNode
+                                    - PerNamespace
+                                    - PerWorkload
+                                    type: string
+                                  groupingDirection:
+                                    description: |-
+                                      Grouping direction, possible values are:<br>
+                                      - `BySource`<br>
+                                      - `ByDestination`<br>
+                                      - `BySourceAndDestination`<br>
+                                      This setting is ignored when no `grouping` is provided.
+                                    enum:
+                                    - ByDestination
+                                    - BySource
+                                    - BySourceAndDestination
+                                    type: string
+                                  severity:
+                                    description: |-
+                                      Severity of an alert, possible values are:<br>
+                                      - `Critical`<br>
+                                      - `Warning`<br>
+                                      - `Info`<br>
+                                    enum:
+                                    - Critical
+                                    - Warning
+                                    - Info
+                                    type: string
+                                  threshold:
+                                    description: Alert threshold, as a percentage
+                                      of errors above which the alert is triggered.
+                                      It must be parsable as float.
+                                    type: string
+                                required:
+                                - threshold
+                                type: object
+                              type: array
+                            name:
+                              description: |-
+                                Alert group name; TODO: more doc with the list of available alerts, similar to the metrics list.
+                                Possible values are:<br>
+                                - `NetObservNoFlows`, triggered when no flows are being observed for a certain period.<br>
+                                - `NetObservLokiError`, triggered when flows are being dropped due to Loki errors.<br>
+                                - `TooManyDrops`, triggered on high percentage of packet drops; it requires the `PacketDrop` agent feature.<br>
+                              enum:
+                              - NetObservNoFlows
+                              - NetObservLokiError
+                              - TooManyDrops
+                              type: string
+                          required:
+                          - alerts
+                          - name
+                          type: object
+                        type: array
                       disableAlerts:
                         description: |-
-                          `disableAlerts` is a list of alerts that should be disabled.
+                          `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
                           Possible values are:<br>
                           `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
                           `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
                         items:
-                          description: |-
-                            Name of a processor alert.
-                            Possible values are:<br>
-                            - `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-                            - `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
-                          enum:
-                          - NetObservNoFlows
-                          - NetObservLokiError
                           type: string
                         type: array
                       includeList:

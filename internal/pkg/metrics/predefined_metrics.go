@@ -8,7 +8,6 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
-	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 )
 
 const (
@@ -33,39 +32,6 @@ var (
 		tagPackets: "Packets",
 	}
 	predefinedMetrics []taggedMetricDefinition
-	// Note that we set default in-code rather than in CRD, in order to keep track of value being unset or set intentionnally in FlowCollector
-	DefaultIncludeList = []string{
-		"node_ingress_bytes_total",
-		"node_egress_bytes_total",
-		"workload_sampling",
-		"workload_ingress_bytes_total",
-		"workload_egress_bytes_total",
-		"namespace_flows_total",
-		"namespace_drop_packets_total",
-		"namespace_rtt_seconds",
-		"namespace_dns_latency_seconds",
-		"namespace_network_policy_events_total",
-		"node_ipsec_flows_total",
-		"node_to_node_ingress_flows_total",
-	}
-	// More metrics enabled when Loki is disabled, to avoid loss of information
-	DefaultIncludeListLokiDisabled = []string{
-		"node_ingress_bytes_total",
-		"node_egress_bytes_total",
-		"workload_ingress_bytes_total",
-		"workload_egress_bytes_total",
-		"workload_sampling",
-		"workload_ingress_packets_total",
-		"workload_egress_packets_total",
-		"workload_flows_total",
-		"workload_drop_bytes_total",
-		"workload_drop_packets_total",
-		"workload_rtt_seconds",
-		"workload_dns_latency_seconds",
-		"namespace_network_policy_events_total",
-		"node_ipsec_flows_total",
-		"node_to_node_ingress_flows_total",
-	}
 	// Pre-deprecation default IgnoreTags list (1.4) - used before switching to whitelist approach,
 	// to make sure there is no unintended new metrics being collected
 	// Don't add anything here: this is not meant to evolve
@@ -301,64 +267,19 @@ func removeLabels(initial []string, toRemove []string) []string {
 	return labels
 }
 
-func GetIncludeList(spec *flowslatest.FlowCollectorSpec) []string {
-	var list []string
-	if spec.Processor.Metrics.IncludeList == nil {
-		if helper.UseLoki(spec) {
-			list = DefaultIncludeList
-		} else {
-			// When loki is disabled, increase what's available through metrics by default, to minimize the loss of information
-			list = DefaultIncludeListLokiDisabled
-		}
-	} else {
-		for _, m := range *spec.Processor.Metrics.IncludeList {
-			list = append(list, string(m))
-		}
-	}
-	if !helper.IsPktDropEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_drop_")
-	}
-	if !helper.IsFlowRTTEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_rtt_")
-	}
-	if !helper.IsDNSTrackingEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_dns_")
-	}
-	if !helper.IsNetworkEventsEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_network_policy_")
-	}
-	if !hasFiltersSampling(spec) {
-		list = removeMetricsByPattern(list, "_sampling")
-	}
-	if !helper.IsIPSecEnabled(&spec.Agent.EBPF) {
-		list = removeMetricsByPattern(list, "_ipsec_")
-	}
-	return list
-}
-
-func removeMetricsByPattern(list []string, search string) []string {
-	var filtered []string
-	for _, m := range list {
-		if !strings.Contains(m, search) {
-			filtered = append(filtered, m)
-		}
-	}
-	return filtered
-}
-
 func GetDefinitions(fc *flowslatest.FlowCollectorSpec, allMetrics bool) []metricslatest.FlowMetric {
 	var names []string
 	if allMetrics {
 		names = GetAllNames()
 	} else {
-		names = GetIncludeList(fc)
+		names = fc.GetIncludeList()
 	}
 
 	var labelsToRemove []string
-	if !helper.IsZoneEnabled(&fc.Processor) {
+	if !fc.Processor.IsZoneEnabled() {
 		labelsToRemove = append(labelsToRemove, "SrcK8S_Zone", "DstK8S_Zone")
 	}
-	if !helper.IsMultiClusterEnabled(&fc.Processor) {
+	if !fc.Processor.IsMultiClusterEnabled() {
 		labelsToRemove = append(labelsToRemove, "K8S_ClusterName")
 	}
 
@@ -388,20 +309,4 @@ func GetDefinitions(fc *flowslatest.FlowCollectorSpec, allMetrics bool) []metric
 func MergePredefined(fm []metricslatest.FlowMetric, fc *flowslatest.FlowCollectorSpec) []metricslatest.FlowMetric {
 	predefined := GetDefinitions(fc, false)
 	return append(predefined, fm...)
-}
-
-func hasFiltersSampling(fc *flowslatest.FlowCollectorSpec) bool {
-	if fc.Agent.EBPF.FlowFilter != nil {
-		for i := range fc.Agent.EBPF.FlowFilter.Rules {
-			if fc.Agent.EBPF.FlowFilter.Rules[i].Sampling != nil && *fc.Agent.EBPF.FlowFilter.Rules[i].Sampling > 1 {
-				return true
-			}
-		}
-	}
-	for _, rule := range fc.Processor.Filters {
-		if rule.Sampling > 1 {
-			return true
-		}
-	}
-	return false
 }
