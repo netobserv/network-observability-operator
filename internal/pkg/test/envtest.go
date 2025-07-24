@@ -38,8 +38,6 @@ import (
 	_ "github.com/openshift/api/operator/v1/zz_generated.crd-manifests"
 	_ "github.com/openshift/api/security/v1/zz_generated.crd-manifests"
 
-	// nolint:staticcheck
-	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
@@ -84,9 +82,6 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	cfg, err := testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
-
-	err = flowsv1beta1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
 
 	err = flowsv1beta2.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())

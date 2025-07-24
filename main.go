@@ -49,8 +49,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	// nolint:staticcheck
-	flowsv1beta1 "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta1"
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	controllers "github.com/netobserv/network-observability-operator/internal/controller"
@@ -74,7 +72,6 @@ var crdBytes []byte
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(flowsv1beta1.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta2.AddToScheme(scheme))
 	utilruntime.Must(metricsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
