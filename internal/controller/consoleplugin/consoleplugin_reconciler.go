@@ -64,21 +64,21 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	if r.ClusterInfo.HasConsolePlugin() {
-		if err = r.checkAutoPatch(ctx, desired); err != nil {
+		if err = r.checkAutoPatch(ctx, desired, constants.PluginName); err != nil {
 			return err
 		}
 	}
 
 	if helper.UseConsolePlugin(&desired.Spec) && (r.ClusterInfo.HasConsolePlugin() || helper.UseTestConsolePlugin(&desired.Spec)) {
 		// Create object builder
-		builder := newBuilder(r.Instance, &desired.Spec)
+		builder := newBuilder(r.Instance, &desired.Spec, constants.PluginName)
 
-		if err := r.reconcilePermissions(ctx, &builder); err != nil {
+		if err := r.reconcilePermissions(ctx, &builder, constants.PluginName); err != nil {
 			return err
 		}
 
 		if r.ClusterInfo.HasConsolePlugin() {
-			if err = r.reconcilePlugin(ctx, &builder, &desired.Spec); err != nil {
+			if err = r.reconcilePlugin(ctx, &builder, &desired.Spec, constants.PluginName, "NetObserv plugin"); err != nil {
 				return err
 			}
 		}
@@ -88,11 +88,11 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			return err
 		}
 
-		if err = r.reconcileDeployment(ctx, &builder, &desired.Spec, cmDigest); err != nil {
+		if err = r.reconcileDeployment(ctx, &builder, &desired.Spec, constants.PluginName, cmDigest); err != nil {
 			return err
 		}
 
-		if err = r.reconcileServices(ctx, &builder); err != nil {
+		if err = r.reconcileServices(ctx, &builder, constants.PluginName); err != nil {
 			return err
 		}
 
@@ -118,7 +118,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	return nil
 }
 
-func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector) error {
+func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector, name string) error {
 	console := operatorsv1.Console{}
 	advancedConfig := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
 	reg := helper.UseConsolePlugin(&desired.Spec) && *advancedConfig.Register
@@ -129,34 +129,34 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 		}
 		return nil
 	}
-	registered := helper.ContainsString(console.Spec.Plugins, constants.PluginName)
+	registered := helper.ContainsString(console.Spec.Plugins, name)
 	if reg && !registered {
-		console.Spec.Plugins = append(console.Spec.Plugins, constants.PluginName)
+		console.Spec.Plugins = append(console.Spec.Plugins, name)
 		return r.Client.Update(ctx, &console)
 	}
 	return nil
 }
 
-func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builder) error {
+func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builder, name string) error {
 	if !r.Managed.Exists(r.serviceAccount) {
-		return r.CreateOwned(ctx, builder.serviceAccount())
+		return r.CreateOwned(ctx, builder.serviceAccount(name))
 	} // update not needed for now
 
 	binding := resources.GetClusterRoleBinding(
 		r.Namespace,
 		constants.PluginShortName,
-		constants.PluginName,
-		constants.PluginName,
+		name,
+		name,
 		constants.ConsoleTokenReviewRole,
 	)
 	return r.ReconcileClusterRoleBinding(ctx, binding)
 }
 
-func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) error {
+func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec, name, displayName string) error {
 	// Console plugin is cluster-scope (it's not deployed in our namespace) however it must still be updated if our namespace changes
 	oldPlg := osv1.ConsolePlugin{}
 	pluginExists := true
-	err := r.Get(ctx, types.NamespacedName{Name: constants.PluginName}, &oldPlg)
+	err := r.Get(ctx, types.NamespacedName{Name: name}, &oldPlg)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			pluginExists = false
@@ -166,7 +166,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 	}
 
 	// Check if objects need update
-	consolePlugin := builder.consolePlugin()
+	consolePlugin := builder.consolePlugin(name, displayName)
 	if !pluginExists {
 		if err := r.CreateOwned(ctx, consolePlugin); err != nil {
 			return err
@@ -196,7 +196,7 @@ func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder)
 	return configDigest, nil
 }
 
-func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec, cmDigest string) error {
+func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec, name string, cmDigest string) error {
 	report := helper.NewChangeReport("Console deployment")
 	defer report.LogIfNeeded(ctx)
 
@@ -204,25 +204,27 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder
 		ctx,
 		r.Instance,
 		r.deployment,
-		builder.deployment(cmDigest),
-		constants.PluginName,
+		builder.deployment(name, cmDigest),
+		name,
 		helper.PtrInt32(desired.ConsolePlugin.Replicas),
 		&desired.ConsolePlugin.Autoscaler,
 		&report,
 	)
 }
 
-func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder) error {
+func (r *CPReconciler) reconcileServices(ctx context.Context, builder *builder, name string) error {
 	report := helper.NewChangeReport("Console services")
 	defer report.LogIfNeeded(ctx)
 
-	if err := r.ReconcileService(ctx, r.service, builder.mainService(), &report); err != nil {
+	if err := r.ReconcileService(ctx, r.service, builder.mainService(name), &report); err != nil {
 		return err
 	}
-	if err := r.ReconcileService(ctx, r.metricsService, builder.metricsService(), &report); err != nil {
-		return err
+	if r.metricsService != nil {
+		if err := r.ReconcileService(ctx, r.metricsService, builder.metricsService(), &report); err != nil {
+			return err
+		}
 	}
-	if r.ClusterInfo.HasSvcMonitor() {
+	if r.serviceMonitor != nil && r.ClusterInfo.HasSvcMonitor() {
 		serviceMonitor := builder.serviceMonitor()
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.serviceMonitor, serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err

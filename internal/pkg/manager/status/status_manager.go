@@ -29,12 +29,13 @@ const (
 	FLPMonolith                 ComponentName = "FLPMonolith"
 	FLPTransformer              ComponentName = "FLPTransformer"
 	Monitoring                  ComponentName = "Monitoring"
+	StaticPlugin                ComponentName = "StaticPlugin"
 	NetworkPolicy               ComponentName = "NetworkPolicy"
 	ConditionConfigurationIssue               = "ConfigurationIssue"
 	LokiIssue                                 = "LokiIssue"
 )
 
-var allNames = []ComponentName{FlowCollectorLegacy, Monitoring}
+var allNames = []ComponentName{FlowCollectorLegacy, Monitoring, StaticPlugin}
 
 type Manager struct {
 	statuses sync.Map

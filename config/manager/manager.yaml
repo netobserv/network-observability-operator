@@ -28,6 +28,7 @@ spec:
         - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
         - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
         - --console-plugin-compat-image=$(RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT)
+        - --namespace=$(NAMESPACE)
         - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
         - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
         env:
@@ -43,6 +44,10 @@ spec:
             value: "false"
           - name: PROFILING_BIND_ADDRESS
             value: ""
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
         image: controller:latest
         name: manager
         imagePullPolicy: Always
