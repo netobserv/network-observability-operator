@@ -24,6 +24,9 @@ type MetricType string
 type FilterMatchType string
 type FlowDirection string
 
+// +kubebuilder:validation:Pattern:="^[a-zA-Z_][a-zA-Z0-9_]*$"
+type Label string
+
 const (
 	CounterMetric   MetricType      = "Counter"
 	GaugeMetric     MetricType      = "Gauge"
@@ -61,6 +64,7 @@ type MetricFilter struct {
 // To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
 type FlowMetricSpec struct {
 	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
+	// +kubebuilder:validation:Pattern:="^[a-zA-Z_][a-zA-Z0-9:_]*$|^$"
 	// +optional
 	MetricName string `json:"metricName"`
 
@@ -99,7 +103,7 @@ type FlowMetricSpec struct {
 
 	// Set the `remap` property to use different names for the generated metric labels than the flow fields. Use the origin flow fields as keys, and the desired label names as values.
 	// +optional
-	Remap map[string]string `json:"remap"`
+	Remap map[string]Label `json:"remap"`
 
 	// Filter for ingress, egress or any direction flows.
 	// When set to `Ingress`, it is equivalent to adding the regular expression filter on `FlowDirection`: `0|2`.
