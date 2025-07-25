@@ -17,6 +17,7 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/internal/pkg/metrics"
 	"github.com/netobserv/network-observability-operator/internal/pkg/resources"
 )
 
@@ -73,7 +74,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 		return err
 	}
 
-	if !helper.UseKafka(&desired.Spec) {
+	if !desired.Spec.UseKafka() {
 		r.Status.SetUnused("Transformer only used with Kafka")
 		r.Managed.TryDeleteAll(ctx)
 		return nil
@@ -115,7 +116,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 		return err
 	}
 
-	if helper.UseLoki(&desired.Spec) {
+	if desired.Spec.UseLoki() {
 		// Watch for Loki certificate if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 		// because certificate is always reloaded from file
 		if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
@@ -200,7 +201,8 @@ func (r *transformerReconciler) reconcilePrometheusService(ctx context.Context, 
 		}
 	}
 	if r.ClusterInfo.HasPromRule() {
-		promRules := builder.prometheusRule()
+		rules := metrics.BuildAlertRules(ctx, builder.desired)
+		promRules := builder.prometheusRule(rules)
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
 		}
@@ -220,7 +222,7 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	}
 
 	// Loki writer
-	if helper.UseLoki(builder.desired) && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+	if builder.desired.UseLoki() && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
 		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.LokiWriterRole)
 		if err := r.ReconcileClusterRoleBinding(ctx, r.rbLokiWriter); err != nil {
 			return err
