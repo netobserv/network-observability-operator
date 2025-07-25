@@ -8,6 +8,8 @@ There are two ways to configure metrics:
 - By enabling or disabling any of the predefined metrics
 - Using the FlowMetrics API to create custom metrics
 
+For alerts documentation, see [Alerts.md](./Alerts.md).
+
 ## Predefined metrics
 
 They can be configured in the `FlowCollector` custom resource, via `spec.processor.metrics.includeList`. It is a list of metric names that tells which ones to generate.

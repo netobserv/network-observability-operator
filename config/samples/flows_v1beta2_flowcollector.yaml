@@ -99,6 +99,17 @@ spec:
       #   - "namespace_flows_total"
       #   - "namespace_drop_packets_total"
       #   - "namespace_rtt_seconds"
+      # alertGroups:
+      # - name: TooManyDrops
+      #   alerts:
+      #   - severity: Critical
+      #     threshold: "10"
+      #     # triggered when the whole cluster traffic (no grouping) reaches 10% of drops
+      #   - severity: Warning
+      #     threshold: "15"
+      #     grouping: PerNode
+      #     groupingDirection: ByDestination
+      #     # triggered when per-destination-node traffic reaches 15% of drops
     # Kafka consumer stage configuration
     kafkaConsumerReplicas: 3
     kafkaConsumerAutoscaler: null

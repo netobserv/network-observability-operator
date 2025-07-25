@@ -190,10 +190,12 @@ func (s *FlowCollectorSpec) GetFLPAlerts() []FLPAlertGroup {
 	}
 	if s.Processor.Metrics.AlertGroups != nil {
 		for _, group := range *s.Processor.Metrics.AlertGroups {
-			// A group defined in FC overrides the default group
-			groups[group.Name] = group
-			if !slices.Contains(names, group.Name) {
-				names = append(names, group.Name)
+			if !slices.Contains(s.Processor.Metrics.DisableAlerts, group.Name) {
+				// A group defined in FC overrides the default group
+				groups[group.Name] = group
+				if !slices.Contains(names, group.Name) {
+					names = append(names, group.Name)
+				}
 			}
 		}
 	}
