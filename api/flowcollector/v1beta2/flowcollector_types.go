@@ -1364,6 +1364,10 @@ type AdvancedLokiConfig struct {
 	//+optional
 	// `staticLabels` is a map of common labels to set on each flow in Loki storage.
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
+
+	//+optional
+	// `excludeLabels` is a list of field to be excluded from the list of Loki labels.
+	ExcludeLabels []string `json:"excludeLabels,omitempty"`
 }
 
 // `AdvancedPluginConfig` allows tweaking some aspects of the internal configuration of the console plugin.

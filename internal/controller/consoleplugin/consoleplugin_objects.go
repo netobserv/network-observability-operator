@@ -330,7 +330,7 @@ func (b *builder) getLokiConfig() (cfg.LokiConfig, error) {
 		return cfg.LokiConfig{}, nil
 	}
 	lk := b.info.Loki
-	lokiLabels, err := loki.GetLabels(&b.desired.Processor)
+	lokiLabels, err := loki.GetLabels(b.desired)
 	if err != nil {
 		return cfg.LokiConfig{}, err
 	}

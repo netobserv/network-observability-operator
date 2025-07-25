@@ -7,8 +7,7 @@
     "DstK8S_OwnerName",
     "DstK8S_Type",
     "K8S_FlowLayer",
-    "FlowDirection",
-    "UdnId"
+    "FlowDirection"
   ],
   "conntrack": [
     "_RecordType"
@@ -19,5 +18,8 @@
   "zones": [
     "SrcK8S_Zone",
     "DstK8S_Zone"
+  ],
+  "udn": [
+    "UdnId"
   ]
 }
