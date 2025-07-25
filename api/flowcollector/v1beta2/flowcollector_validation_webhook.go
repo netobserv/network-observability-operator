@@ -345,6 +345,7 @@ func GetElligibleMetricsForAlert(alertName FLPAlertGroupName, alertDef *FLPAlert
 	case AlertTooManyDrops:
 		metricPatterns = []string{"%s_drop_packets_total"}
 		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
+	case AlertNoFlows, AlertLokiError: // nothing
 	}
 	var metrics, totalMetrics []string
 	for _, p := range metricPatterns {
