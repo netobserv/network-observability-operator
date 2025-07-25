@@ -216,6 +216,8 @@ func (g *FLPAlertGroup) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 		if !spec.Agent.EBPF.IsPktDropEnabled() {
 			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", AlertTooManyDrops, PacketDrop)
 		}
+	case AlertNoFlows, AlertLokiError:
+		return true, ""
 	}
 	return true, ""
 }
