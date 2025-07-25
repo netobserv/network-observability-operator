@@ -252,7 +252,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// loki stage (write) configuration
 	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
-		lokiLabels, err := loki.GetLabels(&b.desired.Processor)
+		lokiLabels, err := loki.GetLabels(b.desired)
 		if err != nil {
 			return err
 		}

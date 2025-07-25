@@ -3742,6 +3742,12 @@ spec:
                       `advanced` allows setting some aspects of the internal configuration of the Loki clients.
                       This section is aimed mostly for debugging and fine-grained performance optimizations.
                     properties:
+                      excludeLabels:
+                        description: '`excludeLabels` is a list of field to be excluded
+                          from the list of Loki labels.'
+                        items:
+                          type: string
+                        type: array
                       staticLabels:
                         additionalProperties:
                           type: string

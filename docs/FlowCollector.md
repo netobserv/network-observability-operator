@@ -7347,6 +7347,13 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>excludeLabels</b></td>
+        <td>[]string</td>
+        <td>
+          `excludeLabels` is a list of field to be excluded from the list of Loki labels.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>staticLabels</b></td>
         <td>map[string]string</td>
         <td>
