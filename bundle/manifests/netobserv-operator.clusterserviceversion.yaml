@@ -1218,7 +1218,6 @@ spec:
     name: console-plugin
   - image: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
     name: console-plugin-compat
-  replaces: netobserv-operator.v1.8.2-community
   version: 1.9.1-community
   webhookdefinitions:
   - admissionReviewVersions:
