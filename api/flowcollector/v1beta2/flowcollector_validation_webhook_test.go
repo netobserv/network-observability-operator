@@ -436,10 +436,11 @@ func TestValidateAgent(t *testing.T) {
 		},
 	}
 
+	r := FlowCollector{}
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
 		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
-		warnings, errs := test.fc.validateAgent(context.TODO(), &test.fc.Spec)
+		warnings, errs := r.validateAgent(context.TODO(), &test.fc.Spec)
 		if test.expectedError == "" {
 			assert.Empty(t, errs, test.name)
 		} else {
@@ -509,9 +510,10 @@ func TestValidateConntrack(t *testing.T) {
 		},
 	}
 
+	r := FlowCollector{}
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
-		warnings, err := test.fc.Validate(context.TODO(), test.fc)
+		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.NoError(t, err, test.name)
 		} else {
@@ -521,7 +523,7 @@ func TestValidateConntrack(t *testing.T) {
 	}
 }
 
-func TestValidateFLPQueries(t *testing.T) {
+func TestValidateFLP(t *testing.T) {
 	tests := []struct {
 		name             string
 		fc               *FlowCollector
@@ -613,7 +615,7 @@ func TestValidateFLPQueries(t *testing.T) {
 			},
 			expectedWarnings: admission.Warnings{
 				"Alert TooManyDrops/PerNode requires enabling at least one metric from this list: node_drop_packets_total",
-				"Alert TooManyDrops/PerNode requires enabling at least one metric from this list: node_ingress_packets_total,node_egress_packets_total",
+				"Alert TooManyDrops/PerNode requires enabling at least one metric from this list: node_ingress_packets_total, node_egress_packets_total",
 			},
 		},
 		{
@@ -675,9 +677,10 @@ func TestValidateFLPQueries(t *testing.T) {
 	}
 
 	CurrentClusterInfo = &cluster.Info{}
+	r := FlowCollector{}
 	for _, test := range tests {
 		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
-		warnings, err := test.fc.Validate(context.TODO(), test.fc)
+		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.NoError(t, err, test.name)
 		} else {
