@@ -288,9 +288,9 @@ func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSp
 			errs = append(errs, fmt.Errorf("cannot parse spec.processor.filters[%d].query: %w", i, err))
 		}
 	}
-	if r.Spec.Processor.Metrics.AlertGroups != nil {
-		for i, group := range *r.Spec.Processor.Metrics.AlertGroups {
-			if _, msg := group.IsAllowed(&r.Spec); len(msg) > 0 {
+	if fc.Processor.Metrics.AlertGroups != nil {
+		for i, group := range *fc.Processor.Metrics.AlertGroups {
+			if _, msg := group.IsAllowed(fc); len(msg) > 0 {
 				warnings = append(warnings, msg)
 			}
 			for j, alert := range group.Alerts {
@@ -325,7 +325,7 @@ func checkAlertRequiredMetrics(alertName FLPAlertGroupName, alertDef *FLPAlert, 
 			return nil
 		}
 	}
-	return admission.Warnings{fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", alertName, alertDef.Grouping, strings.Join(required, ","))}
+	return admission.Warnings{fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", alertName, alertDef.Grouping, strings.Join(required, ", "))}
 }
 
 func GetElligibleMetricsForAlert(alertName FLPAlertGroupName, alertDef *FLPAlert) ([]string, []string) {
