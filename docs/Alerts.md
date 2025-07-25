@@ -3,7 +3,7 @@
 The NetObserv operator comes with a set of predefined alerts, based on its [metrics](./Metrics.md), that you can configure, extend or disable.
 The configured alerts generate a `PrometheusRule` resource that is used to feed Prometheus AlertManager.
 
-These alerts are provided as a convenience, to take the most of NetObserv built-in metrics without requiring you to fine-tune anything. They provide health indication of your cluster network.
+These alerts are provided as a convenience, to take the most of NetObserv built-in metrics without requiring you to write complexe PromQL or to do fine-tuning. They give a health indication of your cluster network.
 
 ## Default alerts
 
@@ -59,10 +59,10 @@ If a group is disabled _and_ overridden in `spec.processor.metrics.alertGroups`,
 This alerting API in NetObserv `FlowCollector` is simply a mapping to the Prometheus operator API, generating a `PrometheusRule` that you can see in the `netobserv` namespace (by default) by running:
 
 ```bash
-oc get prometheusrules -n netobserv -oyaml
+kubectl get prometheusrules -n netobserv -oyaml
 ```
 
-The sections above explain how you can customize the alerts, but should you feel limited with this configuration API, you can go even further and create your own `AlertingRule` resources.
+The sections above explain how you can customize those opinionated alerts, but should you feel limited with this configuration API, you can go even further and create your own `AlertingRule` resources. You need to be familiar with PromQL, or to learn about it.
 
 Here is an example to alert when the current ingress traffic exceeds by more than twice the traffic from the day before.
 
@@ -82,14 +82,20 @@ spec:
           NetObserv is detecting a surge of incoming traffic: current traffic to {{ $labels.DstK8S_Namespace }} has increased by more than 100% since yesterday.
         summary: "Surge in incoming traffic"
       expr: |-
-        (100 * ((sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m])) by (DstK8S_Namespace) > 1000) - sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m] offset 1d)) by (DstK8S_Namespace)) / sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m] offset 1d)) by (DstK8S_Namespace)) > 100
+        (100 *
+          (
+            (sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m])) by (DstK8S_Namespace) > 1000)
+            - sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m] offset 1d)) by (DstK8S_Namespace)
+          )
+          / sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m] offset 1d)) by (DstK8S_Namespace))
+        > 100
       for: 1m
       labels:
         app: netobserv
         severity: warning
 ```
 
-Let's break it down to understand the promQL expression. The base query pattern is this:
+Let's break it down to understand the PromQL expression. The base query pattern is this:
 
 `sum(rate(netobserv_namespace_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m])) by (DstK8S_Namespace)`
 
@@ -97,7 +103,7 @@ This is the bytes rate coming from "openshift-ingress" to any of your workload's
 
 Appending ` > 1000` to this query keeps only the rates observed greater than 1KBps, in order to eliminate the noise from low-bandwidth consumers. 1KBps still isn't a lot, you may want to increase it. Note also that the bytes rate is relative to the sampling ratio defined in the `FlowCollector` agent configuration. If you have a sampling ratio of 1:100, consider that the actual traffic might be approximately 100 times higher than what is reported by the metrics.
 
-In the following parts of the promQL, you can see `offset 1d`: this is to run the same query, one day before. You can change that according to your needs, for instance `offset 5h` will be five hours ago.
+In the following parts of the PromQL, you can see `offset 1d`: this is to run the same query, one day before. You can change that according to your needs, for instance `offset 5h` will be five hours ago.
 
 Which gives us the formula `100 * (<query now> - <query yesterday>) / <query yesterday>`: it's the percentage of increase compared to yesterday. It can be negative, if the bytes rate today is lower than yesterday.
 
