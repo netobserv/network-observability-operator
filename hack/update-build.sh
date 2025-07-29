@@ -3,12 +3,7 @@
 
 echo "Updating container file"
 
-# : "${COMMIT:=$(git rev-list --abbrev-commit --tags --max-count=1)}"
-# : "${CONTAINER_FILE:=./Dockerfile}"
-# : "${BUNDLE_CONTAINER_FILE:=./bundle.Dockerfile}"
-# : "${CATALOG_CONTAINER_FILE:=./catalog.Dockerfile}"
-: "${TARGET_VERSION:=1.9.1}"
-: "${REPLACE_VERSION:=1.9.0}"
+: "${BUILDVERSION:=unknown}"
 
 # supported_ocp_versions="v4.13"
 manifests_dir="./bundle/manifests"
@@ -29,7 +24,7 @@ sed -i 's/\<NetObserv\>/network observability/g' "${crd_file}"
 export EPOC_TIMESTAMP=$(date +%s)
 export IN_CSV_DESC="./config/descriptions/ocp.md"
 
-REPLACES="${REPLACE_VERSION}" VERSION="${TARGET_VERSION}" TARGET_CSV_FILE="${csv_file}" python3 ./hack/patch_csv.py
+VERSION="${BUILDVERSION}" TARGET_CSV_FILE="${csv_file}" python3 ./hack/patch_csv.py
 NEW_BUNDLE_FILE="${new_bundle_file}" python3 ./hack/patch_catalog.py
 
 sed -i 's/operators.operatorframework.io.bundle.channels.v1: latest,community/operators.operatorframework.io.bundle.channels.v1: stable/g' ./bundle/metadata/annotations.yaml
