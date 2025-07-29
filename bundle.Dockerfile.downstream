@@ -1,6 +1,7 @@
 ARG BUILDVERSION
 
 FROM registry.access.redhat.com/ubi9/python-312 as builder
+ARG BUILDVERSION
 
 COPY --chown=default . .
 RUN pip install -r requirements.txt
