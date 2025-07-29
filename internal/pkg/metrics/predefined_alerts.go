@@ -17,6 +17,10 @@ type alertConversion struct {
 	description func(string, string) string
 }
 
+const (
+	healthAnnotation = "netobserv_io_health"
+)
+
 var (
 	conversions = map[flowslatest.FLPAlertGroupName]alertConversion{
 		flowslatest.AlertTooManyDrops: {
@@ -92,8 +96,9 @@ func convertToRule(groupName flowslatest.FLPAlertGroupName, idx int, alert *flow
 	return &monitoringv1.Rule{
 		Alert: fmt.Sprintf("NetObserv%s_%d", groupName, idx),
 		Annotations: map[string]string{
-			"description": conv.description(text, alert.Threshold) + " " + additionalDescription,
-			"summary":     conv.summary,
+			"description":    conv.description(text, alert.Threshold) + " " + additionalDescription,
+			"summary":        conv.summary,
+			healthAnnotation: "{}",
 		},
 		Expr: intstr.FromString(promql),
 		For:  &d,
@@ -115,7 +120,7 @@ func getLabelsAndTexts(alert *flowslatest.FLPAlert) ([]string, string) {
 		labelRoots = []string{"K8S_Namespace"}
 		textFunc = func(dir string) string { return fmt.Sprintf("namespace={{ $labels.%sK8S_Namespace }}", dir) }
 	case flowslatest.GroupingPerWorkload:
-		labelRoots = []string{"K8S_OwnerName", "K8S_OwnerType"}
+		labelRoots = []string{"K8S_Namespace", "K8S_OwnerName", "K8S_OwnerType"}
 		textFunc = func(dir string) string {
 			return fmt.Sprintf("workload={{ $labels.%sK8S_OwnerName }} ({{ $labels.%sK8S_OwnerType }})", dir, dir)
 		}
@@ -149,8 +154,9 @@ func alertNoFlows() *monitoringv1.Rule {
 	return &monitoringv1.Rule{
 		Alert: string(flowslatest.AlertNoFlows),
 		Annotations: map[string]string{
-			"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
-			"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
+			"description":    "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
+			"summary":        "NetObserv flowlogs-pipeline is not receiving any flow",
+			healthAnnotation: "{}",
 		},
 		Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[1m])) == 0"),
 		For:  &d,
@@ -167,8 +173,9 @@ func alertLokiError() *monitoringv1.Rule {
 	return &monitoringv1.Rule{
 		Alert: string(flowslatest.AlertLokiError),
 		Annotations: map[string]string{
-			"description": "NetObserv flowlogs-pipeline is dropping flows because of Loki errors, Loki may be down or having issues ingesting every flows. Please check Loki and flowlogs-pipeline logs.",
-			"summary":     "NetObserv flowlogs-pipeline is dropping flows because of Loki errors",
+			"description":    "NetObserv flowlogs-pipeline is dropping flows because of Loki errors, Loki may be down or having issues ingesting every flows. Please check Loki and flowlogs-pipeline logs.",
+			"summary":        "NetObserv flowlogs-pipeline is dropping flows because of Loki errors",
+			healthAnnotation: "{}",
 		},
 		Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[1m])) > 0"),
 		For:  &d,
