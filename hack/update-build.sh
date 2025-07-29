@@ -1,9 +1,10 @@
 
 #!/usr/bin/env bash
 
-echo "Updating container file"
 
 : "${BUILDVERSION:=unknown}"
+
+echo "Updating container file for v${BUILDVERSION}"
 
 # supported_ocp_versions="v4.13"
 manifests_dir="./bundle/manifests"
