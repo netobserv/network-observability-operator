@@ -15,8 +15,6 @@ IMAGE_REGISTRY ?= quay.io
 REPO ?= $(IMAGE_REGISTRY)/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
-PREVIOUS_VERSION ?= v1.8.2-community
-
 BUNDLE_VERSION ?= 1.9.1-community
 #File based catalog
 FBC_VERSION ?= 1.9.1-community
@@ -399,7 +397,6 @@ bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metada
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/descriptions/upstream.md
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/descriptions/ocp.md
-	$(SED) -i -r 's~replaces: netobserv-operator\.v.*~replaces: netobserv-operator\.$(PREVIOUS_VERSION)~' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 
 .PHONY: bundle
 bundle: bundle-prepare ## Generate final bundle files.
@@ -501,28 +498,6 @@ related-release-notes: ## Grab release notes for related components (to be inser
 	wl-copy < /tmp/related.md
 	cat /tmp/related.md
 	echo -e "\nText has been copied to the clipboard.\n"
-
-.PHONY: prepare-operatorhub
-prepare-operatorhub: ## Copy bundle for an upstream release on OperatorHub
-	$(SED) -i '/scorecard/d' ./bundle.Dockerfile
-	$(SED) -i '/scorecard/d' ./bundle/metadata/annotations.yaml
-	$(SED) -i '/Annotations for testing/d' ./bundle/metadata/annotations.yaml
-	@read -p "Going to hard-reset git's $(OPERATORHUB_PATH) - type y to proceed: " -n 1 -r; \
-	if [[ $$REPLY =~ ^[^Yy] ]]; \
-	then \
-			exit 1; \
-	fi
-	cd $(OPERATORHUB_PATH) && git fetch upstream && git reset --hard upstream/main && cd -
-	mkdir -p "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
-	cp -r bundle/manifests "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
-	cp -r bundle/metadata "$(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)"
-ifeq ($(BUNDLE_CONFIG), "config/openshift-olm")
-	echo "  com.redhat.openshift.versions: \"v4.10-v4.13\"" >> $(OPERATORHUB_PATH)/operators/netobserv-operator/$(BUNDLE_VERSION)/metadata/annotations.yaml
-endif
-	cd $(OPERATORHUB_PATH) && git add -A
-
-	@echo ""
-	@echo "Everything is ready to be pushed. Before that, you should compare the content of $(BUNDLE_VERSION) with $(PREVIOUS_VERSION) to make sure it looks correct."
 
 # Update helm templates
 .PHONY: helm-update
