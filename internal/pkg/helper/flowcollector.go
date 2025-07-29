@@ -218,6 +218,13 @@ func IsManaged(obj client.Object) bool {
 	return labels[netobservManagedLabel] == "true"
 }
 
+// special case where ownership is ignored if netobserv-managed label is explicitly set to false
+// this is used to allow users to create namespaces with custom labels and annotations prior to the reconciliation
+func SkipOwnership(obj client.Object) bool {
+	labels := obj.GetLabels()
+	return labels != nil && labels[netobservManagedLabel] == "false"
+}
+
 func IsOwned(obj client.Object) bool {
 	// ownership is forced if netobserv-managed label is explicitly set to true
 	if IsManaged(obj) {
