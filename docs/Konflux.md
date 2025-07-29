@@ -142,10 +142,13 @@ For the record, store the created Release in the `releases` directory of this re
 ## After release
 
 After a release, the following steps should be done:
-- moving release candidate file in the catalog to the already released directory
-- bumping version label inside the different container images
+1. bump / update all repos for next version: you can run [this script](https://github.com/netobserv/documents/blob/main/hack/prepare-next-version.sh) from each repo.
+2. merge the nudging PRs that are generated after those changes
+3. update ystream and zstream in netobserv-catalog:
+  - updating the dependency graph (replace tags...) with the version just-released
+  - only after step 2. is complete AND the bundle on-push jobs succeeded, regenerate all catalogs
 
-### Redirecting branches
+### Redirecting branches (after ystream release)
 
 After release, we need to repurpose zstream to the just released branch, and ystream to main:
 
@@ -175,6 +178,7 @@ You may want to freeze a branch (stop mintmaker from opening PRs) after it was r
 oc -n ocp-network-observab-tenant annotate component/flowlogs-pipeline-zstream mintmaker.appstudio.redhat.com/disabled=true
 oc -n ocp-network-observab-tenant annotate component/netobserv-ebpf-agent-zstream mintmaker.appstudio.redhat.com/disabled=true
 oc -n ocp-network-observab-tenant annotate component/network-observability-console-plugin-zstream mintmaker.appstudio.redhat.com/disabled=true
+oc -n ocp-network-observab-tenant annotate component/network-observability-console-plugin-pf4-zstream mintmaker.appstudio.redhat.com/disabled=true
 oc -n ocp-network-observab-tenant annotate component/network-observability-operator-zstream mintmaker.appstudio.redhat.com/disabled=true
 oc -n ocp-network-observab-tenant annotate component/network-observability-operator-bundle-zstream mintmaker.appstudio.redhat.com/disabled=true
 oc -n ocp-network-observab-tenant annotate component/network-observability-cli-zstream mintmaker.appstudio.redhat.com/disabled=true
@@ -186,6 +190,7 @@ To re-enable them, just delete these annotations
 oc -n ocp-network-observab-tenant annotate component/flowlogs-pipeline-zstream mintmaker.appstudio.redhat.com/disabled-
 oc -n ocp-network-observab-tenant annotate component/netobserv-ebpf-agent-zstream mintmaker.appstudio.redhat.com/disabled-
 oc -n ocp-network-observab-tenant annotate component/network-observability-console-plugin-zstream mintmaker.appstudio.redhat.com/disabled-
+oc -n ocp-network-observab-tenant annotate component/network-observability-console-plugin-pf4-zstream mintmaker.appstudio.redhat.com/disabled-
 oc -n ocp-network-observab-tenant annotate component/network-observability-operator-zstream mintmaker.appstudio.redhat.com/disabled-
 oc -n ocp-network-observab-tenant annotate component/network-observability-operator-bundle-zstream mintmaker.appstudio.redhat.com/disabled-
 oc -n ocp-network-observab-tenant annotate component/network-observability-cli-zstream mintmaker.appstudio.redhat.com/disabled-
