@@ -7220,12 +7220,13 @@ If the namespace is different, the config map or the secret is copied so that it
         <td>enum</td>
         <td>
           `mode` must be set according to the installation mode of Loki:<br>
+- Use `Dev` to use the development mode, which is not recommended for production use.
 - Use `LokiStack` when Loki is managed using the Loki Operator<br>
 - Use `Monolithic` when Loki is installed as a monolithic workload<br>
 - Use `Microservices` when Loki is installed as microservices, but without Loki Operator<br>
 - Use `Manual` if none of the options above match your setup<br><br/>
           <br/>
-            <i>Enum</i>: Manual, LokiStack, Monolithic, Microservices<br/>
+            <i>Enum</i>: Manual, Dev, LokiStack, Monolithic, Microservices<br/>
             <i>Default</i>: Monolithic<br/>
         </td>
         <td>true</td>

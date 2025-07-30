@@ -3768,12 +3768,14 @@ spec:
                       default: Monolithic
                       description: |-
                         `mode` must be set according to the installation mode of Loki:<br>
+                        - Use `Dev` to use the development mode, which is not recommended for production use.
                         - Use `LokiStack` when Loki is managed using the Loki Operator<br>
                         - Use `Monolithic` when Loki is installed as a monolithic workload<br>
                         - Use `Microservices` when Loki is installed as microservices, but without Loki Operator<br>
                         - Use `Manual` if none of the options above match your setup<br>
                       enum:
                         - Manual
+                        - Dev
                         - LokiStack
                         - Monolithic
                         - Microservices

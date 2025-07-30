@@ -192,19 +192,7 @@ metadata:
               "lokiStack": {
                 "name": "loki"
               },
-              "mode": "Monolithic",
-              "monolithic": {
-                "tenantID": "netobserv",
-                "tls": {
-                  "caCert": {
-                    "certFile": "service-ca.crt",
-                    "name": "loki-gateway-ca-bundle",
-                    "type": "configmap"
-                  },
-                  "enable": false
-                },
-                "url": "http://loki.netobserv.svc:3100/"
-              },
+              "mode": "Dev",
               "readTimeout": "30s",
               "writeBatchSize": 10485760,
               "writeBatchWait": "1s",
@@ -253,7 +241,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.9.1-community
-    createdAt: "2025-07-21T09:56:28Z"
+    createdAt: "2025-07-30T12:28:12Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -775,6 +763,7 @@ spec:
           resources:
           - configmaps
           - namespaces
+          - persistentvolumeclaims
           - secrets
           - serviceaccounts
           - services
