@@ -1,11 +1,11 @@
 # Do not remove comment lines, they are there to reduce conflicts
 # Operator
-export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:07626f4eeb03c7cd066901696e29d70e6e67117186e823c6e920119a45f1ff78'
+export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:8f91de064de4deb7ec3c9da0a61fbb5668ade296986827779e8b635638f1f8ef'
 # eBPF agent
-export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:916483c8b56a3e030c0063826681d9605a059a25d440e66c69c443bef17e64b7'
+export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:9b3099efda0a39b38103c837ad8be6002e30aeae4f3129de45fae4271709e376'
 # Flowlogs-pipeline
-export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:0d1e1a4e15df41f4312f0b31f6ab30ca76c0ef82e050351434892a5fc069dcb1'
+export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:12348cf12e7f7f9bc334944867ac6e9433a1ff8455f2484dff6f0ab89a0699e7'
 # Console plugin
-export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:ddcccaa7caa6f35fae7e84d217f7da69cf4a386a51c8c61363246ab414036e37'
+export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:5a24179e520de861bcd012760a17ac4618db87b5d44777fe0fa239b69c786241'
 # Compatibility Console plugin
-export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:c0c132f0da9993648cda39cc43d8d819dc0a86a428b92e9a4af9307192c8349c'
+export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:439174b980d149f00fc2ad4e91df56a33e999aec63dfe6cf169d633754af50d8'
