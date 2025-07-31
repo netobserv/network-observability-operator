@@ -65,7 +65,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	lastStage = b.addTransformFilter(lastStage)
 	lastStage = b.addConnectionTracking(lastStage)
 
-	addZone := helper.IsZoneEnabled(&b.desired.Processor)
+	addZone := b.desired.Processor.IsZoneEnabled()
 
 	// Get all subnet labels
 	allLabels := b.desired.Processor.SubnetLabels.CustomLabels
@@ -175,7 +175,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			secondaryNetworks = append(secondaryNetworks, flpSN)
 		}
 	}
-	if helper.IsUDNMappingEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsUDNMappingEnabled() {
 		secondaryNetworks = append(secondaryNetworks, api.SecondaryNetwork{
 			Name:  ovnkSecondary,
 			Index: map[string]any{"udn": nil},
@@ -204,7 +204,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	// Dedup stage
-	if helper.HasFLPDeduper(b.desired) {
+	if b.desired.Processor.HasFLPDeduper() {
 		dedupRules := []*api.RemoveEntryRule{
 			{
 				Type: api.RemoveEntryIfEqualD,
@@ -251,7 +251,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 
 	// loki stage (write) configuration
 	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
-	if helper.UseLoki(b.desired) {
+	if b.desired.UseLoki() {
 		lokiLabels, err := loki.GetLabels(&b.desired.Processor)
 		if err != nil {
 			return err
@@ -479,7 +479,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 		},
 	}
 
-	if helper.IsPktDropEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsPktDropEnabled() {
 		outputPktDropFields := []api.OutputField{
 			{
 				Name:      "PktDropBytes",
@@ -511,7 +511,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 		outputFields = append(outputFields, outputPktDropFields...)
 	}
 
-	if helper.IsDNSTrackingEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsDNSTrackingEnabled() {
 		outDNSTrackingFields := []api.OutputField{
 			{
 				Name:      "DnsFlagsResponseCode",
@@ -525,7 +525,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 		outputFields = append(outputFields, outDNSTrackingFields...)
 	}
 
-	if helper.IsNetworkEventsEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsNetworkEventsEnabled() {
 		outNetworkEventsFlowFields := []api.OutputField{
 			{
 				Name:      "NetworkEvents",
@@ -535,7 +535,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 		outputFields = append(outputFields, outNetworkEventsFlowFields...)
 	}
 
-	if helper.IsFlowRTTEnabled(&b.desired.Agent.EBPF) {
+	if b.desired.Agent.EBPF.IsFlowRTTEnabled() {
 		outputFields = append(outputFields, api.OutputField{
 			Name:      "MaxTimeFlowRttNs",
 			Operation: "max",
@@ -544,7 +544,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 	}
 
 	// Connection tracking stage (only if LogTypes is not FLOWS)
-	if helper.IsConntrack(&b.desired.Processor) {
+	if b.desired.Processor.HasConntrack() {
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 		advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
@@ -586,7 +586,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	var clusterName string
 	transformFilterRules := []api.TransformFilterRule{}
 
-	if helper.IsMultiClusterEnabled(&b.desired.Processor) {
+	if b.desired.Processor.IsMultiClusterEnabled() {
 		if b.desired.Processor.ClusterName != "" {
 			clusterName = b.desired.Processor.ClusterName
 		} else {
@@ -734,7 +734,7 @@ func getClientTLS(tls *flowslatest.ClientTLS, volumeName string, volumes *volume
 }
 
 func getSASL(sasl *flowslatest.SASLConfig, volumePrefix string, volumes *volumes.Builder) *api.SASLConfig {
-	if !helper.UseSASL(sasl) {
+	if !sasl.UseSASL() {
 		return nil
 	}
 	t := api.SASLPlain

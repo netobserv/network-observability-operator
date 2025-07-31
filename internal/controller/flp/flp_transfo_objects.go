@@ -181,9 +181,9 @@ func (b *transfoBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	)
 }
 
-func (b *transfoBuilder) prometheusRule() *monitoringv1.PrometheusRule {
+func (b *transfoBuilder) prometheusRule(rules []monitoringv1.Rule) *monitoringv1.PrometheusRule {
 	return prometheusRule(
-		b.desired,
+		rules,
 		transfoPromRule,
 		b.info.Namespace,
 		transfoName,

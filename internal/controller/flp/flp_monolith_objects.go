@@ -159,9 +159,9 @@ func (b *monolithBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
 	)
 }
 
-func (b *monolithBuilder) prometheusRule() *monitoringv1.PrometheusRule {
+func (b *monolithBuilder) prometheusRule(rules []monitoringv1.Rule) *monitoringv1.PrometheusRule {
 	return prometheusRule(
-		b.desired,
+		rules,
 		monoPromRule,
 		b.info.Namespace,
 		monoName,
