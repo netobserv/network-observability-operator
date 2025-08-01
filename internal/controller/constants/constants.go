@@ -14,6 +14,7 @@ const (
 	OperatorName             = "netobserv-operator"
 	ControllerName           = "netobserv-controller-manager"
 	WebhookPort              = 9443
+	K8sAPIServerPort         = 6443
 	FLPName                  = "flowlogs-pipeline"
 	FLPShortName             = "flp"
 	FLPPortName              = "flp" // must be <15 chars
@@ -53,6 +54,7 @@ const (
 	MonitoringServiceAccount = "prometheus-k8s"
 	UWMonitoringNamespace    = "openshift-user-workload-monitoring"
 	ConsoleNamespace         = "openshift-console"
+	DNSNamespace             = "openshift-dns"
 
 	// [Cluster]Roles, must match names in config/rbac/component_roles.yaml (without netobserv- prefix)
 	LokiWriterRole         ClusterRoleName = "netobserv-loki-writer"
