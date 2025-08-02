@@ -884,6 +884,7 @@ type LokiStackRef struct {
 type LokiMode string
 
 const (
+	LokiModeDev           LokiMode = "Dev"
 	LokiModeManual        LokiMode = "Manual"
 	LokiModeLokiStack     LokiMode = "LokiStack"
 	LokiModeMonolithic    LokiMode = "Monolithic"
@@ -904,12 +905,13 @@ type FlowCollectorLoki struct {
 	Enable *bool `json:"enable,omitempty"`
 
 	// `mode` must be set according to the installation mode of Loki:<br>
+	// - Use `Dev` to use the development mode, which is not recommended for production use.
 	// - Use `LokiStack` when Loki is managed using the Loki Operator<br>
 	// - Use `Monolithic` when Loki is installed as a monolithic workload<br>
 	// - Use `Microservices` when Loki is installed as microservices, but without Loki Operator<br>
 	// - Use `Manual` if none of the options above match your setup<br>
 	//+unionDiscriminator
-	//+kubebuilder:validation:Enum=Manual;LokiStack;Monolithic;Microservices
+	//+kubebuilder:validation:Enum=Manual;Dev;LokiStack;Monolithic;Microservices
 	//+kubebuilder:default:="Monolithic"
 	//+kubebuilder:validation:Required
 	Mode LokiMode `json:"mode,omitempty"`

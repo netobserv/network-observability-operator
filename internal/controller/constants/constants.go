@@ -24,6 +24,8 @@ const (
 	PluginName               = "netobserv-plugin"
 	StaticPluginName         = "netobserv-plugin-static"
 	PluginShortName          = "plugin"
+	LokiDev                  = "loki"
+	LokiDevImage             = "grafana/loki:3.5.0"
 
 	// EBPFAgentName and other constants for it
 	EBPFAgentName                     = "netobserv-ebpf-agent"

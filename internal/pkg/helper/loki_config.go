@@ -13,6 +13,13 @@ type LokiConfig struct {
 func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiConfig {
 	loki := LokiConfig{}
 	switch spec.Mode {
+	case flowslatest.LokiModeDev:
+		loki.LokiManualParams = flowslatest.LokiManualParams{
+			QuerierURL:  "http://loki:3100/",
+			IngesterURL: "http://loki:3100/",
+			TenantID:    "netobserv",
+			AuthToken:   flowslatest.LokiAuthDisabled,
+		}
 	case flowslatest.LokiModeLokiStack:
 		ns := namespace
 		if len(spec.LokiStack.Namespace) > 0 {
