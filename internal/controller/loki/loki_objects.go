@@ -1,6 +1,7 @@
 package loki
 
 import (
+	"fmt"
 	"hash/fnv"
 	"strconv"
 
@@ -115,8 +116,11 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Name:            name,
-				Image:           b.info.Images[reconcilers.MainImage],
+				Name:  name,
+				Image: b.info.Images[reconcilers.MainImage],
+				Args: []string{
+					fmt.Sprintf("-config.file=%s/%s", configPath, configFile),
+				},
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),
 				SecurityContext: helper.ContainerDefaultSecurityContext(),
 			}},
