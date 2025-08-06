@@ -38,6 +38,7 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 	rules := BuildAlertRules(context.Background(), &fc)
 	assert.Len(t, rules, 4)
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of dropped packets from [namespace={{ $labels.SrcK8S_Namespace }}] to [namespace={{ $labels.DstK8S_Namespace }}]")
+	assert.Equal(t, `{"namespaceLabels":["SrcK8S_Namespace","DstK8S_Namespace"],"threshold":"20","unit":"%"}`, rules[0].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[1].Annotations["description"], "NetObserv is detecting more than 10% of dropped packets from [node={{ $labels.SrcK8S_HostName }}]")
 	assert.Contains(t, rules[2].Annotations["description"], "NetObserv is detecting more than 10% of dropped packets to [node={{ $labels.DstK8S_HostName }}]")
 	assert.Contains(t, rules[3].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
