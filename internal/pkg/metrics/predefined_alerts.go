@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -13,18 +14,16 @@ import (
 )
 
 type alertConversion struct {
-	summary     string
+	summary     func(string) string
 	description func(string, string) string
 }
-
-const (
-	healthAnnotation = "netobserv_io_health"
-)
 
 var (
 	conversions = map[flowslatest.FLPAlertGroupName]alertConversion{
 		flowslatest.AlertTooManyDrops: {
-			summary: "Too many packets are dropped",
+			summary: func(groupDir string) string {
+				return fmt.Sprintf("Too many packets are dropped %s", groupDir)
+			},
 			description: func(fromTo, threshold string) string {
 				return fmt.Sprintf("NetObserv is detecting more than %s%% of dropped packets%s.", threshold, fromTo)
 			},
@@ -93,35 +92,41 @@ func convertToRule(groupName flowslatest.FLPAlertGroupName, idx int, alert *flow
 		alert.Threshold,
 	)
 
+	bAnnot, err := buildHealthAnnotation(groupName, alert)
+	if err != nil {
+		return nil, err
+	}
+
 	return &monitoringv1.Rule{
 		Alert: fmt.Sprintf("NetObserv%s_%d", groupName, idx),
 		Annotations: map[string]string{
-			"description":    conv.description(text, alert.Threshold) + " " + additionalDescription,
-			"summary":        conv.summary,
-			healthAnnotation: "{}",
+			"description":                 conv.description(text, alert.Threshold) + " " + additionalDescription,
+			"summary":                     conv.summary(getSummaryComplement(alert)),
+			"netobserv_io_network_health": string(bAnnot),
 		},
 		Expr: intstr.FromString(promql),
 		For:  &d,
 		Labels: map[string]string{
-			"severity": strings.ToLower(string(alert.Severity)),
-			"app":      "netobserv",
+			"severity":  strings.ToLower(string(alert.Severity)),
+			"app":       "netobserv", // means that the rule is created by netobserv
+			"netobserv": "true",      // means that the rule should be fetched by netobserv console plugin for health
 		},
 	}, nil
 }
 
 func getLabelsAndTexts(alert *flowslatest.FLPAlert) ([]string, string) {
 	var labelRoots []string
-	var textFunc func(string) string
+	var detailedTextFunc func(string) string
 	switch alert.Grouping {
 	case flowslatest.GroupingPerNode:
 		labelRoots = []string{"K8S_HostName"}
-		textFunc = func(dir string) string { return fmt.Sprintf("node={{ $labels.%sK8S_HostName }}", dir) }
+		detailedTextFunc = func(dir string) string { return fmt.Sprintf("node={{ $labels.%sK8S_HostName }}", dir) }
 	case flowslatest.GroupingPerNamespace:
 		labelRoots = []string{"K8S_Namespace"}
-		textFunc = func(dir string) string { return fmt.Sprintf("namespace={{ $labels.%sK8S_Namespace }}", dir) }
+		detailedTextFunc = func(dir string) string { return fmt.Sprintf("namespace={{ $labels.%sK8S_Namespace }}", dir) }
 	case flowslatest.GroupingPerWorkload:
 		labelRoots = []string{"K8S_Namespace", "K8S_OwnerName", "K8S_OwnerType"}
-		textFunc = func(dir string) string {
+		detailedTextFunc = func(dir string) string {
 			return fmt.Sprintf("workload={{ $labels.%sK8S_OwnerName }} ({{ $labels.%sK8S_OwnerType }})", dir, dir)
 		}
 	}
@@ -131,20 +136,62 @@ func getLabelsAndTexts(alert *flowslatest.FLPAlert) ([]string, string) {
 		for _, lblRoot := range labelRoots {
 			labels = append(labels, "Src"+lblRoot)
 		}
-		if textFunc != nil {
-			strFrom = fmt.Sprintf(" from [%s]", textFunc("Src"))
+		if detailedTextFunc != nil {
+			strFrom = fmt.Sprintf(" from [%s]", detailedTextFunc("Src"))
 		}
 	}
 	if alert.GroupingDirection == flowslatest.GroupingByDestination || alert.GroupingDirection == flowslatest.GroupingBySourceAndDestination {
 		for _, lblRoot := range labelRoots {
 			labels = append(labels, "Dst"+lblRoot)
 		}
-		if textFunc != nil {
-			strTo = fmt.Sprintf(" to [%s]", textFunc("Dst"))
+		if detailedTextFunc != nil {
+			strTo = fmt.Sprintf(" to [%s]", detailedTextFunc("Dst"))
 		}
 	}
 
 	return labels, strFrom + strTo
+}
+
+func buildHealthAnnotation(groupName flowslatest.FLPAlertGroupName, alert *flowslatest.FLPAlert) ([]byte, error) {
+	// The health annotation contains json-encoded information used in console plugin display
+	annotation := map[string]any{
+		"threshold": alert.Threshold,
+		"unit":      "%",
+	}
+	switch alert.Grouping {
+	case flowslatest.GroupingPerNode:
+		annotation["nodeLabels"] = []string{"SrcK8S_HostName", "DstK8S_HostName"}
+	case flowslatest.GroupingPerNamespace, flowslatest.GroupingPerWorkload:
+		annotation["namespaceLabels"] = []string{"SrcK8S_Namespace", "DstK8S_Namespace"}
+	}
+	bAnnot, err := json.Marshal(annotation)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode alert annotation [name=%s]: %w", groupName, err)
+	}
+	return bAnnot, nil
+}
+
+func getSummaryComplement(alert *flowslatest.FLPAlert) string {
+	summaryGroupDir := ""
+	switch alert.Grouping {
+	case flowslatest.GroupingPerNode:
+		summaryGroupDir = "node"
+	case flowslatest.GroupingPerNamespace:
+		summaryGroupDir = "namespace"
+	case flowslatest.GroupingPerWorkload:
+		summaryGroupDir = "workload"
+	}
+	if summaryGroupDir != "" {
+		switch alert.GroupingDirection {
+		case flowslatest.GroupingBySource:
+			summaryGroupDir = "from " + summaryGroupDir
+		case flowslatest.GroupingByDestination:
+			summaryGroupDir = "to " + summaryGroupDir
+		case flowslatest.GroupingBySourceAndDestination:
+			summaryGroupDir = "between " + summaryGroupDir + "s"
+		}
+	}
+	return summaryGroupDir
 }
 
 func alertNoFlows() *monitoringv1.Rule {
@@ -154,9 +201,8 @@ func alertNoFlows() *monitoringv1.Rule {
 	return &monitoringv1.Rule{
 		Alert: string(flowslatest.AlertNoFlows),
 		Annotations: map[string]string{
-			"description":    "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
-			"summary":        "NetObserv flowlogs-pipeline is not receiving any flow",
-			healthAnnotation: "{}",
+			"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
+			"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
 		},
 		Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[1m])) == 0"),
 		For:  &d,
@@ -173,9 +219,8 @@ func alertLokiError() *monitoringv1.Rule {
 	return &monitoringv1.Rule{
 		Alert: string(flowslatest.AlertLokiError),
 		Annotations: map[string]string{
-			"description":    "NetObserv flowlogs-pipeline is dropping flows because of Loki errors, Loki may be down or having issues ingesting every flows. Please check Loki and flowlogs-pipeline logs.",
-			"summary":        "NetObserv flowlogs-pipeline is dropping flows because of Loki errors",
-			healthAnnotation: "{}",
+			"description": "NetObserv flowlogs-pipeline is dropping flows because of Loki errors, Loki may be down or having issues ingesting every flows. Please check Loki and flowlogs-pipeline logs.",
+			"summary":     "NetObserv flowlogs-pipeline is dropping flows because of Loki errors",
 		},
 		Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[1m])) > 0"),
 		For:  &d,
