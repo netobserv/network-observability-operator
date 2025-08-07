@@ -189,5 +189,19 @@ func TestNpBuilder(t *testing.T) {
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
-	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
+	assert.Equal([]networkingv1.NetworkPolicyIngressRule{
+		{From: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "foo",
+				},
+			}},
+		}},
+		{From: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"kubernetes.io/metadata.name": "bar",
+				},
+			}},
+		}}}, np.Spec.Ingress)
 }
