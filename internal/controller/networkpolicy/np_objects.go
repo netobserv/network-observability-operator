@@ -27,7 +27,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	ns := helper.GetNamespace(&desired.Spec)
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
-	if desired.Spec.NetworkPolicy.Enable == nil || !*desired.Spec.NetworkPolicy.Enable {
+	if !helper.DeployNetworkPolicy(&desired.Spec) {
 		return name, nil
 	}
 
@@ -191,7 +191,7 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 	privNs := mainNs + constants.EBPFPrivilegedNSSuffix
 
 	name := types.NamespacedName{Name: netpolName, Namespace: privNs}
-	if desired.Spec.NetworkPolicy.Enable == nil || !*desired.Spec.NetworkPolicy.Enable {
+	if !helper.DeployNetworkPolicy(&desired.Spec) {
 		return name, nil
 	}
 

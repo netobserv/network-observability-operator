@@ -8351,7 +8351,9 @@ configuration, you can disable it and install your own instead.<br/>
         <td>
           Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
 These network policies better isolate the NetObserv components to prevent undesired connections to them.
-To increase the security of connections, enable this option or create your own network policy.<br/>
+This option is enabled by default, disable it to manually manage network policies<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr></tbody>
