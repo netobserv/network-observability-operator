@@ -45,21 +45,48 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 						// Setting empty namespace selector will authorize every pod from the same namespace
 						PodSelector: &metav1.LabelSelector{},
 					},
-					// Allow traffic from the eBPF agents
-					peerInNamespace(privNs),
+				},
+			}},
+			Egress: []networkingv1.NetworkPolicyEgressRule{{
+				To: []networkingv1.NetworkPolicyPeer{
+					{
+						// Setting empty namespace selector will authorize every pod from the same namespace
+						PodSelector: &metav1.LabelSelector{},
+					},
 				},
 			}},
 			PolicyTypes: []networkingv1.PolicyType{
 				networkingv1.PolicyTypeIngress,
+				networkingv1.PolicyTypeEgress,
 			},
 		},
 	}
+	// Allow traffic from the eBPF agents
+	np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+		From: []networkingv1.NetworkPolicyPeer{
+			peerInNamespace(privNs),
+		},
+	})
+	np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+		To: []networkingv1.NetworkPolicyPeer{
+			peerInNamespace(privNs),
+		},
+	})
 
 	if mgr.ClusterInfo.IsOpenShift() {
 		if helper.UseConsolePlugin(&desired.Spec) && mgr.ClusterInfo.HasConsolePlugin() {
 			advanced := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{
+					peerInNamespace(constants.ConsoleNamespace),
+				},
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: ptr.To(corev1.ProtocolTCP),
+					Port:     ptr.To(intstr.FromInt32(*advanced.Port)),
+				}},
+			})
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{
 					peerInNamespace(constants.ConsoleNamespace),
 				},
 				Ports: []networkingv1.NetworkPolicyPort{{
@@ -74,9 +101,20 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 					peerInNamespace(constants.MonitoringNamespace),
 				},
 			})
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{
+					peerInNamespace(constants.MonitoringNamespace),
+				},
+			})
+
 		} else {
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{
+					peerInNamespace(constants.UWMonitoringNamespace),
+				},
+			})
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{
 					peerInNamespace(constants.UWMonitoringNamespace),
 				},
 			})
@@ -95,6 +133,40 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				Port:     ptr.To(intstr.FromInt32(constants.WebhookPort)),
 			}},
 		})
+		// Allow host
+		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+			To: []networkingv1.NetworkPolicyPeer{},
+			Ports: []networkingv1.NetworkPolicyPort{{
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
+			}},
+		})
+		// Allow apiserver
+		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+			From: []networkingv1.NetworkPolicyPeer{
+				{
+					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"policy-group.network.openshift.io/host-network": "",
+					}},
+				},
+			},
+			Ports: []networkingv1.NetworkPolicyPort{{
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(intstr.FromInt32(constants.WebhookPort)),
+			}},
+		})
+		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+			To: []networkingv1.NetworkPolicyPeer{
+				peerInNamespace(constants.DNSNamespace),
+			},
+		})
+		if helper.UseLoki(&desired.Spec) && desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack {
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{
+					peerInNamespace(desired.Spec.Loki.LokiStack.Namespace),
+				},
+			})
+		}
 	}
 
 	for _, aNs := range desired.Spec.NetworkPolicy.AdditionalNamespaces {
@@ -103,6 +175,12 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				peerInNamespace(aNs),
 			},
 		})
+		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+			To: []networkingv1.NetworkPolicyPeer{
+				peerInNamespace(aNs),
+			},
+		})
+
 	}
 
 	return name, &np
@@ -125,11 +203,19 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 		Spec: networkingv1.NetworkPolicySpec{
 			// Start with no allowed traffic
 			Ingress: []networkingv1.NetworkPolicyIngressRule{},
+			Egress:  []networkingv1.NetworkPolicyEgressRule{},
 			PolicyTypes: []networkingv1.PolicyType{
 				networkingv1.PolicyTypeIngress,
+				networkingv1.PolicyTypeEgress,
 			},
 		},
 	}
+
+	np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+		To: []networkingv1.NetworkPolicyPeer{
+			peerInNamespace(mainNs),
+		},
+	})
 
 	if mgr.ClusterInfo.IsOpenShift() {
 		if mgr.Config.DownstreamDeployment {
@@ -138,12 +224,24 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 					peerInNamespace(constants.MonitoringNamespace),
 				},
 			})
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{
+					peerInNamespace(constants.MonitoringNamespace),
+				},
+			})
+
 		} else {
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{
 					peerInNamespace(constants.UWMonitoringNamespace),
 				},
 			})
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: []networkingv1.NetworkPolicyPeer{
+					peerInNamespace(constants.UWMonitoringNamespace),
+				},
+			})
+
 		}
 	}
 
