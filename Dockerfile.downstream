@@ -20,7 +20,7 @@ ENV GOEXPERIMENT strictfipsruntime
 RUN GOOS=linux GO111MODULE=on go build -tags strictfipsruntime -ldflags "-X 'main.buildVersion=${BUILDVERSION}' -X 'main.buildDate=`date +%Y-%m-%d\ %H:%M`'" -mod vendor -a -o manager main.go
 
 # Create final image from minimal + built binary
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1754356396
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1754456323
 ARG BUILDVERSION
 
 WORKDIR /
