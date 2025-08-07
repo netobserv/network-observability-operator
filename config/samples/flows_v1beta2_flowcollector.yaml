@@ -6,7 +6,7 @@ spec:
   namespace: netobserv
   deploymentModel: Direct
   networkPolicy:
-    enable: false
+    enable: true
     additionalNamespaces: []
   agent:
     type: eBPF

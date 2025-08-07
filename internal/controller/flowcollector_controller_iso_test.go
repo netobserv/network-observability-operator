@@ -217,7 +217,7 @@ func flowCollectorIsoSpecs() {
 			},
 			Exporters: []*flowslatest.FlowCollectorExporter{},
 			NetworkPolicy: flowslatest.NetworkPolicy{
-				Enable:               nil,
+				Enable:               ptr.To(true),
 				AdditionalNamespaces: []string{},
 			},
 		}

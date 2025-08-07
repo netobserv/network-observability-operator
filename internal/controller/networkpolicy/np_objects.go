@@ -27,7 +27,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	ns := desired.Spec.GetNamespace()
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
-	if desired.Spec.NetworkPolicy.Enable == nil || !*desired.Spec.NetworkPolicy.Enable {
+	if !helper.DeployNetworkPolicy(&desired.Spec) {
 		return name, nil
 	}
 
@@ -191,7 +191,7 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 	privNs := mainNs + constants.EBPFPrivilegedNSSuffix
 
 	name := types.NamespacedName{Name: netpolName, Namespace: privNs}
-	if desired.Spec.NetworkPolicy.Enable == nil || !*desired.Spec.NetworkPolicy.Enable {
+	if !helper.DeployNetworkPolicy(&desired.Spec) {
 		return name, nil
 	}
 
@@ -243,6 +243,20 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 			})
 
 		}
+	}
+
+	for _, aNs := range desired.Spec.NetworkPolicy.AdditionalNamespaces {
+		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+			From: []networkingv1.NetworkPolicyPeer{
+				peerInNamespace(aNs),
+			},
+		})
+		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+			To: []networkingv1.NetworkPolicyPeer{
+				peerInNamespace(aNs),
+			},
+		})
+
 	}
 
 	return name, &np

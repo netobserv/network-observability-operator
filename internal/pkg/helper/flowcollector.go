@@ -14,6 +14,34 @@ const (
 	netobservManagedLabel = "netobserv-managed"
 )
 
+func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
+	if spec.Agent.EBPF.Sampling == nil {
+		return 50
+	}
+	return int(*spec.Agent.EBPF.Sampling)
+}
+
+func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
+}
+
+func DeployNetworkPolicy(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.NetworkPolicy.Enable != nil && *spec.NetworkPolicy.Enable
+}
+
+func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
+	for _, ex := range spec.Exporters {
+		if ex.Type == flowslatest.KafkaExporter {
+			return true
+		}
+	}
+	return false
+}
+
+func HPAEnabled(spec *flowslatest.FlowCollectorHPA) bool {
+	return spec != nil && spec.Status == flowslatest.HPAStatusEnabled
+}
+
 func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []api.ConnTrackOutputRecordTypeEnum {
 	if processor.LogTypes != nil {
 		switch *processor.LogTypes {
