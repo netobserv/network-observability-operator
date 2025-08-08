@@ -69,7 +69,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 		}
 	}
 
-	if helper.UseConsolePlugin(&desired.Spec) && (r.ClusterInfo.HasConsolePlugin() || helper.UseTestConsolePlugin(&desired.Spec)) {
+	if desired.Spec.UseConsolePlugin() && (r.ClusterInfo.HasConsolePlugin() || desired.Spec.UseTestConsolePlugin()) {
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.PluginName)
 
@@ -100,7 +100,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			return err
 		}
 
-		if helper.UseLoki(&desired.Spec) {
+		if desired.Spec.UseLoki() {
 			// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 			// because certificate is always reloaded from file
 			if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
@@ -121,7 +121,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector, name string) error {
 	console := operatorsv1.Console{}
 	advancedConfig := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
-	reg := helper.UseConsolePlugin(&desired.Spec) && *advancedConfig.Register
+	reg := desired.Spec.UseConsolePlugin() && *advancedConfig.Register
 	if err := r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, &console); err != nil {
 		// Console operator CR not found => warn but continue execution
 		if reg {

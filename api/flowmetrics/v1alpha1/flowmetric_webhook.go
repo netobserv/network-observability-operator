@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper/cardinality"
@@ -132,6 +133,14 @@ func validateFlowMetric(_ context.Context, fMetric *FlowMetric) (admission.Warni
 		if !helper.FindFields([]string{fMetric.Spec.ValueField}, true) {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "valueField"), fMetric.Spec.ValueField,
 				fmt.Sprintf("invalid value field: %s", fMetric.Spec.ValueField)))
+		}
+	}
+
+	for _, b := range fMetric.Spec.Buckets {
+		_, err := strconv.ParseFloat(b, 64)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "buckets"), fMetric.Spec.Buckets,
+				fmt.Sprintf(`cannot be parsed as a float: "%s"`, b)))
 		}
 	}
 
