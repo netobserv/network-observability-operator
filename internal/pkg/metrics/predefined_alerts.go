@@ -70,7 +70,7 @@ func convertToRule(groupName flowslatest.FLPAlertGroupName, idx int, alert *flow
 	labels, text := getLabelsAndTexts(alert)
 
 	d := monitoringv1.Duration("5m")
-	additionalDescription := fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or configure it via spec.processor.metrics.alertGroups.", groupName)
+	additionalDescription := fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alertGroups.", groupName)
 
 	metrics, totalMetrics := flowslatest.GetElligibleMetricsForAlert(groupName, alert)
 	var strLabels string
