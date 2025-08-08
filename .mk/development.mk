@@ -51,26 +51,24 @@ undeploy-loki: ## Undeploy loki.
 	-pkill --oldest --full "3100:3100"
 
 .PHONY: deploy-kafka
-deploy-kafka: DEFAULT_SC=$(shell kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
 deploy-kafka:
 	@echo -e "\n==> Deploy default Kafka. Get more help on https://github.com/netobserv/documents/blob/main/kafka.md"
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
-	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed 's/namespace: default/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
+ 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed -r 's/namespace: (default|myproject)/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
+	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/kafka-node-pool.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/default.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
-	@echo -e "\n==>Using storage class ${DEFAULT_SC}"
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
 	kubectl wait --timeout=180s --for=condition=ready kafkatopic network-flows -n $(NAMESPACE)
 
 .PHONY: deploy-kafka-tls
-deploy-kafka-tls: DEFAULT_SC=$(shell kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
 deploy-kafka-tls:
 	@echo -e "\n==> Deploy Kafka with mTLS. Get more help on https://github.com/netobserv/documents/blob/main/kafka.md"
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
-	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed 's/namespace: default/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed -r 's/namespace: (default|myproject)/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
+	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/kafka-node-pool.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/tls.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
-	@echo -e "\n==>Using storage class ${DEFAULT_SC}"
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/user.yaml" -n $(NAMESPACE)
 	kubectl wait --timeout=180s --for=condition=ready kafkauser flp-kafka -n $(NAMESPACE)
@@ -79,9 +77,10 @@ deploy-kafka-tls:
 undeploy-kafka: ## Undeploy kafka.
 	@echo -e "\n==> Undeploy kafka"
 	kubectl delete -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/topic.yaml" -n $(NAMESPACE) --ignore-not-found=true
+	kubectl delete kafkanodepool kafka-pool -n $(NAMESPACE) --ignore-not-found=true
 	kubectl delete kafkauser flp-kafka -n $(NAMESPACE) --ignore-not-found=true
 	kubectl delete kafka kafka-cluster -n $(NAMESPACE) --ignore-not-found=true
-	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed 's/namespace: default/namespace: $(NAMESPACE)/g' | kubectl delete -n $(NAMESPACE) -f -
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed -r 's/namespace: (default|myproject)/namespace: $(NAMESPACE)/g' | kubectl delete -n $(NAMESPACE) -f -
 
 .PHONY: deploy-grafana
 deploy-grafana: ## Deploy grafana.
