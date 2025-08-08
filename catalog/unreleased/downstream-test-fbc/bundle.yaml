@@ -811,6 +811,8 @@ properties:
           path: loki.microservices.querierUrl
         - displayName: Tenant id
           path: loki.microservices.tenantID
+        - displayName: Zero click
+          path: loki.monolithic.zeroClick
         - displayName: Tenant id
           path: loki.monolithic.tenantID
         - displayName: Url
