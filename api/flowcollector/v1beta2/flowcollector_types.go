@@ -94,8 +94,8 @@ type FlowCollectorSpec struct {
 type NetworkPolicy struct {
 	// Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
 	// These network policies better isolate the NetObserv components to prevent undesired connections to them.
-	// To increase the security of connections, enable this option or create your own network policy.
-	// +optional
+	// This option is enabled by default, disable it to manually manage network policies
+	// +kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
 	// `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
