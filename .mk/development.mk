@@ -54,7 +54,7 @@ undeploy-loki: ## Undeploy loki.
 deploy-kafka:
 	@echo -e "\n==> Deploy default Kafka. Get more help on https://github.com/netobserv/documents/blob/main/kafka.md"
 	kubectl create namespace $(NAMESPACE)  --dry-run=client -o yaml | kubectl apply -f -
- 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed -r 's/namespace: (default|myproject)/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
+	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/strimzi-cluster-operator.yaml" | sed -r 's/namespace: (default|myproject)/namespace: $(NAMESPACE)/g' | kubectl apply -n $(NAMESPACE) -f -
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/kafka-node-pool.yaml" -n $(NAMESPACE)
 	kubectl apply -f "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/metrics-config.yaml" -n $(NAMESPACE)
 	curl -s -L "https://raw.githubusercontent.com/netobserv/documents/main/examples/kafka/default.yaml" | envsubst | kubectl apply -n $(NAMESPACE) -f -
