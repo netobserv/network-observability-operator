@@ -294,12 +294,45 @@ func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSp
 				warnings = append(warnings, msg)
 			}
 			for j, alert := range group.Alerts {
-				_, err := strconv.ParseFloat(alert.Threshold, 64)
-				if err != nil {
-					errs = append(
-						errs,
-						fmt.Errorf(`cannot parse threshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, i, j, alert.Threshold),
-					)
+				lastThreshold := float64(-1)
+				thresholds := []struct {
+					s string
+					t string
+				}{
+					{s: "critical", t: alert.Thresholds.Critical},
+					{s: "warning", t: alert.Thresholds.Warning},
+					{s: "info", t: alert.Thresholds.Info},
+				}
+				for _, st := range thresholds {
+					if st.t != "" {
+						val, err := strconv.ParseFloat(st.t, 64)
+						if err != nil {
+							errs = append(
+								errs,
+								fmt.Errorf(`cannot parse %s threshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, i, j, st.t),
+							)
+						} else if val < 0 {
+							errs = append(
+								errs,
+								fmt.Errorf(`%s threshold must be positive in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, i, j, st.t),
+							)
+						} else if lastThreshold > 0 && val > lastThreshold {
+							errs = append(
+								errs,
+								fmt.Errorf(`%s threshold must be lower than %.0f, which is defined for a higher severity, in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, lastThreshold, i, j, st.t),
+							)
+						}
+						lastThreshold = val
+					}
+				}
+				if alert.LowVolumeThreshold != "" {
+					_, err := strconv.ParseFloat(alert.LowVolumeThreshold, 64)
+					if err != nil {
+						errs = append(
+							errs,
+							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, i, j, alert.LowVolumeThreshold),
+						)
+					}
 				}
 			}
 		}

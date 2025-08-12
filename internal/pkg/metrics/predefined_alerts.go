@@ -40,11 +40,11 @@ func BuildAlertRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []m
 		if ok, _ := group.IsAllowed(fc); !ok {
 			continue
 		}
-		for i, alert := range group.Alerts {
-			if rule, err := convertToRule(group.Name, i, &alert); err != nil {
+		for _, alert := range group.Alerts {
+			if r, err := convertToRules(group.Name, &alert); err != nil {
 				log.Error(err, "unable to configure an alert")
-			} else if rule != nil {
-				rules = append(rules, *rule)
+			} else if len(r) > 0 {
+				rules = append(rules, r...)
 			}
 		}
 	}
@@ -61,13 +61,38 @@ func BuildAlertRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []m
 	return rules
 }
 
-func convertToRule(groupName flowslatest.FLPAlertGroupName, idx int, alert *flowslatest.FLPAlert) (*monitoringv1.Rule, error) {
+func convertToRules(groupName flowslatest.FLPAlertGroupName, alert *flowslatest.FLPAlert) ([]monitoringv1.Rule, error) {
+	var rules []monitoringv1.Rule
+	var upperThreshold string
+	// Create up to 3 rules, one per severity, with non-overlapping thresholds
+	thresholds := []struct {
+		s string
+		t string
+	}{
+		{s: "critical", t: alert.Thresholds.Critical},
+		{s: "warning", t: alert.Thresholds.Warning},
+		{s: "info", t: alert.Thresholds.Info},
+	}
+	for _, st := range thresholds {
+		if st.t != "" {
+			if r, err := convertToRule(groupName, alert, st.s, st.t, upperThreshold); err != nil {
+				return nil, err
+			} else if r != nil {
+				rules = append(rules, *r)
+			}
+			upperThreshold = st.t
+		}
+	}
+	return rules, nil
+}
+
+func convertToRule(groupName flowslatest.FLPAlertGroupName, alert *flowslatest.FLPAlert, severity, threshold, upperThreshold string) (*monitoringv1.Rule, error) {
 	conv, found := conversions[groupName]
 	if !found {
 		return nil, fmt.Errorf("unknown alert group name: %s", groupName)
 	}
 
-	labels, text := getLabelsAndTexts(alert)
+	suffix, labels, text := getLabelsAndTexts(alert)
 
 	d := monitoringv1.Duration("5m")
 	additionalDescription := fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alertGroups.", groupName)
@@ -83,52 +108,67 @@ func convertToRule(groupName flowslatest.FLPAlertGroupName, idx int, alert *flow
 	for i := 0; i < len(totalMetrics); i++ {
 		totalMetrics[i] = "rate(netobserv_" + totalMetrics[i] + "[2m])"
 	}
+
+	var lowVolumeThreshold, upPctThreshold string
+	if alert.LowVolumeThreshold != "" {
+		lowVolumeThreshold = " > " + alert.LowVolumeThreshold
+	}
+	if upperThreshold != "" {
+		upPctThreshold = " < " + upperThreshold
+	}
+
 	promql := fmt.Sprintf(
-		"100 * sum (%s)%s / sum(%s)%s > %s",
+		"100 * sum (%s)%s / (sum(%s)%s%s) > %s%s",
 		strings.Join(metrics, " OR "),
 		strLabels,
 		strings.Join(totalMetrics, " OR "),
 		strLabels,
-		alert.Threshold,
+		lowVolumeThreshold,
+		threshold,
+		upPctThreshold,
 	)
 
-	bAnnot, err := buildHealthAnnotation(groupName, alert)
+	bAnnot, err := buildHealthAnnotation(groupName, alert, threshold)
 	if err != nil {
 		return nil, err
 	}
 
 	return &monitoringv1.Rule{
-		Alert: fmt.Sprintf("NetObserv%s_%d", groupName, idx),
+		Alert: fmt.Sprintf("NetObserv%s%s%s", groupName, strings.ToUpper(string(severity[0])), suffix),
 		Annotations: map[string]string{
-			"description":                 conv.description(text, alert.Threshold) + " " + additionalDescription,
+			"description":                 conv.description(text, threshold) + " " + additionalDescription,
 			"summary":                     conv.summary(getSummaryComplement(alert)),
 			"netobserv_io_network_health": string(bAnnot),
 		},
 		Expr: intstr.FromString(promql),
 		For:  &d,
 		Labels: map[string]string{
-			"severity":  strings.ToLower(string(alert.Severity)),
+			"severity":  strings.ToLower(severity),
 			"app":       "netobserv", // means that the rule is created by netobserv
 			"netobserv": "true",      // means that the rule should be fetched by netobserv console plugin for health
 		},
 	}, nil
 }
 
-func getLabelsAndTexts(alert *flowslatest.FLPAlert) ([]string, string) {
+func getLabelsAndTexts(alert *flowslatest.FLPAlert) (string, []string, string) {
+	var nameSuffix string
 	var labelRoots []string
 	var detailedTextFunc func(string) string
 	switch alert.Grouping {
 	case flowslatest.GroupingPerNode:
 		labelRoots = []string{"K8S_HostName"}
 		detailedTextFunc = func(dir string) string { return fmt.Sprintf("node={{ $labels.%sK8S_HostName }}", dir) }
+		nameSuffix = "Node"
 	case flowslatest.GroupingPerNamespace:
 		labelRoots = []string{"K8S_Namespace"}
 		detailedTextFunc = func(dir string) string { return fmt.Sprintf("namespace={{ $labels.%sK8S_Namespace }}", dir) }
+		nameSuffix = "Namespace"
 	case flowslatest.GroupingPerWorkload:
 		labelRoots = []string{"K8S_Namespace", "K8S_OwnerName", "K8S_OwnerType"}
 		detailedTextFunc = func(dir string) string {
 			return fmt.Sprintf("workload={{ $labels.%sK8S_OwnerName }} ({{ $labels.%sK8S_OwnerType }})", dir, dir)
 		}
+		nameSuffix = "Workload"
 	}
 	var labels []string
 	var strFrom, strTo string
@@ -139,6 +179,9 @@ func getLabelsAndTexts(alert *flowslatest.FLPAlert) ([]string, string) {
 		if detailedTextFunc != nil {
 			strFrom = fmt.Sprintf(" from [%s]", detailedTextFunc("Src"))
 		}
+		if nameSuffix != "" && alert.GroupingDirection != flowslatest.GroupingBySourceAndDestination {
+			nameSuffix = "Src" + nameSuffix
+		}
 	}
 	if alert.GroupingDirection == flowslatest.GroupingByDestination || alert.GroupingDirection == flowslatest.GroupingBySourceAndDestination {
 		for _, lblRoot := range labelRoots {
@@ -147,15 +190,18 @@ func getLabelsAndTexts(alert *flowslatest.FLPAlert) ([]string, string) {
 		if detailedTextFunc != nil {
 			strTo = fmt.Sprintf(" to [%s]", detailedTextFunc("Dst"))
 		}
+		if nameSuffix != "" && alert.GroupingDirection != flowslatest.GroupingBySourceAndDestination {
+			nameSuffix = "Dst" + nameSuffix
+		}
 	}
 
-	return labels, strFrom + strTo
+	return nameSuffix, labels, strFrom + strTo
 }
 
-func buildHealthAnnotation(groupName flowslatest.FLPAlertGroupName, alert *flowslatest.FLPAlert) ([]byte, error) {
+func buildHealthAnnotation(groupName flowslatest.FLPAlertGroupName, alert *flowslatest.FLPAlert, threshold string) ([]byte, error) {
 	// The health annotation contains json-encoded information used in console plugin display
 	annotation := map[string]any{
-		"threshold": alert.Threshold,
+		"threshold": threshold,
 		"unit":      "%",
 	}
 	switch alert.Grouping {
