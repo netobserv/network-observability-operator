@@ -283,7 +283,7 @@ Please refer to [F.A.Q / Troubleshooting main document](./FAQ.md).
 
 ## Discussions and contributions
 
-Discussions related to NetObserv are welcome on [GitHub discussions](https://github.com/orgs/netobserv/discussions) as well as on the [#netobserv-project](http://cloud-native.slack.com/) channel from CNCF slack.
+Discussions related to NetObserv are welcome on [GitHub discussions](https://github.com/orgs/netobserv/discussions) as well as on the [#netobserv-project](http://cloud-native.slack.com/) channel from the CNCF slack (to create an account get an invite from https://slack.cncf.io/).
 
 If you'd like to reach out because you've found a security issue, please do not share sensitive details publicly. Please follow the instructions described on the [Red Hat Customer Portal](https://access.redhat.com/security/team/contact/?extIdCarryOver=true&sc_cid=701f2000001Css5AAC).
 
