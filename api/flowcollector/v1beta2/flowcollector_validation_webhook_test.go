@@ -603,8 +603,10 @@ func TestValidateFLP(t *testing.T) {
 									Name: AlertTooManyDrops,
 									Alerts: []FLPAlert{
 										{
-											Grouping:  GroupingPerNode,
-											Threshold: "5",
+											Grouping: GroupingPerNode,
+											Thresholds: FLPAlertThresholds{
+												Info: "5",
+											},
 										},
 									},
 								},
@@ -634,7 +636,9 @@ func TestValidateFLP(t *testing.T) {
 									Name: AlertTooManyDrops,
 									Alerts: []FLPAlert{
 										{
-											Threshold: "nope",
+											Thresholds: FLPAlertThresholds{
+												Info: "nope",
+											},
 										},
 									},
 								},
@@ -644,7 +648,39 @@ func TestValidateFLP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: `cannot parse threshold as float in spec.processor.metrics.alertGroups[0].alerts[0]: "nope"`,
+			expectedError: `cannot parse info threshold as float in spec.processor.metrics.alertGroups[0].alerts[0]: "nope"`,
+		},
+		{
+			name:       "Invalid alert threshold severities",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{PacketDrop},
+						Privileged: true,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							AlertGroups: &[]FLPAlertGroup{
+								{
+									Name: AlertTooManyDrops,
+									Alerts: []FLPAlert{
+										{
+											Thresholds: FLPAlertThresholds{
+												Info:     "5",
+												Warning:  "50",
+												Critical: "10",
+											},
+										},
+									},
+								},
+							},
+							IncludeList: &[]FLPMetric{"node_drop_packets_total", "node_ingress_packets_total"},
+						},
+					},
+				},
+			},
+			expectedError: `warning threshold must be lower than 10, which is defined for a higher severity`,
 		},
 		{
 			name:       "Correctly configured metrics for alerts",
@@ -662,8 +698,10 @@ func TestValidateFLP(t *testing.T) {
 									Name: AlertTooManyDrops,
 									Alerts: []FLPAlert{
 										{
-											Grouping:  GroupingPerNode,
-											Threshold: "5.5",
+											Grouping: GroupingPerNode,
+											Thresholds: FLPAlertThresholds{
+												Info: "5.5",
+											},
 										},
 									},
 								},
