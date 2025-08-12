@@ -11569,10 +11569,11 @@ Possible values are:<br>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>threshold</b></td>
-        <td>string</td>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertgroupsindexalertsindexthresholds">thresholds</a></b></td>
+        <td>object</td>
         <td>
-          Alert threshold, as a percentage of errors above which the alert is triggered. It must be parsable as float.<br/>
+          Thresholds of the alert per severity.
+They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -11601,15 +11602,54 @@ This setting is ignored when no `grouping` is provided.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>severity</b></td>
-        <td>enum</td>
+        <td><b>lowVolumeThreshold</b></td>
+        <td>string</td>
         <td>
-          Severity of an alert, possible values are:<br>
-- `Critical`<br>
-- `Warning`<br>
-- `Info`<br><br/>
-          <br/>
-            <i>Enum</i>: Critical, Warning, Info<br/>
+          The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
+It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
+When provided, it must be parsable as float.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.alertGroups[index].alerts[index].thresholds
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertgroupsindexalertsindex)</sup></sup>
+
+
+
+Thresholds of the alert per severity.
+They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>critical</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `critical`. Leave empty to not generate a Critical alert.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>info</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `info`. Leave empty to not generate an Info alert.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>warning</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `warning`. Leave empty to not generate a Warning alert.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

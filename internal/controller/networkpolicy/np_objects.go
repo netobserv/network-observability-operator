@@ -160,7 +160,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				peerInNamespace(constants.DNSNamespace),
 			},
 		})
-		if helper.UseLoki(&desired.Spec) && desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack {
+		if desired.Spec.UseLoki() && desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack {
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
 				To: []networkingv1.NetworkPolicyPeer{
 					peerInNamespace(desired.Spec.Loki.LokiStack.Namespace),

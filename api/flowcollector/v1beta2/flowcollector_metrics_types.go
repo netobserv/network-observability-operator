@@ -7,7 +7,6 @@ import (
 )
 
 type FLPAlertGroupName string
-type AlertSeverity string
 type AlertGrouping string
 type AlertGroupingDirection string
 
@@ -15,9 +14,6 @@ const (
 	AlertNoFlows                   FLPAlertGroupName      = "NetObservNoFlows"
 	AlertLokiError                 FLPAlertGroupName      = "NetObservLokiError"
 	AlertTooManyDrops              FLPAlertGroupName      = "TooManyDrops"
-	SeverityCritical               AlertSeverity          = "Critical"
-	SeverityWarning                AlertSeverity          = "Warning"
-	SeverityInfo                   AlertSeverity          = "Info"
 	GroupingPerNode                AlertGrouping          = "PerNode"
 	GroupingPerNamespace           AlertGrouping          = "PerNamespace"
 	GroupingPerWorkload            AlertGrouping          = "PerWorkload"
@@ -42,16 +38,15 @@ type FLPAlertGroup struct {
 }
 
 type FLPAlert struct {
-	// Alert threshold, as a percentage of errors above which the alert is triggered. It must be parsable as float.
-	// +required
-	Threshold string `json:"threshold,omitempty"`
+	// The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
+	// It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
+	// When provided, it must be parsable as float.
+	LowVolumeThreshold string `json:"lowVolumeThreshold,omitempty"`
 
-	// Severity of an alert, possible values are:<br>
-	// - `Critical`<br>
-	// - `Warning`<br>
-	// - `Info`<br>
-	// +kubebuilder:validation:Enum:="Critical";"Warning";"Info"
-	Severity AlertSeverity `json:"severity,omitempty"`
+	// Thresholds of the alert per severity.
+	// They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+	// +required
+	Thresholds FLPAlertThresholds `json:"thresholds,omitempty"`
 
 	// Optional grouping criteria, possible values are:<br>
 	// - `PerNode`<br>
@@ -69,6 +64,17 @@ type FLPAlert struct {
 	// +kubebuilder:validation:Enum:="ByDestination";"BySource";"BySourceAndDestination"
 	// +optional
 	GroupingDirection AlertGroupingDirection `json:"groupingDirection,omitempty"`
+}
+
+type FLPAlertThresholds struct {
+	// Threshold for severity `info`. Leave empty to not generate an Info alert.
+	Info string `json:"info,omitempty"`
+
+	// Threshold for severity `warning`. Leave empty to not generate a Warning alert.
+	Warning string `json:"warning,omitempty"`
+
+	// Threshold for severity `critical`. Leave empty to not generate a Critical alert.
+	Critical string `json:"critical,omitempty"`
 }
 
 var (
@@ -110,20 +116,27 @@ var (
 			Name: AlertTooManyDrops,
 			Alerts: []FLPAlert{
 				{
-					Severity:          SeverityInfo,
-					Threshold:         "20",
-					Grouping:          GroupingPerNamespace,
-					GroupingDirection: GroupingBySourceAndDestination,
+					Thresholds: FLPAlertThresholds{
+						Info:    "10",
+						Warning: "20",
+					},
+					LowVolumeThreshold: "5",
+					Grouping:           GroupingPerNamespace,
+					GroupingDirection:  GroupingBySourceAndDestination,
 				},
 				{
-					Severity:          SeverityWarning,
-					Threshold:         "10",
+					Thresholds: FLPAlertThresholds{
+						Info:    "5",
+						Warning: "10",
+					},
 					Grouping:          GroupingPerNode,
 					GroupingDirection: GroupingBySource,
 				},
 				{
-					Severity:          SeverityWarning,
-					Threshold:         "10",
+					Thresholds: FLPAlertThresholds{
+						Info:    "5",
+						Warning: "10",
+					},
 					Grouping:          GroupingPerNode,
 					GroupingDirection: GroupingByDestination,
 				},
