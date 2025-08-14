@@ -105,14 +105,22 @@ spec:
       # alertGroups:
       # - name: TooManyDrops
       #   alerts:
-      #   - severity: Critical
-      #     threshold: "10"
-      #     # triggered when the whole cluster traffic (no grouping) reaches 10% of drops
-      #   - severity: Warning
-      #     threshold: "15"
+      #   - thresholds:
+      #       critical: "15"
+      #       warning: "10"
+      #       info: "5"
+      #   - thresholds:
+      #       critical: "15"
+      #       warning: "10"
+      #       info: "5"
       #     grouping: PerNode
       #     groupingDirection: ByDestination
-      #     # triggered when per-destination-node traffic reaches 15% of drops
+      #   - thresholds:
+      #       critical: "15"
+      #       warning: "10"
+      #       info: "5"
+      #     grouping: PerNamespace
+      #     groupingDirection: BySource
     # Kafka consumer stage configuration
     kafkaConsumerReplicas: 3
     kafkaConsumerAutoscaler: null
