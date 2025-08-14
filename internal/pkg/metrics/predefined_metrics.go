@@ -192,7 +192,7 @@ func init() {
 				Labels:     netpolLabels,
 				Filters:    []metricslatest.MetricFilter{{Field: "NetworkEvents>Feature", Value: "acl"}},
 				Flatten:    []string{"NetworkEvents"},
-				Remap: map[string]string{
+				Remap: map[string]metricslatest.Label{
 					"NetworkEvents>Type":      "type",
 					"NetworkEvents>Namespace": "namespace",
 					"NetworkEvents>Name":      "name",

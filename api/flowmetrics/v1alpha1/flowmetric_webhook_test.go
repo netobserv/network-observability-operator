@@ -121,7 +121,7 @@ func TestFlowMetric(t *testing.T) {
 							Value: "acl",
 						},
 					},
-					Remap: map[string]string{"NetworkEvents>Name": "name"},
+					Remap: map[string]Label{"NetworkEvents>Name": "name"},
 				},
 			},
 			expectedError: "",
