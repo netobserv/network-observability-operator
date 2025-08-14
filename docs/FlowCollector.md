@@ -8143,6 +8143,16 @@ It is ignored for other modes.
             <i>Default</i>: http://loki:3100/<br/>
         </td>
         <td>false</td>
+      </tr><tr>
+        <td><b>zeroClick</b></td>
+        <td>boolean</td>
+        <td>
+          Set `zeroClick` to `true` to automatically create Loki deployment, service and storage.
+This is useful for development pureposes. Do not use it in production.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

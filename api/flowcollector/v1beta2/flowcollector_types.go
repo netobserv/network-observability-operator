@@ -856,6 +856,11 @@ type LokiMicroservicesParams struct {
 
 // LokiMonolithParams is the configuration for monolithic Loki (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode)
 type LokiMonolithParams struct {
+	// Set `zeroClick` to `true` to automatically create Loki deployment, service and storage.
+	// This is useful for development pureposes. Do not use it in production.
+	//+kubebuilder:default:=true
+	ZeroClick *bool `json:"zeroClick,omitempty"`
+
 	//+kubebuilder:default:="http://loki:3100/"
 	// `url` is the unique address of an existing Loki service that points to both the ingester and the querier.
 	URL string `json:"url,omitempty"`

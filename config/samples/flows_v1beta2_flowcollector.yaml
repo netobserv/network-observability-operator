@@ -129,14 +129,7 @@ spec:
     # Change mode to "LokiStack" to use with the loki operator
     mode: Monolithic
     monolithic:
-      url: 'http://loki.netobserv.svc:3100/'
-      tenantID: netobserv
-      tls:
-        enable: false
-        caCert:
-          type: configmap
-          name: loki-gateway-ca-bundle
-          certFile: service-ca.crt
+      zeroClick: true
     lokiStack:
       name: loki
       # Change loki operator instance namespace
