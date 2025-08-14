@@ -274,6 +274,7 @@ func validatePortString(s string) (uint16, error) {
 	return uint16(p), nil
 }
 
+// nolint:cyclop
 func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var errs []error
 	var warnings admission.Warnings
