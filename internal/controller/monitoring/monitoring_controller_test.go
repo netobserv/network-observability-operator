@@ -149,11 +149,21 @@ func ControllerSpecs() {
 	})
 
 	Context("Installing custom dashboards", func() {
-		It("Should create FlowMetric 1 successfully", func() {
+		It("Should fail to create invalid metric name", func() {
 			Expect(k8sClient.Create(ctx, &metricslatest.FlowMetric{
 				ObjectMeta: metav1.ObjectMeta{Name: "metric1", Namespace: operatorNamespace},
 				Spec: metricslatest.FlowMetricSpec{
 					MetricName: "my-metric",
+					Type:       metricslatest.CounterMetric,
+				},
+			})).Should(MatchError(`FlowMetric.flows.netobserv.io "metric1" is invalid: spec.metricName: Invalid value: "my-metric": spec.metricName in body should match '^[a-zA-Z_][a-zA-Z0-9:_]*$|^$'`))
+		})
+
+		It("Should create FlowMetric 1 successfully", func() {
+			Expect(k8sClient.Create(ctx, &metricslatest.FlowMetric{
+				ObjectMeta: metav1.ObjectMeta{Name: "metric1", Namespace: operatorNamespace},
+				Spec: metricslatest.FlowMetricSpec{
+					MetricName: "my_metric",
 					Type:       metricslatest.CounterMetric,
 					Charts: []metricslatest.Chart{
 						{
@@ -171,8 +181,7 @@ func ControllerSpecs() {
 			Expect(k8sClient.Create(ctx, &metricslatest.FlowMetric{
 				ObjectMeta: metav1.ObjectMeta{Name: "metric2", Namespace: operatorNamespace},
 				Spec: metricslatest.FlowMetricSpec{
-					MetricName: "my-metric",
-					Type:       metricslatest.CounterMetric,
+					Type: metricslatest.CounterMetric,
 					Charts: []metricslatest.Chart{
 						{
 							DashboardName: "My dashboard 02",
