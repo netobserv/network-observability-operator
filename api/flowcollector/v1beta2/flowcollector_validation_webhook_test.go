@@ -436,10 +436,11 @@ func TestValidateAgent(t *testing.T) {
 		},
 	}
 
+	r := FlowCollector{}
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
 		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
-		warnings, errs := test.fc.validateAgent(context.TODO(), &test.fc.Spec)
+		warnings, errs := r.validateAgent(context.TODO(), &test.fc.Spec)
 		if test.expectedError == "" {
 			assert.Empty(t, errs, test.name)
 		} else {
@@ -509,11 +510,12 @@ func TestValidateConntrack(t *testing.T) {
 		},
 	}
 
+	r := FlowCollector{}
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
-		warnings, err := test.fc.Validate(context.TODO(), test.fc)
+		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
-			assert.Nil(t, err, test.name)
+			assert.NoError(t, err, test.name)
 		} else {
 			assert.ErrorContains(t, err, test.expectedError, test.name)
 		}
@@ -521,12 +523,13 @@ func TestValidateConntrack(t *testing.T) {
 	}
 }
 
-func TestValidateFLPQueries(t *testing.T) {
+func TestValidateFLP(t *testing.T) {
 	tests := []struct {
 		name             string
 		fc               *FlowCollector
 		expectedError    string
 		expectedWarnings admission.Warnings
+		ocpVersion       string
 	}{
 		{
 			name: "Valid FLP query",
@@ -566,16 +569,185 @@ func TestValidateFLPQueries(t *testing.T) {
 			},
 			expectedError: "cannot parse spec.processor.filters[1].query: syntax error",
 		},
+		{
+			name: "Missing feature for alerts",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							AlertGroups: &[]FLPAlertGroup{
+								{
+									Name:   AlertTooManyDrops,
+									Alerts: []FLPAlert{},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedWarnings: admission.Warnings{"Alert TooManyDrops requires the PacketDrop agent feature to be enabled"},
+		},
+		{
+			name:       "Missing metrics for alerts",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{PacketDrop},
+						Privileged: true,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							AlertGroups: &[]FLPAlertGroup{
+								{
+									Name: AlertTooManyDrops,
+									Alerts: []FLPAlert{
+										{
+											Grouping: GroupingPerNode,
+											Thresholds: FLPAlertThresholds{
+												Info: "5",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedWarnings: admission.Warnings{
+				"Alert TooManyDrops/PerNode requires enabling at least one metric from this list: node_drop_packets_total",
+				"Alert TooManyDrops/PerNode requires enabling at least one metric from this list: node_ingress_packets_total, node_egress_packets_total",
+			},
+		},
+		{
+			name:       "Invalid alert threshold",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{PacketDrop},
+						Privileged: true,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							AlertGroups: &[]FLPAlertGroup{
+								{
+									Name: AlertTooManyDrops,
+									Alerts: []FLPAlert{
+										{
+											Thresholds: FLPAlertThresholds{
+												Info: "nope",
+											},
+										},
+									},
+								},
+							},
+							IncludeList: &[]FLPMetric{"node_drop_packets_total", "node_ingress_packets_total"},
+						},
+					},
+				},
+			},
+			expectedError: `cannot parse info threshold as float in spec.processor.metrics.alertGroups[0].alerts[0]: "nope"`,
+		},
+		{
+			name:       "Invalid alert threshold severities",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{PacketDrop},
+						Privileged: true,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							AlertGroups: &[]FLPAlertGroup{
+								{
+									Name: AlertTooManyDrops,
+									Alerts: []FLPAlert{
+										{
+											Thresholds: FLPAlertThresholds{
+												Info:     "5",
+												Warning:  "50",
+												Critical: "10",
+											},
+										},
+									},
+								},
+							},
+							IncludeList: &[]FLPMetric{"node_drop_packets_total", "node_ingress_packets_total"},
+						},
+					},
+				},
+			},
+			expectedError: `warning threshold must be lower than 10, which is defined for a higher severity`,
+		},
+		{
+			name:       "Correctly configured metrics for alerts",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{PacketDrop},
+						Privileged: true,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							AlertGroups: &[]FLPAlertGroup{
+								{
+									Name: AlertTooManyDrops,
+									Alerts: []FLPAlert{
+										{
+											Grouping: GroupingPerNode,
+											Thresholds: FLPAlertThresholds{
+												Info: "5.5",
+											},
+										},
+									},
+								},
+							},
+							IncludeList: &[]FLPMetric{"node_drop_packets_total", "node_ingress_packets_total"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	CurrentClusterInfo = &cluster.Info{}
+	r := FlowCollector{}
 	for _, test := range tests {
-		warnings, err := test.fc.Validate(context.TODO(), test.fc)
+		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
+		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
-			assert.Nil(t, err, test.name)
+			assert.NoError(t, err, test.name)
 		} else {
 			assert.ErrorContains(t, err, test.expectedError, test.name)
 		}
 		assert.Equal(t, test.expectedWarnings, warnings, test.name)
 	}
+}
+
+func TestElligibleMetrics(t *testing.T) {
+	met, tot := GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{
+		Grouping: GroupingPerNamespace,
+	})
+	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total"}, met)
+	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total"}, tot)
+
+	met, tot = GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{
+		Grouping: GroupingPerWorkload,
+	})
+	assert.Equal(t, []string{"workload_drop_packets_total"}, met)
+	assert.Equal(t, []string{"workload_ingress_packets_total", "workload_egress_packets_total"}, tot)
+
+	met, tot = GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{
+		Grouping: GroupingPerNode,
+	})
+	assert.Equal(t, []string{"node_drop_packets_total"}, met)
+	assert.Equal(t, []string{"node_ingress_packets_total", "node_egress_packets_total"}, tot)
+
+	met, tot = GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{})
+	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total", "node_drop_packets_total"}, met)
+	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "node_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total", "node_egress_packets_total"}, tot)
 }

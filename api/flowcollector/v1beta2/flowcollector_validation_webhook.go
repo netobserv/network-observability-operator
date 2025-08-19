@@ -274,6 +274,7 @@ func validatePortString(s string) (uint16, error) {
 	return uint16(p), nil
 }
 
+// nolint:cyclop
 func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
 	var errs []error
 	var warnings admission.Warnings
@@ -288,5 +289,108 @@ func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSp
 			errs = append(errs, fmt.Errorf("cannot parse spec.processor.filters[%d].query: %w", i, err))
 		}
 	}
+	if fc.Processor.Metrics.AlertGroups != nil {
+		for i, group := range *fc.Processor.Metrics.AlertGroups {
+			if _, msg := group.IsAllowed(fc); len(msg) > 0 {
+				warnings = append(warnings, msg)
+			}
+			for j, alert := range group.Alerts {
+				lastThreshold := float64(-1)
+				thresholds := []struct {
+					s string
+					t string
+				}{
+					{s: "critical", t: alert.Thresholds.Critical},
+					{s: "warning", t: alert.Thresholds.Warning},
+					{s: "info", t: alert.Thresholds.Info},
+				}
+				for _, st := range thresholds {
+					if st.t != "" {
+						val, err := strconv.ParseFloat(st.t, 64)
+						if err != nil {
+							errs = append(
+								errs,
+								fmt.Errorf(`cannot parse %s threshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, i, j, st.t),
+							)
+						} else if val < 0 {
+							errs = append(
+								errs,
+								fmt.Errorf(`%s threshold must be positive in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, i, j, st.t),
+							)
+						} else if lastThreshold > 0 && val > lastThreshold {
+							errs = append(
+								errs,
+								fmt.Errorf(`%s threshold must be lower than %.0f, which is defined for a higher severity, in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, lastThreshold, i, j, st.t),
+							)
+						}
+						lastThreshold = val
+					}
+				}
+				if alert.LowVolumeThreshold != "" {
+					_, err := strconv.ParseFloat(alert.LowVolumeThreshold, 64)
+					if err != nil {
+						errs = append(
+							errs,
+							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, i, j, alert.LowVolumeThreshold),
+						)
+					}
+				}
+			}
+		}
+	}
+	metrics := fc.GetIncludeList()
+	alertGroups := fc.GetFLPAlerts()
+	for _, g := range alertGroups {
+		for _, a := range g.Alerts {
+			reqMetrics1, reqMetrics2 := GetElligibleMetricsForAlert(g.Name, &a)
+			// At least one metric from reqMetrics1 should be present, same for reqMetrics2
+			w1 := checkAlertRequiredMetrics(g.Name, &a, reqMetrics1, metrics)
+			warnings = append(warnings, w1...)
+			w2 := checkAlertRequiredMetrics(g.Name, &a, reqMetrics2, metrics)
+			warnings = append(warnings, w2...)
+		}
+	}
 	return warnings, errs
+}
+
+func checkAlertRequiredMetrics(alertName FLPAlertGroupName, alertDef *FLPAlert, required, actual []string) admission.Warnings {
+	for _, m := range required {
+		if slices.Contains(actual, m) {
+			return nil
+		}
+	}
+	return admission.Warnings{fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", alertName, alertDef.Grouping, strings.Join(required, ", "))}
+}
+
+func GetElligibleMetricsForAlert(alertName FLPAlertGroupName, alertDef *FLPAlert) ([]string, []string) {
+	var gr []string
+	switch alertDef.Grouping {
+	case GroupingPerNode:
+		gr = []string{"node"}
+	case GroupingPerNamespace:
+		gr = []string{"namespace", "workload"}
+	case GroupingPerWorkload:
+		gr = []string{"workload"}
+	default: // global => any of the metric can work
+		gr = []string{"namespace", "workload", "node"}
+	}
+	var metricPatterns, totalMetricPatterns []string
+	switch alertName {
+	case AlertTooManyDrops:
+		metricPatterns = []string{"%s_drop_packets_total"}
+		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
+	case AlertNoFlows, AlertLokiError: // nothing
+	}
+	var metrics, totalMetrics []string
+	for _, p := range metricPatterns {
+		for _, g := range gr {
+			metrics = append(metrics, fmt.Sprintf(p, g))
+		}
+	}
+	for _, p := range totalMetricPatterns {
+		for _, g := range gr {
+			totalMetrics = append(totalMetrics, fmt.Sprintf(p, g))
+		}
+	}
+	return metrics, totalMetrics
 }

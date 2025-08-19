@@ -11467,10 +11467,19 @@ available.<br/>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>disableAlerts</b></td>
-        <td>[]enum</td>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertgroupsindex">alertGroups</a></b></td>
+        <td>[]object</td>
         <td>
-          `disableAlerts` is a list of alerts that should be disabled.
+          `alertGroups` is a list of alerts to be created for Prometheus AlertManager, organized by group.
+Alerts enabled by default are: TODO
+More information, with full list of available alerts: TODO<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>disableAlerts</b></td>
+        <td>[]string</td>
+        <td>
+          `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
 Possible values are:<br>
 `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
 `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br><br/>
@@ -11497,6 +11506,150 @@ More information, with full list of available metrics: https://github.com/netobs
         <td>object</td>
         <td>
           Metrics server endpoint configuration for Prometheus scraper<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.alertGroups[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetrics)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertgroupsindexalertsindex">alerts</a></b></td>
+        <td>[]object</td>
+        <td>
+          A list of alert definitions for the group<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>enum</td>
+        <td>
+          Alert group name; TODO: more doc with the list of available alerts, similar to the metrics list.
+Possible values are:<br>
+- `NetObservNoFlows`, triggered when no flows are being observed for a certain period.<br>
+- `NetObservLokiError`, triggered when flows are being dropped due to Loki errors.<br>
+- `TooManyDrops`, triggered on high percentage of packet drops; it requires the `PacketDrop` agent feature.<br><br/>
+          <br/>
+            <i>Enum</i>: NetObservNoFlows, NetObservLokiError, TooManyDrops<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.alertGroups[index].alerts[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertgroupsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertgroupsindexalertsindexthresholds">thresholds</a></b></td>
+        <td>object</td>
+        <td>
+          Thresholds of the alert per severity.
+They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>grouping</b></td>
+        <td>enum</td>
+        <td>
+          Optional grouping criteria, possible values are:<br>
+- `PerNode`<br>
+- `PerNamespace`<br>
+- `PerWorkload`<br><br/>
+          <br/>
+            <i>Enum</i>: , PerNode, PerNamespace, PerWorkload<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>groupingDirection</b></td>
+        <td>enum</td>
+        <td>
+          Grouping direction, possible values are:<br>
+- `BySource`<br>
+- `ByDestination`<br>
+- `BySourceAndDestination`<br>
+This setting is ignored when no `grouping` is provided.<br/>
+          <br/>
+            <i>Enum</i>: ByDestination, BySource, BySourceAndDestination<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lowVolumeThreshold</b></td>
+        <td>string</td>
+        <td>
+          The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
+It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
+When provided, it must be parsable as float.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.alertGroups[index].alerts[index].thresholds
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertgroupsindexalertsindex)</sup></sup>
+
+
+
+Thresholds of the alert per severity.
+They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>critical</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `critical`. Leave empty to not generate a Critical alert.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>info</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `info`. Leave empty to not generate an Info alert.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>warning</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `warning`. Leave empty to not generate a Warning alert.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
