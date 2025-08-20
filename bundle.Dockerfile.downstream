@@ -8,6 +8,7 @@ RUN pip install -r requirements.txt
 
 RUN ./hack/update-build.sh
 
+
 FROM scratch
 ARG BUILDVERSION
 
