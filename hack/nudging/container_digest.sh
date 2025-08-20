@@ -1,4 +1,4 @@
-# Do not remove comment lines, they are there to reduce conflicts
+# Do not remove comment lines, they are there to reduce conflicts.
 # Operator
 export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:5bec7a1c6e24b653b7699e653112eca1281670bf422996b083326ab23998edad'
 # eBPF agent
