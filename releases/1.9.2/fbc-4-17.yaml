@@ -1,0 +1,10 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-9-2-fbc-4-17-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'ocazade'
+spec:
+  releasePlan: netobserv-fbc-v4-17
+  snapshot: catalog-4-17-7v58q
