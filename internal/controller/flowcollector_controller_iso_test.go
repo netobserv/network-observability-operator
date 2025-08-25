@@ -168,9 +168,10 @@ func flowCollectorIsoSpecs() {
 					TLS:         defaultTLS,
 				},
 				Monolithic: flowslatest.LokiMonolithParams{
-					URL:      "http://loki:3100/",
-					TenantID: "netobserv",
-					TLS:      defaultTLS,
+					ZeroClick: ptr.To(false),
+					URL:       "http://loki:3100/",
+					TenantID:  "netobserv",
+					TLS:       defaultTLS,
 				},
 				LokiStack: flowslatest.LokiStackRef{
 					Name:      "loki",

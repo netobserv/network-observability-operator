@@ -194,16 +194,7 @@ metadata:
               },
               "mode": "Monolithic",
               "monolithic": {
-                "tenantID": "netobserv",
-                "tls": {
-                  "caCert": {
-                    "certFile": "service-ca.crt",
-                    "name": "loki-gateway-ca-bundle",
-                    "type": "configmap"
-                  },
-                  "enable": false
-                },
-                "url": "http://loki.netobserv.svc:3100/"
+                "zeroClick": true
               },
               "readTimeout": "30s",
               "writeBatchSize": 10485760,
@@ -253,7 +244,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.9.1-community
-    createdAt: "2025-07-21T09:56:28Z"
+    createdAt: "2025-08-05T12:24:29Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -596,6 +587,8 @@ spec:
         path: loki.monolithic.tenantID
       - displayName: Url
         path: loki.monolithic.url
+      - displayName: Zero click
+        path: loki.monolithic.zeroClick
       - displayName: Read timeout
         path: loki.readTimeout
       - displayName: Namespace
@@ -775,6 +768,7 @@ spec:
           resources:
           - configmaps
           - namespaces
+          - persistentvolumeclaims
           - secrets
           - serviceaccounts
           - services
@@ -1055,6 +1049,7 @@ spec:
                 - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
                 - --console-plugin-image=$(RELATED_IMAGE_CONSOLE_PLUGIN)
                 - --console-plugin-compat-image=$(RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT)
+                - --zero-click-loki-image=$(RELATED_IMAGE_ZERO_CLICK_LOKI)
                 - --namespace=$(NAMESPACE)
                 - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
                 - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
@@ -1071,6 +1066,8 @@ spec:
                   value: quay.io/netobserv/network-observability-console-plugin:v1.9.1-community
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
                   value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+                - name: RELATED_IMAGE_ZERO_CLICK_LOKI
+                  value: grafana/loki:3.5.0
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
                 - name: PROFILING_BIND_ADDRESS
@@ -1218,6 +1215,8 @@ spec:
     name: console-plugin
   - image: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
     name: console-plugin-compat
+  - image: grafana/loki:3.5.0
+    name: zero-click-loki
   version: 1.9.1-community
   webhookdefinitions:
   - admissionReviewVersions:
