@@ -146,7 +146,6 @@ func TestGetEnvConfig_WithOverrides(t *testing.T) {
 	env := getEnvConfig(&fc, &cluster.Info{})
 	assert.Equal(t, []corev1.EnvVar{
 		{Name: "GOMEMLIMIT", Value: "0"},
-		{Name: "ENABLE_FLOW_FILTER", Value: "true"},
 		{Name: "FLOW_FILTER_RULES", Value: `[{"ip_cidr":"0.0.0.0/0","action":"Accept"}]`},
 		{Name: "AGENT_IP", Value: "",
 			ValueFrom: &corev1.EnvVarSource{

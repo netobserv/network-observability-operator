@@ -64,7 +64,6 @@ const (
 	envMetricPrefix               = "METRICS_PREFIX"
 	envMetricsTLSCertPath         = "METRICS_TLS_CERT_PATH"
 	envMetricsTLSKeyPath          = "METRICS_TLS_KEY_PATH"
-	envEnableFlowFilter           = "ENABLE_FLOW_FILTER"
 	envFilterRules                = "FLOW_FILTER_RULES"
 	envEnablePacketTranslation    = "ENABLE_PKT_TRANSLATION"
 	envEnableEbpfMgr              = "EBPF_PROGRAM_MANAGER_MODE"
@@ -738,7 +737,6 @@ func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1
 	}
 
 	if helper.IsEBPFFlowFilterEnabled(&coll.Spec.Agent.EBPF) {
-		config = append(config, corev1.EnvVar{Name: envEnableFlowFilter, Value: "true"})
 		if len(coll.Spec.Agent.EBPF.FlowFilter.Rules) != 0 {
 			if filterRules := configureFlowFiltersRules(coll.Spec.Agent.EBPF.FlowFilter.Rules); filterRules != nil {
 				config = append(config, filterRules...)
