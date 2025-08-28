@@ -154,7 +154,7 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         <td><b><a href="#flowcollectorspecnetworkpolicy">networkPolicy</a></b></td>
         <td>object</td>
         <td>
-          `networkPolicy` defines ingress network policy settings for NetObserv components isolation.<br/>
+          `networkPolicy` defines network policy settings for NetObserv components isolation.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8325,7 +8325,7 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-`networkPolicy` defines ingress network policy settings for NetObserv components isolation.
+`networkPolicy` defines network policy settings for NetObserv components isolation.
 
 <table>
     <thead>
@@ -8351,7 +8351,9 @@ configuration, you can disable it and install your own instead.<br/>
         <td>
           Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
 These network policies better isolate the NetObserv components to prevent undesired connections to them.
-To increase the security of connections, enable this option or create your own network policy.<br/>
+This option is enabled by default, disable it to manually manage network policies<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr></tbody>
