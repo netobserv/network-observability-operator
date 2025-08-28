@@ -90,6 +90,11 @@ spec:
         runAsNonRoot: true
       serviceAccountName: netobserv-controller-manager
       terminationGracePeriodSeconds: 10
+{{- if .Values.operator.nodeAffinity }}
+      affinity:
+        nodeAffinity:
+{{- toYaml .Values.operator.nodeAffinity | nindent 10 }}
+{{- end }}
       volumes:
         - name: cert
           secret:

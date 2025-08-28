@@ -8,7 +8,7 @@ spec:
   secretName: webhook-server-cert
   dnsNames:
   - netobserv-webhook-service.{{ .Release.Namespace }}.svc
-  - netobserv-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
+  - netobserv-webhook-service.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
 {{ if .Values.certManager.existingIssuer.name }}
   issuerRef:
     kind: {{ .Values.certManager.existingIssuer.kind }}
@@ -34,7 +34,7 @@ spec:
   secretName: manager-metrics-tls
   dnsNames:
   - netobserv-metrics-service.{{ .Release.Namespace }}.svc
-  - netobserv-metrics-service.{{ .Release.Namespace }}.svc.cluster.local
+  - netobserv-metrics-service.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
 {{ if .Values.certManager.existingIssuer.name }}
   issuerRef:
     kind: {{ .Values.certManager.existingIssuer.kind }}
