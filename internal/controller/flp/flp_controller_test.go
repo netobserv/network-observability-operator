@@ -637,7 +637,8 @@ func ControllerSpecs() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeMonolithic
 				fc.Spec.Loki.Monolithic = flowslatest.LokiMonolithParams{
-					URL: "http://loki-mono:3100/",
+					ZeroClick: ptr.To(false),
+					URL:       "http://loki-mono:3100/",
 					TLS: flowslatest.ClientTLS{
 						Enable: true,
 						CACert: flowslatest.CertificateReference{
