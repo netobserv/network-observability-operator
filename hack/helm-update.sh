@@ -21,19 +21,8 @@ yq -i 'del(.metadata.annotations)' helm/templates/netobserv-webhook-service_v1_s
 yq -i 'del(.metadata.labels)' helm/templates/netobserv-webhook-service_v1_service.yaml
 
 # Extract data from clusterserviceversion
-yq '.spec.install.spec.deployments[0].spec' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/csv-deployment.yaml
 yq '.spec.install.spec.clusterPermissions[0]' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/csv-clusterrole.yaml
 yq '.spec.install.spec.permissions[0]' bundle/manifests/netobserv-operator.clusterserviceversion.yaml > _tmp/csv-role.yaml
- 
-# Create deployment
-yq '{"apiVersion": "apps/v1", "kind": "Deployment", "metadata": {"name": "netobserv-controller-manager", "labels": {"app": "netobserv-operator", "control-plane": "controller-manager"}}, "spec": .}' _tmp/csv-deployment.yaml > helm/templates/deployment.yaml
-
-# Inject parameterized images
-yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_EBPF_AGENT\") | .value) = \"{{ .Values.ebpfAgent.image }}:{{ .Values.ebpfAgent.version }}\"" helm/templates/deployment.yaml
-yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_FLOWLOGS_PIPELINE\") | .value) = \"{{ .Values.flowlogsPipeline.image }}:{{ .Values.flowlogsPipeline.version }}\"" helm/templates/deployment.yaml
-yq -i "(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN\") | .value) = \"{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}\"" helm/templates/deployment.yaml
-yq -i "del(.spec.template.spec.containers[0].env[] | select(.name==\"RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT\"))" helm/templates/deployment.yaml
-yq -i ".spec.template.spec.containers[0].image = \"{{ .Values.operator.image }}:{{ .Values.operator.version }}\"" helm/templates/deployment.yaml
 
 # Create roles
 yq '{"apiVersion": "v1", "kind": "ServiceAccount", "metadata": {"name": .serviceAccountName}}' _tmp/csv-clusterrole.yaml > helm/templates/serviceaccount.yaml
