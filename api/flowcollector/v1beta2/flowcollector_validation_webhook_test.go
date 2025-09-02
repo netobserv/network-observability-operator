@@ -436,18 +436,18 @@ func TestValidateAgent(t *testing.T) {
 		},
 	}
 
-	r := FlowCollector{}
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
 		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
-		warnings, errs := r.validateAgent(context.TODO(), &test.fc.Spec)
+		v := validator{fc: &test.fc.Spec}
+		v.validateAgent()
 		if test.expectedError == "" {
-			assert.Empty(t, errs, test.name)
+			assert.Empty(t, v.errors, test.name)
 		} else {
-			assert.Len(t, errs, 1, test.name)
-			assert.ErrorContains(t, errs[0], test.expectedError, test.name)
+			assert.Len(t, v.errors, 1, test.name)
+			assert.ErrorContains(t, v.errors[0], test.expectedError, test.name)
 		}
-		assert.Equal(t, test.expectedWarnings, warnings, test.name)
+		assert.Equal(t, test.expectedWarnings, v.warnings, test.name)
 	}
 }
 
