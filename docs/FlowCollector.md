@@ -11471,8 +11471,7 @@ available.<br/>
         <td>[]object</td>
         <td>
           `alertGroups` is a list of alerts to be created for Prometheus AlertManager, organized by group.
-Alerts enabled by default are: TODO
-More information, with full list of available alerts: TODO<br/>
+More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11480,9 +11479,8 @@ More information, with full list of available alerts: TODO<br/>
         <td>[]string</td>
         <td>
           `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-Possible values are:<br>
-`NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-`NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br><br/>
+Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyDrops`.<br>
+More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
       </tr><tr>

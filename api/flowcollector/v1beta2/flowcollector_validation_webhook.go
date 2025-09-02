@@ -57,165 +57,104 @@ func (r *FlowCollector) ValidateDelete(_ context.Context, _ runtime.Object) (adm
 	return nil, nil
 }
 
-func (r *FlowCollector) Validate(ctx context.Context, fc *FlowCollector) (admission.Warnings, error) {
-	var allW admission.Warnings
-	var allE []error
-	w, errs := r.validateAgent(ctx, &fc.Spec)
-	allW, allE = collect(allW, allE, w, errs)
-	w, errs = r.validateFLPConfig(ctx, &fc.Spec)
-	allW, allE = collect(allW, allE, w, errs)
-	w = r.warnLogLevels(&fc.Spec)
-	allW, allE = collect(allW, allE, w, nil)
-	return allW, errors.Join(allE...)
+func (r *FlowCollector) Validate(_ context.Context, fc *FlowCollector) (admission.Warnings, error) {
+	v := validator{fc: &fc.Spec}
+	v.validateAgent()
+	v.validateFLP()
+	v.warnLogLevels()
+	return v.warnings, errors.Join(v.errors...)
 }
 
-func collect(wPool admission.Warnings, errsPool []error, w admission.Warnings, errs []error) (admission.Warnings, []error) {
-	if len(w) > 0 {
-		wPool = append(wPool, w...)
-	}
-	if len(errs) > 0 {
-		errsPool = append(errsPool, errs...)
-	}
-	return wPool, errsPool
+type validator struct {
+	fc       *FlowCollectorSpec
+	warnings admission.Warnings
+	errors   []error
 }
 
-func (r *FlowCollector) warnLogLevels(fc *FlowCollectorSpec) admission.Warnings {
-	var w admission.Warnings
-	if fc.Agent.EBPF.LogLevel == "debug" || fc.Agent.EBPF.LogLevel == "trace" {
-		w = append(w, fmt.Sprintf("The log level for the eBPF agent is %s, which impacts performance and resource footprint.", fc.Agent.EBPF.LogLevel))
+func (v *validator) warnLogLevels() {
+	if v.fc.Agent.EBPF.LogLevel == "debug" || v.fc.Agent.EBPF.LogLevel == "trace" {
+		v.warnings = append(v.warnings, fmt.Sprintf("The log level for the eBPF agent is %s, which impacts performance and resource footprint.", v.fc.Agent.EBPF.LogLevel))
 	}
-	if fc.Processor.LogLevel == "debug" || fc.Processor.LogLevel == "trace" {
-		w = append(w, fmt.Sprintf("The log level for the processor (flowlogs-pipeline) is %s, which impacts performance and resource footprint.", fc.Processor.LogLevel))
+	if v.fc.Processor.LogLevel == "debug" || v.fc.Processor.LogLevel == "trace" {
+		v.warnings = append(v.warnings, fmt.Sprintf("The log level for the processor (flowlogs-pipeline) is %s, which impacts performance and resource footprint.", v.fc.Processor.LogLevel))
 	}
-	return w
 }
 
-func (r *FlowCollector) validateAgent(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
-	var warnings admission.Warnings
+func (v *validator) validateAgent() {
 	for feat, minVersion := range neededOpenShiftVersion {
-		if slices.Contains(fc.Agent.EBPF.Features, feat) {
+		if slices.Contains(v.fc.Agent.EBPF.Features, feat) {
 			if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
 				// Make sure required version of ocp is installed
 				ok, err := CurrentClusterInfo.IsOpenShiftVersionAtLeast(minVersion)
 				if err != nil {
-					warnings = append(warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
+					v.warnings = append(v.warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
 				} else if !ok {
-					warnings = append(warnings, fmt.Sprintf("The %s feature requires OpenShift %s or above (version detected: %s)", feat, minVersion, CurrentClusterInfo.GetOpenShiftVersion()))
+					v.warnings = append(v.warnings, fmt.Sprintf("The %s feature requires OpenShift %s or above (version detected: %s)", feat, minVersion, CurrentClusterInfo.GetOpenShiftVersion()))
 				}
 			} else {
-				warnings = append(warnings, fmt.Sprintf("Unknown environment, cannot detect if the feature %s is supported", feat))
+				v.warnings = append(v.warnings, fmt.Sprintf("Unknown environment, cannot detect if the feature %s is supported", feat))
 			}
 		}
 	}
-	if !fc.Agent.EBPF.Privileged {
+	if !v.fc.Agent.EBPF.Privileged {
 		for _, feat := range needPrivileged {
-			if slices.Contains(fc.Agent.EBPF.Features, feat) {
-				warnings = append(warnings, fmt.Sprintf("The %s feature requires eBPF Agent to run in privileged mode, which is currently disabled in spec.agent.ebpf.privileged", feat))
+			if slices.Contains(v.fc.Agent.EBPF.Features, feat) {
+				v.warnings = append(v.warnings, fmt.Sprintf("The %s feature requires eBPF Agent to run in privileged mode, which is currently disabled in spec.agent.ebpf.privileged", feat))
 			}
 		}
 	}
 
-	if slices.Contains(fc.Agent.EBPF.Features, PacketDrop) &&
-		!fc.Agent.EBPF.Privileged &&
-		!slices.Contains(fc.Agent.EBPF.Features, EbpfManager) {
-		warnings = append(warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode, which is currently disabled in spec.agent.ebpf.privileged, or to use with eBPF Manager")
+	if slices.Contains(v.fc.Agent.EBPF.Features, PacketDrop) &&
+		!v.fc.Agent.EBPF.Privileged &&
+		!slices.Contains(v.fc.Agent.EBPF.Features, EbpfManager) {
+		v.warnings = append(v.warnings, "The PacketDrop feature requires eBPF Agent to run in privileged mode, which is currently disabled in spec.agent.ebpf.privileged, or to use with eBPF Manager")
 	}
-	var errs []error
-	if fc.Agent.EBPF.FlowFilter != nil && fc.Agent.EBPF.FlowFilter.Enable != nil && *fc.Agent.EBPF.FlowFilter.Enable {
+	if v.fc.Agent.EBPF.FlowFilter != nil && v.fc.Agent.EBPF.FlowFilter.Enable != nil && *v.fc.Agent.EBPF.FlowFilter.Enable {
 		m := make(map[string]bool)
-		for i := range fc.Agent.EBPF.FlowFilter.Rules {
-			rule := fc.Agent.EBPF.FlowFilter.Rules[i]
+		for i := range v.fc.Agent.EBPF.FlowFilter.Rules {
+			rule := v.fc.Agent.EBPF.FlowFilter.Rules[i]
 			key := rule.CIDR + "-" + rule.PeerCIDR
 			if found := m[key]; found {
-				errs = append(errs, fmt.Errorf("flow filter rule CIDR and PeerCIDR %s already exists",
-					key))
+				v.errors = append(v.errors, fmt.Errorf("flow filter rule CIDR and PeerCIDR %s already exists", key))
 				break
 			}
 			m[key] = true
-			errs = append(errs, validateFilter(&rule)...)
+			v.validateAgentFilter(&rule)
 		}
-		errs = append(errs, validateFilter(fc.Agent.EBPF.FlowFilter)...)
+		v.validateAgentFilter(&v.fc.Agent.EBPF.FlowFilter.EBPFFlowFilterRule)
 	}
-
-	return warnings, errs
 }
 
-type filter interface {
-	getCIDR() string
-	getPorts() intstr.IntOrString
-	getSrcPorts() intstr.IntOrString
-	getDstPorts() intstr.IntOrString
-}
-
-func (f *EBPFFlowFilter) getCIDR() string {
-	return f.CIDR
-}
-
-func (f *EBPFFlowFilter) getPorts() intstr.IntOrString {
-	return f.Ports
-}
-
-func (f *EBPFFlowFilter) getSrcPorts() intstr.IntOrString {
-	return f.SourcePorts
-}
-
-func (f *EBPFFlowFilter) getDstPorts() intstr.IntOrString {
-	return f.DestPorts
-}
-
-func (f *EBPFFlowFilterRule) getCIDR() string {
-	return f.CIDR
-}
-
-func (f *EBPFFlowFilterRule) getPorts() intstr.IntOrString {
-	return f.Ports
-}
-
-func (f *EBPFFlowFilterRule) getSrcPorts() intstr.IntOrString {
-	return f.SourcePorts
-}
-
-func (f *EBPFFlowFilterRule) getDstPorts() intstr.IntOrString {
-	return f.DestPorts
-}
-
-func validateFilter[T filter](f T) []error {
-	var errs []error
-
-	cidr := f.getCIDR()
-	if cidr != "" {
-		if _, _, err := net.ParseCIDR(cidr); err != nil {
-			errs = append(errs, err)
+func (v *validator) validateAgentFilter(f *EBPFFlowFilterRule) {
+	if f.CIDR != "" {
+		if _, _, err := net.ParseCIDR(f.CIDR); err != nil {
+			v.errors = append(v.errors, err)
 		}
 	}
-	ports := f.getPorts()
-	hasPorts := ports.IntVal > 0 || ports.StrVal != ""
+	hasPorts := f.Ports.IntVal > 0 || f.Ports.StrVal != ""
 	if hasPorts {
-		if err := validateFilterPortConfig(ports); err != nil {
-			errs = append(errs, err)
+		if err := validateFilterPortConfig(f.Ports); err != nil {
+			v.errors = append(v.errors, err)
 		}
 	}
-	srcPorts := f.getSrcPorts()
-	hasSrcPorts := srcPorts.IntVal > 0 || srcPorts.StrVal != ""
+	hasSrcPorts := f.SourcePorts.IntVal > 0 || f.SourcePorts.StrVal != ""
 	if hasSrcPorts {
-		if err := validateFilterPortConfig(srcPorts); err != nil {
-			errs = append(errs, err)
+		if err := validateFilterPortConfig(f.SourcePorts); err != nil {
+			v.errors = append(v.errors, err)
 		}
 	}
-	dstPorts := f.getDstPorts()
-	hasDstPorts := dstPorts.IntVal > 0 || dstPorts.StrVal != ""
+	hasDstPorts := f.DestPorts.IntVal > 0 || f.DestPorts.StrVal != ""
 	if hasDstPorts {
-		if err := validateFilterPortConfig(dstPorts); err != nil {
-			errs = append(errs, err)
+		if err := validateFilterPortConfig(f.DestPorts); err != nil {
+			v.errors = append(v.errors, err)
 		}
 	}
 	if hasPorts && hasSrcPorts {
-		errs = append(errs, errors.New("cannot configure agent filter with ports and sourcePorts, they are mutually exclusive"))
+		v.errors = append(v.errors, errors.New("cannot configure agent filter with ports and sourcePorts, they are mutually exclusive"))
 	}
 	if hasPorts && hasDstPorts {
-		errs = append(errs, errors.New("cannot configure agent filter with ports and destPorts, they are mutually exclusive"))
+		v.errors = append(v.errors, errors.New("cannot configure agent filter with ports and destPorts, they are mutually exclusive"))
 	}
-	return errs
 }
 
 func validateFilterPortConfig(value intstr.IntOrString) error {
@@ -274,25 +213,35 @@ func validatePortString(s string) (uint16, error) {
 	return uint16(p), nil
 }
 
-// nolint:cyclop
-func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSpec) (admission.Warnings, []error) {
-	var errs []error
-	var warnings admission.Warnings
-	if fc.Processor.LogTypes != nil && *fc.Processor.LogTypes == LogTypeAll {
-		warnings = append(warnings, "Enabling all log types (in spec.processor.logTypes) has a high impact on resources footprint")
+func (v *validator) validateFLP() {
+	v.validateFLPLogTypes()
+	v.validateFLPFilters()
+	v.validateFLPAlerts()
+	v.validateFLPMetricsForAlerts()
+}
+
+func (v *validator) validateFLPLogTypes() {
+	if v.fc.Processor.LogTypes != nil && *v.fc.Processor.LogTypes == LogTypeAll {
+		v.warnings = append(v.warnings, "Enabling all log types (in spec.processor.logTypes) has a high impact on resources footprint")
 	}
-	if fc.Processor.LogTypes != nil && *fc.Processor.LogTypes != LogTypeFlows && fc.Loki.Enable != nil && !*fc.Loki.Enable {
-		errs = append(errs, errors.New("enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit"))
+	if v.fc.Processor.LogTypes != nil && *v.fc.Processor.LogTypes != LogTypeFlows && v.fc.Loki.Enable != nil && !*v.fc.Loki.Enable {
+		v.errors = append(v.errors, errors.New("enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit"))
 	}
-	for i, filter := range fc.Processor.Filters {
+}
+
+func (v *validator) validateFLPFilters() {
+	for i, filter := range v.fc.Processor.Filters {
 		if _, err := dsl.Parse(filter.Query); err != nil {
-			errs = append(errs, fmt.Errorf("cannot parse spec.processor.filters[%d].query: %w", i, err))
+			v.errors = append(v.errors, fmt.Errorf("cannot parse spec.processor.filters[%d].query: %w", i, err))
 		}
 	}
-	if fc.Processor.Metrics.AlertGroups != nil {
-		for i, group := range *fc.Processor.Metrics.AlertGroups {
-			if _, msg := group.IsAllowed(fc); len(msg) > 0 {
-				warnings = append(warnings, msg)
+}
+
+func (v *validator) validateFLPAlerts() {
+	if v.fc.Processor.Metrics.AlertGroups != nil {
+		for i, group := range *v.fc.Processor.Metrics.AlertGroups {
+			if _, msg := group.IsAllowed(v.fc); len(msg) > 0 {
+				v.warnings = append(v.warnings, msg)
 			}
 			for j, alert := range group.Alerts {
 				lastThreshold := float64(-1)
@@ -308,18 +257,18 @@ func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSp
 					if st.t != "" {
 						val, err := strconv.ParseFloat(st.t, 64)
 						if err != nil {
-							errs = append(
-								errs,
+							v.errors = append(
+								v.errors,
 								fmt.Errorf(`cannot parse %s threshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, i, j, st.t),
 							)
 						} else if val < 0 {
-							errs = append(
-								errs,
+							v.errors = append(
+								v.errors,
 								fmt.Errorf(`%s threshold must be positive in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, i, j, st.t),
 							)
 						} else if lastThreshold > 0 && val > lastThreshold {
-							errs = append(
-								errs,
+							v.errors = append(
+								v.errors,
 								fmt.Errorf(`%s threshold must be lower than %.0f, which is defined for a higher severity, in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, st.s, lastThreshold, i, j, st.t),
 							)
 						}
@@ -329,8 +278,8 @@ func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSp
 				if alert.LowVolumeThreshold != "" {
 					_, err := strconv.ParseFloat(alert.LowVolumeThreshold, 64)
 					if err != nil {
-						errs = append(
-							errs,
+						v.errors = append(
+							v.errors,
 							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.alertGroups[%d].alerts[%d]: "%s"`, i, j, alert.LowVolumeThreshold),
 						)
 					}
@@ -338,19 +287,21 @@ func (r *FlowCollector) validateFLPConfig(_ context.Context, fc *FlowCollectorSp
 			}
 		}
 	}
-	metrics := fc.GetIncludeList()
-	alertGroups := fc.GetFLPAlerts()
+}
+
+func (v *validator) validateFLPMetricsForAlerts() {
+	metrics := v.fc.GetIncludeList()
+	alertGroups := v.fc.GetFLPAlerts()
 	for _, g := range alertGroups {
 		for _, a := range g.Alerts {
 			reqMetrics1, reqMetrics2 := GetElligibleMetricsForAlert(g.Name, &a)
 			// At least one metric from reqMetrics1 should be present, same for reqMetrics2
 			w1 := checkAlertRequiredMetrics(g.Name, &a, reqMetrics1, metrics)
-			warnings = append(warnings, w1...)
+			v.warnings = append(v.warnings, w1...)
 			w2 := checkAlertRequiredMetrics(g.Name, &a, reqMetrics2, metrics)
-			warnings = append(warnings, w2...)
+			v.warnings = append(v.warnings, w2...)
 		}
 	}
-	return warnings, errs
 }
 
 func checkAlertRequiredMetrics(alertName FLPAlertGroupName, alertDef *FLPAlert, required, actual []string) admission.Warnings {
