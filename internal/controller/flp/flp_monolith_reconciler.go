@@ -16,7 +16,7 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
-	"github.com/netobserv/network-observability-operator/internal/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/internal/pkg/metrics/alerts"
 	"github.com/netobserv/network-observability-operator/internal/pkg/resources"
 )
 
@@ -163,7 +163,7 @@ func (r *monolithReconciler) reconcilePrometheusService(ctx context.Context, bui
 		}
 	}
 	if r.ClusterInfo.HasPromRule() {
-		rules := metrics.BuildAlertRules(ctx, builder.desired)
+		rules := alerts.BuildRules(ctx, builder.desired)
 		promRules := builder.prometheusRule(rules)
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err

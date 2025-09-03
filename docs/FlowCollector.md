@@ -11467,10 +11467,10 @@ available.<br/>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertgroupsindex">alertGroups</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertsindex">alerts</a></b></td>
         <td>[]object</td>
         <td>
-          `alertGroups` is a list of alerts to be created for Prometheus AlertManager, organized by group.
+          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
@@ -11479,7 +11479,7 @@ More information on alerts: https://github.com/netobserv/network-observability-o
         <td>[]string</td>
         <td>
           `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyDrops`.<br>
+Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyKernelDrops`, `TooManyDeviceDrops`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
@@ -11510,7 +11510,7 @@ More information, with full list of available metrics: https://github.com/netobs
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alertGroups[index]
+### FlowCollector.spec.processor.metrics.alerts[index]
 <sup><sup>[↩ Parent](#flowcollectorspecprocessormetrics)</sup></sup>
 
 
@@ -11527,31 +11527,29 @@ More information, with full list of available metrics: https://github.com/netobs
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertgroupsindexalertsindex">alerts</a></b></td>
-        <td>[]object</td>
+        <td><b>template</b></td>
+        <td>enum</td>
         <td>
-          A list of alert definitions for the group<br/>
+          Alert template name.
+Possible values are: `TooManyKernelDrops`, `TooManyDeviceDrops`.
+More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
+          <br/>
+            <i>Enum</i>: TooManyKernelDrops, TooManyDeviceDrops<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>name</b></td>
-        <td>enum</td>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindex">variants</a></b></td>
+        <td>[]object</td>
         <td>
-          Alert group name; TODO: more doc with the list of available alerts, similar to the metrics list.
-Possible values are:<br>
-- `NetObservNoFlows`, triggered when no flows are being observed for a certain period.<br>
-- `NetObservLokiError`, triggered when flows are being dropped due to Loki errors.<br>
-- `TooManyDrops`, triggered on high percentage of packet drops; it requires the `PacketDrop` agent feature.<br><br/>
-          <br/>
-            <i>Enum</i>: NetObservNoFlows, NetObservLokiError, TooManyDrops<br/>
+          A list of variants for this template<br/>
         </td>
         <td>true</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alertGroups[index].alerts[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertgroupsindex)</sup></sup>
+### FlowCollector.spec.processor.metrics.alerts[index].variants[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindex)</sup></sup>
 
 
 
@@ -11567,7 +11565,7 @@ Possible values are:<br>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertgroupsindexalertsindexthresholds">thresholds</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindexthresholds">thresholds</a></b></td>
         <td>object</td>
         <td>
           Thresholds of the alert per severity.
@@ -11575,28 +11573,12 @@ They are expressed as a percentage of errors above which the alert is triggered.
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b>grouping</b></td>
+        <td><b>groupBy</b></td>
         <td>enum</td>
         <td>
-          Optional grouping criteria, possible values are:<br>
-- `PerNode`<br>
-- `PerNamespace`<br>
-- `PerWorkload`<br><br/>
+          Optional grouping criteria, possible values are: `Node`, `Namespace`, `Workload`.<br/>
           <br/>
-            <i>Enum</i>: , PerNode, PerNamespace, PerWorkload<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>groupingDirection</b></td>
-        <td>enum</td>
-        <td>
-          Grouping direction, possible values are:<br>
-- `BySource`<br>
-- `ByDestination`<br>
-- `BySourceAndDestination`<br>
-This setting is ignored when no `grouping` is provided.<br/>
-          <br/>
-            <i>Enum</i>: ByDestination, BySource, BySourceAndDestination<br/>
+            <i>Enum</i>: , Node, Namespace, Workload<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11605,15 +11587,15 @@ This setting is ignored when no `grouping` is provided.<br/>
         <td>
           The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
 It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
-When provided, it must be parsable as float.<br/>
+When provided, it must be parsable as a float.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alertGroups[index].alerts[index].thresholds
-<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertgroupsindexalertsindex)</sup></sup>
+### FlowCollector.spec.processor.metrics.alerts[index].variants[index].thresholds
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindexvariantsindex)</sup></sup>
 
 
 

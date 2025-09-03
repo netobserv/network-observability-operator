@@ -5784,45 +5784,39 @@ spec:
                     description: '`Metrics` define the processor configuration regarding
                       metrics'
                     properties:
-                      alertGroups:
+                      alerts:
                         description: |-
-                          `alertGroups` is a list of alerts to be created for Prometheus AlertManager, organized by group.
+                          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
                           More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                         items:
                           properties:
-                            alerts:
-                              description: A list of alert definitions for the group
+                            template:
+                              description: |-
+                                Alert template name.
+                                Possible values are: `TooManyKernelDrops`, `TooManyDeviceDrops`.
+                                More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                              enum:
+                              - TooManyKernelDrops
+                              - TooManyDeviceDrops
+                              type: string
+                            variants:
+                              description: A list of variants for this template
                               items:
                                 properties:
-                                  grouping:
-                                    description: |-
-                                      Optional grouping criteria, possible values are:<br>
-                                      - `PerNode`<br>
-                                      - `PerNamespace`<br>
-                                      - `PerWorkload`<br>
+                                  groupBy:
+                                    description: 'Optional grouping criteria, possible
+                                      values are: `Node`, `Namespace`, `Workload`.'
                                     enum:
                                     - ""
-                                    - PerNode
-                                    - PerNamespace
-                                    - PerWorkload
-                                    type: string
-                                  groupingDirection:
-                                    description: |-
-                                      Grouping direction, possible values are:<br>
-                                      - `BySource`<br>
-                                      - `ByDestination`<br>
-                                      - `BySourceAndDestination`<br>
-                                      This setting is ignored when no `grouping` is provided.
-                                    enum:
-                                    - ByDestination
-                                    - BySource
-                                    - BySourceAndDestination
+                                    - Node
+                                    - Namespace
+                                    - Workload
                                     type: string
                                   lowVolumeThreshold:
                                     description: |-
                                       The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
                                       It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
-                                      When provided, it must be parsable as float.
+                                      When provided, it must be parsable as a float.
                                     type: string
                                   thresholds:
                                     description: |-
@@ -5846,27 +5840,15 @@ spec:
                                 - thresholds
                                 type: object
                               type: array
-                            name:
-                              description: |-
-                                Alert group name; TODO: more doc with the list of available alerts, similar to the metrics list.
-                                Possible values are:<br>
-                                - `NetObservNoFlows`, triggered when no flows are being observed for a certain period.<br>
-                                - `NetObservLokiError`, triggered when flows are being dropped due to Loki errors.<br>
-                                - `TooManyDrops`, triggered on high percentage of packet drops; it requires the `PacketDrop` agent feature.<br>
-                              enum:
-                              - NetObservNoFlows
-                              - NetObservLokiError
-                              - TooManyDrops
-                              type: string
                           required:
-                          - alerts
-                          - name
+                          - template
+                          - variants
                           type: object
                         type: array
                       disableAlerts:
                         description: |-
                           `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-                          Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyDrops`.<br>
+                          Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyKernelDrops`, `TooManyDeviceDrops`.
                           More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                         items:
                           type: string

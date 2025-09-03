@@ -218,7 +218,7 @@ func ControllerSpecs() {
 					LogTypes: &outputRecordTypes,
 					Metrics: flowslatest.FLPMetrics{
 						IncludeList:   &[]flowslatest.FLPMetric{"node_ingress_bytes_total"},
-						DisableAlerts: []flowslatest.FLPAlertGroupName{flowslatest.AlertLokiError},
+						DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
 					},
 				}
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
@@ -469,7 +469,7 @@ func ControllerSpecs() {
 				}, &pr)
 			}, timeout, interval).Should(Succeed())
 			Expect(pr.Spec.Groups).Should(HaveLen(1))
-			Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(1))
+			Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(2))
 
 			// Manually delete ServiceMonitor
 			By("Deleting ServiceMonitor")

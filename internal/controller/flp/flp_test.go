@@ -30,7 +30,7 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
-	"github.com/netobserv/network-observability-operator/internal/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/internal/pkg/metrics/alerts"
 
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -582,7 +582,7 @@ func TestPrometheusRuleNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	r := metrics.BuildAlertRules(context.Background(), &cfg)
+	r := alerts.BuildRules(context.Background(), &cfg)
 	first := b.prometheusRule(r)
 
 	// Check no change
@@ -599,13 +599,13 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	// Get first
 	cfg := getConfig()
 	b := monoBuilder("namespace", &cfg)
-	r := metrics.BuildAlertRules(context.Background(), &cfg)
+	r := alerts.BuildRules(context.Background(), &cfg)
 	first := b.prometheusRule(r)
 
 	// Check enabled rule change
-	cfg.Processor.Metrics.DisableAlerts = []flowslatest.FLPAlertGroupName{flowslatest.AlertNoFlows}
+	cfg.Processor.Metrics.DisableAlerts = []flowslatest.AlertTemplate{flowslatest.AlertNoFlows}
 	b = monoBuilder("namespace", &cfg)
-	r = metrics.BuildAlertRules(context.Background(), &cfg)
+	r = alerts.BuildRules(context.Background(), &cfg)
 	second := b.prometheusRule(r)
 
 	report := helper.NewChangeReport("")
@@ -615,7 +615,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2", ClusterInfo: &cluster.Info{}}
 	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil)
-	r = metrics.BuildAlertRules(context.Background(), &cfg)
+	r = alerts.BuildRules(context.Background(), &cfg)
 	third := b.prometheusRule(r)
 
 	report = helper.NewChangeReport("")
