@@ -580,15 +580,15 @@ type FLPMetrics struct {
 	IncludeList *[]FLPMetric `json:"includeList,omitempty"`
 
 	// `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-	// Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyDrops`.<br>
+	// Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyKernelDrops`, `TooManyDeviceDrops`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
-	DisableAlerts []FLPAlertGroupName `json:"disableAlerts"`
+	DisableAlerts []AlertTemplate `json:"disableAlerts"`
 
-	// `alertGroups` is a list of alerts to be created for Prometheus AlertManager, organized by group.
+	// `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
-	AlertGroups *[]FLPAlertGroup `json:"alertGroups"`
+	Alerts *[]FLPAlert `json:"alerts"`
 }
 
 type FLPLogTypes string

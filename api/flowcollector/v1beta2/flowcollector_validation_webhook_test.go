@@ -575,17 +575,17 @@ func TestValidateFLP(t *testing.T) {
 				Spec: FlowCollectorSpec{
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							AlertGroups: &[]FLPAlertGroup{
+							Alerts: &[]FLPAlert{
 								{
-									Name:   AlertTooManyDrops,
-									Alerts: []FLPAlert{},
+									Template: AlertTooManyKernelDrops,
+									Variants: []AlertVariant{},
 								},
 							},
 						},
 					},
 				},
 			},
-			expectedWarnings: admission.Warnings{"Alert TooManyDrops requires the PacketDrop agent feature to be enabled"},
+			expectedWarnings: admission.Warnings{"Alert TooManyKernelDrops requires the PacketDrop agent feature to be enabled"},
 		},
 		{
 			name:       "Missing metrics for alerts",
@@ -598,13 +598,13 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							AlertGroups: &[]FLPAlertGroup{
+							Alerts: &[]FLPAlert{
 								{
-									Name: AlertTooManyDrops,
-									Alerts: []FLPAlert{
+									Template: AlertTooManyKernelDrops,
+									Variants: []AlertVariant{
 										{
-											Grouping: GroupingPerNode,
-											Thresholds: FLPAlertThresholds{
+											GroupBy: GroupByNode,
+											Thresholds: AlertThresholds{
 												Info: "5",
 											},
 										},
@@ -616,8 +616,8 @@ func TestValidateFLP(t *testing.T) {
 				},
 			},
 			expectedWarnings: admission.Warnings{
-				"Alert TooManyDrops/PerNode requires enabling at least one metric from this list: node_drop_packets_total",
-				"Alert TooManyDrops/PerNode requires enabling at least one metric from this list: node_ingress_packets_total, node_egress_packets_total",
+				"Alert TooManyKernelDrops/Node requires enabling at least one metric from this list: node_drop_packets_total",
+				"Alert TooManyKernelDrops/Node requires enabling at least one metric from this list: node_ingress_packets_total, node_egress_packets_total",
 			},
 		},
 		{
@@ -631,12 +631,12 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							AlertGroups: &[]FLPAlertGroup{
+							Alerts: &[]FLPAlert{
 								{
-									Name: AlertTooManyDrops,
-									Alerts: []FLPAlert{
+									Template: AlertTooManyKernelDrops,
+									Variants: []AlertVariant{
 										{
-											Thresholds: FLPAlertThresholds{
+											Thresholds: AlertThresholds{
 												Info: "nope",
 											},
 										},
@@ -648,7 +648,7 @@ func TestValidateFLP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: `cannot parse info threshold as float in spec.processor.metrics.alertGroups[0].alerts[0]: "nope"`,
+			expectedError: `cannot parse info threshold as float in spec.processor.metrics.alerts[0].variants[0]: "nope"`,
 		},
 		{
 			name:       "Invalid alert threshold severities",
@@ -661,12 +661,12 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							AlertGroups: &[]FLPAlertGroup{
+							Alerts: &[]FLPAlert{
 								{
-									Name: AlertTooManyDrops,
-									Alerts: []FLPAlert{
+									Template: AlertTooManyKernelDrops,
+									Variants: []AlertVariant{
 										{
-											Thresholds: FLPAlertThresholds{
+											Thresholds: AlertThresholds{
 												Info:     "5",
 												Warning:  "50",
 												Critical: "10",
@@ -693,13 +693,13 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							AlertGroups: &[]FLPAlertGroup{
+							Alerts: &[]FLPAlert{
 								{
-									Name: AlertTooManyDrops,
-									Alerts: []FLPAlert{
+									Template: AlertTooManyKernelDrops,
+									Variants: []AlertVariant{
 										{
-											Grouping: GroupingPerNode,
-											Thresholds: FLPAlertThresholds{
+											GroupBy: GroupByNode,
+											Thresholds: AlertThresholds{
 												Info: "5.5",
 											},
 										},
@@ -729,25 +729,25 @@ func TestValidateFLP(t *testing.T) {
 }
 
 func TestElligibleMetrics(t *testing.T) {
-	met, tot := GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{
-		Grouping: GroupingPerNamespace,
+	met, tot := GetElligibleMetricsForAlert(AlertTooManyKernelDrops, &AlertVariant{
+		GroupBy: GroupByNamespace,
 	})
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{
-		Grouping: GroupingPerWorkload,
+	met, tot = GetElligibleMetricsForAlert(AlertTooManyKernelDrops, &AlertVariant{
+		GroupBy: GroupByWorkload,
 	})
 	assert.Equal(t, []string{"workload_drop_packets_total"}, met)
 	assert.Equal(t, []string{"workload_ingress_packets_total", "workload_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{
-		Grouping: GroupingPerNode,
+	met, tot = GetElligibleMetricsForAlert(AlertTooManyKernelDrops, &AlertVariant{
+		GroupBy: GroupByNode,
 	})
 	assert.Equal(t, []string{"node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"node_ingress_packets_total", "node_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForAlert(AlertTooManyDrops, &FLPAlert{})
+	met, tot = GetElligibleMetricsForAlert(AlertTooManyKernelDrops, &AlertVariant{})
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total", "node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "node_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total", "node_egress_packets_total"}, tot)
 }
