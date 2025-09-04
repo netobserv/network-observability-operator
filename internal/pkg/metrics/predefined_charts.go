@@ -12,7 +12,7 @@ const (
 )
 
 func trafficCharts(group, vt, dir string) []metricslatest.Chart {
-	sectionName := "Traffic rates"
+	sectionName := "Traffic rates per " + strings.TrimSuffix(group, "s")
 	var unit metricslatest.Unit
 	switch vt {
 	case tagBytes:
@@ -29,38 +29,7 @@ func trafficCharts(group, vt, dir string) []metricslatest.Chart {
 		Unit:          unit,
 		Queries:       []metricslatest.Query{{PromQL: "sum(rate($METRIC[2m]))"}},
 	}
-
-	appSingleStat := metricslatest.Chart{
-		Type:          metricslatest.ChartTypeSingleStat,
-		SectionName:   "",
-		DashboardName: mainDashboard,
-		Title:         fmt.Sprintf("Apps %s traffic", dir),
-		Unit:          unit,
-		Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC{K8S_FlowLayer="app"}[2m]))`}},
-	}
-
-	infraSingleStat := metricslatest.Chart{
-		Type:          metricslatest.ChartTypeSingleStat,
-		SectionName:   "",
-		DashboardName: mainDashboard,
-		Title:         fmt.Sprintf("Infra %s traffic", dir),
-		Unit:          unit,
-		Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC{K8S_FlowLayer="infra"}[2m]))`}},
-	}
-
-	var charts []metricslatest.Chart
-	switch group {
-	case tagNodes:
-		charts = []metricslatest.Chart{
-			totalSingleStat,
-		}
-	case tagNamespaces, tagWorkloads:
-		charts = []metricslatest.Chart{
-			totalSingleStat,
-			infraSingleStat,
-			appSingleStat,
-		}
-	}
+	charts := []metricslatest.Chart{totalSingleStat}
 
 	return append(charts, chartVariantsFor(&metricslatest.Chart{
 		Type:          metricslatest.ChartTypeStackArea,
@@ -275,23 +244,25 @@ func ipsecStatusChart(group string) []metricslatest.Chart {
 }
 
 func chartVariantsFor(chart *metricslatest.Chart, group, unit string) []metricslatest.Chart {
+	var additionalCharts []metricslatest.Chart
+	if group == tagWorkloads {
+		sectionNameNamespace := strings.Replace(chart.SectionName, "per workload", "per namespace", 1)
+		nsInfra := chartVariantFor(chart, tagNamespaces, "infra", unit)
+		nsInfra.SectionName = sectionNameNamespace
+		nsApp := chartVariantFor(chart, tagNamespaces, "app", unit)
+		nsApp.SectionName = sectionNameNamespace
+		additionalCharts = []metricslatest.Chart{nsInfra, nsApp}
+	}
 	switch group {
 	case tagNodes:
 		return []metricslatest.Chart{
 			chartVariantFor(chart, group, "", unit),
 		}
-	case tagNamespaces:
-		return []metricslatest.Chart{
+	case tagNamespaces, tagWorkloads:
+		return append(additionalCharts, []metricslatest.Chart{
 			chartVariantFor(chart, group, "infra", unit),
 			chartVariantFor(chart, group, "app", unit),
-		}
-	case tagWorkloads:
-		return []metricslatest.Chart{
-			chartVariantFor(chart, tagNamespaces, "infra", unit),
-			chartVariantFor(chart, tagNamespaces, "app", unit),
-			chartVariantFor(chart, group, "infra", unit),
-			chartVariantFor(chart, group, "app", unit),
-		}
+		}...)
 	}
 	return nil
 }

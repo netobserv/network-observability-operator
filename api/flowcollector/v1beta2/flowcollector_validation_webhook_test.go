@@ -588,6 +588,35 @@ func TestValidateFLP(t *testing.T) {
 			expectedWarnings: admission.Warnings{"Alert TooManyKernelDrops requires the PacketDrop agent feature to be enabled"},
 		},
 		{
+			name:       "No missing metrics for alerts by default",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{PacketDrop},
+						Privileged: true,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							Alerts: &[]FLPAlert{
+								{
+									Template: AlertTooManyKernelDrops,
+									Variants: []AlertVariant{
+										{
+											GroupBy: GroupByNode,
+											Thresholds: AlertThresholds{
+												Info: "5.5",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:       "Missing metrics for alerts",
 			ocpVersion: "4.18.0",
 			fc: &FlowCollector{
@@ -611,6 +640,7 @@ func TestValidateFLP(t *testing.T) {
 									},
 								},
 							},
+							IncludeList: &[]FLPMetric{"node_ingress_bytes_total"},
 						},
 					},
 				},
@@ -681,36 +711,6 @@ func TestValidateFLP(t *testing.T) {
 				},
 			},
 			expectedError: `warning threshold must be lower than 10, which is defined for a higher severity`,
-		},
-		{
-			name:       "Correctly configured metrics for alerts",
-			ocpVersion: "4.18.0",
-			fc: &FlowCollector{
-				Spec: FlowCollectorSpec{
-					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
-						Features:   []AgentFeature{PacketDrop},
-						Privileged: true,
-					}},
-					Processor: FlowCollectorFLP{
-						Metrics: FLPMetrics{
-							Alerts: &[]FLPAlert{
-								{
-									Template: AlertTooManyKernelDrops,
-									Variants: []AlertVariant{
-										{
-											GroupBy: GroupByNode,
-											Thresholds: AlertThresholds{
-												Info: "5.5",
-											},
-										},
-									},
-								},
-							},
-							IncludeList: &[]FLPMetric{"node_drop_packets_total", "node_ingress_packets_total"},
-						},
-					},
-				},
-			},
 		},
 	}
 

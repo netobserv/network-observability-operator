@@ -84,6 +84,10 @@ func init() {
 			},
 			tags: []string{group, group + "-flows", "flows"},
 		})
+	}
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+		groupTrimmed := strings.TrimSuffix(group, "s")
+		labels := mapLabels[group]
 		// RTT metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
@@ -100,6 +104,10 @@ func init() {
 			},
 			tags: []string{group, "rtt"},
 		})
+	}
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+		groupTrimmed := strings.TrimSuffix(group, "s")
+		labels := mapLabels[group]
 		// Drops metrics
 		dropLabels := labels
 		dropLabels = append(dropLabels, "PktDropLatestState", "PktDropLatestDropCause")
@@ -129,6 +137,10 @@ func init() {
 			},
 			tags: []string{group, tagBytes, "drop"},
 		})
+	}
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+		groupTrimmed := strings.TrimSuffix(group, "s")
+		labels := mapLabels[group]
 		// DNS metrics
 		dnsLabels := labels
 		dnsLabels = append(dnsLabels, "DnsFlagsResponseCode")
@@ -147,7 +159,11 @@ func init() {
 			},
 			tags: []string{group, "dns"},
 		})
+	}
 
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+		groupTrimmed := strings.TrimSuffix(group, "s")
+		labels := mapLabels[group]
 		// Netpol metrics
 		netpolLabels := labels
 		netpolLabels = append(netpolLabels, "NetworkEvents>Type", "NetworkEvents>Namespace", "NetworkEvents>Name", "NetworkEvents>Action", "NetworkEvents>Direction")
@@ -169,7 +185,11 @@ func init() {
 			},
 			tags: []string{group, "network-policy"},
 		})
+	}
 
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+		groupTrimmed := strings.TrimSuffix(group, "s")
+		labels := mapLabels[group]
 		// IPSEC
 		ipsecLabels := labels
 		ipsecLabels = append(ipsecLabels, "IPSecStatus")
@@ -243,15 +263,24 @@ func GetAllNames() []string {
 func getUpdatedDefsFromNames(names []string, labelsToRemove []string, filterRecordType *metricslatest.MetricFilter) []metricslatest.FlowMetric {
 	ret := []metricslatest.FlowMetric{}
 	for i := range predefinedMetrics {
-		for _, name := range names {
-			if predefinedMetrics[i].MetricName == name {
-				spec := predefinedMetrics[i].FlowMetricSpec
-				spec.Labels = removeLabels(spec.Labels, labelsToRemove)
-				if filterRecordType != nil {
-					spec.Filters = append(spec.Filters, *filterRecordType)
-				}
-				ret = append(ret, metricslatest.FlowMetric{Spec: spec})
+		if slices.Contains(names, predefinedMetrics[i].MetricName) {
+			spec := predefinedMetrics[i].FlowMetricSpec
+			spec.Labels = removeLabels(spec.Labels, labelsToRemove)
+			if filterRecordType != nil {
+				spec.Filters = append(spec.Filters, *filterRecordType)
 			}
+			// Do not display charts for pps when same metric exists as bps, to avoid overloading the dashboard
+			if strings.Contains(predefinedMetrics[i].MetricName, "_packets_") {
+				nameWithBytes := strings.Replace(predefinedMetrics[i].MetricName, "_packets_", "_bytes_", 1)
+				if slices.Contains(names, nameWithBytes) {
+					spec.Charts = nil
+				}
+				nameWithBytes = strings.Replace(nameWithBytes, "namespace_", "workload_", 1)
+				if slices.Contains(names, nameWithBytes) {
+					spec.Charts = nil
+				}
+			}
+			ret = append(ret, metricslatest.FlowMetric{Spec: spec})
 		}
 	}
 	return ret
