@@ -633,7 +633,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
 
-	var decoded config.ConfigFileStruct
+	var decoded config.Root
 	err = json.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
@@ -681,7 +681,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
 
-	var decoded config.ConfigFileStruct
+	var decoded config.Root
 	err = json.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)

@@ -18,7 +18,7 @@ import (
 )
 
 func getConfiguredMetrics(cm *corev1.ConfigMap) (api.MetricsItems, error) {
-	var cfs config.ConfigFileStruct
+	var cfs config.Root
 	err := json.Unmarshal([]byte(cm.Data[configFile]), &cfs)
 	if err != nil {
 		return nil, err
