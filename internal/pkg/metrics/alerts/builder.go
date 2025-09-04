@@ -139,7 +139,7 @@ func getAlertLegend(alert *flowslatest.AlertVariant) string {
 func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperThreshold, lowVolumeThreshold string) string {
 	var lowVolumeThresholdPart, upperThresholdPart string
 	if lowVolumeThreshold != "" {
-		lowVolumeThresholdPart = " > " + lowVolumeThresholdPart
+		lowVolumeThresholdPart = " > " + lowVolumeThreshold
 	}
 	if upperThreshold != "" {
 		upperThresholdPart = " < " + upperThreshold

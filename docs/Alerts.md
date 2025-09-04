@@ -11,10 +11,11 @@ By default, NetObserv creates some alerts, contextual to the enabled features. F
 
 Here is the list of alerts installed by default:
 
-- `TooManyDrops`: triggered on high percentage of packet drops; it requires the `PacketDrop` agent feature. 3 variants installed by default:
-  - "Warning" severity, >=10% of drops, grouped by source nodes
-  - "Warning" severity, >=10% of drops, grouped by destination nodes
-  - "Info" severity, >=20% of drops, grouped by source+destination namespaces
+- `TooManyDeviceDrops`: triggered on high percentage of packet drops from devices (`/proc/net/dev`):
+  - grouped by node, with "Warning" severity above 5%
+- `TooManyKernelDrops`: triggered on high percentage of packet drops by the kernel; it requires the `PacketDrop` agent feature. 2 variants installed by default:
+  - grouped by node, with "Info" severity above 5% and "Warning" above 10%
+  - grouped by namespace, with "Info" severity above 10% and "Warning" above 20%
 
 On top of that, there are also some operational alerts that relate to NetObserv's self health:
 
@@ -23,9 +24,9 @@ On top of that, there are also some operational alerts that relate to NetObserv'
 
 ## Configure predefined alerts
 
-Alerts are configured in the `FlowCollector` custom resource, via `spec.processor.metrics.alertGroups`.
+Alerts are configured in the `FlowCollector` custom resource, via `spec.processor.metrics.alerts`.
 
-They are organized by groups and variants. The group names are the ones listed above, such as `TooManyDrops`. For each group, you can define a list of alert rules to generate, each with their threshold, grouping configuration and severity.
+They are organized by groups and variants. The group names are the ones listed above, such as `TooManyKernelDrops`. For each group, you can define a list of alert rules to generate, each with their threshold, grouping configuration and severity.
 
 Example:
 
@@ -33,26 +34,27 @@ Example:
 spec:
   processor:
     metrics:
-      alertGroups:
-      - name: TooManyDrops
-        alerts:
-        - severity: Critical
-          threshold: "10"
-          # triggered when the whole cluster traffic (no grouping) reaches 10% of drops
-        - severity: Warning
-          threshold: "15"
-          grouping: PerNode
-          groupingDirection: ByDestination
-          # triggered when per-destination-node traffic reaches 15% of drops
+      alerts:
+      - template: TooManyKernelDrops
+        variants:
+        # triggered when the whole cluster traffic (no grouping) reaches 10% of drops
+        - thresholds:
+            critical: "10"
+        # triggered when per-node traffic reaches 5% of drops, with gradual severity
+        - thresholds:
+            critical: "15"
+            warning: "10"
+            info: "5"
+          groupBy: Node
 ```
 
-When you configure an alert group, it overrides (replaces) the default configuration for that group. So, if you want to add a new alert on top of the default ones for a group, you need to replicate the default configuration manually, which is described in the section above.
+When you configure an alert, it overrides (replaces) the default configuration for that template. So, if you want to add a new alert on top of the default ones for a group, you may want to replicate the default configuration manually, which is described in the section above.
 
 ## Disable predefined alerts
 
 Alert groups can be disabled in `spec.processor.metrics.disableAlerts`. This settings accepts a list of group names, as listed above.
 
-If a group is disabled _and_ overridden in `spec.processor.metrics.alertGroups`, the disable setting takes precedence: the alert rule will not created.
+If a group is disabled _and_ overridden in `spec.processor.metrics.alerts`, the disable setting takes precedence: the alert rule will not created.
 
 ## Customizing even further
 
