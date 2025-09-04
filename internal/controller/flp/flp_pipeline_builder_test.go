@@ -109,8 +109,10 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
 		"namespace_flows_total",
+		"namespace_ingress_packets_total",
 		"node_egress_bytes_total",
 		"node_ingress_bytes_total",
+		"node_ingress_packets_total",
 		"node_to_node_ingress_flows_total",
 		"workload_egress_bytes_total",
 		"workload_ingress_bytes_total",
@@ -134,9 +136,12 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 		"namespace_dns_latency_seconds",
 		"namespace_drop_packets_total",
 		"namespace_flows_total",
+		"namespace_ingress_packets_total",
 		"namespace_rtt_seconds",
+		"node_drop_packets_total",
 		"node_egress_bytes_total",
 		"node_ingress_bytes_total",
+		"node_ingress_packets_total",
 		"node_to_node_ingress_flows_total",
 		"workload_egress_bytes_total",
 		"workload_ingress_bytes_total",

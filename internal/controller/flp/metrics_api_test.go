@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
+	"github.com/netobserv/network-observability-operator/internal/controller/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
@@ -50,6 +51,7 @@ func metric(metrics api.MetricsItems, name string) *api.MetricsItem {
 func TestFlowMetricToFLP(t *testing.T) {
 	assert := assert.New(t)
 
+	fmstatus.Reset()
 	b, err := defaultBuilderWithMetrics(&metricslatest.FlowMetricList{
 		Items: []metricslatest.FlowMetric{
 			{Spec: metricslatest.FlowMetricSpec{
@@ -82,8 +84,10 @@ func TestFlowMetricToFLP(t *testing.T) {
 		"m_1",
 		"m_2",
 		"namespace_flows_total",
+		"namespace_ingress_packets_total",
 		"node_egress_bytes_total",
 		"node_ingress_bytes_total",
+		"node_ingress_packets_total",
 		"node_to_node_ingress_flows_total",
 		"workload_egress_bytes_total",
 		"workload_ingress_bytes_total",

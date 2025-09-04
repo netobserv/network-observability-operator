@@ -5,10 +5,13 @@ var (
 	DefaultIncludeList = []string{
 		"node_ingress_bytes_total",
 		"node_egress_bytes_total",
+		"node_ingress_packets_total",
+		"node_drop_packets_total",
 		"workload_sampling",
 		"workload_ingress_bytes_total",
 		"workload_egress_bytes_total",
 		"namespace_flows_total",
+		"namespace_ingress_packets_total",
 		"namespace_drop_packets_total",
 		"namespace_rtt_seconds",
 		"namespace_dns_latency_seconds",
@@ -20,6 +23,8 @@ var (
 	DefaultIncludeListLokiDisabled = []string{
 		"node_ingress_bytes_total",
 		"node_egress_bytes_total",
+		"node_ingress_packets_total",
+		"node_drop_packets_total",
 		"workload_ingress_bytes_total",
 		"workload_egress_bytes_total",
 		"workload_sampling",
