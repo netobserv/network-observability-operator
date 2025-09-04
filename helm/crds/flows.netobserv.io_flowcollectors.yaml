@@ -3865,6 +3865,12 @@ spec:
                           default: http://loki:3100/
                           description: '`url` is the unique address of an existing Loki service that points to both the ingester and the querier.'
                           type: string
+                        zeroClick:
+                          default: true
+                          description: |-
+                            Set `zeroClick` to `true` to automatically create Loki deployment, service and storage.
+                            This is useful for development pureposes. Do not use it in production.
+                          type: boolean
                       type: object
                     readTimeout:
                       default: 30s
