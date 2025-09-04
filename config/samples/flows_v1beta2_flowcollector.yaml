@@ -102,9 +102,9 @@ spec:
       # - "namespace_drop_packets_total"
       # - "node_drop_packets_total"
       # - "namespace_rtt_seconds"
-      # alertGroups:
-      # - name: TooManyDrops
-      #   alerts:
+      # alerts:
+      # - template: TooManyKernelDrops
+      #   variants:
       #   - thresholds:
       #       critical: "15"
       #       warning: "10"
@@ -113,14 +113,14 @@ spec:
       #       critical: "15"
       #       warning: "10"
       #       info: "5"
-      #     grouping: PerNode
-      #     groupingDirection: ByDestination
+      #     groupBy: Node
+      #     lowVolumeThreshold: "5"
       #   - thresholds:
       #       critical: "15"
       #       warning: "10"
       #       info: "5"
-      #     grouping: PerNamespace
-      #     groupingDirection: BySource
+      #     groupBy: Namespace
+      #     lowVolumeThreshold: "5"
     # Kafka consumer stage configuration
     kafkaConsumerReplicas: 3
     kafkaConsumerAutoscaler: null
