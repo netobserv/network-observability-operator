@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"sort"
 	"testing"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
@@ -14,29 +15,30 @@ func TestIncludeExclude(t *testing.T) {
 
 	// IgnoreTags set, Include list unset => resolving ignore tags
 	res := GetAsIncludeList([]string{"egress", "packets", "flows"}, nil)
+	sort.Slice(*res, func(i, j int) bool { return (*res)[i] < (*res)[j] })
 	assert.Equal([]flowslatest.FLPMetric{
-		"node_ingress_bytes_total",
-		"node_sampling",
-		"node_rtt_seconds",
-		"node_drop_bytes_total",
-		"node_dns_latency_seconds",
-		"node_network_policy_events_total",
-		"node_ipsec_flows_total",
-		"namespace_ingress_bytes_total",
-		"namespace_sampling",
-		"namespace_rtt_seconds",
-		"namespace_drop_bytes_total",
 		"namespace_dns_latency_seconds",
-		"namespace_network_policy_events_total",
+		"namespace_drop_bytes_total",
+		"namespace_ingress_bytes_total",
 		"namespace_ipsec_flows_total",
-		"workload_ingress_bytes_total",
-		"workload_sampling",
-		"workload_rtt_seconds",
-		"workload_drop_bytes_total",
-		"workload_dns_latency_seconds",
-		"workload_network_policy_events_total",
-		"workload_ipsec_flows_total",
+		"namespace_network_policy_events_total",
+		"namespace_rtt_seconds",
+		"namespace_sampling",
+		"node_dns_latency_seconds",
+		"node_drop_bytes_total",
+		"node_ingress_bytes_total",
+		"node_ipsec_flows_total",
+		"node_network_policy_events_total",
+		"node_rtt_seconds",
+		"node_sampling",
 		"node_to_node_ingress_flows_total",
+		"workload_dns_latency_seconds",
+		"workload_drop_bytes_total",
+		"workload_ingress_bytes_total",
+		"workload_ipsec_flows_total",
+		"workload_network_policy_events_total",
+		"workload_rtt_seconds",
+		"workload_sampling",
 	}, *res)
 
 	// IgnoreTags set, Include list set => keep include list

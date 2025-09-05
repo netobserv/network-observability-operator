@@ -19,7 +19,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 	report := helper.NewChangeReport("EBPF Agent prometheus service")
 	defer report.LogIfNeeded(ctx)
 
-	if !helper.IsEBPFMetricsEnabled(target) {
+	if !target.IsEBPFMetricsEnabled() {
 		c.Managed.TryDelete(ctx, c.promSvc)
 		if c.ClusterInfo.HasSvcMonitor() {
 			c.Managed.TryDelete(ctx, c.serviceMonitor)
@@ -51,7 +51,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 }
 
 func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *corev1.Service {
-	port := helper.GetEBPFMetricsPort(target)
+	port := target.GetMetricsPort()
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentMetricsSvcName,

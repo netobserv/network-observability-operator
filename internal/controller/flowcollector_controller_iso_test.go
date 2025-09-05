@@ -88,7 +88,7 @@ func flowCollectorIsoSpecs() {
 							Provided: nil,
 						},
 					},
-					DisableAlerts: []flowslatest.FLPAlert{},
+					DisableAlerts: []flowslatest.AlertTemplate{},
 				},
 			},
 			Agent: flowslatest.FlowCollectorAgent{
