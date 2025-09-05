@@ -62,7 +62,7 @@ func flowCollectorIsoSpecs() {
 				ImagePullPolicy:            "Always",
 				LogLevel:                   "trace",
 				Resources:                  v1.ResourceRequirements{Limits: nil, Requests: nil},
-				KafkaConsumerReplicas:      &zero,
+				ConsumerReplicas:           &zero,
 				KafkaConsumerAutoscaler:    flowslatest.FlowCollectorHPA{Status: "Disabled", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
 				KafkaConsumerQueueCapacity: int(zero),
 				KafkaConsumerBatchSize:     int(zero),

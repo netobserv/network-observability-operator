@@ -22,6 +22,8 @@ import (
 type monolithReconciler struct {
 	*reconcilers.Instance
 	daemonSet        *appsv1.DaemonSet
+	deployment       *appsv1.Deployment
+	service          *corev1.Service
 	promService      *corev1.Service
 	serviceAccount   *corev1.ServiceAccount
 	staticConfigMap  *corev1.ConfigMap
@@ -38,6 +40,8 @@ func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
 	rec := monolithReconciler{
 		Instance:         cmn,
 		daemonSet:        cmn.Managed.NewDaemonSet(monoName),
+		deployment:       cmn.Managed.NewDeployment(monoName),
+		service:          cmn.Managed.NewService(monoName),
 		promService:      cmn.Managed.NewService(constants.FLPMetricsSvcName),
 		serviceAccount:   cmn.Managed.NewServiceAccount(monoName),
 		staticConfigMap:  cmn.Managed.NewConfigMap(monoConfigMap),
@@ -109,6 +113,14 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
+	if helper.UseHostNetwork(&desired.Spec) {
+		r.Managed.TryDelete(ctx, r.service)
+	} else {
+		if err := r.reconcileService(ctx, &builder); err != nil {
+			return err
+		}
+	}
+
 	err = r.reconcilePrometheusService(ctx, &builder)
 	if err != nil {
 		return err
@@ -132,7 +144,15 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
+	if helper.UseHostNetwork(&desired.Spec) {
+		// Use DaemonSet
+		r.Managed.TryDelete(ctx, r.deployment)
+		return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
+	}
+
+	// Use Deployment
+	r.Managed.TryDelete(ctx, r.daemonSet)
+	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations)
 }
 
 func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, newDCM *corev1.ConfigMap) error {
@@ -144,6 +164,16 @@ func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, newD
 		if err := r.UpdateIfOwned(ctx, r.dynamicConfigMap, newDCM); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (r *monolithReconciler) reconcileService(ctx context.Context, builder *monolithBuilder) error {
+	report := helper.NewChangeReport("FLP service")
+	defer report.LogIfNeeded(ctx)
+
+	if err := r.ReconcileService(ctx, r.service, builder.service(), &report); err != nil {
+		return err
 	}
 	return nil
 }
@@ -184,6 +214,22 @@ func (r *monolithReconciler) reconcileDaemonSet(ctx context.Context, desiredDS *
 	)
 }
 
+func (r *monolithReconciler) reconcileDeployment(ctx context.Context, desiredFLP *flowslatest.FlowCollectorFLP, builder *monolithBuilder, annotations map[string]string) error {
+	report := helper.NewChangeReport("FLP Deployment")
+	defer report.LogIfNeeded(ctx)
+
+	return reconcilers.ReconcileDeployment(
+		ctx,
+		r.Instance,
+		r.deployment,
+		builder.deployment(annotations),
+		constants.FLPName,
+		!helper.IsUnmanagedFLPReplicas(desiredFLP),
+		helper.GetFLPReplicas(desiredFLP),
+		&report,
+	)
+}
+
 func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *monolithBuilder) error {
 	if !r.Managed.Exists(r.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
@@ -196,7 +242,7 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 	}
 
 	// Host network
-	if r.ClusterInfo.IsOpenShift() {
+	if r.ClusterInfo.IsOpenShift() && helper.UseHostNetwork(builder.desired) {
 		r.rbHostNetwork = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.HostNetworkRole)
 		if err := r.ReconcileClusterRoleBinding(ctx, r.rbHostNetwork); err != nil {
 			return err

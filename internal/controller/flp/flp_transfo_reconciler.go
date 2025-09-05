@@ -166,8 +166,8 @@ func (r *transformerReconciler) reconcileDeployment(ctx context.Context, desired
 		r.deployment,
 		builder.deployment(annotations),
 		constants.FLPName,
-		helper.PtrInt32(desiredFLP.KafkaConsumerReplicas),
-		&desiredFLP.KafkaConsumerAutoscaler,
+		!helper.IsUnmanagedFLPReplicas(desiredFLP),
+		helper.GetFLPReplicas(desiredFLP),
 		&report,
 	)
 }

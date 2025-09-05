@@ -461,20 +461,31 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
 		advancedConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
-		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
-		// data to the pod that is deployed in the same host
-		config = append(config, corev1.EnvVar{
-			Name: envFlowsTargetHost,
-			ValueFrom: &corev1.EnvVarSource{
-				FieldRef: &corev1.ObjectFieldSelector{
-					APIVersion: "v1",
-					FieldPath:  "status.hostIP",
+		if helper.UseHostNetwork(&coll.Spec) {
+			// When flowlogs-pipeline is deployed as a daemonset, each agent must send
+			// data to the pod that is deployed in the same host
+			config = append(config, corev1.EnvVar{
+				Name: envFlowsTargetHost,
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						APIVersion: "v1",
+						FieldPath:  "status.hostIP",
+					},
 				},
-			},
-		}, corev1.EnvVar{
-			Name:  envFlowsTargetPort,
-			Value: strconv.Itoa(int(*advancedConfig.Port)),
-		})
+			}, corev1.EnvVar{
+				Name:  envFlowsTargetPort,
+				Value: strconv.Itoa(int(*advancedConfig.Port)),
+			})
+		} else {
+			// Send to FLP service
+			config = append(config, corev1.EnvVar{
+				Name:  envFlowsTargetHost,
+				Value: "flowlogs-pipeline.netobserv.svc", // TODO: generate
+			}, corev1.EnvVar{
+				Name:  envFlowsTargetPort,
+				Value: strconv.Itoa(int(*advancedConfig.Port)),
+			})
+		}
 	}
 
 	return config, nil

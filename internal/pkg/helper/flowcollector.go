@@ -27,6 +27,10 @@ func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
 	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
 }
 
+func UseHostNetwork(spec *flowslatest.FlowCollectorSpec) bool {
+	return spec.DeploymentModel == flowslatest.DeploymentModelDirect
+}
+
 func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
 	for _, ex := range spec.Exporters {
 		if ex.Type == flowslatest.KafkaExporter {
@@ -419,4 +423,27 @@ func AutoDetectOpenShiftNetworks(spec *flowslatest.FlowCollectorFLP) bool {
 
 func HasFLPDeduper(spec *flowslatest.FlowCollectorSpec) bool {
 	return spec.Processor.Deduper != nil && spec.Processor.Deduper.Mode != "" && spec.Processor.Deduper.Mode != flowslatest.FLPDeduperDisabled
+}
+
+func GetFLPReplicas(spec *flowslatest.FlowCollectorFLP) int32 {
+	if spec.ConsumerReplicas != nil {
+		return *spec.ConsumerReplicas
+	} else if spec.KafkaConsumerReplicas != nil {
+		return *spec.KafkaConsumerReplicas
+	}
+	return 3
+}
+
+func IsUnmanagedFLPReplicas(spec *flowslatest.FlowCollectorFLP) bool {
+	if spec.UnmanagedReplicas {
+		return true
+	}
+	return HPAEnabled(&spec.KafkaConsumerAutoscaler)
+}
+
+func IsUnmanagedConsolePluginReplicas(spec *flowslatest.FlowCollectorConsolePlugin) bool {
+	if spec.UnmanagedReplicas {
+		return true
+	}
+	return HPAEnabled(&spec.Autoscaler)
 }

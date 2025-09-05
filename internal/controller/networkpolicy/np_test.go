@@ -46,8 +46,8 @@ func getConfig() flowslatest.FlowCollector {
 			DeploymentModel: flowslatest.DeploymentModelDirect,
 			Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentEBPF},
 			Processor: flowslatest.FlowCollectorFLP{
-				LogLevel:              "trace",
-				KafkaConsumerReplicas: ptr.To(int32(1)),
+				LogLevel:         "trace",
+				ConsumerReplicas: ptr.To(int32(1)),
 				KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 					Status:  flowslatest.HPAStatusEnabled,
 					Metrics: []ascv2.MetricSpec{},

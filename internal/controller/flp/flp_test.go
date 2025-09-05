@@ -71,7 +71,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 					},
 				},
 			},
-			KafkaConsumerReplicas: ptr.To(int32(1)),
+			ConsumerReplicas: ptr.To(int32(1)),
 			KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 				Status:      flowslatest.HPAStatusEnabled,
 				MinReplicas: &minReplicas,
@@ -354,7 +354,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, !helper.HPAEnabled(&cfg.Processor.KafkaConsumerAutoscaler), *cfg.Processor.KafkaConsumerReplicas, &report))
+	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, !helper.IsUnmanagedFLPReplicas(&cfg.Processor), *cfg.Processor.ConsumerReplicas, &report))
 	assert.Contains(report.String(), "no change")
 }
 
@@ -378,7 +378,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	report := helper.NewChangeReport("")
 	checkChanged := func(old, newd *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
-		return helper.DeploymentChanged(old, newd, constants.FLPName, !helper.HPAEnabled(&spec.Processor.KafkaConsumerAutoscaler), *spec.Processor.KafkaConsumerReplicas, &report)
+		return helper.DeploymentChanged(old, newd, constants.FLPName, !helper.IsUnmanagedFLPReplicas(&spec.Processor), *spec.Processor.ConsumerReplicas, &report)
 	}
 
 	assert.True(checkChanged(first, second, cfg))
@@ -428,7 +428,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
+	cfg2.Processor.ConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, _, err = b.configMaps()
 	assert.NoError(err)
@@ -452,14 +452,14 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
+	cfg2.Processor.ConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, _, err = b.configMaps()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, !helper.HPAEnabled(&cfg2.Processor.KafkaConsumerAutoscaler), *cfg2.Processor.KafkaConsumerReplicas, &report))
+	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, !helper.IsUnmanagedFLPReplicas(&cfg2.Processor), *cfg2.Processor.ConsumerReplicas, &report))
 	assert.Contains(report.String(), "Replicas changed")
 }
 
