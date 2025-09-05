@@ -18,8 +18,8 @@ import (
 )
 
 // This function validate that each stage has its matching parameter
-func validatePipelineConfig(t *testing.T, staticCm *corev1.ConfigMap, dynamicCm *corev1.ConfigMap) (*config.ConfigFileStruct, string) {
-	var cfs config.ConfigFileStruct
+func validatePipelineConfig(t *testing.T, staticCm *corev1.ConfigMap, dynamicCm *corev1.ConfigMap) (*config.Root, string) {
+	var cfs config.Root
 	err := json.Unmarshal([]byte(staticCm.Data[configFile]), &cfs)
 	assert.NoError(t, err)
 

@@ -69,7 +69,7 @@ func NewPipeline(name string, ingest *Ingest) (PipelineBuilderStage, error) {
 
 // NewCollectorPipeline creates a new pipeline from an `IngestIpfix` initial stage (listening for NetFlows / IPFIX)
 //
-//nolint:golint,gocritic
+//nolint:gocritic // hugeParam can be ignored: func only used at init
 func NewIPFIXPipeline(name string, ingest api.IngestIpfix) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
@@ -79,8 +79,6 @@ func NewIPFIXPipeline(name string, ingest api.IngestIpfix) PipelineBuilderStage 
 }
 
 // NewGRPCPipeline creates a new pipeline from an `IngestGRPCProto` initial stage (listening for NetObserv's eBPF agent protobuf)
-//
-//nolint:golint,gocritic
 func NewGRPCPipeline(name string, ingest api.IngestGRPCProto) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
@@ -91,7 +89,7 @@ func NewGRPCPipeline(name string, ingest api.IngestGRPCProto) PipelineBuilderSta
 
 // NewKafkaPipeline creates a new pipeline from an `IngestKafka` initial stage (listening for flow events on Kafka)
 //
-//nolint:golint,gocritic
+//nolint:gocritic // hugeParam can be ignored: func only used at init
 func NewKafkaPipeline(name string, ingest api.IngestKafka) PipelineBuilderStage {
 	p := pipeline{
 		stages: []Stage{{Name: name}},
@@ -137,14 +135,14 @@ func (b *PipelineBuilderStage) TransformFilter(name string, filter api.Transform
 
 // TransformNetwork chains the current stage with a TransformNetwork stage and returns that new stage
 //
-//nolint:golint,gocritic
+//nolint:gocritic // hugeParam can be ignored: func only used at init
 func (b *PipelineBuilderStage) TransformNetwork(name string, nw api.TransformNetwork) PipelineBuilderStage {
 	return b.next(name, NewTransformNetworkParams(name, nw))
 }
 
 // ConnTrack chains the current stage with a ConnTrack stage and returns that new stage
 //
-//nolint:golint,gocritic
+//nolint:gocritic // hugeParam can be ignored: func only used at init
 func (b *PipelineBuilderStage) ConnTrack(name string, ct api.ConnTrack) PipelineBuilderStage {
 	return b.next(name, NewConnTrackParams(name, ct))
 }
@@ -156,35 +154,29 @@ func (b *PipelineBuilderStage) EncodePrometheus(name string, prom api.PromEncode
 
 // EncodeKafka chains the current stage with an EncodeKafka stage (writing to a Kafka topic) and returns that new stage
 //
-//nolint:golint,gocritic
+//nolint:gocritic // hugeParam can be ignored: func only used at init
 func (b *PipelineBuilderStage) EncodeKafka(name string, kafka api.EncodeKafka) PipelineBuilderStage {
 	return b.next(name, NewEncodeKafkaParams(name, kafka))
 }
 
 // EncodeS3 chains the current stage with an EncodeS3 stage (writing to s3 bucket) and returns that new stage
 //
-//nolint:golint,gocritic
+//nolint:gocritic // hugeParam can be ignored: func only used at init
 func (b *PipelineBuilderStage) EncodeS3(name string, s3 api.EncodeS3) PipelineBuilderStage {
 	return b.next(name, NewEncodeS3Params(name, s3))
 }
 
 // EncodeOtelLogs chains the current stage with an EncodeOtelLogs stage (writing logs to open telemetry) and returns that new stage
-//
-//nolint:golint,gocritic
 func (b *PipelineBuilderStage) EncodeOtelLogs(name string, logs api.EncodeOtlpLogs) PipelineBuilderStage {
 	return b.next(name, NewEncodeOtelLogsParams(name, logs))
 }
 
 // EncodeOtelMetrics chains the current stage with an EncodeOtelMetrics stage (writing metrics to open telemetry) and returns that new stage
-//
-//nolint:golint,gocritic
 func (b *PipelineBuilderStage) EncodeOtelMetrics(name string, metrics api.EncodeOtlpMetrics) PipelineBuilderStage {
 	return b.next(name, NewEncodeOtelMetricsParams(name, metrics))
 }
 
 // EncodeOtelTraces chains the current stage with an EncodeOtelTraces stage (writing traces to open telemetry) and returns that new stage
-//
-//nolint:golint,gocritic
 func (b *PipelineBuilderStage) EncodeOtelTraces(name string, traces api.EncodeOtlpTraces) PipelineBuilderStage {
 	return b.next(name, NewEncodeOtelTracesParams(name, traces))
 }
@@ -196,7 +188,7 @@ func (b *PipelineBuilderStage) WriteStdout(name string, stdout api.WriteStdout) 
 
 // WriteLoki chains the current stage with a WriteLoki stage and returns that new stage
 //
-//nolint:golint,gocritic
+//nolint:gocritic // hugeParam can be ignored: func only used at init
 func (b *PipelineBuilderStage) WriteLoki(name string, loki api.WriteLoki) PipelineBuilderStage {
 	return b.next(name, NewWriteLokiParams(name, loki))
 }
@@ -243,14 +235,14 @@ func (b *PipelineBuilderStage) GetDynamicStageParams() []StageParam {
 	return res
 }
 
-// IntoConfigFileStruct injects the current pipeline and params in the provided ConfigFileStruct object.
-func (b *PipelineBuilderStage) IntoConfigFileStruct(cfs *ConfigFileStruct) *ConfigFileStruct {
+// IntoRootConfig injects the current pipeline and params in the provided config.Root object.
+func (b *PipelineBuilderStage) IntoRootConfig(cfs *Root) *Root {
 	cfs.Pipeline = b.GetStages()
 	cfs.Parameters = b.GetStageParams()
 	return cfs
 }
 
-// ToConfigFileStruct returns the current pipeline and params as a new ConfigFileStruct object.
-func (b *PipelineBuilderStage) ToConfigFileStruct() *ConfigFileStruct {
-	return b.IntoConfigFileStruct(&ConfigFileStruct{})
+// ToRootConfig returns the current pipeline and params as a new config.Root object.
+func (b *PipelineBuilderStage) ToRootConfig() *Root {
+	return b.IntoRootConfig(&Root{})
 }

@@ -63,9 +63,8 @@ func ConvertToFloat64(unk interface{}) (float64, error) {
 			sv := v.Convert(stringType)
 			s := sv.String()
 			return strconv.ParseFloat(s, 64)
-		} else {
-			return math.NaN(), fmt.Errorf("can't convert %v to float64", v.Type())
 		}
+		return math.NaN(), fmt.Errorf("can't convert %v to float64", v.Type())
 	}
 }
 
@@ -101,9 +100,8 @@ func ConvertToUint32(unk interface{}) (uint32, error) {
 			s := sv.String()
 			res, err := strconv.ParseUint(s, 10, 32)
 			return uint32(res), err
-		} else {
-			return 0, fmt.Errorf("can't convert %v to uint32", v.Type())
 		}
+		return 0, fmt.Errorf("can't convert %v to uint32", v.Type())
 	}
 }
 
@@ -137,9 +135,8 @@ func ConvertToUint64(unk interface{}) (uint64, error) {
 			sv := v.Convert(stringType)
 			s := sv.String()
 			return strconv.ParseUint(s, 10, 64)
-		} else {
-			return 0, fmt.Errorf("can't convert %v to uint64", v.Type())
 		}
+		return 0, fmt.Errorf("can't convert %v to uint64", v.Type())
 	}
 }
 
@@ -173,9 +170,8 @@ func ConvertToInt64(unk interface{}) (int64, error) {
 			sv := v.Convert(stringType)
 			s := sv.String()
 			return strconv.ParseInt(s, 10, 64)
-		} else {
-			return 0, fmt.Errorf("can't convert %v to int64", v.Type())
 		}
+		return 0, fmt.Errorf("can't convert %v to int64", v.Type())
 	}
 }
 
@@ -211,9 +207,8 @@ func ConvertToInt(unk interface{}) (int, error) {
 			s := sv.String()
 			res, err := strconv.ParseInt(s, 10, 64)
 			return int(res), err
-		} else {
-			return 0, fmt.Errorf("can't convert %v to int", v.Type())
 		}
+		return 0, fmt.Errorf("can't convert %v to int", v.Type())
 	}
 }
 
@@ -252,9 +247,8 @@ func ConvertToBool(unk interface{}) (bool, error) {
 			default:
 				return false, fmt.Errorf("can't convert %v (%v) to bool", s, v.Type())
 			}
-		} else {
-			return false, fmt.Errorf("can't convert %v (%v) to bool", unk, v.Type())
 		}
+		return false, fmt.Errorf("can't convert %v (%v) to bool", unk, v.Type())
 	}
 }
 
