@@ -35,10 +35,7 @@ type Options struct {
 	Profile           Profile
 }
 
-// (nolint => needs refactoring)
-//
-//nolint:revive
-type ConfigFileStruct struct {
+type Root struct {
 	LogLevel          string            `yaml:"log-level,omitempty" json:"log-level,omitempty"`
 	MetricsSettings   MetricsSettings   `yaml:"metricsSettings,omitempty" json:"metricsSettings,omitempty"`
 	Pipeline          []Stage           `yaml:"pipeline,omitempty" json:"pipeline,omitempty"`
@@ -150,8 +147,8 @@ type Write struct {
 }
 
 // ParseConfig creates the internal unmarshalled representation from the Pipeline and Parameters json
-func ParseConfig(opts *Options) (ConfigFileStruct, error) {
-	out := ConfigFileStruct{}
+func ParseConfig(opts *Options) (Root, error) {
+	out := Root{}
 
 	logrus.Debugf("opts.PipeLine = %v ", opts.PipeLine)
 	err := JSONUnmarshalStrict([]byte(opts.PipeLine), &out.Pipeline)
