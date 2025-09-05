@@ -36,11 +36,8 @@ var (
 	})
 	UpdateOrDeleteOnlyPred = builder.WithPredicates(predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			// Update only if new object is owned and spec / annotations / labels change, ie. ignore status changes
-			return helper.IsOwned(e.ObjectNew) &&
-				(e.ObjectOld.GetGeneration() != e.ObjectNew.GetGeneration()) ||
-				!equality.Semantic.DeepEqual(e.ObjectNew.GetAnnotations(), e.ObjectOld.GetAnnotations()) ||
-				!equality.Semantic.DeepEqual(e.ObjectNew.GetLabels(), e.ObjectOld.GetLabels())
+			// Update only if new object is owned - we want to watch for status changes as well (e.g. to know when a deployment is ready)
+			return helper.IsOwned(e.ObjectNew)
 		},
 		CreateFunc: func(_ event.CreateEvent) bool { return false },
 		DeleteFunc: func(e event.DeleteEvent) bool {
