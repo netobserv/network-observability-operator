@@ -1536,8 +1536,8 @@ a node that violates one or more of the expressions. The node that is
 most preferred is the one with the greatest sum of weights, i.e.
 for each node that meets all of the scheduling requirements (resource
 request, requiredDuringScheduling anti-affinity expressions, etc.),
-compute a sum by iterating through the elements of this field and adding
-"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+compute a sum by iterating through the elements of this field and subtracting
+"weight" from the sum if the node has pods which matches the corresponding podAffinityTerm; the
 node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
@@ -2754,7 +2754,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-This is an alpha field and requires enabling the
+This field depends on the
 DynamicResourceAllocation feature gate.
 
 This field is immutable. It can only be set for containers.<br/>
@@ -4247,8 +4247,8 @@ a node that violates one or more of the expressions. The node that is
 most preferred is the one with the greatest sum of weights, i.e.
 for each node that meets all of the scheduling requirements (resource
 request, requiredDuringScheduling anti-affinity expressions, etc.),
-compute a sum by iterating through the elements of this field and adding
-"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+compute a sum by iterating through the elements of this field and subtracting
+"weight" from the sum if the node has pods which matches the corresponding podAffinityTerm; the
 node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
@@ -5921,7 +5921,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-This is an alpha field and requires enabling the
+This field depends on the
 DynamicResourceAllocation feature gate.
 
 This field is immutable. It can only be set for containers.<br/>
@@ -9752,8 +9752,8 @@ a node that violates one or more of the expressions. The node that is
 most preferred is the one with the greatest sum of weights, i.e.
 for each node that meets all of the scheduling requirements (resource
 request, requiredDuringScheduling anti-affinity expressions, etc.),
-compute a sum by iterating through the elements of this field and adding
-"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+compute a sum by iterating through the elements of this field and subtracting
+"weight" from the sum if the node has pods which matches the corresponding podAffinityTerm; the
 node(s) with the highest sum are the most preferred.<br/>
         </td>
         <td>false</td>
@@ -11735,7 +11735,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           Claims lists the names of resources, defined in spec.resourceClaims,
 that are used by this container.
 
-This is an alpha field and requires enabling the
+This field depends on the
 DynamicResourceAllocation feature gate.
 
 This field is immutable. It can only be set for containers.<br/>
