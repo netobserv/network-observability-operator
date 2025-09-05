@@ -206,8 +206,7 @@ func (r *CPReconciler) reconcileDeployment(ctx context.Context, builder *builder
 		r.deployment,
 		builder.deployment(name, cmDigest),
 		name,
-		helper.PtrInt32(desired.ConsolePlugin.Replicas),
-		&desired.ConsolePlugin.Autoscaler,
+		desired.ConsolePlugin.UnmanagedReplicas,
 		&report,
 	)
 }

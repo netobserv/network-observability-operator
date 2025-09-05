@@ -23,6 +23,32 @@ func peerInNamespace(ns string) networkingv1.NetworkPolicyPeer {
 	}
 }
 
+func peerInNamespaces(ns []string) networkingv1.NetworkPolicyPeer {
+	return networkingv1.NetworkPolicyPeer{
+		NamespaceSelector: &metav1.LabelSelector{
+			MatchExpressions: []metav1.LabelSelectorRequirement{{
+				Key:      "kubernetes.io/metadata.name",
+				Operator: metav1.LabelSelectorOpIn,
+				Values:   ns,
+			}},
+		},
+		PodSelector: &metav1.LabelSelector{}, // see https://issues.redhat.com/browse/OSDOCS-14395 / needed for apiserver
+	}
+}
+
+func addAllowedNamespaces(np *networkingv1.NetworkPolicy, in, out []string) {
+	if len(in) > 0 {
+		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+			From: []networkingv1.NetworkPolicyPeer{peerInNamespaces(in)},
+		})
+	}
+	if len(out) > 0 {
+		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+			To: []networkingv1.NetworkPolicyPeer{peerInNamespaces(out)},
+		})
+	}
+}
+
 func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager) (types.NamespacedName, *networkingv1.NetworkPolicy) {
 	ns := desired.Spec.GetNamespace()
 
@@ -30,8 +56,6 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	if !desired.Spec.DeployNetworkPolicy() {
 		return name, nil
 	}
-
-	privNs := ns + constants.EBPFPrivilegedNSSuffix
 
 	np := networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
@@ -67,19 +91,26 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 			},
 		},
 	}
-	// Allow traffic from the eBPF agents
-	np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-		From: []networkingv1.NetworkPolicyPeer{
-			peerInNamespace(privNs),
-		},
-	})
-	np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-		To: []networkingv1.NetworkPolicyPeer{
-			peerInNamespace(privNs),
-		},
-	})
+	allowedNamespacesIn := []string{}
+	allowedNamespacesOut := []string{}
+
+	if desired.Spec.UseLoki() &&
+		desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack &&
+		desired.Spec.Loki.LokiStack.Namespace != "" &&
+		desired.Spec.Loki.LokiStack.Namespace != ns {
+		allowedNamespacesIn = append(allowedNamespacesIn, desired.Spec.Loki.LokiStack.Namespace)
+		allowedNamespacesOut = append(allowedNamespacesOut, desired.Spec.Loki.LokiStack.Namespace)
+	}
 
 	if mgr.ClusterInfo.IsOpenShift() {
+		allowedNamespacesOut = append(allowedNamespacesOut, constants.DNSNamespace)
+		allowedNamespacesOut = append(allowedNamespacesOut, constants.MonitoringNamespace)
+		if mgr.Config.DownstreamDeployment {
+			allowedNamespacesIn = append(allowedNamespacesIn, constants.MonitoringNamespace)
+		} else {
+			allowedNamespacesIn = append(allowedNamespacesIn, constants.UWMonitoringNamespace)
+		}
+
 		if desired.Spec.UseConsolePlugin() && mgr.ClusterInfo.HasConsolePlugin() {
 			advanced := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
@@ -91,36 +122,20 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 					Port:     ptr.To(intstr.FromInt32(*advanced.Port)),
 				}},
 			})
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.ConsoleNamespace),
-				},
-				Ports: []networkingv1.NetworkPolicyPort{{
-					Protocol: ptr.To(corev1.ProtocolTCP),
-					Port:     ptr.To(intstr.FromInt32(*advanced.Port)),
-				}},
-			})
-		}
-		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-			// Console plugin pod needs access to cluster monitoring, see its configured URL, even with upstream deployment
-			To: []networkingv1.NetworkPolicyPeer{
-				peerInNamespace(constants.MonitoringNamespace),
-			},
-		})
-		if mgr.Config.DownstreamDeployment {
-			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-				From: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.MonitoringNamespace),
-				},
-			})
-		} else {
-			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-				From: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.UWMonitoringNamespace),
-				},
-			})
 		}
 		// Allow apiserver/host
+		hostNetworkPorts := []networkingv1.NetworkPolicyPort{{
+			Protocol: ptr.To(corev1.ProtocolTCP),
+			Port:     ptr.To(intstr.FromInt32(constants.WebhookPort)),
+		}}
+		if desired.Spec.DeploymentModel == flowslatest.DeploymentModelService {
+			// Can be counter-intuitive, but only the DeploymentModelService mode needs an explicit rule for host-network (agents are still hostnetwork pods)
+			advanced := helper.GetAdvancedProcessorConfig(&desired.Spec)
+			hostNetworkPorts = append(hostNetworkPorts, networkingv1.NetworkPolicyPort{
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(intstr.FromInt32(*advanced.Port)),
+			})
+		}
 		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 			From: []networkingv1.NetworkPolicyPeer{
 				{
@@ -129,60 +144,28 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 					}},
 				},
 			},
-			Ports: []networkingv1.NetworkPolicyPort{{
-				Protocol: ptr.To(corev1.ProtocolTCP),
-				Port:     ptr.To(intstr.FromInt32(constants.WebhookPort)),
-			}},
+			Ports: hostNetworkPorts,
 		})
-		// Allow host
+		// Allow fetching from apiserver
 		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-			To: []networkingv1.NetworkPolicyPeer{},
+			To: []networkingv1.NetworkPolicyPeer{
+				peerInNamespaces([]string{constants.OpenShiftAPIServerNamespace, constants.OpenShiftKubeAPIServerNamespace}),
+			},
 			Ports: []networkingv1.NetworkPolicyPort{{
 				Protocol: ptr.To(corev1.ProtocolTCP),
 				Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
 			}},
 		})
-		// Allow apiserver
-		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-			From: []networkingv1.NetworkPolicyPeer{
-				{
-					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-						"policy-group.network.openshift.io/host-network": "",
-					}},
-				},
-			},
-			Ports: []networkingv1.NetworkPolicyPort{{
-				Protocol: ptr.To(corev1.ProtocolTCP),
-				Port:     ptr.To(intstr.FromInt32(constants.WebhookPort)),
-			}},
-		})
-		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-			To: []networkingv1.NetworkPolicyPeer{
-				peerInNamespace(constants.DNSNamespace),
-			},
-		})
-		if desired.Spec.UseLoki() && desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack {
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(desired.Spec.Loki.LokiStack.Namespace),
-				},
-			})
-		}
+	} else {
+		// Not OpenShift
+		// Allow fetching from apiserver / kube-system
+		allowedNamespacesOut = append(allowedNamespacesOut, constants.KubeSystemNamespace)
 	}
 
-	for _, aNs := range desired.Spec.NetworkPolicy.AdditionalNamespaces {
-		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-			From: []networkingv1.NetworkPolicyPeer{
-				peerInNamespace(aNs),
-			},
-		})
-		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-			To: []networkingv1.NetworkPolicyPeer{
-				peerInNamespace(aNs),
-			},
-		})
+	allowedNamespacesIn = append(allowedNamespacesIn, desired.Spec.NetworkPolicy.AdditionalNamespaces...)
+	allowedNamespacesOut = append(allowedNamespacesOut, desired.Spec.NetworkPolicy.AdditionalNamespaces...)
 
-	}
+	addAllowedNamespaces(&np, allowedNamespacesIn, allowedNamespacesOut)
 
 	return name, &np
 }
@@ -212,53 +195,18 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 		},
 	}
 
-	np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-		To: []networkingv1.NetworkPolicyPeer{
-			peerInNamespace(mainNs),
-		},
-	})
+	// Note that we don't need explicit authorizations for egress as agent pods are on hostnetwork, which allows us to further lock the namespace
+	allowedNamespacesIn := []string{}
 
 	if mgr.ClusterInfo.IsOpenShift() {
 		if mgr.Config.DownstreamDeployment {
-			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-				From: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.MonitoringNamespace),
-				},
-			})
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.MonitoringNamespace),
-				},
-			})
-
+			allowedNamespacesIn = append(allowedNamespacesIn, constants.MonitoringNamespace)
 		} else {
-			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-				From: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.UWMonitoringNamespace),
-				},
-			})
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.UWMonitoringNamespace),
-				},
-			})
-
+			allowedNamespacesIn = append(allowedNamespacesIn, constants.UWMonitoringNamespace)
 		}
 	}
 
-	for _, aNs := range desired.Spec.NetworkPolicy.AdditionalNamespaces {
-		np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
-			From: []networkingv1.NetworkPolicyPeer{
-				peerInNamespace(aNs),
-			},
-		})
-		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-			To: []networkingv1.NetworkPolicyPeer{
-				peerInNamespace(aNs),
-			},
-		})
-
-	}
+	addAllowedNamespaces(&np, allowedNamespacesIn, nil)
 
 	return name, &np
 }
