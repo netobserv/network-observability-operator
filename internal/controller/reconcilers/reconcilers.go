@@ -34,6 +34,18 @@ var (
 		DeleteFunc:  func(_ event.DeleteEvent) bool { return true },
 		GenericFunc: func(_ event.GenericEvent) bool { return false },
 	})
+	UpdateOrDeleteOnlyPred = builder.WithPredicates(predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Update only if new object is owned - we want to watch for status changes as well (e.g. to know when a deployment is ready)
+			return helper.IsOwned(e.ObjectNew)
+		},
+		CreateFunc: func(_ event.CreateEvent) bool { return false },
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Update only if it was owned and confirmed as deleted by the api server
+			return helper.IsOwned(e.Object) && !e.DeleteStateUnknown
+		},
+		GenericFunc: func(_ event.GenericEvent) bool { return false },
+	})
 )
 
 func ReconcileClusterRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv1.ClusterRoleBinding) error {
