@@ -319,7 +319,7 @@ lint: prereqs ## Run linter (golangci-lint).
 	./bin/golangci-lint-${GOLANGCI_LINT_VERSION} run --timeout 5m ./...
 
 test: envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverpkg=./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT="120s" go test ./... -coverpkg=./... -coverprofile cover.out
 
 coverage-report: ## Generate coverage report
 	go tool cover --func=./cover.out

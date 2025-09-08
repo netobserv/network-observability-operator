@@ -199,7 +199,7 @@ pprof:
 pprof-pf:
 	@echo -e "\n==> Port-forwarding..."
 	oc get pods
-	kubectl port-forward -n $(NAMESPACE) $(shell kubectl get pod -l app=netobserv-operator -o jsonpath="{.items[0].metadata.name}") 6060
+	kubectl port-forward -n $(NAMESPACE) $(shell kubectl get pod -l app=netobserv-operator -n $(NAMESPACE) -o jsonpath="{.items[0].metadata.name}") 6060
 
 .PHONY: use-test-console
 use-test-console:
