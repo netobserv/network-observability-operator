@@ -253,7 +253,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.9.2-community
-    createdAt: "2025-09-08T08:23:26Z"
+    createdAt: "2025-09-08T09:08:19Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -1194,14 +1194,14 @@ spec:
     name: Julien Pinsonneau
   - email: jtakvori@redhat.com
     name: Joel Takvorian
-  - email: kmeth@redhat.com
-    name: Kalman Meth
+  - email: lberetta@redhat.com
+    name: Leandro Beretta
+  - email: ljira@redhat.com
+    name: Luis Jira
   - email: mmahmoud@redhat.com
     name: Mohamed S. Mahmoud
   - email: ocazade@redhat.com
     name: Olivier Cazade
-  - email: rschaffe@redhat.com
-    name: Ronen Schaffer
   - email: stlee@redhat.com
     name: Steven Lee
   maturity: alpha

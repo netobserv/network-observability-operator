@@ -49,6 +49,10 @@ maintainers:
   name: Joel Takvorian
 - email: mmahmoud@redhat.com
   name: Mohamed S. Mahmoud
+- email: lberetta@redhat.com
+  name: Leandro Beretta
+- email: ljira@redhat.com
+  name: Luis Jira
 - email: ocazade@redhat.com
   name: Olivier Cazade
 - email: stlee@redhat.com
