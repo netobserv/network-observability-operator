@@ -1,22 +1,58 @@
 ## Releasing process
 
-### Sub-components
+### Related components - draft release
 
 All components deployed by this operator can be released separatly, at their own pace.
-
-Before releasing, it's a good opportunity to check for image upgrades: Go, [node.js](https://catalog.redhat.com/software/containers/ubi9/nodejs-18/62e8e7ed22d1d3c2dfe2ca01) and [ubi9-minimal](https://catalog.redhat.com/software/containers/ubi9-minimal/61832888c0d15aff4912fe0d).
 
 To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be set on the desired clean HEAD state (generally, up-to-date `main` branch; "crc" stands for "community release candidate"), then pushed. It applies to [the console plugin](https://github.com/netobserv/network-observability-console-plugin/), [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) and [netobserv-ebpf-agent](https://github.com/netobserv/netobserv-ebpf-agent).
 
 E.g:
 
 ```bash
-version="v1.9.1-community"
+version="v1.9.2-community"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
 
 The release script should be triggered (check github actions). It will automatically draft a new release, with artifacts attached.
+
+### Operator - draft release
+
+When all those components are pre-released, we can proceed with the operator.
+
+Edit the [Makefile](./Makefile) to update `BUNDLE_VERSION`.
+
+```bash
+make update-bundle
+
+# Set desired operator version - CAREFUL, no leading "v" here
+version="1.9.2-community"
+vv=v$version
+test_branch=test-$vv
+
+git commit -a -m "Prepare release $vv"
+# Push to a test branch, and tag for release
+git push upstream HEAD:$test_branch
+git tag -a "$version" -m "$version"
+git push upstream --tags
+```
+
+The release script should be triggered ([check github actions](https://github.com/netobserv/network-observability-operator/actions)).
+
+At this point, you can test the bundle / catalog on your cluster:
+
+```bash
+BUNDLE_VERSION="$version" USER=netobserv make catalog-deploy
+```
+
+When everything is ok, push to main and delete the test branch
+
+```bash
+git push upstream HEAD:main
+git push upstream :$test_branch
+```
+
+
 
 If the release looks good, you can publish it via the github interface:
 - [console plugin](https://github.com/netobserv/network-observability-console-plugin/releases)
