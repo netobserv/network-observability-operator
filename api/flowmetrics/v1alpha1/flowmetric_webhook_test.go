@@ -100,7 +100,7 @@ func TestFlowMetric(t *testing.T) {
 					Buckets: []string{"a", ""},
 				},
 			},
-			expectedError: `spec.buckets: Invalid value: []string{"a", ""}: cannot be parsed as a float: "a"`,
+			expectedError: `spec.buckets: Invalid value: ["a",""]: cannot be parsed as a float: "a"`,
 		},
 	}
 

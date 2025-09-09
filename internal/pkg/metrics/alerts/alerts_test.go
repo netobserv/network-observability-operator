@@ -46,11 +46,11 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 	}
 	rules := BuildRules(context.Background(), &fc)
 	assert.Equal(t, []string{
-		"PacketDropsByKernel_WNamespace",
-		"PacketDropsByKernel_INamespace",
-		"PacketDropsByKernel_WNode",
-		"PacketDropsByKernel_INode",
-		"PacketDropsByDevice_WNode",
+		"PacketDropsByKernel_PerNamespaceWarning",
+		"PacketDropsByKernel_PerNamespaceInfo",
+		"PacketDropsByKernel_PerNodeWarning",
+		"PacketDropsByKernel_PerNodeInfo",
+		"PacketDropsByDevice_PerNodeWarning",
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [namespace={{ $labels.namespace }}]")
