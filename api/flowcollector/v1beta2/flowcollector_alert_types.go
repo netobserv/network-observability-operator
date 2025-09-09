@@ -4,26 +4,37 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type AlertTemplate string
 type AlertGroupBy string
 
 const (
-	AlertNoFlows             AlertTemplate = "NetObservNoFlows"
-	AlertLokiError           AlertTemplate = "NetObservLokiError"
-	AlertPacketDropsByKernel AlertTemplate = "PacketDropsByKernel"
-	AlertPacketDropsByDevice AlertTemplate = "PacketDropsByDevice"
-	GroupByNode              AlertGroupBy  = "Node"
-	GroupByNamespace         AlertGroupBy  = "Namespace"
-	GroupByWorkload          AlertGroupBy  = "Workload"
+	AlertNoFlows                  AlertTemplate = "NetObservNoFlows"
+	AlertLokiError                AlertTemplate = "NetObservLokiError"
+	AlertPacketDropsByKernel      AlertTemplate = "PacketDropsByKernel"
+	AlertPacketDropsByDevice      AlertTemplate = "PacketDropsByDevice"
+	AlertIPsecErrors              AlertTemplate = "IPsecErrors"
+	AlertNetpolDenied             AlertTemplate = "NetpolDenied"
+	AlertLatencyHighTrend         AlertTemplate = "LatencyHighTrend"
+	AlertDNSErrors                AlertTemplate = "DNSErrors"
+	AlertExternalEgressHighTrend  AlertTemplate = "ExternalEgressHighTrend"
+	AlertExternalIngressHighTrend AlertTemplate = "ExternalIngressHighTrend"
+	AlertCrossAZ                  AlertTemplate = "CrossAZ"
+	GroupByNode                   AlertGroupBy  = "Node"
+	GroupByNamespace              AlertGroupBy  = "Namespace"
+	GroupByWorkload               AlertGroupBy  = "Workload"
 )
 
 type FLPAlert struct {
 	// Alert template name.
-	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`.
+	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+	// `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice"
+	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"CrossAZ"
 	// +required
 	Template AlertTemplate `json:"template,omitempty"`
 
@@ -47,6 +58,12 @@ type AlertVariant struct {
 	// +kubebuilder:validation:Enum:="";"Node";"Namespace";"Workload"
 	// +optional
 	GroupBy AlertGroupBy `json:"groupBy,omitempty"`
+
+	// For trending alerts, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.
+	TrendOffset *metav1.Duration `json:"trendOffset,omitempty"`
+
+	// For trending alerts, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.
+	TrendDuration *metav1.Duration `json:"trendDuration,omitempty"`
 }
 
 type AlertThresholds struct {
@@ -142,10 +159,42 @@ func (g *FLPAlert) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 	switch g.Template {
 	case AlertPacketDropsByKernel:
 		if !spec.Agent.EBPF.IsPktDropEnabled() {
-			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", AlertPacketDropsByKernel, PacketDrop)
+			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, PacketDrop)
 		}
-	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice:
+	case AlertIPsecErrors:
+		if !spec.Agent.EBPF.IsIPSecEnabled() {
+			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, IPSec)
+		}
+	case AlertDNSErrors:
+		if !spec.Agent.EBPF.IsDNSTrackingEnabled() {
+			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, DNSTracking)
+		}
+	case AlertLatencyHighTrend:
+		if !spec.Agent.EBPF.IsFlowRTTEnabled() {
+			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, FlowRTT)
+		}
+	case AlertNetpolDenied:
+		if !spec.Agent.EBPF.IsNetworkEventsEnabled() {
+			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, NetworkEvents)
+		}
+	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend:
 		return true, ""
 	}
 	return true, ""
+}
+
+func (v *AlertVariant) GetTrendParams() (string, string) {
+	offset := metav1.Duration{Duration: 24 * time.Hour}
+	if v.TrendOffset != nil {
+		offset = *v.TrendOffset
+	}
+	duration := metav1.Duration{Duration: 2 * time.Hour}
+	if v.TrendDuration != nil {
+		duration = *v.TrendDuration
+	}
+	return durationToStringTrimmed(&offset), durationToStringTrimmed(&duration)
+}
+
+func durationToStringTrimmed(d *metav1.Duration) string {
+	return strings.TrimSuffix(strings.TrimSuffix(d.Duration.String(), "0s"), "0m")
 }

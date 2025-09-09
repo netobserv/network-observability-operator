@@ -1,5 +1,11 @@
 package v1beta2
 
+import (
+	"time"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 var (
 	// Note that we set default in-code rather than in CRD, in order to keep track of value being unset or set intentionnally in FlowCollector
 	DefaultIncludeList = []string{
@@ -68,6 +74,101 @@ var (
 						Warning: "5",
 					},
 					GroupBy: GroupByNode,
+				},
+			},
+		},
+		{
+			Template: AlertIPsecErrors,
+			Variants: []AlertVariant{
+				{
+					Thresholds: AlertThresholds{
+						Critical: "2",
+					},
+				},
+				{
+					Thresholds: AlertThresholds{
+						Critical: "2",
+					},
+					GroupBy: GroupByNode,
+				},
+			},
+		},
+		{
+			Template: AlertDNSErrors,
+			Variants: []AlertVariant{
+				{
+					Thresholds: AlertThresholds{
+						Warning: "5",
+					},
+				},
+				{
+					Thresholds: AlertThresholds{
+						Info:    "5",
+						Warning: "10",
+					},
+					GroupBy: GroupByNamespace,
+				},
+			},
+		},
+		{
+			Template: AlertNetpolDenied,
+			Variants: []AlertVariant{
+				{
+					Thresholds: AlertThresholds{
+						Info:    "5",
+						Warning: "10",
+					},
+					GroupBy: GroupByNamespace,
+				},
+			},
+		},
+		{
+			Template: AlertLatencyHighTrend,
+			Variants: []AlertVariant{
+				{
+					Thresholds: AlertThresholds{
+						Info: "100",
+					},
+					GroupBy: GroupByNamespace,
+					// TODO: set longer-term defaults
+					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
+					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
+				},
+			},
+		},
+		{
+			Template: AlertExternalEgressHighTrend,
+			Variants: []AlertVariant{
+				{
+					Thresholds: AlertThresholds{
+						Warning: "5",
+					},
+					GroupBy: GroupByNode,
+				},
+				{
+					Thresholds: AlertThresholds{
+						Info:    "5",
+						Warning: "10",
+					},
+					GroupBy: GroupByNamespace,
+				},
+			},
+		},
+		{
+			Template: AlertExternalIngressHighTrend,
+			Variants: []AlertVariant{
+				{
+					Thresholds: AlertThresholds{
+						Warning: "5",
+					},
+					GroupBy: GroupByNode,
+				},
+				{
+					Thresholds: AlertThresholds{
+						Info:    "5",
+						Warning: "10",
+					},
+					GroupBy: GroupByNamespace,
 				},
 			},
 		},

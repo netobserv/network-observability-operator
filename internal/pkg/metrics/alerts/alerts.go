@@ -40,48 +40,35 @@ func alertLokiError() *monitoringv1.Rule {
 	}
 }
 
-func tooManyKernelDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
-	const tpl = flowslatest.AlertPacketDropsByKernel
-	d := monitoringv1.Duration("5m")
-
-	metrics, totalMetrics := flowslatest.GetElligibleMetricsForAlert(tpl, alert)
-	metricsRate := promQLRateFromElligibleMetrics(metrics)
-	totalRate := promQLRateFromElligibleMetrics(totalMetrics)
-	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy)
-	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy)
-
-	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
-
-	bAnnot, err := buildHealthAnnotation(tpl, alert, threshold, nil)
-	if err != nil {
-		return nil, err
-	}
-
+func kernelDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+	tpl := flowslatest.AlertPacketDropsByKernel
 	description := fmt.Sprintf(
 		"NetObserv is detecting more than %s%% of packets dropped by the kernel%s. %s",
 		threshold,
 		getAlertLegend(alert),
 		addtnlDesc,
 	)
-	var gr string
-	if alert.GroupBy != "" {
-		gr = "Per" + string(alert.GroupBy)
-	}
-	return &monitoringv1.Rule{
-		Alert: fmt.Sprintf("%s_%s%s", tpl, gr, strings.ToUpper(severity[:1])+severity[1:]),
-		Annotations: map[string]string{
-			"description":                 description,
-			"summary":                     "Too many drops by the kernel",
-			"netobserv_io_network_health": string(bAnnot),
-		},
-		Expr:   intstr.FromString(promql),
-		For:    &d,
-		Labels: buildLabels(severity, true),
-	}, nil
 
+	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
+	metricsRate := promQLRateFromMetric(metric, "", "", "2m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "", "", "2m", "")
+	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
+	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
+	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+
+	return createRule(
+		tpl,
+		alert,
+		promql,
+		"Too many packet drops by the kernel",
+		description,
+		severity,
+		threshold,
+		monitoringv1.Duration("5m"),
+	)
 }
 
-func tooManyDeviceDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
+func deviceDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
 	const tpl = flowslatest.AlertPacketDropsByDevice
 	d := monitoringv1.Duration("5m")
 
@@ -127,4 +114,118 @@ func tooManyDeviceDrops(alert *flowslatest.AlertVariant, severity, threshold, up
 		For:    &d,
 		Labels: buildLabels(severity, true),
 	}, nil
+}
+
+func ipsecErrors(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+	tpl := flowslatest.AlertIPsecErrors
+	description := fmt.Sprintf(
+		"NetObserv is detecting more than %s%% of IPsec errors%s. %s",
+		threshold,
+		getAlertLegend(alert),
+		addtnlDesc,
+	)
+
+	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
+	metricsRate := promQLRateFromMetric(metric, "", "", "2m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "", "", "2m", "")
+	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
+	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
+	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+
+	return createRule(
+		tpl,
+		alert,
+		promql,
+		"Too many IPsec errors",
+		description,
+		severity,
+		threshold,
+		monitoringv1.Duration("5m"),
+	)
+}
+
+func dnsErrors(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+	tpl := flowslatest.AlertDNSErrors
+	description := fmt.Sprintf(
+		"NetObserv is detecting more than %s%% of DNS errors%s. %s",
+		threshold,
+		getAlertLegend(alert),
+		addtnlDesc,
+	)
+
+	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
+	metricsRate := promQLRateFromMetric(metric, "_count", `{DnsFlagsResponseCode!="NoError"}`, "2m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "_count", "", "2m", "")
+	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
+	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
+	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+
+	return createRule(
+		tpl,
+		alert,
+		promql,
+		"Too many DNS errors",
+		description,
+		severity,
+		threshold,
+		monitoringv1.Duration("5m"),
+	)
+}
+
+func netpolDenied(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+	tpl := flowslatest.AlertNetpolDenied
+	description := fmt.Sprintf(
+		"NetObserv is detecting more than %s%% of denied traffic due to Network Policies%s. %s",
+		threshold,
+		getAlertLegend(alert),
+		addtnlDesc,
+	)
+
+	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
+	metricsRate := promQLRateFromMetric(metric, "", `{action="drop"}`, "2m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "", "", "2m", "")
+	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
+	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
+	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+
+	return createRule(
+		tpl,
+		alert,
+		promql,
+		"Traffic denied by Network Policies",
+		description,
+		severity,
+		threshold,
+		monitoringv1.Duration("5m"),
+	)
+}
+
+func latencyTrend(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+	tpl := flowslatest.AlertLatencyHighTrend
+	offset, duration := alert.GetTrendParams()
+	description := fmt.Sprintf(
+		"NetObserv is detecting TCP latency increased by more than %s%%%s, compared to baseline (offset: %s). %s",
+		threshold,
+		getAlertLegend(alert),
+		offset,
+		addtnlDesc,
+	)
+
+	metric, baseline := getMetricsForAlert(tpl, alert, enabledMetrics)
+	metricsRate := promQLRateFromMetric(metric, "_bucket", "", "2m", "")
+	baselineRate := promQLRateFromMetric(baseline, "_bucket", "", duration, " offset "+offset)
+	aggregatedMetricsSum := aggregateSourceDestHistogram(metricsRate, alert.GroupBy, "0.9")
+	aggregatedBaselineSum := aggregateSourceDestHistogram(baselineRate, alert.GroupBy, "0.9")
+	promql := baselineIncreasePromQL(aggregatedMetricsSum, aggregatedBaselineSum, threshold, upperThreshold)
+
+	return createRule(
+		tpl,
+		alert,
+		promql,
+		"TCP latency increase",
+		description,
+		severity,
+		threshold,
+		monitoringv1.Duration("5m"),
+	)
 }

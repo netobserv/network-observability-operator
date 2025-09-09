@@ -239,19 +239,29 @@ func (v *validator) validateFLPFilters() {
 
 func (v *validator) validateFLPAlerts() {
 	if v.fc.Processor.Metrics.Alerts != nil {
-		for i, group := range *v.fc.Processor.Metrics.Alerts {
-			if _, msg := group.IsAllowed(v.fc); len(msg) > 0 {
+		for i, alert := range *v.fc.Processor.Metrics.Alerts {
+			if _, msg := alert.IsAllowed(v.fc); len(msg) > 0 {
 				v.warnings = append(v.warnings, msg)
 			}
-			for j, alert := range group.Variants {
+			for j, variant := range alert.Variants {
+				// Check allowed groups
+				if !v.isFLPAlertGroupBySupported(alert.Template, &variant) {
+					v.errors = append(
+						v.errors,
+						fmt.Errorf(
+							`%s alert template does not support grouping by %s, in spec.processor.metrics.alerts[%d].variants[%d]`,
+							alert.Template, variant.GroupBy, i, j,
+						),
+					)
+				}
 				lastThreshold := float64(-1)
 				thresholds := []struct {
 					s string
 					t string
 				}{
-					{s: "critical", t: alert.Thresholds.Critical},
-					{s: "warning", t: alert.Thresholds.Warning},
-					{s: "info", t: alert.Thresholds.Info},
+					{s: "critical", t: variant.Thresholds.Critical},
+					{s: "warning", t: variant.Thresholds.Warning},
+					{s: "info", t: variant.Thresholds.Info},
 				}
 				for _, st := range thresholds {
 					if st.t != "" {
@@ -275,18 +285,30 @@ func (v *validator) validateFLPAlerts() {
 						lastThreshold = val
 					}
 				}
-				if alert.LowVolumeThreshold != "" {
-					_, err := strconv.ParseFloat(alert.LowVolumeThreshold, 64)
+				if variant.LowVolumeThreshold != "" {
+					_, err := strconv.ParseFloat(variant.LowVolumeThreshold, 64)
 					if err != nil {
 						v.errors = append(
 							v.errors,
-							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, i, j, alert.LowVolumeThreshold),
+							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, i, j, variant.LowVolumeThreshold),
 						)
 					}
 				}
 			}
 		}
 	}
+}
+
+func (v *validator) isFLPAlertGroupBySupported(template AlertTemplate, variant *AlertVariant) bool {
+	switch template {
+	case AlertPacketDropsByDevice:
+		return variant.GroupBy != GroupByWorkload
+	case AlertIPsecErrors:
+		return variant.GroupBy != GroupByWorkload && variant.GroupBy != GroupByNamespace
+	case AlertPacketDropsByKernel, AlertDNSErrors, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend, AlertLatencyHighTrend, AlertNetpolDenied:
+		return true
+	}
+	return true
 }
 
 func (v *validator) validateFLPMetricsForAlerts() {
@@ -297,31 +319,52 @@ func (v *validator) validateFLPMetricsForAlerts() {
 			reqMetrics1, reqMetrics2 := GetElligibleMetricsForAlert(g.Template, &a)
 			// At least one metric from reqMetrics1 should be present, same for reqMetrics2
 			if len(reqMetrics1) > 0 {
-				w1 := checkAlertRequiredMetrics(g.Template, &a, reqMetrics1, metrics)
-				v.warnings = append(v.warnings, w1...)
+				if GetFirstRequiredMetrics(reqMetrics1, metrics) == "" {
+					v.warnings = append(
+						v.warnings,
+						fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", g.Template, a.GroupBy, strings.Join(reqMetrics1, ", ")),
+					)
+				}
 			}
 			if len(reqMetrics2) > 0 {
-				w2 := checkAlertRequiredMetrics(g.Template, &a, reqMetrics2, metrics)
-				v.warnings = append(v.warnings, w2...)
+				if GetFirstRequiredMetrics(reqMetrics2, metrics) == "" {
+					v.warnings = append(
+						v.warnings,
+						fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", g.Template, a.GroupBy, strings.Join(reqMetrics2, ", ")),
+					)
+				}
 			}
 		}
 	}
 }
 
-func checkAlertRequiredMetrics(alertName AlertTemplate, alertDef *AlertVariant, required, actual []string) admission.Warnings {
-	for _, m := range required {
+func GetFirstRequiredMetrics(anyRequired, actual []string) string {
+	for _, m := range anyRequired {
 		if slices.Contains(actual, m) {
-			return nil
+			return m
 		}
 	}
-	return admission.Warnings{fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", alertName, alertDef.GroupBy, strings.Join(required, ", "))}
+	return ""
 }
 
-func GetElligibleMetricsForAlert(alertName AlertTemplate, alertDef *AlertVariant) ([]string, []string) {
+func GetElligibleMetricsForAlert(template AlertTemplate, alertDef *AlertVariant) ([]string, []string) {
 	var metricPatterns, totalMetricPatterns []string
-	switch alertName {
+	switch template {
 	case AlertPacketDropsByKernel:
 		metricPatterns = []string{"%s_drop_packets_total"}
+		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
+	case AlertIPsecErrors:
+		return []string{"node_ipsec_flows_total"}, []string{"node_to_node_ingress_flows_total"}
+	case AlertDNSErrors:
+		metricPatterns = []string{`%s_dns_latency_seconds`}
+		totalMetricPatterns = []string{"%s_dns_latency_seconds"}
+	case AlertExternalEgressHighTrend:
+	case AlertExternalIngressHighTrend:
+	case AlertLatencyHighTrend:
+		metricPatterns = []string{`%s_rtt_seconds`}
+		totalMetricPatterns = []string{`%s_rtt_seconds`}
+	case AlertNetpolDenied:
+		metricPatterns = []string{`%s_network_policy_events_total`}
 		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
 	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice:
 		// nothing

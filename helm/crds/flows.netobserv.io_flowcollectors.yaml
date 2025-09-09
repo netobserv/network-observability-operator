@@ -5359,11 +5359,19 @@ spec:
                               template:
                                 description: |-
                                   Alert template name.
-                                  Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`.
+                                  Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+                                  `HighLatency`, `DNSErrors`, `HighExternalEgress`, `HighExternalIngress`, `CrossAZ`.
                                   More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                                 enum:
                                   - PacketDropsByKernel
                                   - PacketDropsByDevice
+                                  - IPsecErrors
+                                  - NetpolDenied
+                                  - HighLatency
+                                  - DNSErrors
+                                  - HighExternalEgress
+                                  - HighExternalIngress
+                                  - CrossAZ
                                 type: string
                               variants:
                                 description: A list of variants for this template
