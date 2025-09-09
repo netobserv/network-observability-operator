@@ -61,7 +61,7 @@ var (
 			},
 		},
 		{
-			Template: AlertPacketDropsByNetDev,
+			Template: AlertPacketDropsByDevice,
 			Variants: []AlertVariant{
 				{
 					Thresholds: AlertThresholds{

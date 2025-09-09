@@ -13,7 +13,7 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 	fc := flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByNetDev},
+				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByDevice},
 			},
 		},
 	}
@@ -50,7 +50,7 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"PacketDropsByKernel_INamespace",
 		"PacketDropsByKernel_WNode",
 		"PacketDropsByKernel_INode",
-		"PacketDropsByNetDev_WNode",
+		"PacketDropsByDevice_WNode",
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [namespace={{ $labels.namespace }}]")
@@ -72,7 +72,7 @@ func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByKernel, flowslatest.AlertPacketDropsByNetDev},
+				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByKernel, flowslatest.AlertPacketDropsByDevice},
 			},
 		},
 	}
@@ -91,7 +91,7 @@ func TestBuildRules_Overidden(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByNetDev},
+				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByDevice},
 				Alerts: &[]flowslatest.FLPAlert{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
@@ -124,7 +124,7 @@ func TestBuildRules_Global(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByNetDev},
+				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByDevice},
 				Alerts: &[]flowslatest.FLPAlert{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
@@ -157,7 +157,7 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByKernel, flowslatest.AlertPacketDropsByNetDev},
+				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByKernel, flowslatest.AlertPacketDropsByDevice},
 				Alerts: &[]flowslatest.FLPAlert{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,

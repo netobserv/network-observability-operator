@@ -11,7 +11,7 @@ By default, NetObserv creates some alerts, contextual to the enabled features. F
 
 Here is the list of alerts installed by default:
 
-- `PacketDropsByNetDev`: triggered on high percentage of packet drops from devices (`/proc/net/dev`):
+- `PacketDropsByDevice`: triggered on high percentage of packet drops from devices (`/proc/net/dev`):
   - grouped by node, with "Warning" severity above 5%
 - `PacketDropsByKernel`: triggered on high percentage of packet drops by the kernel; it requires the `PacketDrop` agent feature. 2 variants installed by default:
   - grouped by node, with "Info" severity above 5% and "Warning" above 10%

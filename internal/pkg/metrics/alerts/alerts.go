@@ -63,8 +63,12 @@ func tooManyKernelDrops(alert *flowslatest.AlertVariant, severity, threshold, up
 		getAlertLegend(alert),
 		addtnlDesc,
 	)
+	var gr string
+	if alert.GroupBy != "" {
+		gr = "Per" + string(alert.GroupBy)
+	}
 	return &monitoringv1.Rule{
-		Alert: fmt.Sprintf("%s_%s%s", tpl, strings.ToUpper(string(severity[0])), alert.GroupBy),
+		Alert: fmt.Sprintf("%s_%s%s", tpl, gr, strings.ToUpper(severity[:1])+severity[1:]),
 		Annotations: map[string]string{
 			"description":                 description,
 			"summary":                     "Too many drops by the kernel",
@@ -78,7 +82,7 @@ func tooManyKernelDrops(alert *flowslatest.AlertVariant, severity, threshold, up
 }
 
 func tooManyDeviceDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
-	const tpl = flowslatest.AlertPacketDropsByNetDev
+	const tpl = flowslatest.AlertPacketDropsByDevice
 	d := monitoringv1.Duration("5m")
 
 	var byLabels string
@@ -90,9 +94,9 @@ func tooManyDeviceDrops(alert *flowslatest.AlertVariant, severity, threshold, up
 		healthAnnotOverride = map[string]any{"nodeLabels": "instance"}
 		legend = " [node={{ $labels.instance }}]"
 	case flowslatest.GroupByNamespace:
-		return nil, fmt.Errorf("PacketDropsByNetDev alert does not support grouping per namespace")
+		return nil, fmt.Errorf("PacketDropsByDevice alert does not support grouping per namespace")
 	case flowslatest.GroupByWorkload:
-		return nil, fmt.Errorf("PacketDropsByNetDev alert does not support grouping per workload")
+		return nil, fmt.Errorf("PacketDropsByDevice alert does not support grouping per workload")
 	}
 
 	promql := percentagePromQL(
@@ -108,8 +112,12 @@ func tooManyDeviceDrops(alert *flowslatest.AlertVariant, severity, threshold, up
 		return nil, err
 	}
 
+	var gr string
+	if alert.GroupBy != "" {
+		gr = "Per" + string(alert.GroupBy)
+	}
 	return &monitoringv1.Rule{
-		Alert: fmt.Sprintf("%s_%s%s", tpl, strings.ToUpper(string(severity[0])), alert.GroupBy),
+		Alert: fmt.Sprintf("%s_%s%s", tpl, gr, strings.ToUpper(severity[:1])+severity[1:]),
 		Annotations: map[string]string{
 			"description":                 fmt.Sprintf("node-exporter is detecting more than %s%% of dropped packets%s. %s", threshold, legend, addtnlDesc),
 			"summary":                     "Too many drops from device",

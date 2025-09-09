@@ -13,7 +13,7 @@ const (
 	AlertNoFlows             AlertTemplate = "NetObservNoFlows"
 	AlertLokiError           AlertTemplate = "NetObservLokiError"
 	AlertPacketDropsByKernel AlertTemplate = "PacketDropsByKernel"
-	AlertPacketDropsByNetDev AlertTemplate = "PacketDropsByNetDev"
+	AlertPacketDropsByDevice AlertTemplate = "PacketDropsByDevice"
 	GroupByNode              AlertGroupBy  = "Node"
 	GroupByNamespace         AlertGroupBy  = "Namespace"
 	GroupByWorkload          AlertGroupBy  = "Workload"
@@ -21,9 +21,9 @@ const (
 
 type FLPAlert struct {
 	// Alert template name.
-	// Possible values are: `PacketDropsByKernel`, `PacketDropsByNetDev`.
+	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByNetDev"
+	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice"
 	// +required
 	Template AlertTemplate `json:"template,omitempty"`
 
@@ -144,7 +144,7 @@ func (g *FLPAlert) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 		if !spec.Agent.EBPF.IsPktDropEnabled() {
 			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", AlertPacketDropsByKernel, PacketDrop)
 		}
-	case AlertNoFlows, AlertLokiError, AlertPacketDropsByNetDev:
+	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice:
 		return true, ""
 	}
 	return true, ""

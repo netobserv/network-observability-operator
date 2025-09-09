@@ -323,7 +323,7 @@ func GetElligibleMetricsForAlert(alertName AlertTemplate, alertDef *AlertVariant
 	case AlertPacketDropsByKernel:
 		metricPatterns = []string{"%s_drop_packets_total"}
 		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
-	case AlertNoFlows, AlertLokiError, AlertPacketDropsByNetDev:
+	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice:
 		// nothing
 		return nil, nil
 	}

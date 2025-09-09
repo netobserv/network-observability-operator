@@ -5355,11 +5355,11 @@ spec:
                               template:
                                 description: |-
                                   Alert template name.
-                                  Possible values are: `PacketDropsByKernel`, `PacketDropsByNetDev`.
+                                  Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`.
                                   More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                                 enum:
                                   - PacketDropsByKernel
-                                  - PacketDropsByNetDev
+                                  - PacketDropsByDevice
                                 type: string
                               variants:
                                 description: A list of variants for this template
@@ -5406,7 +5406,7 @@ spec:
                         disableAlerts:
                           description: |-
                             `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-                            Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByNetDev`.
+                            Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`.
                             More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                           items:
                             type: string
