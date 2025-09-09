@@ -11,9 +11,9 @@ By default, NetObserv creates some alerts, contextual to the enabled features. F
 
 Here is the list of alerts installed by default:
 
-- `TooManyDeviceDrops`: triggered on high percentage of packet drops from devices (`/proc/net/dev`):
+- `PacketDropsByNetDev`: triggered on high percentage of packet drops from devices (`/proc/net/dev`):
   - grouped by node, with "Warning" severity above 5%
-- `TooManyKernelDrops`: triggered on high percentage of packet drops by the kernel; it requires the `PacketDrop` agent feature. 2 variants installed by default:
+- `PacketDropsByKernel`: triggered on high percentage of packet drops by the kernel; it requires the `PacketDrop` agent feature. 2 variants installed by default:
   - grouped by node, with "Info" severity above 5% and "Warning" above 10%
   - grouped by namespace, with "Info" severity above 10% and "Warning" above 20%
 
@@ -26,7 +26,7 @@ On top of that, there are also some operational alerts that relate to NetObserv'
 
 Alerts are configured in the `FlowCollector` custom resource, via `spec.processor.metrics.alerts`.
 
-They are organized by groups and variants. The group names are the ones listed above, such as `TooManyKernelDrops`. For each group, you can define a list of alert rules to generate, each with their threshold, grouping configuration and severity.
+They are organized by groups and variants. The group names are the ones listed above, such as `PacketDropsByKernel`. For each group, you can define a list of alert rules to generate, each with their threshold, grouping configuration and severity.
 
 Example:
 
@@ -35,7 +35,7 @@ spec:
   processor:
     metrics:
       alerts:
-      - template: TooManyKernelDrops
+      - template: PacketDropsByKernel
         variants:
         # triggered when the whole cluster traffic (no grouping) reaches 10% of drops
         - thresholds:

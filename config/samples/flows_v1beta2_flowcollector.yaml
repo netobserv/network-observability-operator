@@ -103,7 +103,7 @@ spec:
       # - "node_drop_packets_total"
       # - "namespace_rtt_seconds"
       # alerts:
-      # - template: TooManyKernelDrops
+      # - template: PacketDropsByKernel
       #   variants:
       #   - thresholds:
       #       critical: "15"

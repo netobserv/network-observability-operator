@@ -41,7 +41,7 @@ func alertLokiError() *monitoringv1.Rule {
 }
 
 func tooManyKernelDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
-	const tpl = flowslatest.AlertTooManyKernelDrops
+	const tpl = flowslatest.AlertPacketDropsByKernel
 	d := monitoringv1.Duration("5m")
 
 	metrics, totalMetrics := flowslatest.GetElligibleMetricsForAlert(tpl, alert)
@@ -78,7 +78,7 @@ func tooManyKernelDrops(alert *flowslatest.AlertVariant, severity, threshold, up
 }
 
 func tooManyDeviceDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
-	const tpl = flowslatest.AlertTooManyDeviceDrops
+	const tpl = flowslatest.AlertPacketDropsByNetDev
 	d := monitoringv1.Duration("5m")
 
 	var byLabels string
@@ -90,9 +90,9 @@ func tooManyDeviceDrops(alert *flowslatest.AlertVariant, severity, threshold, up
 		healthAnnotOverride = map[string]any{"nodeLabels": "instance"}
 		legend = " [node={{ $labels.instance }}]"
 	case flowslatest.GroupByNamespace:
-		return nil, fmt.Errorf("TooManyDeviceDrops alert does not support grouping per namespace")
+		return nil, fmt.Errorf("PacketDropsByNetDev alert does not support grouping per namespace")
 	case flowslatest.GroupByWorkload:
-		return nil, fmt.Errorf("TooManyDeviceDrops alert does not support grouping per workload")
+		return nil, fmt.Errorf("PacketDropsByNetDev alert does not support grouping per workload")
 	}
 
 	promql := percentagePromQL(

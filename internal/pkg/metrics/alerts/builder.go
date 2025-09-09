@@ -70,9 +70,9 @@ func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.Alert
 func convertToRule(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, severity, threshold, upperThreshold string) (*monitoringv1.Rule, error) {
 	additionalDescription := fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alerts.", template)
 	switch template {
-	case flowslatest.AlertTooManyDeviceDrops:
+	case flowslatest.AlertPacketDropsByNetDev:
 		return tooManyDeviceDrops(alert, severity, threshold, upperThreshold, additionalDescription)
-	case flowslatest.AlertTooManyKernelDrops:
+	case flowslatest.AlertPacketDropsByKernel:
 		return tooManyKernelDrops(alert, severity, threshold, upperThreshold, additionalDescription)
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error

@@ -10,20 +10,20 @@ type AlertTemplate string
 type AlertGroupBy string
 
 const (
-	AlertNoFlows            AlertTemplate = "NetObservNoFlows"
-	AlertLokiError          AlertTemplate = "NetObservLokiError"
-	AlertTooManyKernelDrops AlertTemplate = "TooManyKernelDrops"
-	AlertTooManyDeviceDrops AlertTemplate = "TooManyDeviceDrops"
-	GroupByNode             AlertGroupBy  = "Node"
-	GroupByNamespace        AlertGroupBy  = "Namespace"
-	GroupByWorkload         AlertGroupBy  = "Workload"
+	AlertNoFlows             AlertTemplate = "NetObservNoFlows"
+	AlertLokiError           AlertTemplate = "NetObservLokiError"
+	AlertPacketDropsByKernel AlertTemplate = "PacketDropsByKernel"
+	AlertPacketDropsByNetDev AlertTemplate = "PacketDropsByNetDev"
+	GroupByNode              AlertGroupBy  = "Node"
+	GroupByNamespace         AlertGroupBy  = "Namespace"
+	GroupByWorkload          AlertGroupBy  = "Workload"
 )
 
 type FLPAlert struct {
 	// Alert template name.
-	// Possible values are: `TooManyKernelDrops`, `TooManyDeviceDrops`.
+	// Possible values are: `PacketDropsByKernel`, `PacketDropsByNetDev`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-	// +kubebuilder:validation:Enum:="TooManyKernelDrops";"TooManyDeviceDrops"
+	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByNetDev"
 	// +required
 	Template AlertTemplate `json:"template,omitempty"`
 
@@ -140,11 +140,11 @@ func (s *FlowCollectorSpec) GetFLPAlerts() []FLPAlert {
 
 func (g *FLPAlert) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 	switch g.Template {
-	case AlertTooManyKernelDrops:
+	case AlertPacketDropsByKernel:
 		if !spec.Agent.EBPF.IsPktDropEnabled() {
-			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", AlertTooManyKernelDrops, PacketDrop)
+			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", AlertPacketDropsByKernel, PacketDrop)
 		}
-	case AlertNoFlows, AlertLokiError, AlertTooManyDeviceDrops:
+	case AlertNoFlows, AlertLokiError, AlertPacketDropsByNetDev:
 		return true, ""
 	}
 	return true, ""

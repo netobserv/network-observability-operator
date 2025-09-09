@@ -11479,7 +11479,7 @@ More information on alerts: https://github.com/netobserv/network-observability-o
         <td>[]string</td>
         <td>
           `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyKernelDrops`, `TooManyDeviceDrops`.
+Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByNetDev`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
@@ -11531,10 +11531,10 @@ More information, with full list of available metrics: https://github.com/netobs
         <td>enum</td>
         <td>
           Alert template name.
-Possible values are: `TooManyKernelDrops`, `TooManyDeviceDrops`.
+Possible values are: `PacketDropsByKernel`, `PacketDropsByNetDev`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
           <br/>
-            <i>Enum</i>: TooManyKernelDrops, TooManyDeviceDrops<br/>
+            <i>Enum</i>: PacketDropsByKernel, PacketDropsByNetDev<br/>
         </td>
         <td>true</td>
       </tr><tr>

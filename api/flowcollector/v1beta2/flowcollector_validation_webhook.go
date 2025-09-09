@@ -320,10 +320,10 @@ func checkAlertRequiredMetrics(alertName AlertTemplate, alertDef *AlertVariant, 
 func GetElligibleMetricsForAlert(alertName AlertTemplate, alertDef *AlertVariant) ([]string, []string) {
 	var metricPatterns, totalMetricPatterns []string
 	switch alertName {
-	case AlertTooManyKernelDrops:
+	case AlertPacketDropsByKernel:
 		metricPatterns = []string{"%s_drop_packets_total"}
 		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
-	case AlertNoFlows, AlertLokiError, AlertTooManyDeviceDrops:
+	case AlertNoFlows, AlertLokiError, AlertPacketDropsByNetDev:
 		// nothing
 		return nil, nil
 	}

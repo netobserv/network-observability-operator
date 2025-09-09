@@ -580,7 +580,7 @@ type FLPMetrics struct {
 	IncludeList *[]FLPMetric `json:"includeList,omitempty"`
 
 	// `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-	// Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `TooManyKernelDrops`, `TooManyDeviceDrops`.
+	// Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByNetDev`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
 	DisableAlerts []AlertTemplate `json:"disableAlerts"`

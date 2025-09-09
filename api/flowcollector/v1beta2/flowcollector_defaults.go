@@ -41,7 +41,7 @@ var (
 	}
 	DefaultAlerts = []FLPAlert{
 		{
-			Template: AlertTooManyKernelDrops,
+			Template: AlertPacketDropsByKernel,
 			Variants: []AlertVariant{
 				{
 					Thresholds: AlertThresholds{
@@ -61,7 +61,7 @@ var (
 			},
 		},
 		{
-			Template: AlertTooManyDeviceDrops,
+			Template: AlertPacketDropsByNetDev,
 			Variants: []AlertVariant{
 				{
 					Thresholds: AlertThresholds{
