@@ -2,6 +2,7 @@ package v1beta2
 
 import (
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -195,6 +196,9 @@ func (v *AlertVariant) GetTrendParams() (string, string) {
 	return durationToStringTrimmed(&offset), durationToStringTrimmed(&duration)
 }
 
+var regTrim = regexp.MustCompile("([a-zA-Z])(0[a-zA-Z])+")
+
 func durationToStringTrimmed(d *metav1.Duration) string {
-	return strings.TrimSuffix(strings.TrimSuffix(d.Duration.String(), "0s"), "0m")
+	s := d.Duration.String()
+	return regTrim.ReplaceAllString(s, "$1")
 }

@@ -40,25 +40,26 @@ func alertLokiError() *monitoringv1.Rule {
 	}
 }
 
-func kernelDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+func kernelDrops(alert *flowslatest.AlertVariant, side srcOrDst, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
 	tpl := flowslatest.AlertPacketDropsByKernel
 	description := fmt.Sprintf(
 		"NetObserv is detecting more than %s%% of packets dropped by the kernel%s. %s",
 		threshold,
-		getAlertLegend(alert),
+		getAlertLegend(side, alert),
 		addtnlDesc,
 	)
 
 	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
 	metricsRate := promQLRateFromMetric(metric, "", "", "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "", "", "2m", "")
-	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
-	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
-	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, alert.GroupBy, side, "")
+	totalSumBy := sumBy(totalRate, alert.GroupBy, side, "")
+	promql := percentagePromQL(metricsSumBy, totalSumBy, threshold, upperThreshold, alert.LowVolumeThreshold)
 
 	return createRule(
 		tpl,
 		alert,
+		side,
 		promql,
 		"Too many packet drops by the kernel",
 		description,
@@ -68,7 +69,11 @@ func kernelDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThre
 	)
 }
 
-func deviceDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
+func deviceDrops(alert *flowslatest.AlertVariant, side srcOrDst, severity, threshold, upperThreshold, addtnlDesc string) (*monitoringv1.Rule, error) {
+	// No "side" consideration on netdev metrics, so keep only 1 call from the two of them
+	if side == asDest {
+		return nil, nil
+	}
 	const tpl = flowslatest.AlertPacketDropsByDevice
 	d := monitoringv1.Duration("5m")
 
@@ -116,25 +121,26 @@ func deviceDrops(alert *flowslatest.AlertVariant, severity, threshold, upperThre
 	}, nil
 }
 
-func ipsecErrors(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+func ipsecErrors(alert *flowslatest.AlertVariant, side srcOrDst, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
 	tpl := flowslatest.AlertIPsecErrors
 	description := fmt.Sprintf(
 		"NetObserv is detecting more than %s%% of IPsec errors%s. %s",
 		threshold,
-		getAlertLegend(alert),
+		getAlertLegend(side, alert),
 		addtnlDesc,
 	)
 
 	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
 	metricsRate := promQLRateFromMetric(metric, "", "", "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "", "", "2m", "")
-	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
-	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
-	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, alert.GroupBy, side, "")
+	totalSumBy := sumBy(totalRate, alert.GroupBy, side, "")
+	promql := percentagePromQL(metricsSumBy, totalSumBy, threshold, upperThreshold, alert.LowVolumeThreshold)
 
 	return createRule(
 		tpl,
 		alert,
+		side,
 		promql,
 		"Too many IPsec errors",
 		description,
@@ -144,25 +150,30 @@ func ipsecErrors(alert *flowslatest.AlertVariant, severity, threshold, upperThre
 	)
 }
 
-func dnsErrors(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+func dnsErrors(alert *flowslatest.AlertVariant, side srcOrDst, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+	// DNS errors are in return traffic only
+	if side == asSource {
+		return nil, nil
+	}
 	tpl := flowslatest.AlertDNSErrors
 	description := fmt.Sprintf(
 		"NetObserv is detecting more than %s%% of DNS errors%s. %s",
 		threshold,
-		getAlertLegend(alert),
+		getAlertLegend(side, alert),
 		addtnlDesc,
 	)
 
 	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
 	metricsRate := promQLRateFromMetric(metric, "_count", `{DnsFlagsResponseCode!="NoError"}`, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "_count", "", "2m", "")
-	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
-	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
-	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, alert.GroupBy, side, "")
+	totalSumBy := sumBy(totalRate, alert.GroupBy, side, "")
+	promql := percentagePromQL(metricsSumBy, totalSumBy, threshold, upperThreshold, alert.LowVolumeThreshold)
 
 	return createRule(
 		tpl,
 		alert,
+		side,
 		promql,
 		"Too many DNS errors",
 		description,
@@ -172,25 +183,26 @@ func dnsErrors(alert *flowslatest.AlertVariant, severity, threshold, upperThresh
 	)
 }
 
-func netpolDenied(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+func netpolDenied(alert *flowslatest.AlertVariant, side srcOrDst, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
 	tpl := flowslatest.AlertNetpolDenied
 	description := fmt.Sprintf(
 		"NetObserv is detecting more than %s%% of denied traffic due to Network Policies%s. %s",
 		threshold,
-		getAlertLegend(alert),
+		getAlertLegend(side, alert),
 		addtnlDesc,
 	)
 
 	metric, totalMetric := getMetricsForAlert(tpl, alert, enabledMetrics)
 	metricsRate := promQLRateFromMetric(metric, "", `{action="drop"}`, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "", "", "2m", "")
-	aggregatedMetricsSum := aggregateSourceDest(metricsRate, alert.GroupBy, "")
-	aggregatedTotalSum := aggregateSourceDest(totalRate, alert.GroupBy, "")
-	promql := percentagePromQL(aggregatedMetricsSum, aggregatedTotalSum, threshold, upperThreshold, alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, alert.GroupBy, side, "")
+	totalSumBy := sumBy(totalRate, alert.GroupBy, side, "")
+	promql := percentagePromQL(metricsSumBy, totalSumBy, threshold, upperThreshold, alert.LowVolumeThreshold)
 
 	return createRule(
 		tpl,
 		alert,
+		side,
 		promql,
 		"Traffic denied by Network Policies",
 		description,
@@ -200,13 +212,13 @@ func netpolDenied(alert *flowslatest.AlertVariant, severity, threshold, upperThr
 	)
 }
 
-func latencyTrend(alert *flowslatest.AlertVariant, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
+func latencyTrend(alert *flowslatest.AlertVariant, side srcOrDst, severity, threshold, upperThreshold, addtnlDesc string, enabledMetrics []string) (*monitoringv1.Rule, error) {
 	tpl := flowslatest.AlertLatencyHighTrend
 	offset, duration := alert.GetTrendParams()
 	description := fmt.Sprintf(
 		"NetObserv is detecting TCP latency increased by more than %s%%%s, compared to baseline (offset: %s). %s",
 		threshold,
-		getAlertLegend(alert),
+		getAlertLegend(side, alert),
 		offset,
 		addtnlDesc,
 	)
@@ -214,13 +226,14 @@ func latencyTrend(alert *flowslatest.AlertVariant, severity, threshold, upperThr
 	metric, baseline := getMetricsForAlert(tpl, alert, enabledMetrics)
 	metricsRate := promQLRateFromMetric(metric, "_bucket", "", "2m", "")
 	baselineRate := promQLRateFromMetric(baseline, "_bucket", "", duration, " offset "+offset)
-	aggregatedMetricsSum := aggregateSourceDestHistogram(metricsRate, alert.GroupBy, "0.9")
-	aggregatedBaselineSum := aggregateSourceDestHistogram(baselineRate, alert.GroupBy, "0.9")
-	promql := baselineIncreasePromQL(aggregatedMetricsSum, aggregatedBaselineSum, threshold, upperThreshold)
+	metricQuantile := histogramQuantile(metricsRate, alert.GroupBy, side, "0.9")
+	baselineQuantile := histogramQuantile(baselineRate, alert.GroupBy, side, "0.9")
+	promql := baselineIncreasePromQL(metricQuantile, baselineQuantile, threshold, upperThreshold)
 
 	return createRule(
 		tpl,
 		alert,
+		side,
 		promql,
 		"TCP latency increase",
 		description,

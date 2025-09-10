@@ -70,28 +70,36 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 	}
 	rules := BuildRules(context.Background(), &fc)
 	assert.Equal(t, []string{
-		"PacketDropsByKernel_PerNamespaceWarning",
-		"PacketDropsByKernel_PerNamespaceInfo",
-		"PacketDropsByKernel_PerNodeWarning",
-		"PacketDropsByKernel_PerNodeInfo",
+		"PacketDropsByKernel_PerSrcNamespaceWarning",
+		"PacketDropsByKernel_PerDstNamespaceWarning",
+		"PacketDropsByKernel_PerSrcNamespaceInfo",
+		"PacketDropsByKernel_PerDstNamespaceInfo",
+		"PacketDropsByKernel_PerSrcNodeWarning",
+		"PacketDropsByKernel_PerDstNodeWarning",
+		"PacketDropsByKernel_PerSrcNodeInfo",
+		"PacketDropsByKernel_PerDstNodeInfo",
 		"PacketDropsByDevice_PerNodeWarning",
 		"IPsecErrors_Critical",
-		"IPsecErrors_PerNodeCritical",
+		"IPsecErrors_PerSrcNodeCritical",
+		"IPsecErrors_PerDstNodeCritical",
 		"DNSErrors_Warning",
-		"DNSErrors_PerNamespaceWarning",
-		"DNSErrors_PerNamespaceInfo",
-		"NetpolDenied_PerNamespaceWarning",
-		"NetpolDenied_PerNamespaceInfo",
-		"LatencyHighTrend_PerNamespaceInfo",
+		"DNSErrors_PerDstNamespaceWarning",
+		"DNSErrors_PerDstNamespaceInfo",
+		"NetpolDenied_PerSrcNamespaceWarning",
+		"NetpolDenied_PerDstNamespaceWarning",
+		"NetpolDenied_PerSrcNamespaceInfo",
+		"NetpolDenied_PerDstNamespaceInfo",
+		"LatencyHighTrend_PerSrcNamespaceInfo",
+		"LatencyHighTrend_PerDstNamespaceInfo",
 		"NetObservNoFlows",
 	}, allNames(rules))
-	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [namespace={{ $labels.namespace }}]")
+	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")
 	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"20","unit":"%"}`, rules[0].Annotations["netobserv_io_network_health"])
-	assert.Contains(t, rules[1].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"10","unit":"%"}`, rules[1].Annotations["netobserv_io_network_health"])
-	assert.Contains(t, rules[2].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [node={{ $labels.node }}]")
-	assert.Contains(t, rules[4].Annotations["description"], "node-exporter is detecting more than 5% of dropped packets [node={{ $labels.instance }}]")
-	assert.Contains(t, rules[13].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
+	assert.Contains(t, rules[3].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [dest. namespace={{ $labels.namespace }}]")
+	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"10","unit":"%"}`, rules[3].Annotations["netobserv_io_network_health"])
+	assert.Contains(t, rules[4].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [source node={{ $labels.node }}]")
+	assert.Contains(t, rules[8].Annotations["description"], "node-exporter is detecting more than 5% of dropped packets [node={{ $labels.instance }}]")
+	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
 }
 
 func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
@@ -140,8 +148,9 @@ func TestBuildRules_Overidden(t *testing.T) {
 		},
 	}
 	rules := BuildRules(context.Background(), &fc)
-	assert.Len(t, rules, 1)
-	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 50% of packets dropped by the kernel [workload={{ $labels.workload }} ({{ $labels.kind }})]")
+	assert.Len(t, rules, 2)
+	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 50% of packets dropped by the kernel [source workload={{ $labels.workload }} ({{ $labels.kind }})]")
+	assert.Contains(t, rules[1].Annotations["description"], "NetObserv is detecting more than 50% of packets dropped by the kernel [dest. workload={{ $labels.workload }} ({{ $labels.kind }})]")
 }
 
 func TestBuildRules_Global(t *testing.T) {
@@ -207,26 +216,20 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 	assert.Empty(t, rules)
 }
 
-func TestAggregateSourceDest(t *testing.T) {
-	pql := aggregateSourceDest("rate(my_metric[1m])", flowslatest.GroupByNode, "")
+func TestSumBy(t *testing.T) {
+	pql := sumBy("rate(my_metric[1m])", flowslatest.GroupByNode, asSource, "")
 	assert.Equal(t,
-		`(sum(label_replace(rate(my_metric[1m]), "node", "$1", "SrcK8S_HostName", "(.*)")) by (node)`+
-			` + sum(label_replace(rate(my_metric[1m]), "node", "$1", "DstK8S_HostName", "(.*)")) by (node))`+
-			` OR sum(label_replace(rate(my_metric[1m]), "node", "$1", "SrcK8S_HostName", "(.*)")) by (node)`+
-			` OR sum(label_replace(rate(my_metric[1m]), "node", "$1", "DstK8S_HostName", "(.*)")) by (node)`,
+		`sum(label_replace(rate(my_metric[1m]), "node", "$1", "SrcK8S_HostName", "(.*)")) by (node)`,
 		pql,
 	)
 
-	pql = aggregateSourceDest("rate(my_metric[1m])", flowslatest.GroupByWorkload, "")
+	pql = sumBy("rate(my_metric[1m])", flowslatest.GroupByWorkload, asDest, "")
 	assert.Equal(t,
-		`(sum(label_replace(label_replace(label_replace(rate(my_metric[1m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)"), "workload", "$1", "SrcK8S_OwnerName", "(.*)"), "kind", "$1", "SrcK8S_OwnerType", "(.*)")) by (namespace,workload,kind)`+
-			` + sum(label_replace(label_replace(label_replace(rate(my_metric[1m]), "namespace", "$1", "DstK8S_Namespace", "(.*)"), "workload", "$1", "DstK8S_OwnerName", "(.*)"), "kind", "$1", "DstK8S_OwnerType", "(.*)")) by (namespace,workload,kind))`+
-			` OR sum(label_replace(label_replace(label_replace(rate(my_metric[1m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)"), "workload", "$1", "SrcK8S_OwnerName", "(.*)"), "kind", "$1", "SrcK8S_OwnerType", "(.*)")) by (namespace,workload,kind)`+
-			` OR sum(label_replace(label_replace(label_replace(rate(my_metric[1m]), "namespace", "$1", "DstK8S_Namespace", "(.*)"), "workload", "$1", "DstK8S_OwnerName", "(.*)"), "kind", "$1", "DstK8S_OwnerType", "(.*)")) by (namespace,workload,kind)`,
+		`sum(label_replace(label_replace(label_replace(rate(my_metric[1m]), "namespace", "$1", "DstK8S_Namespace", "(.*)"), "workload", "$1", "DstK8S_OwnerName", "(.*)"), "kind", "$1", "DstK8S_OwnerType", "(.*)")) by (namespace,workload,kind)`,
 		pql,
 	)
 
-	pql = aggregateSourceDest("rate(my_metric[1m])", "", "")
+	pql = sumBy("rate(my_metric[1m])", "", "", "")
 	assert.Equal(t, `sum(rate(my_metric[1m]))`, pql)
 }
 
@@ -250,30 +253,18 @@ func TestLatencyPromql(t *testing.T) {
 	}
 	rules, err := convertToRules(flowslatest.AlertLatencyHighTrend, &variant, []string{"namespace_rtt_seconds"})
 	assert.NoError(t, err)
-	assert.Len(t, rules, 1)
-	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting TCP latency increased by more than 100% [namespace={{ $labels.namespace }}], compared to baseline (offset: 24h).")
-	// Pretty dense query, which stands for:
+	assert.Len(t, rules, 2)
+	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting TCP latency increased by more than 100% [source namespace={{ $labels.namespace }}], compared to baseline (offset: 24h).")
+	// The pattern is:
 	// 100 * (<current latency> - <past latency>) / <past latency>
-	// Both <current latency> and <past latency> are:
-	// (Latency by source namespace + Latency by dest namespace) OR Latency by source namespace OR Latency by dest namespace
-	// (this "OR" trick is necessary, otherwise prometheus eliminates data that isn't retrieved both as source and destination)
 	assert.Equal(t,
 		`100 * `+
 			`((histogram_quantile(0.9, `+
-			`(sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)`+
-			` + sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2m]), "namespace", "$1", "DstK8S_Namespace", "(.*)")) by (namespace,le))`+
-			` OR sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)`+
-			` OR sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2m]), "namespace", "$1", "DstK8S_Namespace", "(.*)")) by (namespace,le)))`+
+			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)))`+
 			` - (histogram_quantile(0.9, `+
-			`(sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)`+
-			` + sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "DstK8S_Namespace", "(.*)")) by (namespace,le))`+
-			` OR sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)`+
-			` OR sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "DstK8S_Namespace", "(.*)")) by (namespace,le))))`+
+			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le))))`+
 			` / (histogram_quantile(0.9, `+
-			`(sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)`+
-			` + sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "DstK8S_Namespace", "(.*)")) by (namespace,le))`+
-			` OR sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)`+
-			` OR sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "DstK8S_Namespace", "(.*)")) by (namespace,le)))`+
+			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)))`+
 			` > 100`,
 		rules[0].Expr.StrVal,
 	)

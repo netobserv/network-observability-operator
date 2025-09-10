@@ -13,6 +13,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+type srcOrDst string
+
+const (
+	asSource srcOrDst = "Src"
+	asDest   srcOrDst = "Dst"
+)
+
 func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
 	log := log.FromContext(ctx)
 	rules := []monitoringv1.Rule{}
@@ -47,6 +54,11 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
 	var rules []monitoringv1.Rule
 	var upperThreshold string
+	sides := []srcOrDst{asSource, asDest}
+	if alert.GroupBy == "" {
+		// No side for global group
+		sides = []srcOrDst{""}
+	}
 	// Create up to 3 rules, one per severity, with non-overlapping thresholds
 	thresholds := []struct {
 		s string
@@ -58,10 +70,12 @@ func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.Alert
 	}
 	for _, st := range thresholds {
 		if st.t != "" {
-			if r, err := convertToRule(template, alert, enabledMetrics, st.s, st.t, upperThreshold); err != nil {
-				return nil, err
-			} else if r != nil {
-				rules = append(rules, *r)
+			for _, side := range sides {
+				if r, err := convertToRule(template, alert, enabledMetrics, side, st.s, st.t, upperThreshold); err != nil {
+					return nil, err
+				} else if r != nil {
+					rules = append(rules, *r)
+				}
 			}
 			upperThreshold = st.t
 		}
@@ -69,28 +83,28 @@ func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.Alert
 	return rules, nil
 }
 
-func convertToRule(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string, severity, threshold, upperThreshold string) (*monitoringv1.Rule, error) {
+func convertToRule(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string, side srcOrDst, severity, threshold, upperThreshold string) (*monitoringv1.Rule, error) {
 	additionalDescription := fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alerts.", template)
 	switch template {
 	case flowslatest.AlertPacketDropsByDevice:
-		return deviceDrops(alert, severity, threshold, upperThreshold, additionalDescription)
+		return deviceDrops(alert, side, severity, threshold, upperThreshold, additionalDescription)
 	case flowslatest.AlertPacketDropsByKernel:
-		return kernelDrops(alert, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return kernelDrops(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
 	case flowslatest.AlertIPsecErrors:
-		return ipsecErrors(alert, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return ipsecErrors(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
 	case flowslatest.AlertDNSErrors:
-		return dnsErrors(alert, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return dnsErrors(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
 	case flowslatest.AlertNetpolDenied:
-		return netpolDenied(alert, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return netpolDenied(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
 	case flowslatest.AlertLatencyHighTrend:
-		return latencyTrend(alert, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return latencyTrend(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error
 	}
 	return nil, fmt.Errorf("unknown alert template: %s", template)
 }
 
-func createRule(tpl flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, promQL, summary, description, severity, threshold string, d monitoringv1.Duration) (*monitoringv1.Rule, error) {
+func createRule(tpl flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, side srcOrDst, promQL, summary, description, severity, threshold string, d monitoringv1.Duration) (*monitoringv1.Rule, error) {
 	bAnnot, err := buildHealthAnnotation(tpl, alert, threshold, nil)
 	if err != nil {
 		return nil, err
@@ -98,7 +112,7 @@ func createRule(tpl flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, 
 
 	var gr string
 	if alert.GroupBy != "" {
-		gr = "Per" + string(alert.GroupBy)
+		gr = "Per" + string(side) + string(alert.GroupBy)
 	}
 	return &monitoringv1.Rule{
 		Alert: fmt.Sprintf("%s_%s%s", tpl, gr, strings.ToUpper(severity[:1])+severity[1:]),
@@ -119,60 +133,62 @@ func promQLRateFromMetric(metric, suffix, filters, interval, offset string) prom
 	return promQLRate(fmt.Sprintf("rate(netobserv_%s%s%s[%s]%s)", metric, suffix, filters, interval, offset))
 }
 
-func aggregateSourceDest(promQL promQLRate, groupBy flowslatest.AlertGroupBy, extraLabel string) string {
+func sumBy(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, extraLabel string) string {
 	var nooLabels []string
 	var labelsOut []string
 	switch groupBy {
 	case flowslatest.GroupByNode:
-		nooLabels = []string{"K8S_HostName"}
+		nooLabels = []string{string(side) + "K8S_HostName"}
 		labelsOut = []string{"node"}
 	case flowslatest.GroupByNamespace:
-		nooLabels = []string{"K8S_Namespace"}
+		nooLabels = []string{string(side) + "K8S_Namespace"}
 		labelsOut = []string{"namespace"}
 	case flowslatest.GroupByWorkload:
-		nooLabels = []string{"K8S_Namespace", "K8S_OwnerName", "K8S_OwnerType"}
+		nooLabels = []string{string(side) + "K8S_Namespace", string(side) + "K8S_OwnerName", string(side) + "K8S_OwnerType"}
 		labelsOut = []string{"namespace", "workload", "kind"}
 	}
 	if len(labelsOut) > 0 {
 		// promQL input is like "rate(netobserv_workload_ingress_bytes_total[1m])"
-		// we need to relabel src and dst labels to the same label name in order to allow adding them
+		// we need to relabel src / dst labels to the same label name in order to allow adding them
 		// e.g. of desired output:
-		// sum(label_replace(rate(netobserv_workload_ingress_bytes_total[1m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace) + sum(label_replace(rate(netobserv_workload_ingress_bytes_total[1m]), "namespace", "$1", "DstK8S_Namespace", "(.*)")) by (namespace)
-		srcPromQL := string(promQL)
-		dstPromQL := string(promQL)
+		// sum(label_replace(rate(netobserv_workload_ingress_bytes_total[1m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace)
+		replacedLabels := string(promQL)
 		for i := range labelsOut {
 			in := nooLabels[i]
 			out := labelsOut[i]
-			srcPromQL = fmt.Sprintf(`label_replace(%s, "%s", "$1", "Src%s", "(.*)")`, srcPromQL, out, in)
-			dstPromQL = fmt.Sprintf(`label_replace(%s, "%s", "$1", "Dst%s", "(.*)")`, dstPromQL, out, in)
+			replacedLabels = fmt.Sprintf(`label_replace(%s, "%s", "$1", "%s", "(.*)")`, replacedLabels, out, in)
 		}
 		joinedLabels := strings.Join(labelsOut, ",")
 		if extraLabel != "" {
 			joinedLabels += "," + extraLabel
 		}
-		srcSum := fmt.Sprintf("sum(%s) by (%s)", srcPromQL, joinedLabels)
-		dstSum := fmt.Sprintf("sum(%s) by (%s)", dstPromQL, joinedLabels)
-		// Doing only A+B would discard non-matching label values in A and B, so we need to do (A+B) or A or B
-		return fmt.Sprintf("(%s + %s) OR %s OR %s", srcSum, dstSum, srcSum, dstSum)
+		return fmt.Sprintf("sum(%s) by (%s)", replacedLabels, joinedLabels)
 	} else if extraLabel != "" {
 		return fmt.Sprintf("sum(%s) by (%s)", promQL, extraLabel)
 	}
 	return fmt.Sprintf("sum(%s)", promQL)
 }
 
-func aggregateSourceDestHistogram(promQL promQLRate, groupBy flowslatest.AlertGroupBy, quantile string) string {
-	sumQL := aggregateSourceDest(promQL, groupBy, "le")
+func histogramQuantile(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, quantile string) string {
+	sumQL := sumBy(promQL, groupBy, side, "le")
 	return fmt.Sprintf("histogram_quantile(%s, %s)", quantile, sumQL)
 }
 
-func getAlertLegend(alert *flowslatest.AlertVariant) string {
+func getAlertLegend(side srcOrDst, alert *flowslatest.AlertVariant) string {
+	var sideText string
+	switch side {
+	case asSource:
+		sideText = "source "
+	case asDest:
+		sideText = "dest. "
+	}
 	switch alert.GroupBy {
 	case flowslatest.GroupByNode:
-		return " [node={{ $labels.node }}]"
+		return " [" + sideText + "node={{ $labels.node }}]"
 	case flowslatest.GroupByNamespace:
-		return " [namespace={{ $labels.namespace }}]"
+		return " [" + sideText + "namespace={{ $labels.namespace }}]"
 	case flowslatest.GroupByWorkload:
-		return " [workload={{ $labels.workload }} ({{ $labels.kind }})]"
+		return " [" + sideText + "workload={{ $labels.workload }} ({{ $labels.kind }})]"
 	}
 	return ""
 }
