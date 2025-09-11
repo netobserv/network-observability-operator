@@ -117,7 +117,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	ns := fc.Spec.GetNamespace()
 	r.currentNamespace = ns
 	previousNamespace := r.status.GetDeployedNamespace(fc)
-	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns)
+	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns, fc.Spec.Processor.HasExperimentalLokiGRPCClientProtocol())
 	cmn := r.newCommonInfo(clh, ns, &loki)
 
 	r.watcher.Reset(ns)

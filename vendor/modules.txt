@@ -161,7 +161,11 @@ github.com/munnerz/goautoneg
 # github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 ## explicit
 github.com/mwitkow/go-conntrack
+<<<<<<< HEAD
 # github.com/netobserv/flowlogs-pipeline v1.9.2-community.0.20251006073644-7e3fe86c1e99
+=======
+# github.com/netobserv/flowlogs-pipeline v1.9.2-community => github.com/leandroberetta/flowlogs-pipeline v0.0.0-20251009135050-3d8583a3cfbc
+>>>>>>> 6b4e3db1 (Support for configure grpc client to send logs to Loki)
 ## explicit; go 1.24.0
 github.com/netobserv/flowlogs-pipeline/pkg/api
 github.com/netobserv/flowlogs-pipeline/pkg/config
@@ -1258,3 +1262,4 @@ sigs.k8s.io/structured-merge-diff/v6/value
 # sigs.k8s.io/yaml v1.6.0
 ## explicit; go 1.22
 sigs.k8s.io/yaml
+# github.com/netobserv/flowlogs-pipeline => github.com/leandroberetta/flowlogs-pipeline v0.0.0-20251009135050-3d8583a3cfbc

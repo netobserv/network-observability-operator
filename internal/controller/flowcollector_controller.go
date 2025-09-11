@@ -120,7 +120,7 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
 	ns := desired.Spec.GetNamespace()
 	previousNamespace := r.status.GetDeployedNamespace(desired)
-	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)
+	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns, desired.Spec.Processor.HasExperimentalLokiGRPCClientProtocol())
 	reconcilersInfo := r.newCommonInfo(clh, ns, &loki)
 
 	if err := r.checkFinalizer(ctx, desired); err != nil {

@@ -25,6 +25,9 @@ import (
 
 const (
 	ovnkSecondary = "ovn-kubernetes"
+
+	http = "http"
+	grpc = "grpc"
 )
 
 type PipelineBuilder struct {
@@ -262,7 +265,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		if len(filters) > 0 {
 			lokiStage = lokiStage.TransformFilter("filters-loki", newTransformFilter(filters))
 		}
-
+		lokiClientProtocol := getLokiClientProtocol(&b.desired.Processor)
 		lokiWrite := api.WriteLoki{
 			Labels:         lokiLabels,
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
@@ -276,14 +279,21 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			TimestampLabel: "TimeFlowEndMs",
 			TimestampScale: "1ms",
 			TenantID:       b.loki.TenantID,
+			ClientProtocol: lokiClientProtocol,
+		}
+
+		// Configure gRPC-specific settings if using gRPC
+		if lokiWrite.ClientProtocol == grpc {
+			lokiWrite.GRPCConfig = b.buildGRPCConfig()
 		}
 
 		for k, v := range advancedConfig.StaticLabels {
 			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
 		}
 
+		// Configure client settings (TLS is shared between HTTP and gRPC)
 		var authorization *promConfig.Authorization
-		if b.loki.UseHostToken() || b.loki.UseForwardToken() {
+		if lokiWrite.ClientProtocol == http && (b.loki.UseHostToken() || b.loki.UseForwardToken()) {
 			b.volumes.AddToken(constants.FLPName)
 			authorization = &promConfig.Authorization{
 				Type:            "Bearer",
@@ -291,27 +301,13 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			}
 		}
 
-		if b.loki.TLS.Enable {
-			if b.loki.TLS.InsecureSkipVerify {
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						InsecureSkipVerify: true,
-					},
-				}
-			} else {
-				caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						CAFile: caPath,
-					},
-				}
-			}
-		} else {
-			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-				Authorization: authorization,
-			}
+		// Build TLS config (different cert paths for HTTP vs gRPC)
+		useGRPCCerts := lokiWrite.ClientProtocol == grpc
+		tlsConfig := b.buildTLSConfig(&b.loki.TLS, b.loki.IngesterURL, useGRPCCerts)
+
+		lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+			Authorization: authorization,
+			TLSConfig:     tlsConfig,
 		}
 		lokiStage.WriteLoki("loki", lokiWrite)
 	}
@@ -767,4 +763,63 @@ func subnetLabelsToFLP(labels []flowslatest.SubnetLabel) []api.NetworkTransformS
 		})
 	}
 	return cats
+}
+
+// getLokiClientProtocol returns the client type, defaulting to http if experimental support is not configured
+func getLokiClientProtocol(processorSpec *flowslatest.FlowCollectorFLP) string {
+	if processorSpec.HasExperimentalLokiGRPCClientProtocol() {
+		return grpc
+	}
+	return http
+}
+
+// buildGRPCConfig builds the gRPC configuration for Loki writer
+func (b *PipelineBuilder) buildGRPCConfig() *api.GRPCLokiConfig {
+	// TO-DO: Fill values from env vars
+	config := &api.GRPCLokiConfig{}
+
+	if config.KeepAlive == "" {
+		config.KeepAlive = "30s"
+	}
+	if config.KeepAliveTimeout == "" {
+		config.KeepAliveTimeout = "5s"
+	}
+
+	return config
+}
+
+// buildTLSConfig builds TLS configuration for Loki client
+// useGRPCCerts: true for gRPC (mutual TLS with client certs), false for HTTP (CA only)
+func (b *PipelineBuilder) buildTLSConfig(tlsConfig *flowslatest.ClientTLS, serverAddress string, useGRPCCerts bool) promConfig.TLSConfig {
+	if !tlsConfig.Enable {
+		return promConfig.TLSConfig{}
+	}
+
+	config := promConfig.TLSConfig{
+		InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
+	}
+
+	if !tlsConfig.InsecureSkipVerify {
+		if useGRPCCerts {
+			// gRPC uses mutual TLS with client certificates
+			caPath, certPath, keyPath := b.volumes.AddMutualTLSCertificates(tlsConfig, "loki-grpc-certs")
+			config.CAFile = caPath
+			config.CertFile = certPath
+			config.KeyFile = keyPath
+
+			// Set ServerName for certificate verification
+			// Extract hostname from server address (remove port)
+			serverName := serverAddress
+			if idx := strings.LastIndex(serverName, ":"); idx != -1 {
+				serverName = serverName[:idx]
+			}
+			config.ServerName = serverName
+		} else {
+			// HTTP uses only CA certificate
+			caPath := b.volumes.AddCACertificate(tlsConfig, "loki-certs")
+			config.CAFile = caPath
+		}
+	}
+
+	return config
 }
