@@ -94,9 +94,9 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"20","unit":"%"}`, rules[0].Annotations["netobserv_io_network_health"])
+	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"20","unit":"%","upperBound":"100"}`, rules[0].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[3].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [dest. namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"10","unit":"%"}`, rules[3].Annotations["netobserv_io_network_health"])
+	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"10","unit":"%","upperBound":"100"}`, rules[3].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[4].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [source node={{ $labels.node }}]")
 	assert.Contains(t, rules[8].Annotations["description"], "node-exporter is detecting more than 5% of dropped packets [node={{ $labels.instance }}]")
 	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
@@ -268,4 +268,5 @@ func TestLatencyPromql(t *testing.T) {
 			` > 100`,
 		rules[0].Expr.StrVal,
 	)
+	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"100","unit":"%","upperBound":"500"}`, rules[0].Annotations["netobserv_io_network_health"])
 }

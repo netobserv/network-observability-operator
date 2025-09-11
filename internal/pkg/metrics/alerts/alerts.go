@@ -2,6 +2,8 @@ package alerts
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
@@ -65,6 +67,7 @@ func kernelDrops(alert *flowslatest.AlertVariant, side srcOrDst, severity, thres
 		description,
 		severity,
 		threshold,
+		"100",
 		monitoringv1.Duration("5m"),
 	)
 }
@@ -99,7 +102,7 @@ func deviceDrops(alert *flowslatest.AlertVariant, side srcOrDst, severity, thres
 		alert.LowVolumeThreshold,
 	)
 
-	bAnnot, err := buildHealthAnnotation(tpl, alert, threshold, healthAnnotOverride)
+	bAnnot, err := buildHealthAnnotation(tpl, alert, threshold, "100", healthAnnotOverride)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +149,7 @@ func ipsecErrors(alert *flowslatest.AlertVariant, side srcOrDst, severity, thres
 		description,
 		severity,
 		threshold,
+		"100",
 		monitoringv1.Duration("5m"),
 	)
 }
@@ -179,6 +183,7 @@ func dnsErrors(alert *flowslatest.AlertVariant, side srcOrDst, severity, thresho
 		description,
 		severity,
 		threshold,
+		"100",
 		monitoringv1.Duration("5m"),
 	)
 }
@@ -208,6 +213,7 @@ func netpolDenied(alert *flowslatest.AlertVariant, side srcOrDst, severity, thre
 		description,
 		severity,
 		threshold,
+		"100",
 		monitoringv1.Duration("5m"),
 	)
 }
@@ -230,6 +236,15 @@ func latencyTrend(alert *flowslatest.AlertVariant, side srcOrDst, severity, thre
 	baselineQuantile := histogramQuantile(baselineRate, alert.GroupBy, side, "0.9")
 	promql := baselineIncreasePromQL(metricQuantile, baselineQuantile, threshold, upperThreshold)
 
+	// trending comparison are on an open scale; but in the health page, we need a closed scale to compute the score
+	// let's set an upper bound to max(5*threshold, 100) so score can be computed after clamping
+	var upperBound string
+	val, err := strconv.ParseFloat(threshold, 64)
+	if err != nil {
+		return nil, err
+	}
+	upperBound = strconv.Itoa(int(math.Max(val*5, 100)))
+
 	return createRule(
 		tpl,
 		alert,
@@ -239,6 +254,7 @@ func latencyTrend(alert *flowslatest.AlertVariant, side srcOrDst, severity, thre
 		description,
 		severity,
 		threshold,
+		upperBound,
 		monitoringv1.Duration("5m"),
 	)
 }

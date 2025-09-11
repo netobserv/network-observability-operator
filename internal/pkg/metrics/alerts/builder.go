@@ -104,8 +104,8 @@ func convertToRule(template flowslatest.AlertTemplate, alert *flowslatest.AlertV
 	return nil, fmt.Errorf("unknown alert template: %s", template)
 }
 
-func createRule(tpl flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, side srcOrDst, promQL, summary, description, severity, threshold string, d monitoringv1.Duration) (*monitoringv1.Rule, error) {
-	bAnnot, err := buildHealthAnnotation(tpl, alert, threshold, nil)
+func createRule(tpl flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, side srcOrDst, promQL, summary, description, severity, threshold, upperBound string, d monitoringv1.Duration) (*monitoringv1.Rule, error) {
+	bAnnot, err := buildHealthAnnotation(tpl, alert, threshold, upperBound, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -228,11 +228,12 @@ func baselineIncreasePromQL(promQLMetric, promQLBaseline string, threshold, uppe
 	)
 }
 
-func buildHealthAnnotation(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, threshold string, override map[string]any) ([]byte, error) {
+func buildHealthAnnotation(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, threshold, upperBound string, override map[string]any) ([]byte, error) {
 	// The health annotation contains json-encoded information used in console plugin display
 	annotation := map[string]any{
-		"threshold": threshold,
-		"unit":      "%",
+		"threshold":  threshold,
+		"upperBound": upperBound,
+		"unit":       "%",
 	}
 	switch alert.GroupBy {
 	case flowslatest.GroupByNode:

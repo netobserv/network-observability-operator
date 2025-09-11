@@ -365,7 +365,7 @@ func GetElligibleMetricsForAlert(template AlertTemplate, alertDef *AlertVariant)
 		totalMetricPatterns = []string{`%s_rtt_seconds`}
 	case AlertNetpolDenied:
 		metricPatterns = []string{`%s_network_policy_events_total`}
-		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
+		totalMetricPatterns = []string{"%s_flows_total"}
 	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice:
 		// nothing
 		return nil, nil
