@@ -12,6 +12,8 @@ permissions:
 
 jobs:
   auto-label:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'pull_request' &&
