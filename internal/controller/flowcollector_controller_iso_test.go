@@ -150,8 +150,9 @@ func flowCollectorIsoSpecs() {
 				QuickFilters: []flowslatest.QuickFilter{},
 			},
 			Loki: flowslatest.FlowCollectorLoki{
-				Enable: ptr.To(true),
-				Mode:   flowslatest.LokiModeManual,
+				Enable:     ptr.To(true),
+				Mode:       flowslatest.LokiModeManual,
+				ClientType: "http",
 				Manual: flowslatest.LokiManualParams{
 					IngesterURL: "http://loki",
 					QuerierURL:  "http://loki",
