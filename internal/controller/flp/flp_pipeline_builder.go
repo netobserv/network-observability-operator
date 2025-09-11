@@ -845,7 +845,7 @@ func (b *PipelineBuilder) buildGRPCConfig(grpcConfig *flowslatest.LokiGRPCConfig
 			if keyPath != "" {
 				config.TLS.KeyFile = keyPath
 			}
-			
+
 			// Set ServerName for certificate verification
 			// Extract hostname from server address (remove port)
 			serverName := address

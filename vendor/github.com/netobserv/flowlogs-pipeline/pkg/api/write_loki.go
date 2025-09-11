@@ -49,17 +49,17 @@ type WriteLoki struct {
 	Reorder        bool   `yaml:"reorder,omitempty" json:"reorder,omitempty" doc:"reorder json map keys"`
 
 	// Client type selection
-	ClientType string         `yaml:"clientType,omitempty" json:"clientType,omitempty" doc:"type of client to use: 'http' or 'grpc' (default: 'http')"`
+	ClientType string          `yaml:"clientType,omitempty" json:"clientType,omitempty" doc:"type of client to use: 'http' or 'grpc' (default: 'http')"`
 	GRPCConfig *GRPCLokiConfig `yaml:"grpcConfig,omitempty" json:"grpcConfig,omitempty" doc:"gRPC client configuration (used only for gRPC client type)"`
 }
 
 type GRPCLokiConfig struct {
-	ServerAddress    string        `yaml:"serverAddress,omitempty" json:"serverAddress,omitempty" doc:"gRPC server address (host:port)"`
-	MaxRecvMsgSize   int           `yaml:"maxRecvMsgSize,omitempty" json:"maxRecvMsgSize,omitempty" doc:"maximum message size the client can receive"`
-	MaxSendMsgSize   int           `yaml:"maxSendMsgSize,omitempty" json:"maxSendMsgSize,omitempty" doc:"maximum message size the client can send"`
-	KeepAlive        string        `yaml:"keepAlive,omitempty" json:"keepAlive,omitempty" doc:"keep alive interval"`
-	KeepAliveTimeout string        `yaml:"keepAliveTimeout,omitempty" json:"keepAliveTimeout,omitempty" doc:"keep alive timeout"`
-	UseStreaming     bool          `yaml:"useStreaming,omitempty" json:"useStreaming,omitempty" doc:"use streaming for real-time log pushing"`
+	ServerAddress    string         `yaml:"serverAddress,omitempty" json:"serverAddress,omitempty" doc:"gRPC server address (host:port)"`
+	MaxRecvMsgSize   int            `yaml:"maxRecvMsgSize,omitempty" json:"maxRecvMsgSize,omitempty" doc:"maximum message size the client can receive"`
+	MaxSendMsgSize   int            `yaml:"maxSendMsgSize,omitempty" json:"maxSendMsgSize,omitempty" doc:"maximum message size the client can send"`
+	KeepAlive        string         `yaml:"keepAlive,omitempty" json:"keepAlive,omitempty" doc:"keep alive interval"`
+	KeepAliveTimeout string         `yaml:"keepAliveTimeout,omitempty" json:"keepAliveTimeout,omitempty" doc:"keep alive timeout"`
+	UseStreaming     bool           `yaml:"useStreaming,omitempty" json:"useStreaming,omitempty" doc:"use streaming for real-time log pushing"`
 	TLS              *GRPCTLSConfig `yaml:"tls,omitempty" json:"tls,omitempty" doc:"TLS configuration"`
 }
 

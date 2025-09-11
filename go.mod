@@ -118,3 +118,5 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
 )
+
+replace github.com/netobserv/flowlogs-pipeline => github.com/leandroberetta/flowlogs-pipeline v0.0.0-20250910204200-598934e552bf

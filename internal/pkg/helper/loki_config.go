@@ -27,7 +27,7 @@ func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiCo
 		tlsConfig := flowslatest.ClientTLS{
 			Enable: true,
 		}
-		
+
 		// Set TLS certificates based on the connection type
 		if spec.ClientType == "grpc" {
 			// For gRPC ingester connections: use the Loki signing CA
