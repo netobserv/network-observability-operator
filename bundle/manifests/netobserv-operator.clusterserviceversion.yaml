@@ -253,7 +253,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.9.1-community
-    createdAt: "2025-09-05T12:42:59Z"
+    createdAt: "2025-09-11T18:07:05Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -572,6 +572,20 @@ spec:
         path: kafka.address
       - displayName: Topic
         path: kafka.topic
+      - displayName: Client type
+        path: loki.clientType
+      - displayName: Grpc config
+        path: loki.grpcConfig
+      - displayName: Keep alive
+        path: loki.grpcConfig.keepAlive
+      - displayName: Keep alive timeout
+        path: loki.grpcConfig.keepAliveTimeout
+      - displayName: Max recv msg size
+        path: loki.grpcConfig.maxRecvMsgSize
+      - displayName: Max send msg size
+        path: loki.grpcConfig.maxSendMsgSize
+      - displayName: Use streaming
+        path: loki.grpcConfig.useStreaming
       - displayName: Name
         path: loki.lokiStack.name
       - displayName: Namespace
