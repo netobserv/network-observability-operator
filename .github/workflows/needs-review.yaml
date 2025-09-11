@@ -1,11 +1,8 @@
 name: Auto-label PR for review
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, edited, ready_for_review]
-  issue_comment:
-    types: [created]
-
 permissions:
   issues: write
   pull-requests: write
