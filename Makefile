@@ -15,15 +15,13 @@ IMAGE_REGISTRY ?= quay.io
 REPO ?= $(IMAGE_REGISTRY)/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
-BUNDLE_VERSION ?= 1.9.1-community
-#File based catalog
-FBC_VERSION ?= 1.9.1-community
+BUNDLE_VERSION ?= 1.9.2-community
 # console plugin
-export PLG_VERSION ?= v1.9.1-community
+export PLG_VERSION ?= v${BUNDLE_VERSION}
 # flowlogs-pipeline
-export FLP_VERSION ?= v1.9.1-community
+export FLP_VERSION ?= v${BUNDLE_VERSION}
 # eBPF agent
-export BPF_VERSION ?= v1.9.1-community
+export BPF_VERSION ?= v${BUNDLE_VERSION}
 
 # Allows building bundles in Mac replacing BSD 'sed' command by GNU-compatible 'gsed'
 ifeq (,$(shell which gsed 2>/dev/null))
@@ -319,7 +317,7 @@ lint: prereqs ## Run linter (golangci-lint).
 	./bin/golangci-lint-${GOLANGCI_LINT_VERSION} run --timeout 5m ./...
 
 test: envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./... -coverpkg=./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT="120s" go test ./... -coverpkg=./... -coverprofile cover.out
 
 coverage-report: ## Generate coverage report
 	go tool cover --func=./cover.out

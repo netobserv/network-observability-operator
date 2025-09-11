@@ -6,6 +6,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,7 +44,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("monitoring").
-		Owns(&corev1.Namespace{}).
+		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).
 		Watches(
 			&metricslatest.FlowMetric{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
@@ -51,6 +53,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 				}
 				return []reconcile.Request{}
 			}),
+			reconcilers.IgnoreStatusChange,
 		).
 		Complete(&r)
 }
@@ -129,12 +132,18 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 		allMetrics := metrics.MergePredefined(fm.Items, &desired.Spec)
 		log.WithValues("metrics count", len(allMetrics)).Info("Merged metrics")
 
+		req, err := labels.NewRequirement("netobserv-managed", selection.Exists, []string{})
+		if err != nil {
+			return r.status.Error("CantQueryRequirement", err)
+		}
 		// List existing dashboards
 		currentDashboards := corev1.ConfigMapList{}
-		if err := r.Client.List(ctx, &currentDashboards, &client.ListOptions{Namespace: dashboardCMNamespace}); err != nil {
+		if err := r.Client.List(ctx, &currentDashboards, &client.ListOptions{
+			Namespace:     dashboardCMNamespace,
+			LabelSelector: labels.NewSelector().Add(*req),
+		}); err != nil {
 			return r.status.Error("CantListDashboards", err)
 		}
-		filterOwned(&currentDashboards)
 
 		// Build desired dashboards
 		cms := buildFlowMetricsDashboards(allMetrics)
@@ -170,14 +179,6 @@ func getNamespacedFlowsMetric(metrics []metricslatest.FlowMetric) string {
 		}
 	}
 	return "netobserv_workload_flows_total"
-}
-
-func filterOwned(list *corev1.ConfigMapList) {
-	for i := len(list.Items) - 1; i >= 0; i-- {
-		if !helper.IsOwned(&list.Items[i]) {
-			removeFromList(list, i)
-		}
-	}
 }
 
 func findAndRemoveConfigMapFromList(list *corev1.ConfigMapList, name string) *corev1.ConfigMap {
