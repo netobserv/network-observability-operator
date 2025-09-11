@@ -216,6 +216,12 @@ spec:
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
             - urn:alm:descriptor:com.tectonic.ui:advanced
+        - displayName: Keep alive
+          path: loki.grpcConfig.keepAlive
+        - displayName: Keep alive timeout
+          path: loki.grpcConfig.keepAliveTimeout
+        - displayName: Read timeout
+          path: loki.readTimeout
         - path: loki.advanced
           x-descriptors:
             - urn:alm:descriptor:com.tectonic.ui:hidden
