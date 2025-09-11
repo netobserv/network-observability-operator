@@ -3,11 +3,14 @@ name: Auto-label PR for review
 on:
   pull_request:
     types: [opened, edited, ready_for_review]
+  issue_comment:
+    types: [created]
 
 jobs:
   auto-label:
     runs-on: ubuntu-latest
     if: >
+      github.event_name == 'pull_request' &&
       github.event.pull_request.draft == false &&
       github.event.pull_request.user.login != 'red-hat-konflux' &&
       !contains(github.event.pull_request.title, 'WIP')
@@ -22,3 +25,30 @@ jobs:
               issue_number: context.issue.number,
               labels: ['needs-review']
             });
+
+  manual-needs-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    steps:
+      - name: Add needs-review label via comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body.toLowerCase();
+            
+            if (comment.includes('needs-review') || comment.includes('/needs-review')) {
+              const { owner, repo } = context.repo;
+              const issue_number = context.payload.issue.number;
+              
+              try {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number,
+                  labels: ['needs-review']
+                });
+                console.log('Added needs-review label via comment');
+              } catch (error) {
+                console.log('Error adding needs-review label:', error.message);
+              }
+            }
