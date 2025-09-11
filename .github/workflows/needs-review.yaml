@@ -1,0 +1,24 @@
+name: Auto-label PR for review
+
+on:
+  pull_request:
+    types: [opened, edited, ready_for_review]
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'red-hat-konflux' &&
+      !contains(github.event.pull_request.title, 'WIP')
+    steps:
+      - name: Add needs-review label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['needs-review']
+            });
