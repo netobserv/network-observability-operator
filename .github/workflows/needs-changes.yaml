@@ -8,6 +8,10 @@ on:
   pull_request:
     types: [labeled]
 
+permissions:
+  issues: write
+  pull-requests: write
+
 jobs:
   manage-review-labels:
     runs-on: ubuntu-latest
