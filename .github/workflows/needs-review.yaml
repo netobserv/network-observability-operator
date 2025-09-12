@@ -21,7 +21,8 @@ jobs:
       - name: Add needs-review label
         run: gh pr edit ${{ github.event.pull_request.number }} --add-label needs-review
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
   manual-needs-review:
     runs-on: ubuntu-latest
@@ -37,7 +38,8 @@ jobs:
             gh pr edit ${{ github.event.issue.number }} --add-label needs-review || echo "Failed to add label or label already exists"
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
   remove-needs-review-on-needs-changes:
     runs-on: ubuntu-latest
@@ -51,4 +53,5 @@ jobs:
           echo "Removing needs-review label when needs-changes was added"
           gh pr edit ${{ github.event.pull_request.number }} --remove-label needs-review || echo "needs-review label not found or already removed"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}

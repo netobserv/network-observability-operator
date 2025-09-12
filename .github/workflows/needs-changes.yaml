@@ -30,7 +30,8 @@ jobs:
             gh pr edit $PR_NUMBER --add-label needs-changes || echo "Failed to add needs-changes label or label already exists"
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
       - name: Handle manual needs-changes via comment
         if: github.event_name == 'issue_comment' && github.event.issue.pull_request
@@ -43,7 +44,8 @@ jobs:
             gh pr edit ${{ github.event.issue.number }} --add-label needs-changes || echo "Failed to add needs-changes label or label already exists"
           fi
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
 
       - name: Remove needs-changes when lgtm is added
         if: github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'lgtm'
@@ -51,4 +53,5 @@ jobs:
           echo "Removing needs-changes label when lgtm was added"
           gh pr edit ${{ github.event.pull_request.number }} --remove-label needs-changes || echo "needs-changes label not found or already removed"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
