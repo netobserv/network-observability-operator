@@ -182,3 +182,13 @@ func (spec *FlowCollectorFLP) GetMetricsPort() int32 {
 	}
 	return port
 }
+
+func (spec *FlowCollectorSpec) HasExperimentalAlertsHealth() bool {
+	if spec.Processor.Advanced != nil {
+		env := spec.Processor.Advanced.Env["EXPERIMENTAL_ALERTS_HEALTH"]
+		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
+		b, err := strconv.ParseBool(env)
+		return err == nil && b
+	}
+	return false
+}

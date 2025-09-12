@@ -37,17 +37,19 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 	log := log.FromContext(ctx)
 	rules := []monitoringv1.Rule{}
 
-	alerts := fc.GetFLPAlerts()
-	metrics := fc.GetIncludeList()
-	for _, alert := range alerts {
-		if ok, _ := alert.IsAllowed(fc); !ok {
-			continue
-		}
-		for _, variant := range alert.Variants {
-			if r, err := convertToRules(alert.Template, &variant, metrics); err != nil {
-				log.Error(err, "unable to configure an alert")
-			} else if len(r) > 0 {
-				rules = append(rules, r...)
+	if fc.HasExperimentalAlertsHealth() {
+		alerts := fc.GetFLPAlerts()
+		metrics := fc.GetIncludeList()
+		for _, alert := range alerts {
+			if ok, _ := alert.IsAllowed(fc); !ok {
+				continue
+			}
+			for _, variant := range alert.Variants {
+				if r, err := convertToRules(alert.Template, &variant, metrics); err != nil {
+					log.Error(err, "unable to configure an alert")
+				} else if len(r) > 0 {
+					rules = append(rules, r...)
+				}
 			}
 		}
 	}
