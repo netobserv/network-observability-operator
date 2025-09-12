@@ -11479,7 +11479,8 @@ More information on alerts: https://github.com/netobserv/network-observability-o
         <td>[]string</td>
         <td>
           `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`.
+Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
@@ -11532,10 +11533,10 @@ More information, with full list of available metrics: https://github.com/netobs
         <td>
           Alert template name.
 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-`HighLatency`, `DNSErrors`, `HighExternalEgress`, `HighExternalIngress`, `CrossAZ`.
+`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
           <br/>
-            <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, HighLatency, DNSErrors, HighExternalEgress, HighExternalIngress, CrossAZ<br/>
+            <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, ExternalEgressHighTrend, ExternalIngressHighTrend, CrossAZ<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -11589,6 +11590,20 @@ They are expressed as a percentage of errors above which the alert is triggered.
           The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
 It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
 When provided, it must be parsable as a float.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>trendDuration</b></td>
+        <td>string</td>
+        <td>
+          For trending alerts, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>trendOffset</b></td>
+        <td>string</td>
+        <td>
+          For trending alerts, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

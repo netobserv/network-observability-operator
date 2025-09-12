@@ -16,17 +16,29 @@ Here is the list of alerts installed by default:
 - `PacketDropsByKernel`: triggered on high percentage of packet drops by the kernel; it requires the `PacketDrop` agent feature. 2 variants installed by default:
   - grouped by node, with "Info" severity above 5% and "Warning" above 10%
   - grouped by namespace, with "Info" severity above 10% and "Warning" above 20%
+- `IPsecErrors`: triggered when NetObserv detects IPsec encyption errors; it requires the `IPSec` agent feature.
+- `NetpolDenied`: triggered when NetObserv detects traffic denied by network policies; it requires the `NetworkEvents` agent feature.
+- `LatencyHighTrend`: triggered when NetObserv detects an increase of TCP latency; it requires the `FlowRTT` agent feature.
+- `DNSErrors`: triggered when NetObserv detects DNS errors; it requires the `DNSTracking` agent feature.
+- `ExternalEgressHighTrend`: TODO.
+- `ExternalIngressHighTrend`: TODO.
 
 On top of that, there are also some operational alerts that relate to NetObserv's self health:
 
 - `NetObservNoFlows`: triggered when no flows are being observed for a certain period.
 - `NetObservLokiError`: triggered when flows are being dropped due to Loki errors.
 
+## Other alert templates
+
+Templates that are not enabled by default, but available for configuration:
+
+- `CrossAZ`: TODO.
+
 ## Configure predefined alerts
 
 Alerts are configured in the `FlowCollector` custom resource, via `spec.processor.metrics.alerts`.
 
-They are organized by groups and variants. The group names are the ones listed above, such as `PacketDropsByKernel`. For each group, you can define a list of alert rules to generate, each with their threshold, grouping configuration and severity.
+They are organized by templates and variants. The template names are the ones listed above, such as `PacketDropsByKernel`. For each template, you can define a list of variants, each with their thresholds and grouping configuration.
 
 Example:
 
@@ -48,15 +60,15 @@ spec:
           groupBy: Node
 ```
 
-When you configure an alert, it overrides (replaces) the default configuration for that template. So, if you want to add a new alert on top of the default ones for a group, you may want to replicate the default configuration manually, which is described in the section above.
+When you configure an alert, it overrides (replaces) the default configuration for that template. So, if you want to add a new alert on top of the default ones for a template, you may want to replicate the default configuration manually, which is described in the section above.
 
 ## Disable predefined alerts
 
-Alert groups can be disabled in `spec.processor.metrics.disableAlerts`. This settings accepts a list of group names, as listed above.
+Alert templates can be disabled in `spec.processor.metrics.disableAlerts`. This settings accepts a list of template names, as listed above.
 
-If a group is disabled _and_ overridden in `spec.processor.metrics.alerts`, the disable setting takes precedence: the alert rule will not created.
+If a template is disabled _and_ overridden in `spec.processor.metrics.alerts`, the disable setting takes precedence: the alert rule will not be created.
 
-## Customizing even further
+## Creating rules from scratch
 
 This alerting API in NetObserv `FlowCollector` is simply a mapping to the Prometheus operator API, generating a `PrometheusRule` that you can see in the `netobserv` namespace (by default) by running:
 
@@ -64,7 +76,7 @@ This alerting API in NetObserv `FlowCollector` is simply a mapping to the Promet
 kubectl get prometheusrules -n netobserv -oyaml
 ```
 
-The sections above explain how you can customize those opinionated alerts, but should you feel limited with this configuration API, you can go even further and create your own `AlertingRule` resources. You need to be familiar with PromQL, or to learn about it.
+The sections above explain how you can customize those opinionated alerts, but should you feel limited with this configuration API, you can go further and create your own `AlertingRule` resources. You'll just need to be familiar with PromQL (or to learn).
 
 Here is an example to alert when the current ingress traffic exceeds by more than twice the traffic from the day before.
 
