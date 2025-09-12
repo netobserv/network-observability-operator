@@ -17,81 +17,39 @@ jobs:
     steps:
       - name: Handle review submission
         if: github.event_name == 'pull_request_review'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const pr_number = context.payload.pull_request.number;
-            const review_state = context.payload.review.state;
-            
-            // Remove needs-review label when any review is submitted
-            try {
-              await github.rest.issues.removeLabel({
-                owner,
-                repo,
-                issue_number: pr_number,
-                name: 'needs-review'
-              });
-              console.log('Removed needs-review label');
-            } catch (error) {
-              console.log('needs-review label not found or already removed');
-            }
-            
-            // Add needs-changes label for non-approved reviews
-            if (review_state === 'changes_requested' || review_state === 'commented') {
-              try {
-                await github.rest.issues.addLabels({
-                  owner,
-                  repo,
-                  issue_number: pr_number,
-                  labels: ['needs-changes']
-                });
-                console.log('Added needs-changes label');
-              } catch (error) {
-                console.log('Error adding needs-changes label:', error.message);
-              }
-            }
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          REVIEW_STATE="${{ github.event.review.state }}"
+          
+          # Remove needs-review label when any review is submitted
+          echo "Removing needs-review label"
+          gh pr edit $PR_NUMBER --remove-label needs-review || echo "needs-review label not found or already removed"
+          
+          # Add needs-changes label for non-approved reviews
+          if [[ "$REVIEW_STATE" == "changes_requested" ]] || [[ "$REVIEW_STATE" == "commented" ]]; then
+            echo "Adding needs-changes label for $REVIEW_STATE review"
+            gh pr edit $PR_NUMBER --add-label needs-changes || echo "Failed to add needs-changes label or label already exists"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Handle manual needs-changes via comment
         if: github.event_name == 'issue_comment' && github.event.issue.pull_request
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const comment = context.payload.comment.body.toLowerCase();
-            
-            if (comment.includes('needs-changes') || comment.includes('/needs-changes')) {
-              const { owner, repo } = context.repo;
-              const issue_number = context.payload.issue.number;
-              
-              try {
-                await github.rest.issues.addLabels({
-                  owner,
-                  repo,
-                  issue_number,
-                  labels: ['needs-changes']
-                });
-                console.log('Added needs-changes label via comment');
-              } catch (error) {
-                console.log('Error adding needs-changes label:', error.message);
-              }
-            }
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          COMMENT_LOWER=$(echo "$COMMENT_BODY" | tr '[:upper:]' '[:lower:]')
+          
+          if [[ "$COMMENT_LOWER" == *"needs-changes"* ]] || [[ "$COMMENT_LOWER" == *"/needs-changes"* ]]; then
+            echo "Adding needs-changes label via comment"
+            gh pr edit ${{ github.event.issue.number }} --add-label needs-changes || echo "Failed to add needs-changes label or label already exists"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Remove needs-changes when lgtm is added
         if: github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'lgtm'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const pr_number = context.payload.pull_request.number;
-            
-            try {
-              await github.rest.issues.removeLabel({
-                owner,
-                repo,
-                issue_number: pr_number,
-                name: 'needs-changes'
-              });
-              console.log('Removed needs-changes label when lgtm was added');
-            } catch (error) {
-              console.log('needs-changes label not found or already removed');
-            }
+        run: |
+          echo "Removing needs-changes label when lgtm was added"
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label needs-changes || echo "needs-changes label not found or already removed"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
