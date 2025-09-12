@@ -5,12 +5,12 @@ on:
     types: [synchronize, reopened, opened, edited, ready_for_review, labeled]
   issue_comment:
     types: [created]
-permissions:
-  pull-requests: write
 
 jobs:
   auto-label:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     if: >
       github.event_name == 'pull_request_target' &&
       contains(fromJSON('["opened", "edited", "ready_for_review"]'), github.event.action) &&
