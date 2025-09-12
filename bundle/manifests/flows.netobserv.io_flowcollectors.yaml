@@ -3774,6 +3774,16 @@ spec:
                           for Loki client connection between retries.'
                         type: string
                     type: object
+                  clientType:
+                    default: http
+                    description: |-
+                      `clientType` specifies the protocol to use for sending flows to Loki: `http` or `grpc`.
+                      This setting is independent of the Loki installation mode and allows choosing the optimal transport protocol.
+                      gRPC may provide better performance for high-throughput scenarios.
+                    enum:
+                    - http
+                    - grpc
+                    type: string
                   enable:
                     default: true
                     description: |-
@@ -3784,6 +3794,39 @@ spec:
                       If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
                       If they are both disabled, the Console plugin is not deployed.
                     type: boolean
+                  grpcConfig:
+                    description: |-
+                      `grpcConfig` contains gRPC-specific configuration for the Loki writer.
+                      This is only used when `clientType` is set to `grpc`.
+                    properties:
+                      keepAlive:
+                        default: 30s
+                        description: '`keepAlive` is the gRPC keep-alive interval.'
+                        type: string
+                      keepAliveTimeout:
+                        default: 5s
+                        description: '`keepAliveTimeout` is the gRPC keep-alive timeout.'
+                        type: string
+                      maxRecvMsgSize:
+                        default: 67108864
+                        description: '`maxRecvMsgSize` is the maximum message size
+                          in bytes the gRPC client can receive. Default: 64MB.'
+                        maximum: 67108864
+                        minimum: 1024
+                        type: integer
+                      maxSendMsgSize:
+                        default: 16777216
+                        description: '`maxSendMsgSize` is the maximum message size
+                          in bytes the gRPC client can send. Default: 16MB.'
+                        maximum: 67108864
+                        minimum: 1024
+                        type: integer
+                      useStreaming:
+                        default: false
+                        description: '`useStreaming` enables streaming mode for real-time
+                          log pushing when using gRPC.'
+                        type: boolean
+                    type: object
                   lokiStack:
                     description: |-
                       Loki configuration for `LokiStack` mode. This is useful for an easy Loki Operator configuration.

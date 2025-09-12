@@ -890,6 +890,33 @@ const (
 	LokiModeMicroservices LokiMode = "Microservices"
 )
 
+// `LokiGRPCConfig` defines gRPC-specific configuration for the Loki writer
+type LokiGRPCConfig struct {
+	//+kubebuilder:validation:Minimum=1024
+	//+kubebuilder:validation:Maximum=67108864
+	//+kubebuilder:default:=67108864
+	// `maxRecvMsgSize` is the maximum message size in bytes the gRPC client can receive. Default: 64MB.
+	MaxRecvMsgSize int `json:"maxRecvMsgSize,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1024
+	//+kubebuilder:validation:Maximum=67108864
+	//+kubebuilder:default:=16777216
+	// `maxSendMsgSize` is the maximum message size in bytes the gRPC client can send. Default: 16MB.
+	MaxSendMsgSize int `json:"maxSendMsgSize,omitempty"`
+
+	//+kubebuilder:default:="30s"
+	// `keepAlive` is the gRPC keep-alive interval.
+	KeepAlive *metav1.Duration `json:"keepAlive,omitempty"`
+
+	//+kubebuilder:default:="5s"
+	// `keepAliveTimeout` is the gRPC keep-alive timeout.
+	KeepAliveTimeout *metav1.Duration `json:"keepAliveTimeout,omitempty"`
+
+	//+kubebuilder:default:=false
+	// `useStreaming` enables streaming mode for real-time log pushing when using gRPC.
+	UseStreaming bool `json:"useStreaming,omitempty"`
+}
+
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
@@ -954,6 +981,19 @@ type FlowCollectorLoki struct {
 	//+kubebuilder:default:=10485760
 	// `writeBatchSize` is the maximum batch size (in bytes) of Loki logs to accumulate before sending.
 	WriteBatchSize int64 `json:"writeBatchSize,omitempty"`
+
+	//+kubebuilder:validation:Enum=http;grpc
+	//+kubebuilder:default:="http"
+	// `clientType` specifies the protocol to use for sending flows to Loki: `http` or `grpc`.
+	// This setting is independent of the Loki installation mode and allows choosing the optimal transport protocol.
+	// gRPC may provide better performance for high-throughput scenarios.
+	// +optional
+	ClientType string `json:"clientType,omitempty"`
+
+	// `grpcConfig` contains gRPC-specific configuration for the Loki writer.
+	// This is only used when `clientType` is set to `grpc`.
+	// +optional
+	GRPCConfig *LokiGRPCConfig `json:"grpcConfig,omitempty"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the Loki clients.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations.
