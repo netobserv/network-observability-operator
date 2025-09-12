@@ -94,11 +94,33 @@ spec:
         port: 9401
       disableAlerts: []
       # includeList:
-      #   - "node_ingress_bytes_total"
-      #   - "workload_ingress_bytes_total"
-      #   - "namespace_flows_total"
-      #   - "namespace_drop_packets_total"
-      #   - "namespace_rtt_seconds"
+      # - "node_ingress_bytes_total"
+      # - "node_ingress_packets_total"
+      # - "workload_ingress_bytes_total"
+      # - "workload_ingress_packets_total"
+      # - "namespace_flows_total"
+      # - "namespace_drop_packets_total"
+      # - "node_drop_packets_total"
+      # - "namespace_rtt_seconds"
+      # alerts:
+      # - template: PacketDropsByKernel
+      #   variants:
+      #   - thresholds:
+      #       critical: "15"
+      #       warning: "10"
+      #       info: "5"
+      #   - thresholds:
+      #       critical: "15"
+      #       warning: "10"
+      #       info: "5"
+      #     groupBy: Node
+      #     lowVolumeThreshold: "5"
+      #   - thresholds:
+      #       critical: "15"
+      #       warning: "10"
+      #       info: "5"
+      #     groupBy: Namespace
+      #     lowVolumeThreshold: "5"
     # Kafka consumer stage configuration
     kafkaConsumerReplicas: 3
     kafkaConsumerAutoscaler: null

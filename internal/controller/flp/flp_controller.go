@@ -114,7 +114,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flowslatest.FlowCollector) error {
 	log := log.FromContext(ctx)
 
-	ns := helper.GetNamespace(&fc.Spec)
+	ns := fc.Spec.GetNamespace()
 	r.currentNamespace = ns
 	previousNamespace := r.status.GetDeployedNamespace(fc)
 	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns)
@@ -129,7 +129,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 
 	// Auto-detect subnets
 	var subnetLabels []flowslatest.SubnetLabel
-	if r.mgr.ClusterInfo.IsOpenShift() && helper.AutoDetectOpenShiftNetworks(&fc.Spec.Processor) {
+	if r.mgr.ClusterInfo.IsOpenShift() && fc.Spec.Processor.HasAutoDetectOpenShiftNetworks() {
 		var err error
 		subnetLabels, err = r.getOpenShiftSubnets(ctx)
 		if err != nil {
@@ -204,7 +204,7 @@ func annotateKafkaCerts(ctx context.Context, info *reconcilers.Common, spec *flo
 	if userDigest != "" {
 		annotations[watchers.Annotation(prefix+"-user")] = userDigest
 	}
-	if helper.UseSASL(&spec.SASL) {
+	if spec.SASL.UseSASL() {
 		saslDigest1, saslDigest2, err := info.Watcher.ProcessSASL(ctx, info.Client, &spec.SASL, info.Namespace)
 		if err != nil {
 			return err

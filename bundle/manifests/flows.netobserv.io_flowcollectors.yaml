@@ -5784,21 +5784,93 @@ spec:
                     description: '`Metrics` define the processor configuration regarding
                       metrics'
                     properties:
+                      alerts:
+                        description: |-
+                          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
+                          More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                        items:
+                          properties:
+                            template:
+                              description: |-
+                                Alert template name.
+                                Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+                                `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+                                More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                              enum:
+                              - PacketDropsByKernel
+                              - PacketDropsByDevice
+                              - IPsecErrors
+                              - NetpolDenied
+                              - LatencyHighTrend
+                              - DNSErrors
+                              - ExternalEgressHighTrend
+                              - ExternalIngressHighTrend
+                              - CrossAZ
+                              type: string
+                            variants:
+                              description: A list of variants for this template
+                              items:
+                                properties:
+                                  groupBy:
+                                    description: 'Optional grouping criteria, possible
+                                      values are: `Node`, `Namespace`, `Workload`.'
+                                    enum:
+                                    - ""
+                                    - Node
+                                    - Namespace
+                                    - Workload
+                                    type: string
+                                  lowVolumeThreshold:
+                                    description: |-
+                                      The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
+                                      It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
+                                      When provided, it must be parsable as a float.
+                                    type: string
+                                  thresholds:
+                                    description: |-
+                                      Thresholds of the alert per severity.
+                                      They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+                                    properties:
+                                      critical:
+                                        description: Threshold for severity `critical`.
+                                          Leave empty to not generate a Critical alert.
+                                        type: string
+                                      info:
+                                        description: Threshold for severity `info`.
+                                          Leave empty to not generate an Info alert.
+                                        type: string
+                                      warning:
+                                        description: Threshold for severity `warning`.
+                                          Leave empty to not generate a Warning alert.
+                                        type: string
+                                    type: object
+                                  trendDuration:
+                                    description: For trending alerts, the duration
+                                      interval for baseline comparison. For example,
+                                      "2h" means comparing against a 2-hours average.
+                                      Defaults to 2h.
+                                    type: string
+                                  trendOffset:
+                                    description: For trending alerts, the time offset
+                                      for baseline comparison. For example, "1d" means
+                                      comparing against yesterday. Defaults to 1d.
+                                    type: string
+                                required:
+                                - thresholds
+                                type: object
+                              type: array
+                          required:
+                          - template
+                          - variants
+                          type: object
+                        type: array
                       disableAlerts:
                         description: |-
-                          `disableAlerts` is a list of alerts that should be disabled.
-                          Possible values are:<br>
-                          `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-                          `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
+                          `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
+                          Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+                          `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+                          More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                         items:
-                          description: |-
-                            Name of a processor alert.
-                            Possible values are:<br>
-                            - `NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-                            - `NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br>
-                          enum:
-                          - NetObservNoFlows
-                          - NetObservLokiError
                           type: string
                         type: array
                       includeList:

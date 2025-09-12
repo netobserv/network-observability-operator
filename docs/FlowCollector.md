@@ -11467,13 +11467,21 @@ available.<br/>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>disableAlerts</b></td>
-        <td>[]enum</td>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertsindex">alerts</a></b></td>
+        <td>[]object</td>
         <td>
-          `disableAlerts` is a list of alerts that should be disabled.
-Possible values are:<br>
-`NetObservNoFlows`, which is triggered when no flows are being observed for a certain period.<br>
-`NetObservLokiError`, which is triggered when flows are being dropped due to Loki errors.<br><br/>
+          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
+More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>disableAlerts</b></td>
+        <td>[]string</td>
+        <td>
+          `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
+Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11497,6 +11505,147 @@ More information, with full list of available metrics: https://github.com/netobs
         <td>object</td>
         <td>
           Metrics server endpoint configuration for Prometheus scraper<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.alerts[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetrics)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>template</b></td>
+        <td>enum</td>
+        <td>
+          Alert template name.
+Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
+          <br/>
+            <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, ExternalEgressHighTrend, ExternalIngressHighTrend, CrossAZ<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindex">variants</a></b></td>
+        <td>[]object</td>
+        <td>
+          A list of variants for this template<br/>
+        </td>
+        <td>true</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.alerts[index].variants[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindex)</sup></sup>
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindexthresholds">thresholds</a></b></td>
+        <td>object</td>
+        <td>
+          Thresholds of the alert per severity.
+They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>groupBy</b></td>
+        <td>enum</td>
+        <td>
+          Optional grouping criteria, possible values are: `Node`, `Namespace`, `Workload`.<br/>
+          <br/>
+            <i>Enum</i>: , Node, Namespace, Workload<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>lowVolumeThreshold</b></td>
+        <td>string</td>
+        <td>
+          The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
+It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
+When provided, it must be parsable as a float.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>trendDuration</b></td>
+        <td>string</td>
+        <td>
+          For trending alerts, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>trendOffset</b></td>
+        <td>string</td>
+        <td>
+          For trending alerts, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.metrics.alerts[index].variants[index].thresholds
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindexvariantsindex)</sup></sup>
+
+
+
+Thresholds of the alert per severity.
+They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>critical</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `critical`. Leave empty to not generate a Critical alert.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>info</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `info`. Leave empty to not generate an Info alert.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>warning</b></td>
+        <td>string</td>
+        <td>
+          Threshold for severity `warning`. Leave empty to not generate a Warning alert.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
