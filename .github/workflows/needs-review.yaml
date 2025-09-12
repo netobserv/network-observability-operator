@@ -26,6 +26,8 @@ jobs:
 
   manual-needs-review:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     if: github.event_name == 'issue_comment' && github.event.issue.pull_request
     steps:
       - name: Add needs-review label via comment
@@ -43,6 +45,8 @@ jobs:
 
   remove-needs-review-on-needs-changes:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     if: >
       github.event_name == 'pull_request_target' &&
       github.event.action == 'labeled' &&
