@@ -15,8 +15,13 @@ jobs:
       pull-requests: write
     steps:
       - name: Handle review submission
-        if: github.event_name == 'pull_request_review' && github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name == 'pull_request_review'
         run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "PR number: ${{ github.event.pull_request.number }}"
+          echo "Review state: ${{ github.event.review.state }}"
+          echo "Repository: ${{ github.repository }}"
+          
           PR_NUMBER=${{ github.event.pull_request.number }}
           REVIEW_STATE="${{ github.event.review.state }}"
           
@@ -28,6 +33,8 @@ jobs:
           if [[ "$REVIEW_STATE" == "changes_requested" ]] || [[ "$REVIEW_STATE" == "commented" ]]; then
             echo "Adding needs-changes label for $REVIEW_STATE review"
             gh pr edit $PR_NUMBER --add-label needs-changes || echo "Failed to add needs-changes label or label already exists"
+          else
+            echo "Review state $REVIEW_STATE does not trigger needs-changes label"
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
