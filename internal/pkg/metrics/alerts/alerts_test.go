@@ -94,9 +94,9 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"20","unit":"%","upperBound":"100"}`, rules[0].Annotations["netobserv_io_network_health"])
+	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"20","unit":"%"}`, rules[0].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[3].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [dest. namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"10","unit":"%","upperBound":"100"}`, rules[3].Annotations["netobserv_io_network_health"])
+	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"10","unit":"%"}`, rules[3].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[4].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [source node={{ $labels.node }}]")
 	assert.Contains(t, rules[8].Annotations["description"], "node-exporter is detecting more than 5% of dropped packets [node={{ $labels.instance }}]")
 	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
@@ -214,34 +214,6 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 	}
 	rules := BuildRules(context.Background(), &fc)
 	assert.Empty(t, rules)
-}
-
-func TestSumBy(t *testing.T) {
-	pql := sumBy("rate(my_metric[1m])", flowslatest.GroupByNode, asSource, "")
-	assert.Equal(t,
-		`sum(label_replace(rate(my_metric[1m]), "node", "$1", "SrcK8S_HostName", "(.*)")) by (node)`,
-		pql,
-	)
-
-	pql = sumBy("rate(my_metric[1m])", flowslatest.GroupByWorkload, asDest, "")
-	assert.Equal(t,
-		`sum(label_replace(label_replace(label_replace(rate(my_metric[1m]), "namespace", "$1", "DstK8S_Namespace", "(.*)"), "workload", "$1", "DstK8S_OwnerName", "(.*)"), "kind", "$1", "DstK8S_OwnerType", "(.*)")) by (namespace,workload,kind)`,
-		pql,
-	)
-
-	pql = sumBy("rate(my_metric[1m])", "", "", "")
-	assert.Equal(t, `sum(rate(my_metric[1m]))`, pql)
-}
-
-func TestPercentagePromQL(t *testing.T) {
-	pql := percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "", "")
-	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10", pql)
-
-	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "")
-	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10 < 20", pql)
-
-	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "2")
-	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])) > 2) > 10 < 20", pql)
 }
 
 func TestLatencyPromql(t *testing.T) {

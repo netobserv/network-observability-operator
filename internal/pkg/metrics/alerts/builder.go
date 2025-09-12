@@ -20,6 +20,19 @@ const (
 	asDest   srcOrDst = "Dst"
 )
 
+type ruleBuilder struct {
+	template          flowslatest.AlertTemplate
+	alert             *flowslatest.AlertVariant
+	enabledMetrics    []string
+	side              srcOrDst
+	severity          string
+	threshold         string
+	upperThreshold    string
+	upperValueRange   string
+	trafficLinkFilter string
+	duration          monitoringv1.Duration
+}
+
 func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
 	log := log.FromContext(ctx)
 	rules := []monitoringv1.Rule{}
@@ -71,7 +84,17 @@ func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.Alert
 	for _, st := range thresholds {
 		if st.t != "" {
 			for _, side := range sides {
-				if r, err := convertToRule(template, alert, enabledMetrics, side, st.s, st.t, upperThreshold); err != nil {
+				rb := ruleBuilder{
+					template:       template,
+					alert:          alert,
+					enabledMetrics: enabledMetrics,
+					side:           side,
+					severity:       st.s,
+					threshold:      st.t,
+					upperThreshold: upperThreshold,
+					duration:       monitoringv1.Duration("5m"),
+				}
+				if r, err := rb.convertToRule(); err != nil {
 					return nil, err
 				} else if r != nil {
 					rules = append(rules, *r)
@@ -83,106 +106,63 @@ func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.Alert
 	return rules, nil
 }
 
-func convertToRule(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string, side srcOrDst, severity, threshold, upperThreshold string) (*monitoringv1.Rule, error) {
-	additionalDescription := fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alerts.", template)
-	switch template {
+func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
+	switch rb.template {
 	case flowslatest.AlertPacketDropsByDevice:
-		return deviceDrops(alert, side, severity, threshold, upperThreshold, additionalDescription)
+		return rb.deviceDrops()
 	case flowslatest.AlertPacketDropsByKernel:
-		return kernelDrops(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return rb.kernelDrops()
 	case flowslatest.AlertIPsecErrors:
-		return ipsecErrors(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return rb.ipsecErrors()
 	case flowslatest.AlertDNSErrors:
-		return dnsErrors(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return rb.dnsErrors()
 	case flowslatest.AlertNetpolDenied:
-		return netpolDenied(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return rb.netpolDenied()
 	case flowslatest.AlertLatencyHighTrend:
-		return latencyTrend(alert, side, severity, threshold, upperThreshold, additionalDescription, enabledMetrics)
+		return rb.latencyTrend()
+	case flowslatest.AlertCrossAZ, flowslatest.AlertExternalEgressHighTrend, flowslatest.AlertExternalIngressHighTrend: // TODO
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error
 	}
-	return nil, fmt.Errorf("unknown alert template: %s", template)
+	return nil, fmt.Errorf("unknown alert template: %s", rb.template)
 }
 
-func createRule(tpl flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, side srcOrDst, promQL, summary, description, severity, threshold, upperBound string, d monitoringv1.Duration) (*monitoringv1.Rule, error) {
-	bAnnot, err := buildHealthAnnotation(tpl, alert, threshold, upperBound, nil)
+func (rb *ruleBuilder) additionalDescription() string {
+	return fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alerts.", rb.template)
+}
+
+func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitoringv1.Rule, error) {
+	bAnnot, err := rb.buildHealthAnnotation(nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var gr string
-	if alert.GroupBy != "" {
-		gr = "Per" + string(side) + string(alert.GroupBy)
+	if rb.alert.GroupBy != "" {
+		gr = "Per" + string(rb.side) + string(rb.alert.GroupBy)
 	}
 	return &monitoringv1.Rule{
-		Alert: fmt.Sprintf("%s_%s%s", tpl, gr, strings.ToUpper(severity[:1])+severity[1:]),
+		Alert: fmt.Sprintf("%s_%s%s", rb.template, gr, strings.ToUpper(rb.severity[:1])+rb.severity[1:]),
 		Annotations: map[string]string{
 			"description":                 description,
 			"summary":                     summary,
 			"netobserv_io_network_health": string(bAnnot),
 		},
 		Expr:   intstr.FromString(promQL),
-		For:    &d,
-		Labels: buildLabels(severity, true),
+		For:    &rb.duration,
+		Labels: buildLabels(rb.severity, true),
 	}, nil
 }
 
-type promQLRate string
-
-func promQLRateFromMetric(metric, suffix, filters, interval, offset string) promQLRate {
-	return promQLRate(fmt.Sprintf("rate(netobserv_%s%s%s[%s]%s)", metric, suffix, filters, interval, offset))
-}
-
-func sumBy(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, extraLabel string) string {
-	var nooLabels []string
-	var labelsOut []string
-	switch groupBy {
-	case flowslatest.GroupByNode:
-		nooLabels = []string{string(side) + "K8S_HostName"}
-		labelsOut = []string{"node"}
-	case flowslatest.GroupByNamespace:
-		nooLabels = []string{string(side) + "K8S_Namespace"}
-		labelsOut = []string{"namespace"}
-	case flowslatest.GroupByWorkload:
-		nooLabels = []string{string(side) + "K8S_Namespace", string(side) + "K8S_OwnerName", string(side) + "K8S_OwnerType"}
-		labelsOut = []string{"namespace", "workload", "kind"}
-	}
-	if len(labelsOut) > 0 {
-		// promQL input is like "rate(netobserv_workload_ingress_bytes_total[1m])"
-		// we need to relabel src / dst labels to the same label name in order to allow adding them
-		// e.g. of desired output:
-		// sum(label_replace(rate(netobserv_workload_ingress_bytes_total[1m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace)
-		replacedLabels := string(promQL)
-		for i := range labelsOut {
-			in := nooLabels[i]
-			out := labelsOut[i]
-			replacedLabels = fmt.Sprintf(`label_replace(%s, "%s", "$1", "%s", "(.*)")`, replacedLabels, out, in)
-		}
-		joinedLabels := strings.Join(labelsOut, ",")
-		if extraLabel != "" {
-			joinedLabels += "," + extraLabel
-		}
-		return fmt.Sprintf("sum(%s) by (%s)", replacedLabels, joinedLabels)
-	} else if extraLabel != "" {
-		return fmt.Sprintf("sum(%s) by (%s)", promQL, extraLabel)
-	}
-	return fmt.Sprintf("sum(%s)", promQL)
-}
-
-func histogramQuantile(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, quantile string) string {
-	sumQL := sumBy(promQL, groupBy, side, "le")
-	return fmt.Sprintf("histogram_quantile(%s, %s)", quantile, sumQL)
-}
-
-func getAlertLegend(side srcOrDst, alert *flowslatest.AlertVariant) string {
+func (rb *ruleBuilder) getAlertLegend() string {
 	var sideText string
-	switch side {
+	switch rb.side {
 	case asSource:
 		sideText = "source "
 	case asDest:
 		sideText = "dest. "
 	}
-	switch alert.GroupBy {
+	switch rb.alert.GroupBy {
 	case flowslatest.GroupByNode:
 		return " [" + sideText + "node={{ $labels.node }}]"
 	case flowslatest.GroupByNamespace:
@@ -193,49 +173,19 @@ func getAlertLegend(side srcOrDst, alert *flowslatest.AlertVariant) string {
 	return ""
 }
 
-func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperThreshold, lowVolumeThreshold string) string {
-	var lowVolumeThresholdPart, upperThresholdPart string
-	if lowVolumeThreshold != "" {
-		lowVolumeThresholdPart = " > " + lowVolumeThreshold
-	}
-	if upperThreshold != "" {
-		upperThresholdPart = " < " + upperThreshold
-	}
-
-	return fmt.Sprintf(
-		"100 * (%s) / (%s%s) > %s%s",
-		promQLMetricSum,
-		promQLTotalSum,
-		lowVolumeThresholdPart,
-		threshold,
-		upperThresholdPart,
-	)
-}
-
-func baselineIncreasePromQL(promQLMetric, promQLBaseline string, threshold, upperThreshold string) string {
-	var upperThresholdPart string
-	if upperThreshold != "" {
-		upperThresholdPart = " < " + upperThreshold
-	}
-
-	return fmt.Sprintf(
-		"100 * ((%s) - (%s)) / (%s) > %s%s",
-		promQLMetric,
-		promQLBaseline,
-		promQLBaseline,
-		threshold,
-		upperThresholdPart,
-	)
-}
-
-func buildHealthAnnotation(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, threshold, upperBound string, override map[string]any) ([]byte, error) {
+func (rb *ruleBuilder) buildHealthAnnotation(override map[string]any) ([]byte, error) {
 	// The health annotation contains json-encoded information used in console plugin display
 	annotation := map[string]any{
-		"threshold":  threshold,
-		"upperBound": upperBound,
-		"unit":       "%",
+		"threshold": rb.threshold,
+		"unit":      "%",
 	}
-	switch alert.GroupBy {
+	if rb.upperValueRange != "" {
+		annotation["upperBound"] = rb.upperValueRange
+	}
+	if rb.trafficLinkFilter != "" {
+		annotation["trafficLinkFilter"] = rb.trafficLinkFilter
+	}
+	switch rb.alert.GroupBy {
 	case flowslatest.GroupByNode:
 		annotation["nodeLabels"] = []string{"node"}
 	case flowslatest.GroupByNamespace, flowslatest.GroupByWorkload:
@@ -246,7 +196,7 @@ func buildHealthAnnotation(template flowslatest.AlertTemplate, alert *flowslates
 	}
 	bAnnot, err := json.Marshal(annotation)
 	if err != nil {
-		return nil, fmt.Errorf("cannot encode alert annotation [template=%s]: %w", template, err)
+		return nil, fmt.Errorf("cannot encode alert annotation [template=%s]: %w", rb.template, err)
 	}
 	return bAnnot, nil
 }
@@ -262,14 +212,14 @@ func buildLabels(severity string, forHealth bool) map[string]string {
 	return m
 }
 
-func getMetricsForAlert(template flowslatest.AlertTemplate, alertDef *flowslatest.AlertVariant, includeList []string) (string, string) {
+func (rb *ruleBuilder) getMetricsForAlert() (string, string) {
 	var reqMetric1, reqMetric2 string
-	reqMetrics1, reqMetrics2 := flowslatest.GetElligibleMetricsForAlert(template, alertDef)
+	reqMetrics1, reqMetrics2 := flowslatest.GetElligibleMetricsForAlert(rb.template, rb.alert)
 	if len(reqMetrics1) > 0 {
-		reqMetric1 = flowslatest.GetFirstRequiredMetrics(reqMetrics1, includeList)
+		reqMetric1 = flowslatest.GetFirstRequiredMetrics(reqMetrics1, rb.enabledMetrics)
 	}
 	if len(reqMetrics2) > 0 {
-		reqMetric2 = flowslatest.GetFirstRequiredMetrics(reqMetrics2, includeList)
+		reqMetric2 = flowslatest.GetFirstRequiredMetrics(reqMetrics2, rb.enabledMetrics)
 	}
 	return reqMetric1, reqMetric2
 }

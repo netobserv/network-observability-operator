@@ -178,7 +178,7 @@ func (g *FLPAlert) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 		if !spec.Agent.EBPF.IsNetworkEventsEnabled() {
 			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, NetworkEvents)
 		}
-	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend:
+	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend, AlertCrossAZ:
 		return true, ""
 	}
 	return true, ""
