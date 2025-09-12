@@ -28,16 +28,23 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    if: github.event_name == 'issue_comment' && github.event.issue.pull_request != null
     steps:
       - name: Add needs-review label via comment
         run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Issue number: ${{ github.event.issue.number }}"
+          echo "Comment body: ${{ github.event.comment.body }}"
+          echo "Is PR: ${{ github.event.issue.pull_request != null }}"
+          
           COMMENT_BODY="${{ github.event.comment.body }}"
           COMMENT_LOWER=$(echo "$COMMENT_BODY" | tr '[:upper:]' '[:lower:]')
           
           if [[ "$COMMENT_LOWER" == *"needs-review"* ]] || [[ "$COMMENT_LOWER" == *"/needs-review"* ]]; then
             echo "Adding needs-review label via comment"
             gh pr edit ${{ github.event.issue.number }} --add-label needs-review || echo "Failed to add label or label already exists"
+          else
+            echo "Comment does not contain needs-review trigger"
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
