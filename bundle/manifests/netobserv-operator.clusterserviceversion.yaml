@@ -253,7 +253,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.9.2-community
-    createdAt: "2025-09-08T09:08:19Z"
+    createdAt: "2025-09-11T21:03:50Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -480,6 +480,22 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
+      - displayName: Client type
+        path: loki.clientType
+      - displayName: Grpc config
+        path: loki.grpcConfig
+      - displayName: Keep alive
+        path: loki.grpcConfig.keepAlive
+      - displayName: Keep alive timeout
+        path: loki.grpcConfig.keepAliveTimeout
+      - displayName: Max recv msg size
+        path: loki.grpcConfig.maxRecvMsgSize
+      - displayName: Max send msg size
+        path: loki.grpcConfig.maxSendMsgSize
+      - displayName: Use streaming
+        path: loki.grpcConfig.useStreaming
+      - displayName: Read timeout
+        path: loki.readTimeout
       - path: loki.advanced
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:hidden
@@ -596,8 +612,6 @@ spec:
         path: loki.monolithic.tenantID
       - displayName: Url
         path: loki.monolithic.url
-      - displayName: Read timeout
-        path: loki.readTimeout
       - displayName: Namespace
         path: namespace
       - displayName: Network policy
@@ -1070,7 +1084,7 @@ spec:
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN
                   value: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
-                  value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+                  value: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
                 - name: PROFILING_BIND_ADDRESS
@@ -1215,9 +1229,7 @@ spec:
   - image: quay.io/netobserv/flowlogs-pipeline:v1.9.2-community
     name: flowlogs-pipeline
   - image: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
-    name: console-plugin
-  - image: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
-    name: console-plugin-compat
+    name: ""
   version: 1.9.2-community
   webhookdefinitions:
   - admissionReviewVersions:

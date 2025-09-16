@@ -7238,6 +7238,18 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>clientType</b></td>
+        <td>enum</td>
+        <td>
+          `clientType` specifies the protocol to use for sending flows to Loki: `http` or `grpc`.
+This setting is independent of the Loki installation mode and allows choosing the optimal transport protocol.
+gRPC may provide better performance for high-throughput scenarios.<br/>
+          <br/>
+            <i>Enum</i>: http, grpc<br/>
+            <i>Default</i>: http<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
@@ -7249,6 +7261,14 @@ If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is
 If they are both disabled, the Console plugin is not deployed.<br/>
           <br/>
             <i>Default</i>: true<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspeclokigrpcconfig">grpcConfig</a></b></td>
+        <td>object</td>
+        <td>
+          `grpcConfig` contains gRPC-specific configuration for the Loki writer.
+This is only used when `clientType` is set to `grpc`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -7389,6 +7409,76 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
           `writeMinBackoff` is the initial backoff time for Loki client connection between retries.<br/>
           <br/>
             <i>Default</i>: 1s<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.loki.grpcConfig
+<sup><sup>[↩ Parent](#flowcollectorspecloki)</sup></sup>
+
+
+
+`grpcConfig` contains gRPC-specific configuration for the Loki writer.
+This is only used when `clientType` is set to `grpc`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>keepAlive</b></td>
+        <td>string</td>
+        <td>
+          `keepAlive` is the gRPC keep-alive interval.<br/>
+          <br/>
+            <i>Default</i>: 30s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>keepAliveTimeout</b></td>
+        <td>string</td>
+        <td>
+          `keepAliveTimeout` is the gRPC keep-alive timeout.<br/>
+          <br/>
+            <i>Default</i>: 5s<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxRecvMsgSize</b></td>
+        <td>integer</td>
+        <td>
+          `maxRecvMsgSize` is the maximum message size in bytes the gRPC client can receive. Default: 64MB.<br/>
+          <br/>
+            <i>Default</i>: 67108864<br/>
+            <i>Minimum</i>: 1024<br/>
+            <i>Maximum</i>: 6.7108864e+07<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxSendMsgSize</b></td>
+        <td>integer</td>
+        <td>
+          `maxSendMsgSize` is the maximum message size in bytes the gRPC client can send. Default: 16MB.<br/>
+          <br/>
+            <i>Default</i>: 16777216<br/>
+            <i>Minimum</i>: 1024<br/>
+            <i>Maximum</i>: 6.7108864e+07<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>useStreaming</b></td>
+        <td>boolean</td>
+        <td>
+          `useStreaming` enables streaming mode for real-time log pushing when using gRPC.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>
