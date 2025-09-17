@@ -32,7 +32,8 @@ COPY --from=builder /opt/app-root/src/bundle/metadata /metadata/
 COPY --from=builder /opt/app-root/src/bundle/tests/scorecard /tests/scorecard/
 
 LABEL com.redhat.component="network-observability-operator-bundle-container"
-LABEL name="network-observability-operator-bundle"
+LABEL cpe="cpe:/a:redhat:network_observ_optr:1.9::el9"
+LABEL name="network-observability/network-observability-operator-bundle"
 LABEL io.k8s.display-name="Network Observability Operator Bundle"
 LABEL io.k8s.description="Network Observability Operator Bundle"
 LABEL summary="Network Observability Operator Bundle"
