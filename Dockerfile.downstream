@@ -32,7 +32,8 @@ USER 65532:65532
 ENTRYPOINT ["/manager"]
 
 LABEL com.redhat.component="network-observability-operator-container"
-LABEL name="network-observability-operator"
+LABEL name="network-observability/network-observability-rhel9-operator"
+LABEL cpe="cpe:/a:redhat:network_observ_optr:1.9::el9"
 LABEL io.k8s.display-name="Network Observability Operator"
 LABEL io.k8s.description="Network Observability Operator"
 LABEL summary="Network Observability Operator"
