@@ -170,8 +170,8 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 func TeardownEnvTest(testEnv *envtest.Environment, cancel context.CancelFunc) {
 	cancel()
 	By("tearing down the test environment")
-	_ = testEnv.Stop()
-	// Expect(err).NotTo(HaveOccurred())
+	err := testEnv.Stop()
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func CreateFakeController(ctx context.Context, k8sClient client.Client) {
