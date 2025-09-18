@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -50,7 +51,13 @@ const (
 	Interval = 1 * time.Second
 )
 
-func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, basePath string) (context.Context, client.Client, *envtest.Environment, context.CancelFunc) {
+type SuiteContext struct {
+	testEnv    *envtest.Environment
+	cancel     context.CancelFunc
+	kubeConfig string
+}
+
+func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, basePath string) (context.Context, client.Client, *SuiteContext) {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel := context.WithCancel(context.TODO())
 
@@ -82,6 +89,9 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	cfg, err := testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
+
+	kubeConfig, err := writeKubeConfig(testEnv)
+	Expect(err).NotTo(HaveOccurred())
 
 	err = flowsv1beta2.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
@@ -134,7 +144,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	Expect(err).NotTo(HaveOccurred())
 
 	k8sManager, err := manager.NewManager(
-		context.Background(),
+		ctx,
 		cfg,
 		&manager.Config{
 			EBPFAgentImage:        "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-ebpf-agent@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
@@ -164,13 +174,36 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
-	return ctx, k8sClient, testEnv, cancel
+	return ctx, k8sClient, &SuiteContext{
+		testEnv:    testEnv,
+		cancel:     cancel,
+		kubeConfig: kubeConfig,
+	}
 }
 
-func TeardownEnvTest(testEnv *envtest.Environment, cancel context.CancelFunc) {
-	cancel()
+func writeKubeConfig(testEnv *envtest.Environment) (string, error) {
+	f, err := os.CreateTemp("", "testenv-kubeconfig-")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	if _, err := f.Write(testEnv.KubeConfig); err != nil {
+		return f.Name(), err
+	}
+
+	logf.Log.Info("To debug with kubectl, run:")
+	logf.Log.Info("export KUBECONFIG=" + f.Name())
+	return f.Name(), nil
+}
+
+func TeardownEnvTest(suiteContext *SuiteContext) {
+	if suiteContext.kubeConfig != "" {
+		defer os.Remove(suiteContext.kubeConfig)
+	}
 	By("tearing down the test environment")
-	err := testEnv.Stop()
+	suiteContext.cancel()
+	err := suiteContext.testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 }
 

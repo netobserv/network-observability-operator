@@ -24,21 +24,15 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/netobserv/network-observability-operator/internal/pkg/test"
 )
 
-// These tests use Ginkgo (BDD-style Go testing framework). Refer to
-// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
-
-var namespacesToPrepare = []string{"openshift-network-operator", "openshift-config-managed", "loki-namespace", "kafka-exporter-namespace", "main-namespace", "main-namespace-privileged"}
-
 var (
-	ctx       context.Context
-	k8sClient client.Client
-	testEnv   *envtest.Environment
-	cancel    context.CancelFunc
+	namespacesToPrepare = []string{"openshift-network-operator", "openshift-config-managed", "loki-namespace", "kafka-exporter-namespace", "main-namespace", "main-namespace-privileged"}
+	ctx                 context.Context
+	k8sClient           client.Client
+	suiteContext        *test.SuiteContext
 )
 
 func TestAPIs(t *testing.T) {
@@ -60,9 +54,9 @@ var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 })
 
 var _ = BeforeSuite(func() {
-	ctx, k8sClient, testEnv, cancel = test.PrepareEnvTest(Registerers, namespacesToPrepare, ".")
+	ctx, k8sClient, suiteContext = test.PrepareEnvTest(Registerers, namespacesToPrepare, ".")
 })
 
 var _ = AfterSuite(func() {
-	test.TeardownEnvTest(testEnv, cancel)
+	test.TeardownEnvTest(suiteContext)
 })
