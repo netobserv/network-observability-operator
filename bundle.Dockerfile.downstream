@@ -1,4 +1,5 @@
 ARG BUILDVERSION
+ARG BUILDVERSION_Y
 
 FROM registry.access.redhat.com/ubi9/python-312 as builder
 ARG BUILDVERSION
@@ -10,6 +11,7 @@ RUN ./hack/update-build.sh
 
 FROM scratch
 ARG BUILDVERSION
+ARG BUILDVERSION_Y
 
 # Core bundle labels.
 LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
@@ -32,7 +34,7 @@ COPY --from=builder /opt/app-root/src/bundle/metadata /metadata/
 COPY --from=builder /opt/app-root/src/bundle/tests/scorecard /tests/scorecard/
 
 LABEL com.redhat.component="network-observability-operator-bundle-container"
-LABEL cpe="cpe:/a:redhat:network_observ_optr:1.9::el9"
+LABEL cpe="cpe:/a:redhat:network_observ_optr:$BUILDVERSION_Y::el9"
 LABEL name="network-observability/network-observability-operator-bundle"
 LABEL io.k8s.display-name="Network Observability Operator Bundle"
 LABEL io.k8s.description="Network Observability Operator Bundle"

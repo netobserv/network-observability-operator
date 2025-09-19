@@ -1,4 +1,5 @@
 ARG BUILDVERSION
+ARG BUILDVERSION_Y
 
 # Build the manager binary
 FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:v1.23 as builder
@@ -23,6 +24,7 @@ RUN GOOS=linux GO111MODULE=on go build -tags strictfipsruntime -ldflags "-X 'mai
 # Create final image from minimal + built binary
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.6-1755695350
 ARG BUILDVERSION
+ARG BUILDVERSION_Y
 
 WORKDIR /
 COPY --from=builder /opt/app-root/manager .
@@ -33,7 +35,7 @@ ENTRYPOINT ["/manager"]
 
 LABEL com.redhat.component="network-observability-operator-container"
 LABEL name="network-observability/network-observability-rhel9-operator"
-LABEL cpe="cpe:/a:redhat:network_observ_optr:1.9::el9"
+LABEL cpe="cpe:/a:redhat:network_observ_optr:$BUILDVERSION_Y::el9"
 LABEL io.k8s.display-name="Network Observability Operator"
 LABEL io.k8s.description="Network Observability Operator"
 LABEL summary="Network Observability Operator"
