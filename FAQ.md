@@ -226,7 +226,7 @@ This can be caused when traffic goes through Kubernetes Services: when a Pod tal
 
 There are several possible causes:
 
-- Sampling is being used. Check your `FlowCollector` `spec.agent.ebpf.sampling`: a value greater than 1 means not every flows are sampled. NetObserv metrics aren't normalized automatically, but you can do so in your promQL by multiplying with the sampling rate, for instance: `sum(rate(netobserv_workload_ingress_bytes_total{DstK8S_Namespace="my-namespace"}[2m])) * avg(netobserv_agent_sampling_rate > 0)`. Be aware that, the higher the sampling, the less accurate the metrics.
+- Sampling is being used. Check your `FlowCollector` `spec.agent.ebpf.sampling`: a value greater than 1 means not every flows are sampled. NetObserv metrics aren't normalized automatically, but you can do so in your promQL by multiplying with the sampling interval, for instance: `sum(rate(netobserv_workload_ingress_bytes_total{DstK8S_Namespace="my-namespace"}[2m])) * avg(netobserv_agent_sampling_rate > 0)`. Be aware that, the higher the sampling, the less accurate the metrics.
 
 - Filters are configured in the agent, resulting in ignoring some of the traffic. Check your `FlowCollector` `spec.agent.ebpf.flowFilter`, `spec.agent.ebpf.interfaces`, `spec.agent.ebpf.excludeInterfaces` and make sure it doesn't filter out some of the traffic that you are looking at.
 

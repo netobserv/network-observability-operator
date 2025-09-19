@@ -1325,7 +1325,7 @@ fields:
     description: Differentiated Services Code Point (DSCP) value
   - name: Sampling
     type: number
-    description: Sampling rate used for this flow
+    description: Sampling interval used for this flow
   - name: IcmpType
     type: number
     description: ICMP type

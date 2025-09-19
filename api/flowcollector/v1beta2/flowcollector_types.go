@@ -151,7 +151,7 @@ type FlowCollectorIPFIX struct {
 
 	//+kubebuilder:validation:Minimum=2
 	//+kubebuilder:default:=400
-	// `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent.
+	// `sampling` is the sampling interval on the reporter. 100 means one flow on 100 is sent.
 	// To ensure cluster stability, it is not possible to set a value below 2.
 	// If you really want to sample every packet, which might impact the cluster stability,
 	// refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.
@@ -288,7 +288,7 @@ type EBPFFlowFilterRule struct {
 	// +optional
 	PktDrops *bool `json:"pktDrops,omitempty"`
 
-	// `sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
+	// `sampling` is the sampling interval for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.
 	// +optional
 	Sampling *uint32 `json:"sampling,omitempty"`
 }
@@ -324,7 +324,7 @@ type FlowCollectorEBPF struct {
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
-	// Sampling ratio of the eBPF probe. 100 means one packet on 100 is sent. 0 or 1 means all packets are sampled.
+	// Sampling interval of the eBPF probe. 100 means one packet on 100 is sent. 0 or 1 means all packets are sampled.
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=50
 	//+optional
@@ -709,7 +709,7 @@ type FLPDeduper struct {
 	// +kubebuilder:default:=Disabled
 	Mode FLPDeduperMode `json:"mode,omitempty"`
 
-	// `sampling` is the sampling ratio when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.
+	// `sampling` is the sampling interval when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=50
 	Sampling int32 `json:"sampling,omitempty"`
@@ -735,7 +735,7 @@ type FLPFilterSet struct {
 	// +kubebuilder:validation:Enum:="";"Loki";"Metrics";"Exporters"
 	OutputTarget FLPFilterTarget `json:"outputTarget,omitempty"`
 
-	// `sampling` is an optional sampling ratio to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.
+	// `sampling` is an optional sampling interval to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.
 	//+kubebuilder:validation:Minimum=0
 	// +optional
 	Sampling int32 `json:"sampling,omitempty"`
