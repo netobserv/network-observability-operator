@@ -384,7 +384,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          Sampling ratio of the eBPF probe. 100 means one packet on 100 is sent. 0 or 1 means all packets are sampled.<br/>
+          Sampling interval of the eBPF probe. 100 means one packet on 100 is sent. 0 or 1 means all packets are sampled.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 50<br/>
@@ -2309,7 +2309,7 @@ To change the default, you can define a rule that accepts everything: `{ action:
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.<br/>
+          `sampling` is the sampling interval for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -2450,7 +2450,7 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` is the sampling ratio for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.<br/>
+          `sampling` is the sampling interval for the matched packets, overriding the global sampling defined at `spec.agent.ebpf.sampling`.<br/>
           <br/>
             <i>Format</i>: int32<br/>
         </td>
@@ -2887,7 +2887,7 @@ When it is set to `true`, the value of `sampling` is ignored.<br/>
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent.
+          `sampling` is the sampling interval on the reporter. 100 means one flow on 100 is sent.
 To ensure cluster stability, it is not possible to set a value below 2.
 If you really want to sample every packet, which might impact the cluster stability,
 refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.<br/>
@@ -10466,7 +10466,7 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` is the sampling ratio when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.<br/>
+          `sampling` is the sampling interval when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 50<br/>
@@ -10513,7 +10513,7 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
         <td><b>sampling</b></td>
         <td>integer</td>
         <td>
-          `sampling` is an optional sampling ratio to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.<br/>
+          `sampling` is an optional sampling interval to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 0<br/>

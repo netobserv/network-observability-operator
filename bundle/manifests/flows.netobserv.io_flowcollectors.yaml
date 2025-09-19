@@ -1332,9 +1332,9 @@ spec:
                                   - SCTP
                                   type: string
                                 sampling:
-                                  description: '`sampling` is the sampling ratio for
-                                    the matched packets, overriding the global sampling
-                                    defined at `spec.agent.ebpf.sampling`.'
+                                  description: '`sampling` is the sampling interval
+                                    for the matched packets, overriding the global
+                                    sampling defined at `spec.agent.ebpf.sampling`.'
                                   format: int32
                                   type: integer
                                 sourcePorts:
@@ -1368,9 +1368,9 @@ spec:
                             minItems: 1
                             type: array
                           sampling:
-                            description: '`sampling` is the sampling ratio for the
-                              matched packets, overriding the global sampling defined
-                              at `spec.agent.ebpf.sampling`.'
+                            description: '`sampling` is the sampling interval for
+                              the matched packets, overriding the global sampling
+                              defined at `spec.agent.ebpf.sampling`.'
                             format: int32
                             type: integer
                           sourcePorts:
@@ -1631,8 +1631,9 @@ spec:
                         type: object
                       sampling:
                         default: 50
-                        description: Sampling ratio of the eBPF probe. 100 means one
-                          packet on 100 is sent. 0 or 1 means all packets are sampled.
+                        description: Sampling interval of the eBPF probe. 100 means
+                          one packet on 100 is sent. 0 or 1 means all packets are
+                          sampled.
                         format: int32
                         minimum: 0
                         type: integer
@@ -1699,7 +1700,7 @@ spec:
                       sampling:
                         default: 400
                         description: |-
-                          `sampling` is the sampling rate on the reporter. 100 means one flow on 100 is sent.
+                          `sampling` is the sampling interval on the reporter. 100 means one flow on 100 is sent.
                           To ensure cluster stability, it is not possible to set a value below 2.
                           If you really want to sample every packet, which might impact the cluster stability,
                           refer to `forceSampleAll`. Alternatively, you can use the eBPF Agent instead of IPFIX.
@@ -5384,7 +5385,7 @@ spec:
                         type: string
                       sampling:
                         default: 50
-                        description: '`sampling` is the sampling ratio when deduper
+                        description: '`sampling` is the sampling interval when deduper
                           `mode` is `Sample`. For example, a value of `50` means that
                           1 flow in 50 is sampled.'
                         format: int32
@@ -5415,9 +5416,9 @@ spec:
                             More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.
                           type: string
                         sampling:
-                          description: '`sampling` is an optional sampling ratio to
-                            apply to this filter. For example, a value of `50` means
-                            that 1 matching flow in 50 is sampled.'
+                          description: '`sampling` is an optional sampling interval
+                            to apply to this filter. For example, a value of `50`
+                            means that 1 matching flow in 50 is sampled.'
                           format: int32
                           minimum: 0
                           type: integer
