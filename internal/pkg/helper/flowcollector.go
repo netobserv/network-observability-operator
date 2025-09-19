@@ -1,12 +1,10 @@
 package helper
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
-	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -15,30 +13,6 @@ import (
 const (
 	netobservManagedLabel = "netobserv-managed"
 )
-
-func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
-	if spec.Agent.EBPF.Sampling == nil {
-		return 50
-	}
-	return int(*spec.Agent.EBPF.Sampling)
-}
-
-func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
-}
-
-func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
-	for _, ex := range spec.Exporters {
-		if ex.Type == flowslatest.KafkaExporter {
-			return true
-		}
-	}
-	return false
-}
-
-func HPAEnabled(spec *flowslatest.FlowCollectorHPA) bool {
-	return spec != nil && spec.Status == flowslatest.HPAStatusEnabled
-}
 
 func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []api.ConnTrackOutputRecordTypeEnum {
 	if processor.LogTypes != nil {
@@ -63,127 +37,6 @@ func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []api.ConnTrackOutp
 		}
 	}
 	return []api.ConnTrackOutputRecordTypeEnum{api.ConnTrackFlowLog}
-}
-
-func UseSASL(cfg *flowslatest.SASLConfig) bool {
-	return cfg.Type == flowslatest.SASLPlain || cfg.Type == flowslatest.SASLScramSHA512
-}
-
-func UseLoki(spec *flowslatest.FlowCollectorSpec) bool {
-	// nil should fallback to default value, which is "true"
-	return spec.Loki.Enable == nil || *spec.Loki.Enable
-}
-
-func UsePrometheus(spec *flowslatest.FlowCollectorSpec) bool {
-	// nil should fallback to default value, which is "true"
-	return spec.Prometheus.Querier.Enable == nil || *spec.Prometheus.Querier.Enable
-}
-
-func UseConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
-	return (UseLoki(spec) || UsePrometheus(spec)) &&
-		// nil should fallback to default value, which is "true"
-		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
-}
-
-func UseTestConsolePlugin(spec *flowslatest.FlowCollectorSpec) bool {
-	if spec.ConsolePlugin.Advanced != nil {
-		env := spec.ConsolePlugin.Advanced.Env[constants.EnvTestConsole]
-		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
-		b, err := strconv.ParseBool(env)
-		return err == nil && b
-	}
-	return false
-}
-
-func IsAgentFeatureEnabled(spec *flowslatest.FlowCollectorEBPF, feature flowslatest.AgentFeature) bool {
-	for _, f := range spec.Features {
-		if f == feature {
-			return true
-		}
-	}
-	return false
-}
-
-func IsPrivileged(spec *flowslatest.FlowCollectorEBPF) bool {
-	return spec.Privileged
-}
-
-func IsPktDropEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	if (IsPrivileged(spec) || IsEbpfManagerEnabled(spec)) && IsAgentFeatureEnabled(spec, flowslatest.PacketDrop) {
-		return true
-	}
-	return false
-}
-
-func IsDNSTrackingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.DNSTracking)
-}
-
-func IsFlowRTTEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.FlowRTT)
-}
-
-func IsNetworkEventsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.NetworkEvents)
-}
-
-func IsPacketTranslationEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.PacketTranslation)
-}
-func IsEbpfManagerEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.EbpfManager)
-}
-
-func IsUDNMappingEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.UDNMapping)
-}
-
-func IsIPSecEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return IsAgentFeatureEnabled(spec, flowslatest.IPSec)
-}
-
-func IsConntrack(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec != nil && spec.LogTypes != nil && *spec.LogTypes != flowslatest.LogTypeFlows
-}
-
-func IsMultiClusterEnabled(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec != nil && spec.MultiClusterDeployment != nil && *spec.MultiClusterDeployment
-}
-
-func IsZoneEnabled(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec != nil && spec.AddZone != nil && *spec.AddZone
-}
-
-func IsEBPFMetricsEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return spec.Metrics.Enable == nil || *spec.Metrics.Enable
-}
-
-func IsSubnetLabelsEnabled(spec *flowslatest.FlowCollectorFLP) bool {
-	return AutoDetectOpenShiftNetworks(spec) || len(spec.SubnetLabels.CustomLabels) > 0
-}
-
-func IsEBPFFlowFilterEnabled(spec *flowslatest.FlowCollectorEBPF) bool {
-	return spec.FlowFilter != nil && spec.FlowFilter.Enable != nil && *spec.FlowFilter.Enable
-}
-
-func HasSecondaryIndexes(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec.Advanced != nil && len(spec.Advanced.SecondaryNetworks) > 0
-}
-
-func GetEBPFMetricsPort(spec *flowslatest.FlowCollectorEBPF) int32 {
-	port := int32(constants.EBPFMetricPort)
-	if spec.Metrics.Server.Port != nil {
-		port = *spec.Metrics.Server.Port
-	}
-	return port
-}
-
-func GetFlowCollectorMetricsPort(spec *flowslatest.FlowCollectorSpec) int32 {
-	port := int32(constants.FLPMetricsPort)
-	if spec.Processor.Metrics.Server.Port != nil {
-		port = *spec.Processor.Metrics.Server.Port
-	}
-	return port
 }
 
 func PtrBool(b *bool) bool {
@@ -233,13 +86,6 @@ func IsOwned(obj client.Object) bool {
 	// else we check for owner references
 	refs := obj.GetOwnerReferences()
 	return len(refs) > 0 && strings.HasPrefix(refs[0].APIVersion, flowslatest.GroupVersion.Group)
-}
-
-func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {
-	if spec.Namespace != "" {
-		return spec.Namespace
-	}
-	return constants.DefaultOperatorNamespace
 }
 
 func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowslatest.AdvancedAgentConfig {
@@ -411,12 +257,4 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 	}
 
 	return cfg
-}
-
-func AutoDetectOpenShiftNetworks(spec *flowslatest.FlowCollectorFLP) bool {
-	return spec.SubnetLabels.OpenShiftAutoDetect == nil || *spec.SubnetLabels.OpenShiftAutoDetect
-}
-
-func HasFLPDeduper(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.Processor.Deduper != nil && spec.Processor.Deduper.Mode != "" && spec.Processor.Deduper.Mode != flowslatest.FLPDeduperDisabled
 }

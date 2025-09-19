@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"slices"
 	"strconv"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -98,7 +97,7 @@ func podTemplate(
 	})
 	ports = append(ports, corev1.ContainerPort{
 		Name:          prometheusPortName,
-		ContainerPort: helper.GetFlowCollectorMetricsPort(desired),
+		ContainerPort: desired.Processor.GetMetricsPort(),
 	})
 
 	if advancedConfig.ProfilePort != nil {
@@ -171,7 +170,7 @@ func podTemplate(
 		dnsPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 	annotations["prometheus.io/scrape"] = "true"
-	annotations["prometheus.io/scrape_port"] = fmt.Sprint(helper.GetFlowCollectorMetricsPort(desired))
+	annotations["prometheus.io/scrape_port"] = fmt.Sprint(desired.Processor.GetMetricsPort())
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      map[string]string{"app": appName, "version": version},
@@ -213,7 +212,7 @@ func configMap(name, namespace, data, appName string) (*corev1.ConfigMap, string
 func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder, promTLS *flowslatest.CertificateReference) config.MetricsSettings {
 	metricsSettings := config.MetricsSettings{
 		PromConnectionInfo: api.PromConnectionInfo{
-			Port: int(helper.GetFlowCollectorMetricsPort(desired)),
+			Port: int(desired.Processor.GetMetricsPort()),
 		},
 		Prefix:  "netobserv_",
 		NoPanic: true,
@@ -271,7 +270,7 @@ func getDynamicJSONConfig(pipeline *PipelineBuilder) (string, error) {
 }
 
 func promService(desired *flowslatest.FlowCollectorSpec, svcName, namespace, appLabel string) *corev1.Service {
-	port := helper.GetFlowCollectorMetricsPort(desired)
+	port := desired.Processor.GetMetricsPort()
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      svcName,
@@ -347,44 +346,7 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 	}
 }
 
-func prometheusRule(desired *flowslatest.FlowCollectorSpec, ruleName, namespace, appLabel, version string) *monitoringv1.PrometheusRule {
-	rules := []monitoringv1.Rule{}
-	d := monitoringv1.Duration("10m")
-
-	// Not receiving flows
-	if !slices.Contains(desired.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
-		rules = append(rules, monitoringv1.Rule{
-			Alert: string(flowslatest.AlertNoFlows),
-			Annotations: map[string]string{
-				"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
-				"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
-			},
-			Expr: intstr.FromString("sum(rate(netobserv_ingest_flows_processed[1m])) == 0"),
-			For:  &d,
-			Labels: map[string]string{
-				"severity": "warning",
-				"app":      "netobserv",
-			},
-		})
-	}
-
-	// Flows getting dropped by loki library
-	if !slices.Contains(desired.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
-		rules = append(rules, monitoringv1.Rule{
-			Alert: string(flowslatest.AlertLokiError),
-			Annotations: map[string]string{
-				"description": "NetObserv flowlogs-pipeline is dropping flows because of loki errors, loki may be down or having issues ingesting every flows. Please check loki and flowlogs-pipeline logs.",
-				"summary":     "NetObserv flowlogs-pipeline is dropping flows because of loki errors",
-			},
-			Expr: intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[1m])) > 0"),
-			For:  &d,
-			Labels: map[string]string{
-				"severity": "warning",
-				"app":      "netobserv",
-			},
-		})
-	}
-
+func prometheusRule(rules []monitoringv1.Rule, ruleName, namespace, appLabel, version string) *monitoringv1.PrometheusRule {
 	flpPrometheusRuleObject := monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ruleName,
@@ -394,7 +356,7 @@ func prometheusRule(desired *flowslatest.FlowCollectorSpec, ruleName, namespace,
 		Spec: monitoringv1.PrometheusRuleSpec{
 			Groups: []monitoringv1.RuleGroup{
 				{
-					Name:  "NetobservFlowLogsPipeline",
+					Name:  "NetObservFlowLogsPipeline",
 					Rules: rules,
 				},
 			},

@@ -9,7 +9,6 @@ import (
 	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
-	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -180,7 +179,7 @@ func checkValidation(ctx context.Context, fc *flowslatest.FlowCollector) metav1.
 }
 
 func checkLoki(ctx context.Context, c client.Client, fc *flowslatest.FlowCollector) metav1.Condition {
-	if !helper.UseLoki(&fc.Spec) {
+	if !fc.Spec.UseLoki() {
 		return metav1.Condition{
 			Type:    LokiIssue,
 			Reason:  "Unused",

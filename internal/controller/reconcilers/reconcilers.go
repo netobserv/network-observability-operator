@@ -140,7 +140,7 @@ func ReconcileDeployment(ctx context.Context, ci *Instance, old, n *appsv1.Deplo
 		return ci.CreateOwned(ctx, n)
 	}
 	ci.Status.CheckDeploymentProgress(old)
-	if helper.DeploymentChanged(old, n, containerName, !helper.HPAEnabled(hpa), replicas, report) {
+	if helper.DeploymentChanged(old, n, containerName, !hpa.HPAEnabled(), replicas, report) {
 		return ci.UpdateIfOwned(ctx, old, n)
 	}
 	return nil
@@ -148,7 +148,7 @@ func ReconcileDeployment(ctx context.Context, ci *Instance, old, n *appsv1.Deplo
 
 func ReconcileHPA(ctx context.Context, ci *Instance, old, n *ascv2.HorizontalPodAutoscaler, desired *flowslatest.FlowCollectorHPA, report *helper.ChangeReport) error {
 	// Delete or Create / Update Autoscaler according to HPA option
-	if helper.HPAEnabled(desired) {
+	if desired.HPAEnabled() {
 		if !ci.Managed.Exists(old) {
 			return ci.CreateOwned(ctx, n)
 		} else if helper.AutoScalerChanged(old, *desired, report) {

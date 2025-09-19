@@ -17,6 +17,7 @@ limitations under the License.
 package flp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -29,6 +30,7 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
+	"github.com/netobserv/network-observability-operator/internal/pkg/metrics/alerts"
 
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -354,7 +356,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, !helper.HPAEnabled(&cfg.Processor.KafkaConsumerAutoscaler), *cfg.Processor.KafkaConsumerReplicas, &report))
+	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, !cfg.Processor.KafkaConsumerAutoscaler.HPAEnabled(), *cfg.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "no change")
 }
 
@@ -378,7 +380,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	report := helper.NewChangeReport("")
 	checkChanged := func(old, newd *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
-		return helper.DeploymentChanged(old, newd, constants.FLPName, !helper.HPAEnabled(&spec.Processor.KafkaConsumerAutoscaler), *spec.Processor.KafkaConsumerReplicas, &report)
+		return helper.DeploymentChanged(old, newd, constants.FLPName, !cfg.Processor.KafkaConsumerAutoscaler.HPAEnabled(), *spec.Processor.KafkaConsumerReplicas, &report)
 	}
 
 	assert.True(checkChanged(first, second, cfg))
@@ -459,7 +461,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, !helper.HPAEnabled(&cfg2.Processor.KafkaConsumerAutoscaler), *cfg2.Processor.KafkaConsumerReplicas, &report))
+	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, !cfg2.Processor.KafkaConsumerAutoscaler.HPAEnabled(), *cfg2.Processor.KafkaConsumerReplicas, &report))
 	assert.Contains(report.String(), "Replicas changed")
 }
 
@@ -580,7 +582,8 @@ func TestPrometheusRuleNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	first := b.prometheusRule()
+	r := alerts.BuildRules(context.Background(), &cfg)
+	first := b.prometheusRule(r)
 
 	// Check no change
 	newServiceMonitor := first.DeepCopy()
@@ -596,12 +599,14 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	// Get first
 	cfg := getConfig()
 	b := monoBuilder("namespace", &cfg)
-	first := b.prometheusRule()
+	r := alerts.BuildRules(context.Background(), &cfg)
+	first := b.prometheusRule(r)
 
 	// Check enabled rule change
-	cfg.Processor.Metrics.DisableAlerts = []flowslatest.FLPAlert{flowslatest.AlertNoFlows}
+	cfg.Processor.Metrics.DisableAlerts = []flowslatest.AlertTemplate{flowslatest.AlertNoFlows}
 	b = monoBuilder("namespace", &cfg)
-	second := b.prometheusRule()
+	r = alerts.BuildRules(context.Background(), &cfg)
+	second := b.prometheusRule(r)
 
 	report := helper.NewChangeReport("")
 	assert.True(helper.PrometheusRuleChanged(first, second, &report))
@@ -610,7 +615,8 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2", ClusterInfo: &cluster.Info{}}
 	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil)
-	third := b.prometheusRule()
+	r = alerts.BuildRules(context.Background(), &cfg)
+	third := b.prometheusRule(r)
 
 	report = helper.NewChangeReport("")
 	assert.True(helper.PrometheusRuleChanged(second, third, &report))

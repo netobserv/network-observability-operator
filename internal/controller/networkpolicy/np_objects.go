@@ -24,7 +24,7 @@ func peerInNamespace(ns string) networkingv1.NetworkPolicyPeer {
 }
 
 func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager) (types.NamespacedName, *networkingv1.NetworkPolicy) {
-	ns := helper.GetNamespace(&desired.Spec)
+	ns := desired.Spec.GetNamespace()
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
 	if desired.Spec.NetworkPolicy.Enable == nil || !*desired.Spec.NetworkPolicy.Enable {
@@ -74,7 +74,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	})
 
 	if mgr.ClusterInfo.IsOpenShift() {
-		if helper.UseConsolePlugin(&desired.Spec) && mgr.ClusterInfo.HasConsolePlugin() {
+		if desired.Spec.UseConsolePlugin() && mgr.ClusterInfo.HasConsolePlugin() {
 			advanced := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{
@@ -160,7 +160,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				peerInNamespace(constants.DNSNamespace),
 			},
 		})
-		if helper.UseLoki(&desired.Spec) && desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack {
+		if desired.Spec.UseLoki() && desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack {
 			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
 				To: []networkingv1.NetworkPolicyPeer{
 					peerInNamespace(desired.Spec.Loki.LokiStack.Namespace),
@@ -187,7 +187,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 }
 
 func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager) (types.NamespacedName, *networkingv1.NetworkPolicy) {
-	mainNs := helper.GetNamespace(&desired.Spec)
+	mainNs := desired.Spec.GetNamespace()
 	privNs := mainNs + constants.EBPFPrivilegedNSSuffix
 
 	name := types.NamespacedName{Name: netpolName, Namespace: privNs}
