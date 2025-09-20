@@ -231,8 +231,6 @@ type Agent struct {
 	MetricsTLSKeyPath string `env:"METRICS_TLS_KEY_PATH"`
 	// MetricsPrefix is the prefix of the metrics that are sent to the server.
 	MetricsPrefix string `env:"METRICS_PREFIX" envDefault:"ebpf_agent_"`
-	// EnableFlowFilter enables flow filter, default is false.
-	EnableFlowFilter bool `env:"ENABLE_FLOW_FILTER" envDefault:"false"`
 	// FlowFilterRules list of flow filter rules
 	FlowFilterRules string `env:"FLOW_FILTER_RULES"`
 	// EnableNetworkEventsMonitoring enables monitoring network plugin events, default is false.
