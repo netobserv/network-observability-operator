@@ -1,6 +1,6 @@
 # NetObserv architecture
 
-_See also: [architecture in the downstream documentation](https://docs.openshift.com/container-platform/latest/observability/network_observability/understanding-network-observability-operator.html#network-observability-architecture_nw-network-observability-operator)_
+_See also: [architecture in the downstream documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/4.18/html/network_observability/nw-network-observability-operator#network-observability-architecture_nw-network-observability-operator)_
 
 NetObserv is a collection of components that can sometimes run independently, or as a whole.
 
