@@ -3899,7 +3899,7 @@ spec:
                     - message: Namespace is immutable. If you need to change it, delete and recreate the resource.
                       rule: self == oldSelf
                 networkPolicy:
-                  description: '`networkPolicy` defines ingress network policy settings for NetObserv components isolation.'
+                  description: '`networkPolicy` defines network policy settings for NetObserv components isolation.'
                   properties:
                     additionalNamespaces:
                       description: |-
@@ -3910,10 +3910,11 @@ spec:
                         type: string
                       type: array
                     enable:
+                      default: true
                       description: |-
                         Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
                         These network policies better isolate the NetObserv components to prevent undesired connections to them.
-                        To increase the security of connections, enable this option or create your own network policy.
+                        This option is enabled by default, disable it to manually manage network policies
                       type: boolean
                   type: object
                 processor:
