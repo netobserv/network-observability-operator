@@ -411,7 +411,7 @@ bundle: bundle-prepare ## Generate final bundle files.
 		| $(SED) -e 's~:container-image:~$(IMAGE)~' \
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
-		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+		| $(OPSDK) generate bundle -q --overwrite=false --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
 	mv tmp-csv ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 	rm tmp-desc
 	sh -c '\
