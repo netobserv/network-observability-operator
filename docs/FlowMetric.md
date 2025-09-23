@@ -141,7 +141,7 @@ When set to `Egress`, it is equivalent to adding the regular expression filter o
         <td>[]object</td>
         <td>
           `filters` is a list of fields and values used to restrict which flows are taken into account.
-Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
+Refer to the documentation for the list of available fields: https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/json-flows-format-reference.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -161,7 +161,7 @@ From choosing labels results the level of granularity of this metric, and the av
 It must be done carefully as it impacts the metric cardinality (cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric).
 In general, avoid setting very high cardinality labels such as IP or MAC addresses.
 "SrcK8S_OwnerName" or "DstK8S_OwnerName" should be preferred over "SrcK8S_Name" or "DstK8S_Name" as much as possible.
-Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
+Refer to the documentation for the list of available fields: https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/json-flows-format-reference.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -184,7 +184,7 @@ Refer to the documentation for the list of available fields: https://docs.opensh
         <td>
           `valueField` is the flow field that must be used as a value for this metric. This field must hold numeric values.
 Leave empty to count flows rather than a specific value per flow.
-Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/observability/network_observability/json-flows-format-reference.html.<br/>
+Refer to the documentation for the list of available fields: https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/json-flows-format-reference.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

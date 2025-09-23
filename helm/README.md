@@ -15,7 +15,7 @@ Flow data is then available in multiple ways, each optional:
 
 You can install the NetObserv Operator using [Helm](https://helm.sh/), or directly from sources.
 
-In OpenShift, NetObserv is named Network Observability operator and can be found in OperatorHub as an OLM operator. This section does not apply to it: please refer to the [OpenShift documentation](https://docs.openshift.com/container-platform/latest/observability/network_observability/installing-operators.html) in that case.
+In OpenShift, NetObserv is named Network Observability operator and can be found in OperatorHub as an OLM operator. This section does not apply to it: please refer to the [OpenShift documentation](docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/installing-network-observability-operators) in that case.
 
 ### Pre-requisite
 
