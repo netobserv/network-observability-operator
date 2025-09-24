@@ -152,7 +152,7 @@ spec:
                   items:
                     properties:
                       field:
-                        description: Name of the field to filter on
+                        description: 'Name of the field to filter on (for example: `SrcK8S_Namespace`).'
                         type: string
                       matchType:
                         default: Equal
@@ -182,7 +182,7 @@ spec:
                   type: array
                 labels:
                   description: |-
-                    `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions.
+                    `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions (for example: `SrcK8S_Namespace`).
                     From choosing labels results the level of granularity of this metric, and the available aggregations at query time.
                     It must be done carefully as it impacts the metric cardinality (cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric).
                     In general, avoid setting very high cardinality labels such as IP or MAC addresses.
@@ -192,7 +192,7 @@ spec:
                     type: string
                   type: array
                 metricName:
-                  description: Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
+                  description: Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_". Leave empty to generate the name based on the `FlowMetric` resource name.
                   pattern: ^[a-zA-Z_][a-zA-Z0-9:_]*$|^$
                   type: string
                 remap:
@@ -210,10 +210,11 @@ spec:
                   enum:
                     - Counter
                     - Histogram
+                    - Gauge
                   type: string
                 valueField:
                   description: |-
-                    `valueField` is the flow field that must be used as a value for this metric. This field must hold numeric values.
+                    `valueField` is the flow field that must be used as a value for this metric (for example: `Bytes`). This field must hold numeric values.
                     Leave empty to count flows rather than a specific value per flow.
                     Refer to the documentation for the list of available fields: https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/json-flows-format-reference.
                   type: string
