@@ -1360,7 +1360,7 @@ type AdvancedLokiConfig struct {
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 
 	//+optional
-	// `excludeLabels` is a list of field to be excluded from the list of Loki labels.
+	// `excludeLabels` is a list of fields to be excluded from the list of Loki labels. [Unsupported (*)].
 	ExcludeLabels []string `json:"excludeLabels,omitempty"`
 }
 

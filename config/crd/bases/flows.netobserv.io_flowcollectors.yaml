@@ -3459,7 +3459,7 @@ spec:
                         This section is aimed mostly for debugging and fine-grained performance optimizations.
                       properties:
                         excludeLabels:
-                          description: '`excludeLabels` is a list of field to be excluded from the list of Loki labels.'
+                          description: '`excludeLabels` is a list of fields to be excluded from the list of Loki labels. [Unsupported (*)].'
                           items:
                             type: string
                           type: array
