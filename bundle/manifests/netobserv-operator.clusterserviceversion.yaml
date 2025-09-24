@@ -252,8 +252,8 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
-    containerImage: quay.io/netobserv/network-observability-operator:1.9.2-community
-    createdAt: "2025-09-24T14:09:38Z"
+    containerImage: quay.io/lberetta/network-observability-operator:main
+    createdAt: "2025-09-24T17:28:38Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -480,10 +480,6 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:loki.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
-      - displayName: Keep alive
-        path: loki.grpcConfig.keepAlive
-      - displayName: Keep alive timeout
-        path: loki.grpcConfig.keepAliveTimeout
       - displayName: Read timeout
         path: loki.readTimeout
       - path: loki.advanced
@@ -662,7 +658,7 @@ spec:
         - urn:alm:descriptor:io.kubernetes.conditions
       version: v1beta2
     - description: '`FlowMetric` is the schema for the custom metrics API, which allows
-        to generate more metrics out of flow logs. You can find examples here: https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics'
+        to generate more metrics out of flow logs. You can find examples here: https://github.com/netobserv/network-observability-operator/tree/v1.9.2-community/config/samples/flowmetrics'
       displayName: Flow Metric
       kind: FlowMetric
       name: flowmetrics.flows.netobserv.io
@@ -1076,7 +1072,7 @@ spec:
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN
                   value: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
-                  value: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
+                  value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
                 - name: PROFILING_BIND_ADDRESS
@@ -1221,7 +1217,9 @@ spec:
   - image: quay.io/netobserv/flowlogs-pipeline:v1.9.2-community
     name: flowlogs-pipeline
   - image: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
-    name: ""
+    name: console-plugin
+  - image: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+    name: console-plugin-compat
   version: 1.9.2-community
   webhookdefinitions:
   - admissionReviewVersions:

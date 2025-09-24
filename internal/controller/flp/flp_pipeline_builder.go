@@ -265,7 +265,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		if len(filters) > 0 {
 			lokiStage = lokiStage.TransformFilter("filters-loki", newTransformFilter(filters))
 		}
-		lokiClientProtocol := getLokiClientProtocol(b.desired.Processor)
+		lokiClientProtocol := getLokiClientProtocol(&b.desired.Processor)
 		lokiWrite := api.WriteLoki{
 			Labels:         lokiLabels,
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
@@ -781,7 +781,7 @@ func subnetLabelsToFLP(labels []flowslatest.SubnetLabel) []api.NetworkTransformS
 }
 
 // getLokiClientProtocol returns the client type, defaulting to http if experimental support is not configured
-func getLokiClientProtocol(processorSpec flowslatest.FlowCollectorFLP) string {
+func getLokiClientProtocol(processorSpec *flowslatest.FlowCollectorFLP) string {
 	if processorSpec.HasExperimentalLokiGRPCClientProtocol() {
 		return grpc
 	}
