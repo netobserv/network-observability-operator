@@ -7350,7 +7350,7 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
         <td><b>excludeLabels</b></td>
         <td>[]string</td>
         <td>
-          `excludeLabels` is a list of field to be excluded from the list of Loki labels.<br/>
+          `excludeLabels` is a list of fields to be excluded from the list of Loki labels. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
