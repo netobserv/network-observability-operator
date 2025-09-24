@@ -112,11 +112,30 @@ To be able to see release pipeline, a read access to the `rhtap-releng` namespac
 ### Branching
 
 After creating a new release branch, the following steps need to be done:
-- create a new konflux component
-- create new component inside the new application, one for each image except the FBC
-- edit the new component build pipeline to point to the pipeline-ref file
-- creating the new `ReleasePlanAdmission` objects, one for staging one for production
-- creating the new `ReleasePlan` objects, one for staging, one for production, note that the `auto-release` label in the production file must be false
+- update the konflux components source branches (e.g. below for release-10):
+
+```bash
+oc patch components flowlogs-pipeline-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10'}]"
+oc patch components netobserv-ebpf-agent-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10'}]"
+oc patch components network-observability-cli-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10'}]"
+oc patch components network-observability-console-plugin-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10'}]"
+oc patch components network-observability-operator-bundle-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10'}]"
+oc patch components network-observability-operator-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10'}]"
+oc patch components network-observability-console-plugin-pf4-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10-pf4'}]"
+```
+
+- update main branches on every repo to disable on-push jobs:
+```yaml
+    pipelinesascode.tekton.dev/on-cel-expression: "false"
+```
+
+- update release branches on every repo to target self:
+```yaml
+    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch == "release-1.10"
+```
+(for both on-push and on-pull-request jobs)
+
+- review the `ReleasePlanAdmission` objects to make sure they are targetting the next release.
 
 ## Release
 
