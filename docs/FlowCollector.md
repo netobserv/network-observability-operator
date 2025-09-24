@@ -363,10 +363,8 @@ Otherwise it is matched as a case-sensitive string.<br/>
         <td><b>privileged</b></td>
         <td>boolean</td>
         <td>
-          Privileged mode for the eBPF Agent container. When ignored or set to `false`, the operator sets
-granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
-If for some reason these capabilities cannot be set, such as if an old kernel version not knowing CAP_BPF
-is in use, then you can turn on this mode for more global privileges.
+          Privileged mode for the eBPF Agent container. When set to `true`, the agent is able to capture more traffic, including from secondary interfaces.
+When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
 Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.<br/>
         </td>
         <td>false</td>
@@ -7350,7 +7348,7 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
         <td><b>excludeLabels</b></td>
         <td>[]string</td>
         <td>
-          `excludeLabels` is a list of field to be excluded from the list of Loki labels.<br/>
+          `excludeLabels` is a list of field to be excluded from the list of Loki labels. [Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>

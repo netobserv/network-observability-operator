@@ -290,7 +290,7 @@ The "Cardinality" column gives information about the implied metric cardinality 
 | protocol
 | `Sampling`
 | number
-| Sampling rate used for this flow
+| Sampling interval used for this flow
 | n/a
 | no
 | fine
