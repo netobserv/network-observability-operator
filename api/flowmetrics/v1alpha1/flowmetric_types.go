@@ -43,7 +43,7 @@ const (
 )
 
 type MetricFilter struct {
-	// Name of the field to filter on
+	// Name of the field to filter on (for example: `SrcK8S_Namespace`).
 	// +required
 	Field string `json:"field"`
 
@@ -63,7 +63,7 @@ type MetricFilter struct {
 // usage of Prometheus workloads as this could potentially have a high impact. Cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric<br>
 // To check the cardinality of all NetObserv metrics, run as `promql`: `count({__name__=~"netobserv.*"}) by (__name__)`.
 type FlowMetricSpec struct {
-	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_".
+	// Name of the metric. In Prometheus, it is automatically prefixed with "netobserv_". Leave empty to generate the name based on the `FlowMetric` resource name.
 	// +kubebuilder:validation:Pattern:="^[a-zA-Z_][a-zA-Z0-9:_]*$|^$"
 	// +optional
 	MetricName string `json:"metricName"`
@@ -72,11 +72,11 @@ type FlowMetricSpec struct {
 	// Use "Counter" for any value that increases over time and on which you can compute a rate, such as Bytes or Packets.
 	// Use "Histogram" for any value that must be sampled independently, such as latencies.
 	// Use "Gauge" for other values that don't necessitate accuracy over time (gauges are sampled only every N seconds when Prometheus fetches the metric).
-	// +kubebuilder:validation:Enum:="Counter";"Histogram"
+	// +kubebuilder:validation:Enum:="Counter";"Histogram";"Gauge"
 	// +required
 	Type MetricType `json:"type"`
 
-	// `valueField` is the flow field that must be used as a value for this metric. This field must hold numeric values.
+	// `valueField` is the flow field that must be used as a value for this metric (for example: `Bytes`). This field must hold numeric values.
 	// Leave empty to count flows rather than a specific value per flow.
 	// Refer to the documentation for the list of available fields: https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/json-flows-format-reference.
 	// +optional
@@ -87,7 +87,7 @@ type FlowMetricSpec struct {
 	// +optional
 	Filters []MetricFilter `json:"filters"`
 
-	// `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions.
+	// `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions (for example: `SrcK8S_Namespace`).
 	// From choosing labels results the level of granularity of this metric, and the available aggregations at query time.
 	// It must be done carefully as it impacts the metric cardinality (cf https://rhobs-handbook.netlify.app/products/openshiftmonitoring/telemetry.md/#what-is-the-cardinality-of-a-metric).
 	// In general, avoid setting very high cardinality labels such as IP or MAC addresses.
