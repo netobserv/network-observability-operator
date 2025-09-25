@@ -370,12 +370,17 @@ install: kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/con
 uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl --ignore-not-found=true delete -f - || true
 
-deploy: kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+set-manager-images: kustomize ## Update image references
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMAGE}
-	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:main~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:main~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~console-plugin:.+~console-plugin:main~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~console-plugin-pf4:.+~console-plugin:main-pf4~' ./config/manager/manager.yaml
+	$(SED) -i -r '/RELATED_IMAGE_EBPF_AGENT$$/{ n; s~value:.+$$~value: quay.io/netobserv/netobserv-ebpf-agent:$(BPF_VERSION)~}' ./config/manager/manager.yaml
+	$(SED) -i -r '/RELATED_IMAGE_FLOWLOGS_PIPELINE$$/{ n; s~value:.+$$~value: quay.io/netobserv/flowlogs-pipeline:$(FLP_VERSION)~}' ./config/manager/manager.yaml
+	$(SED) -i -r '/RELATED_IMAGE_CONSOLE_PLUGIN$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)~}' ./config/manager/manager.yaml
+	$(SED) -i -r '/RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf4~}' ./config/manager/manager.yaml
+
+deploy: BPF_VERSION=main
+deploy: FLP_VERSION=main
+deploy: PLG_VERSION=main
+deploy: kustomize set-manager-images ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | sed -r "s/openshift-netobserv-operator\.svc/${NAMESPACE}.svc/" | kubectl apply --server-side --force-conflicts -f -
 	kubectl get ns openshift-netobserv-operator || kubectl create ns openshift-netobserv-operator
 	cat bundle/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl apply --server-side --force-conflicts -f -
@@ -390,12 +395,8 @@ run: fmt lint ## Run a controller from your host.
 ##@ OLM
 
 .PHONY: bundle-prepare
-bundle-prepare: OPSDK generate kustomize ## Generate bundle manifests and metadata, then validate generated files.
+bundle-prepare: OPSDK generate kustomize set-manager-images ## Generate bundle manifests and metadata, then validate generated files.
 # $(OPSDK) generate kustomize manifests -q --input-dir $(BUNDLE_CONFIG) --output-dir $(BUNDLE_CONFIG)
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
-	$(SED) -i -r 's~ebpf-agent:.+~ebpf-agent:$(BPF_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~flowlogs-pipeline:.+~flowlogs-pipeline:$(FLP_VERSION)~' ./config/manager/manager.yaml
-	$(SED) -i -r 's~console-plugin:.+~console-plugin:$(PLG_VERSION)~' ./config/manager/manager.yaml
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/descriptions/upstream.md
 	$(SED) -i -r 's~network-observability-operator/blob/[^/]+/~network-observability-operator/blob/$(VERSION)/~g' ./config/descriptions/ocp.md
