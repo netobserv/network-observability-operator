@@ -1072,7 +1072,7 @@ spec:
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN
                   value: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
-                  value: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+                  value: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community-pf4
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
                 - name: PROFILING_BIND_ADDRESS
@@ -1218,7 +1218,7 @@ spec:
     name: flowlogs-pipeline
   - image: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community
     name: console-plugin
-  - image: quay.io/netobserv/network-observability-console-plugin-pf4:v1.8.2-community
+  - image: quay.io/netobserv/network-observability-console-plugin:v1.9.2-community-pf4
     name: console-plugin-compat
   version: 1.9.2-community
   webhookdefinitions:
