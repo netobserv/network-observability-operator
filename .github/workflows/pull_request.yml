@@ -43,6 +43,9 @@ jobs:
       run: make update-bundle
     - name: check bundle clean state
       run: git add -A && git diff HEAD -I "operator-sdk-v" -I "createdAt" --exit-code
+    - if: ${{ failure() }}
+      name: print info
+      run: echo "::error::Bundle isn't in a clean state. Did you forget to run 'make update-bundle' ?"; exit 1
 
   helm-check:
     runs-on: ubuntu-latest
