@@ -3897,6 +3897,8 @@ spec:
                     - message: Namespace is immutable. If you need to change it, delete and recreate the resource.
                       rule: self == oldSelf
                 networkPolicy:
+                  default:
+                    enable: true
                   description: '`networkPolicy` defines network policy settings for NetObserv components isolation.'
                   properties:
                     additionalNamespaces:
@@ -3908,7 +3910,6 @@ spec:
                         type: string
                       type: array
                     enable:
-                      default: true
                       description: |-
                         Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
                         These network policies better isolate the NetObserv components to prevent undesired connections to them.
