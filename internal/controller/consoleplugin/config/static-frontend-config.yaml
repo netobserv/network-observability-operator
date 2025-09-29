@@ -1159,6 +1159,8 @@ scopes:
       - DstK8S_OwnerType
       - SrcK8S_Namespace
       - DstK8S_Namespace
+      - SrcSubnetLabel
+      - DstSubnetLabel
     groups:
       - clusters
       - clusters+zones
@@ -1190,6 +1192,7 @@ scopes:
       - SrcK8S_Namespace
       - SrcAddr
       - SrcK8S_HostName
+      - SrcSubnetLabel
       - DstK8S_Name
       - DstK8S_Type
       - DstK8S_OwnerName
@@ -1197,6 +1200,7 @@ scopes:
       - DstK8S_Namespace
       - DstAddr
       - DstK8S_HostName
+      - DstSubnetLabel
     groups:
       - clusters
       - clusters+zones
