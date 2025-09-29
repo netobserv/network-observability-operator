@@ -5,6 +5,8 @@ import (
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/internal/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/internal/pkg/test/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +33,7 @@ func TestOtelTransformConfig(t *testing.T) {
 		{Input: "DstK8S_Zone", Output: "destination.zone", Multiplier: 0},
 		{Input: "DstMac", Output: "destination.mac", Multiplier: 0},
 		{Input: "DstPort", Output: "destination.port", Multiplier: 0},
+		{Input: "DstSubnetLabel", Output: "destination.subnet.label", Multiplier: 0},
 		{Input: "Flags", Output: "tcp.flags", Multiplier: 0},
 		{Input: "FlowDirection", Output: "host.direction", Multiplier: 0},
 		{Input: "IcmpCode", Output: "icmp.code", Multiplier: 0},
@@ -57,11 +60,26 @@ func TestOtelTransformConfig(t *testing.T) {
 		{Input: "SrcK8S_Zone", Output: "source.zone", Multiplier: 0},
 		{Input: "SrcMac", Output: "source.mac", Multiplier: 0},
 		{Input: "SrcPort", Output: "source.port", Multiplier: 0},
+		{Input: "SrcSubnetLabel", Output: "source.subnet.label", Multiplier: 0},
 		{Input: "TimeFlowEndMs", Output: "timeflowend", Multiplier: 0},
 		{Input: "TimeFlowRttNs", Output: "tcp.rtt", Multiplier: 0},
 		{Input: "TimeFlowStartMs", Output: "timeflowstart", Multiplier: 0},
 		{Input: "TimeReceived", Output: "timereceived", Multiplier: 0},
 	}, m.Rules)
+
+	// Make sure default metric labels are all covered
+	defs := metrics.GetDefinitions(util.SpecForMetrics(), false)
+	for _, metric := range defs {
+		for _, label := range metric.Spec.Labels {
+			assert.True(t, fieldFound(label, m.Rules), "missing label '%s' found in metric '%s'", label, metric.Spec.MetricName)
+		}
+		for _, filter := range metric.Spec.Filters {
+			assert.True(t, fieldFound(filter.Field, m.Rules), "missing label '%s' found in filters for metric '%s'", filter.Field, metric.Spec.MetricName)
+		}
+		if metric.Spec.ValueField != "" {
+			assert.True(t, fieldFound(metric.Spec.ValueField, m.Rules), "missing '%s' used as ValueField for metric '%s'", metric.Spec.ValueField, metric.Spec.MetricName)
+		}
+	}
 
 	// override with custom rules
 	m, err = GetOtelTransformConfig(&[]flowslatest.GenericTransformRule{{
@@ -74,6 +92,15 @@ func TestOtelTransformConfig(t *testing.T) {
 	assert.Equal(t, "Test", m.Rules[0].Input)
 	assert.Equal(t, "outputTest", m.Rules[0].Output)
 	assert.Equal(t, 1234, m.Rules[0].Multiplier)
+}
+
+func fieldFound(name string, rules []api.GenericTransformRule) bool {
+	for _, r := range rules {
+		if name == r.Input {
+			return true
+		}
+	}
+	return false
 }
 
 func TestOtelMetrics(t *testing.T) {
