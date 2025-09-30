@@ -134,13 +134,16 @@ func ReconcileDaemonSet(ctx context.Context, ci *Instance, old, n *appsv1.Daemon
 	return nil
 }
 
-func ReconcileDeployment(ctx context.Context, ci *Instance, old, n *appsv1.Deployment, containerName string, checkReplicas bool, desiredReplicas int32, report *helper.ChangeReport) error {
+func ReconcileDeployment(ctx context.Context, ci *Instance, old, n *appsv1.Deployment, containerName string, ignoreReplicas bool, report *helper.ChangeReport) error {
 	if !ci.Managed.Exists(old) {
 		ci.Status.SetCreatingDeployment(n)
 		return ci.CreateOwned(ctx, n)
 	}
 	ci.Status.CheckDeploymentProgress(old)
-	if helper.DeploymentChanged(old, n, containerName, checkReplicas, desiredReplicas, report) {
+	if ignoreReplicas {
+		n.Spec.Replicas = old.Spec.Replicas
+	}
+	if helper.DeploymentChanged(old, n, containerName, report) {
 		return ci.UpdateIfOwned(ctx, old, n)
 	}
 	return nil

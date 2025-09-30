@@ -167,8 +167,7 @@ func (r *transformerReconciler) reconcileDeployment(ctx context.Context, desired
 		r.deployment,
 		builder.deployment(annotations),
 		constants.FLPName,
-		!desiredFLP.IsUnmanagedFLPReplicas(),
-		desiredFLP.GetFLPReplicas(),
+		desiredFLP.IsUnmanagedFLPReplicas(),
 		&report,
 	)
 }

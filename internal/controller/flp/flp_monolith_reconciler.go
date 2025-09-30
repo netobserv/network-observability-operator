@@ -226,8 +226,7 @@ func (r *monolithReconciler) reconcileDeployment(ctx context.Context, desiredFLP
 		r.deployment,
 		builder.deployment(annotations),
 		constants.FLPName,
-		!desiredFLP.IsUnmanagedFLPReplicas(),
-		desiredFLP.GetFLPReplicas(),
+		desiredFLP.IsUnmanagedFLPReplicas(),
 		&report,
 	)
 }

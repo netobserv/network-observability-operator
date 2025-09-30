@@ -52,9 +52,9 @@ func DaemonSetChanged(current, desired *appsv1.DaemonSet) ReconcileAction {
 	return ActionNone
 }
 
-func DeploymentChanged(old, n *appsv1.Deployment, contName string, checkReplicas bool, desiredReplicas int32, report *ChangeReport) bool {
+func DeploymentChanged(old, n *appsv1.Deployment, contName string, report *ChangeReport) bool {
 	return report.Check("Pod changed", PodChanged(&old.Spec.Template, &n.Spec.Template, contName, report)) ||
-		report.Check("Replicas changed", (checkReplicas && *old.Spec.Replicas != desiredReplicas))
+		report.Check("Replicas changed", *old.Spec.Replicas != *n.Spec.Replicas)
 }
 
 func PodChanged(old, n *corev1.PodTemplateSpec, containerName string, report *ChangeReport) bool {
