@@ -155,6 +155,8 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         <td>object</td>
         <td>
           `networkPolicy` defines network policy settings for NetObserv components isolation.<br/>
+          <br/>
+            <i>Default</i>: map[enable:true]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8347,11 +8349,9 @@ configuration, you can disable it and install your own instead.<br/>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
+          Deploys network policies on the namespaces used by NetObserv (main and privileged).
 These network policies better isolate the NetObserv components to prevent undesired connections to them.
 This option is enabled by default, disable it to manually manage network policies<br/>
-          <br/>
-            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr></tbody>
