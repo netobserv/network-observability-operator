@@ -93,7 +93,7 @@ type FlowCollectorSpec struct {
 }
 
 type NetworkPolicy struct {
-	// Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
+	// Deploys network policies on the namespaces used by NetObserv (main and privileged).
 	// These network policies better isolate the NetObserv components to prevent undesired connections to them.
 	// This option is enabled by default, disable it to manually manage network policies
 	// +optional
