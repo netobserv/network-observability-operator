@@ -25,6 +25,9 @@ import (
 
 const (
 	ovnkSecondary = "ovn-kubernetes"
+
+	http = "http"
+	grpc = "grpc"
 )
 
 type PipelineBuilder struct {
@@ -262,7 +265,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		if len(filters) > 0 {
 			lokiStage = lokiStage.TransformFilter("filters-loki", newTransformFilter(filters))
 		}
-
+		lokiClientProtocol := getLokiClientProtocol(&b.desired.Processor)
 		lokiWrite := api.WriteLoki{
 			Labels:         lokiLabels,
 			BatchSize:      int(b.desired.Loki.WriteBatchSize),
@@ -276,41 +279,50 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			TimestampLabel: "TimeFlowEndMs",
 			TimestampScale: "1ms",
 			TenantID:       b.loki.TenantID,
+			ClientProtocol: lokiClientProtocol,
+		}
+
+		// Configure gRPC-specific settings if using gRPC
+		if lokiWrite.ClientProtocol == grpc {
+			lokiWrite.GRPCConfig = b.buildGRPCConfig(b.loki.IngesterURL, &b.loki.TLS)
 		}
 
 		for k, v := range advancedConfig.StaticLabels {
 			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
 		}
 
-		var authorization *promConfig.Authorization
-		if b.loki.UseHostToken() || b.loki.UseForwardToken() {
-			b.volumes.AddToken(constants.FLPName)
-			authorization = &promConfig.Authorization{
-				Type:            "Bearer",
-				CredentialsFile: constants.TokensPath + constants.FLPName,
+		// Configure HTTP client settings only for HTTP client type
+		if lokiWrite.ClientProtocol == http {
+			var authorization *promConfig.Authorization
+			if b.loki.UseHostToken() || b.loki.UseForwardToken() {
+				b.volumes.AddToken(constants.FLPName)
+				authorization = &promConfig.Authorization{
+					Type:            "Bearer",
+					CredentialsFile: constants.TokensPath + constants.FLPName,
+				}
 			}
-		}
 
-		if b.loki.TLS.Enable {
-			if b.loki.TLS.InsecureSkipVerify {
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						InsecureSkipVerify: true,
-					},
+			if b.loki.TLS.Enable {
+				if b.loki.TLS.InsecureSkipVerify {
+					lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+						Authorization: authorization,
+						TLSConfig: promConfig.TLSConfig{
+							InsecureSkipVerify: true,
+						},
+					}
+				} else {
+					caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
+					lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+						Authorization: authorization,
+						TLSConfig: promConfig.TLSConfig{
+							CAFile: caPath,
+						},
+					}
 				}
 			} else {
-				caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
 				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
 					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						CAFile: caPath,
-					},
 				}
-			}
-		} else {
-			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-				Authorization: authorization,
 			}
 		}
 		lokiStage.WriteLoki("loki", lokiWrite)
@@ -766,4 +778,58 @@ func subnetLabelsToFLP(labels []flowslatest.SubnetLabel) []api.NetworkTransformS
 		})
 	}
 	return cats
+}
+
+// getLokiClientProtocol returns the client type, defaulting to http if experimental support is not configured
+func getLokiClientProtocol(processorSpec *flowslatest.FlowCollectorFLP) string {
+	if processorSpec.HasExperimentalLokiGRPCClientProtocol() {
+		return grpc
+	}
+	return http
+}
+
+// buildGRPCConfig builds the gRPC configuration for Loki writer
+func (b *PipelineBuilder) buildGRPCConfig(serverAddress string, tlsConfig *flowslatest.ClientTLS) *api.GRPCLokiConfig {
+
+	// TO-DO: Fill values from env vars
+	config := &api.GRPCLokiConfig{}
+
+	if config.KeepAlive == "" {
+		config.KeepAlive = "30s"
+	}
+	if config.KeepAliveTimeout == "" {
+		config.KeepAliveTimeout = "5s"
+	}
+
+	// Configure TLS if enabled
+	if tlsConfig != nil && tlsConfig.Enable {
+		config.TLS = &api.GRPCTLSConfig{
+			Enabled:            true,
+			InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
+		}
+
+		if !tlsConfig.InsecureSkipVerify {
+			// Use volume builder to get proper certificate paths
+			caPath, certPath, keyPath := b.volumes.AddMutualTLSCertificates(tlsConfig, "loki-grpc-certs")
+			if caPath != "" {
+				config.TLS.CAFile = caPath
+			}
+			if certPath != "" {
+				config.TLS.CertFile = certPath
+			}
+			if keyPath != "" {
+				config.TLS.KeyFile = keyPath
+			}
+
+			// Set ServerName for certificate verification
+			// Extract hostname from server address (remove port)
+			serverName := serverAddress
+			if idx := strings.LastIndex(serverName, ":"); idx != -1 {
+				serverName = serverName[:idx]
+			}
+			config.TLS.ServerName = serverName
+		}
+	}
+
+	return config
 }

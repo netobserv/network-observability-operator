@@ -192,3 +192,12 @@ func (spec *FlowCollectorSpec) HasExperimentalAlertsHealth() bool {
 	}
 	return false
 }
+
+func (spec *FlowCollectorFLP) HasExperimentalLokiGRPCClientProtocol() bool {
+	if spec.Advanced != nil {
+		env := spec.Advanced.Env["LOKI_USE_GRPC_CLIENT_PROTOCOL"]
+		useGRPC, err := strconv.ParseBool(env)
+		return err == nil && useGRPC
+	}
+	return false
+}
