@@ -112,10 +112,11 @@ for these features as a best effort only.
         <td>enum</td>
         <td>
           `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-- `Direct` (default) to make the flow processor listen directly from the agents using the host network.<br>
-- `Service` to make the flow processor listen as a Kubernetes Service.<br>
+- `Direct` (default) to make the flow processor listen directly from the agents using the host network, backed by a DaemonSet.<br>
+- `Service` to make the flow processor listen as a Kubernetes Service, backed by a scalable Deployment.<br>
 - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
-Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br>
+`Direct` is not recommended on large clusters as it is less memory efficient.<br/>
           <br/>
             <i>Enum</i>: Direct, Service, Kafka<br/>
             <i>Default</i>: Direct<br/>
