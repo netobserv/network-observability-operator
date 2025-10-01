@@ -89,7 +89,6 @@ func GetOtelMetrics(flpMetrics []api.MetricsItem) ([]api.MetricsItem, error) {
 		otelMetrics = append(otelMetrics, api.MetricsItem{
 			Name:       convertToOtelLabel(otelRules, m.Name),
 			Type:       m.Type,
-			Help:       m.Help,
 			Filters:    convertToOtelFilters(otelRules, m.Filters),
 			ValueKey:   convertToOtelLabel(otelRules, m.ValueKey),
 			Labels:     convertToOtelLabels(otelRules, m.Labels),

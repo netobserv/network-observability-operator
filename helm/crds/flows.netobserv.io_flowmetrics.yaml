@@ -180,9 +180,6 @@ spec:
                   items:
                     type: string
                   type: array
-                help:
-                  description: Help text of the metric, as it appears in Prometheus.
-                  type: string
                 labels:
                   description: |-
                     `labels` is a list of fields that should be used as Prometheus labels, also known as dimensions (for example: `SrcK8S_Namespace`).

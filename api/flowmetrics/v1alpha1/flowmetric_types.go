@@ -76,10 +76,6 @@ type FlowMetricSpec struct {
 	// +required
 	Type MetricType `json:"type"`
 
-	// Help text of the metric, as it appears in Prometheus.
-	// +optional
-	Help string `json:"help,omitempty"`
-
 	// `valueField` is the flow field that must be used as a value for this metric (for example: `Bytes`). This field must hold numeric values.
 	// Leave empty to count flows rather than a specific value per flow.
 	// Refer to the documentation for the list of available fields: https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/json-flows-format-reference.
