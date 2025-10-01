@@ -71,10 +71,10 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 		transfoConfigMap,
 		b.desired,
 		&b.volumes,
-		false, /*no listen*/
-		false, /*no host network*/
+		pull,
 		annotations,
 	)
+	replicas := b.desired.Processor.GetFLPReplicas()
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      transfoName,
@@ -82,7 +82,7 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 			Labels:    b.appVersionLabels(),
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: b.desired.Processor.KafkaConsumerReplicas,
+			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: b.appLabel(),
 			},
