@@ -88,14 +88,15 @@ type FlowCollectorSpec struct {
 
 	// `networkPolicy` defines network policy settings for NetObserv components isolation.
 	// +k8s:conversion-gen=false
+	// +kubebuilder:default:={enable:true}
 	NetworkPolicy NetworkPolicy `json:"networkPolicy,omitempty"`
 }
 
 type NetworkPolicy struct {
-	// Set `enable` to `true` to deploy network policies on the namespaces used by NetObserv (main and privileged). It is disabled by default.
+	// Deploys network policies on the namespaces used by NetObserv (main and privileged).
 	// These network policies better isolate the NetObserv components to prevent undesired connections to them.
 	// This option is enabled by default, disable it to manually manage network policies
-	// +kubebuilder:default:=true
+	// +optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// `additionalNamespaces` contains additional namespaces allowed to connect to the NetObserv namespace.
