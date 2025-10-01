@@ -37,7 +37,7 @@ type WriteLoki struct {
 	Labels         []string                     `yaml:"labels,omitempty" json:"labels,omitempty" doc:"map of record fields to be used as labels"`
 	StaticLabels   model.LabelSet               `yaml:"staticLabels,omitempty" json:"staticLabels,omitempty" doc:"map of common labels to set on each flow"`
 	IgnoreList     []string                     `yaml:"ignoreList,omitempty" json:"ignoreList,omitempty" doc:"map of record fields to be removed from the record"`
-	ClientConfig   *promConfig.HTTPClientConfig `yaml:"clientConfig,omitempty" json:"clientConfig,omitempty" doc:"Loki client configuration, which follows the same structure as the Prometheus HTTP client config described here: https://pkg.go.dev/github.com/prometheus/common/config#HTTPClientConfig"`
+	ClientConfig   *promConfig.HTTPClientConfig `yaml:"clientConfig,omitempty" json:"clientConfig,omitempty" doc:"clientConfig"`
 	TimestampLabel model.LabelName              `yaml:"timestampLabel,omitempty" json:"timestampLabel,omitempty" doc:"label to use for time indexing"`
 	// TimestampScale provides the scale in time of the units from the timestamp
 	// E.g. UNIX timescale is '1s' (one second) while other clock sources might have
