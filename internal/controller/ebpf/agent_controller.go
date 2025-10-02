@@ -460,7 +460,7 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		}
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
-		advancedConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
+		advancedConfig := helper.GetAdvancedProcessorConfig(&coll.Spec)
 		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
 		// data to the pod that is deployed in the same host
 		config = append(config, corev1.EnvVar{
