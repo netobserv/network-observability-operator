@@ -6,6 +6,7 @@ import (
 
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
@@ -711,6 +712,165 @@ func TestValidateFLP(t *testing.T) {
 				},
 			},
 			expectedError: `warning threshold must be lower than 10, which is defined for a higher severity`,
+		},
+	}
+
+	CurrentClusterInfo = &cluster.Info{}
+	r := FlowCollector{}
+	for _, test := range tests {
+		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
+		warnings, err := r.Validate(context.TODO(), test.fc)
+		if test.expectedError == "" {
+			assert.NoError(t, err, test.name)
+		} else {
+			assert.ErrorContains(t, err, test.expectedError, test.name)
+		}
+		assert.Equal(t, test.expectedWarnings, warnings, test.name)
+	}
+}
+
+func TestValidateScheduling(t *testing.T) {
+	mismatchWarning := "Mismatch detected between spec.agent.ebpf.advanced.scheduling and spec.processor.advanced.scheduling. In Direct mode, it can lead to inconsistent pod scheduling that would result in errors in the flow collection process."
+	tests := []struct {
+		name             string
+		fc               *FlowCollector
+		expectedError    string
+		expectedWarnings admission.Warnings
+		ocpVersion       string
+	}{
+		{
+			name: "Valid default (Direct)",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					DeploymentModel: DeploymentModelDirect,
+				},
+			},
+		},
+		{
+			name: "Invalid Agent scheduling",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					DeploymentModel: DeploymentModelDirect,
+					Agent: FlowCollectorAgent{
+						EBPF: FlowCollectorEBPF{
+							Advanced: &AdvancedAgentConfig{
+								Scheduling: &SchedulingConfig{
+									Tolerations: []corev1.Toleration{{Key: "key"}},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedWarnings: admission.Warnings{mismatchWarning},
+		},
+		{
+			name: "Invalid FLP scheduling",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					DeploymentModel: DeploymentModelDirect,
+					Processor: FlowCollectorFLP{
+						Advanced: &AdvancedProcessorConfig{
+							Scheduling: &SchedulingConfig{
+								Tolerations: []corev1.Toleration{{Key: "key"}},
+							},
+						},
+					},
+				},
+			},
+			expectedWarnings: admission.Warnings{mismatchWarning},
+		},
+		{
+			name: "Invalid FLP and Agent scheduling",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					DeploymentModel: DeploymentModelDirect,
+					Agent: FlowCollectorAgent{
+						EBPF: FlowCollectorEBPF{
+							Advanced: &AdvancedAgentConfig{
+								Scheduling: &SchedulingConfig{
+									Tolerations: []corev1.Toleration{{Key: "key1"}},
+								},
+							},
+						},
+					},
+					Processor: FlowCollectorFLP{
+						Advanced: &AdvancedProcessorConfig{
+							Scheduling: &SchedulingConfig{
+								Tolerations: []corev1.Toleration{{Key: "key2"}},
+							},
+						},
+					},
+				},
+			},
+			expectedWarnings: admission.Warnings{mismatchWarning},
+		},
+		{
+			name: "Valid FLP and Agent scheduling",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					DeploymentModel: DeploymentModelDirect,
+					Agent: FlowCollectorAgent{
+						EBPF: FlowCollectorEBPF{
+							Advanced: &AdvancedAgentConfig{
+								Scheduling: &SchedulingConfig{
+									Tolerations: []corev1.Toleration{{Key: "same_key"}},
+								},
+							},
+						},
+					},
+					Processor: FlowCollectorFLP{
+						Advanced: &AdvancedProcessorConfig{
+							Scheduling: &SchedulingConfig{
+								Tolerations: []corev1.Toleration{{Key: "same_key"}},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Valid default (Kafka)",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					DeploymentModel: DeploymentModelKafka,
+				},
+			},
+		},
+		{
+			name: "No inconsistent scheduling with Kafka",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Processor: FlowCollectorFLP{
+						Advanced: &AdvancedProcessorConfig{
+							Scheduling: &SchedulingConfig{
+								Tolerations: []corev1.Toleration{{Key: "key"}},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
