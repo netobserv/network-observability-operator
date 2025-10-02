@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -214,10 +215,27 @@ func validatePortString(s string) (uint16, error) {
 }
 
 func (v *validator) validateFLP() {
+	v.validateScheduling()
 	v.validateFLPLogTypes()
 	v.validateFLPFilters()
 	v.validateFLPAlerts()
 	v.validateFLPMetricsForAlerts()
+}
+
+func (v *validator) validateScheduling() {
+	if v.fc.DeploymentModel == DeploymentModelDirect {
+		// In direct mode, agent and FLP scheduling should be consistent, to ensure the 1-1 relation
+		var agent, flp *SchedulingConfig
+		if v.fc.Agent.EBPF.Advanced != nil {
+			agent = v.fc.Agent.EBPF.Advanced.Scheduling
+		}
+		if v.fc.Processor.Advanced != nil {
+			flp = v.fc.Processor.Advanced.Scheduling
+		}
+		if !reflect.DeepEqual(agent, flp) {
+			v.warnings = append(v.warnings, "Mismatch detected between spec.agent.ebpf.advanced.scheduling and spec.processor.advanced.scheduling. In Direct mode, it can lead to inconsistent pod scheduling that would result in errors in the flow collection process.")
+		}
+	}
 }
 
 func (v *validator) validateFLPLogTypes() {

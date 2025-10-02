@@ -35,7 +35,7 @@ const (
 
 func newGRPCPipeline(desired *flowslatest.FlowCollectorSpec) config.PipelineBuilderStage {
 	return config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
-		Port: int(*helper.GetAdvancedProcessorConfig(desired.Processor.Advanced).Port),
+		Port: int(*helper.GetAdvancedProcessorConfig(desired).Port),
 	})
 }
 
@@ -80,7 +80,7 @@ func podTemplate(
 	hasHostPort, hostNetwork bool,
 	annotations map[string]string,
 ) corev1.PodTemplateSpec {
-	advancedConfig := helper.GetAdvancedProcessorConfig(desired.Processor.Advanced)
+	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
 	var ports []corev1.ContainerPort
 	if hasHostPort {
 		ports = []corev1.ContainerPort{{
@@ -231,7 +231,7 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 
 func getStaticJSONConfig(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder, promTLS *flowslatest.CertificateReference, pipeline *PipelineBuilder, dynCMName string) (string, error) {
 	metricsSettings := metricsSettings(desired, vol, promTLS)
-	advancedConfig := helper.GetAdvancedProcessorConfig(desired.Processor.Advanced)
+	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
 	config := map[string]interface{}{
 		"log-level": desired.Processor.LogLevel,
 		"health": map[string]interface{}{

@@ -191,6 +191,19 @@ func TestContainerUpdateCheck(t *testing.T) {
 	assert.Contains(report.String(), "Volumes changed")
 	old = nEw
 
+	// new toleration
+	spec.ConsolePlugin.Advanced = &flowslatest.AdvancedPluginConfig{
+		Scheduling: &flowslatest.SchedulingConfig{
+			Tolerations: []corev1.Toleration{{Key: "dummy-key", Operator: corev1.TolerationOpExists}},
+		},
+	}
+	builder = getBuilder(&spec, &loki)
+	nEw = builder.deployment(constants.PluginName, "digest")
+	report = helper.NewChangeReport("")
+	assert.True(helper.PodChanged(&old.Spec.Template, &nEw.Spec.Template, constants.PluginName, &report))
+	assert.Contains(report.String(), "Toleration changed")
+	old = nEw
+
 	// test again no change
 	loki.LokiManualParams.TLS.CACert.Name = "cm-name-2"
 	builder = getBuilder(&spec, &loki)

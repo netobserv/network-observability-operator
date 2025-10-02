@@ -553,7 +553,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 	// Connection tracking stage (only if LogTypes is not FLOWS)
 	if b.desired.Processor.HasConntrack() {
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
-		advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
+		advancedConfig := helper.GetAdvancedProcessorConfig(b.desired)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
 			KeyDefinition: api.KeyDefinition{
 				FieldGroups: []api.FieldGroup{

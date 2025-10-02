@@ -794,3 +794,23 @@ func TestLabels(t *testing.T) {
 	assert.Equal("flowlogs-pipeline-transformer-monitor", smTrans.Name)
 	assert.Equal("flowlogs-pipeline-transformer", smTrans.Spec.Selector.MatchLabels["app"])
 }
+
+func TestToleration(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := getConfig()
+	cfgKafka := cfg
+	cfgKafka.DeploymentModel = flowslatest.DeploymentModelKafka
+	info := reconcilers.Common{Namespace: "ns", ClusterInfo: &cluster.Info{}}
+	builder, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil)
+	tBuilder, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), &cfgKafka, &metricslatest.FlowMetricList{}, nil)
+
+	// Deployment: no specific toleration
+	depl := tBuilder.deployment(annotate("digest"))
+	assert.Len(depl.Spec.Template.Spec.Tolerations, 0)
+
+	// DaemonSet: has toleration
+	ds := builder.daemonSet(annotate("digest"))
+	assert.Len(ds.Spec.Template.Spec.Tolerations, 1)
+	assert.Equal(corev1.Toleration{Operator: "Exists"}, ds.Spec.Template.Spec.Tolerations[0])
+}
