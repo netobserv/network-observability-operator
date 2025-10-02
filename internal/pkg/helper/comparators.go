@@ -102,6 +102,12 @@ func assignationChanged(old, n *corev1.PodTemplateSpec, report *ChangeReport) bo
 		}
 		return true
 	}
+	if !deepEqual(n.Spec.Tolerations, old.Spec.Tolerations) {
+		if report != nil {
+			report.Add("Toleration changed")
+		}
+		return true
+	}
 	if !deepDerivative(n.Spec.Affinity, old.Spec.Affinity) {
 		if report != nil {
 			report.Add("Affinity changed")

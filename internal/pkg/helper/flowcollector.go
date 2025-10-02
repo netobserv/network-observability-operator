@@ -132,10 +132,10 @@ func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowsla
 			cfg.Env = specConfig.Env
 		}
 		if specConfig.Scheduling != nil {
-			if len(specConfig.Scheduling.NodeSelector) > 0 {
+			if specConfig.Scheduling.NodeSelector != nil {
 				cfg.Scheduling.NodeSelector = specConfig.Scheduling.NodeSelector
 			}
-			if len(specConfig.Scheduling.Tolerations) > 0 {
+			if specConfig.Scheduling.Tolerations != nil {
 				cfg.Scheduling.Tolerations = specConfig.Scheduling.Tolerations
 			}
 			if specConfig.Scheduling.Affinity != nil {
@@ -150,7 +150,11 @@ func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowsla
 	return cfg
 }
 
-func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig) flowslatest.AdvancedProcessorConfig {
+func GetAdvancedProcessorConfig(spec *flowslatest.FlowCollectorSpec) flowslatest.AdvancedProcessorConfig {
+	var defaultToleration []corev1.Toleration
+	if !UseKafka(spec) { // TODO: with coming-soon Service deploymentModel, this should be replaced with "UseHostNetwork" (conflict should pop up while rebasing).
+		defaultToleration = []corev1.Toleration{{Operator: corev1.TolerationOpExists}}
+	}
 	cfg := flowslatest.AdvancedProcessorConfig{
 		Env:                            map[string]string{},
 		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "port")),
@@ -162,12 +166,13 @@ func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig)
 		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationTerminatingTimeout")),
 		Scheduling: &flowslatest.SchedulingConfig{
 			NodeSelector:      map[string]string{},
-			Tolerations:       []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+			Tolerations:       defaultToleration,
 			Affinity:          nil,
 			PriorityClassName: "",
 		},
 	}
 
+	specConfig := spec.Processor.Advanced
 	if specConfig != nil {
 		if len(specConfig.Env) > 0 {
 			cfg.Env = specConfig.Env
@@ -197,10 +202,10 @@ func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig)
 			cfg.ConversationTerminatingTimeout = specConfig.ConversationTerminatingTimeout
 		}
 		if specConfig.Scheduling != nil {
-			if len(specConfig.Scheduling.NodeSelector) > 0 {
+			if specConfig.Scheduling.NodeSelector != nil {
 				cfg.Scheduling.NodeSelector = specConfig.Scheduling.NodeSelector
 			}
-			if len(specConfig.Scheduling.Tolerations) > 0 {
+			if specConfig.Scheduling.Tolerations != nil {
 				cfg.Scheduling.Tolerations = specConfig.Scheduling.Tolerations
 			}
 			if specConfig.Scheduling.Affinity != nil {
@@ -249,7 +254,7 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 		Port:     ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
 		Scheduling: &flowslatest.SchedulingConfig{
 			NodeSelector:      map[string]string{},
-			Tolerations:       []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+			Tolerations:       nil,
 			Affinity:          nil,
 			PriorityClassName: "",
 		},
@@ -269,10 +274,10 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 			cfg.Port = specConfig.Port
 		}
 		if specConfig.Scheduling != nil {
-			if len(specConfig.Scheduling.NodeSelector) > 0 {
+			if specConfig.Scheduling.NodeSelector != nil {
 				cfg.Scheduling.NodeSelector = specConfig.Scheduling.NodeSelector
 			}
-			if len(specConfig.Scheduling.Tolerations) > 0 {
+			if specConfig.Scheduling.Tolerations != nil {
 				cfg.Scheduling.Tolerations = specConfig.Scheduling.Tolerations
 			}
 			if specConfig.Scheduling.Affinity != nil {
