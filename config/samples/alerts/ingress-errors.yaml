@@ -11,8 +11,8 @@ spec:
       annotations:
         description: There are more than 10% of 5xx HTTP response codes returned from ingress traffic, to namespace
           {{ $labels.exported_namespace }}.
-        netobserv_io_network_health: '{"threshold":"10","unit":"%","namespaceLabels":["exported_namespace"]}'
         summary: Too many 5xx errors to namespace
+        netobserv_io_network_health: '{"threshold":"10","unit":"%","namespaceLabels":["exported_namespace"]}'
       expr: 100 * sum(rate(haproxy_server_http_responses_total{code="5xx"}[2m])) by (exported_namespace)
         / sum(rate(haproxy_server_http_responses_total[2m])) by (exported_namespace) > 10
       for: 5m
@@ -23,8 +23,8 @@ spec:
       annotations:
         description: There are more than 10% of 4xx HTTP response codes returned from ingress traffic, to namespace
           {{ $labels.exported_namespace }}.
-        netobserv_io_network_health: '{"threshold":"10","unit":"%","namespaceLabels":["exported_namespace"]}'
         summary: Too many 4xx errors to namespace
+        netobserv_io_network_health: '{"threshold":"10","unit":"%","namespaceLabels":["exported_namespace"]}'
       expr: 100 * sum(rate(haproxy_server_http_responses_total{code="4xx"}[2m])) by (exported_namespace)
         / sum(rate(haproxy_server_http_responses_total[2m])) by (exported_namespace) > 10
       for: 5m
