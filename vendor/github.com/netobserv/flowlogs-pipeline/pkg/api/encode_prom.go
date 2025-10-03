@@ -49,6 +49,7 @@ type PromConnectionInfo struct {
 type MetricsItem struct {
 	Name       string                    `yaml:"name" json:"name" doc:"the metric name"`
 	Type       MetricEncodeOperationEnum `yaml:"type" json:"type" doc:"(enum) one of the following:"`
+	Help       string                    `yaml:"help,omitempty" json:"help,omitempty" doc:"the metric help text"`
 	Filters    []MetricsFilter           `yaml:"filters" json:"filters" doc:"a list of criteria to filter entries by"`
 	ValueKey   string                    `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value"`
 	Labels     []string                  `yaml:"labels" json:"labels" doc:"labels to be associated with the metric"`

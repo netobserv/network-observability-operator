@@ -409,6 +409,7 @@ func flowMetricToFLP(fm *metricslatest.FlowMetric) (*api.MetricsItem, error) {
 	m := &api.MetricsItem{
 		Name:     metricName,
 		Type:     api.MetricEncodeOperationEnum(strings.ToLower(string(fm.Spec.Type))),
+		Help:     fm.Spec.Help,
 		Filters:  []api.MetricsFilter{},
 		Labels:   fm.Spec.Labels,
 		Remap:    remap,

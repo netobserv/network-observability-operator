@@ -56,6 +56,7 @@ func init() {
 					FlowMetricSpec: metricslatest.FlowMetricSpec{
 						MetricName: fmt.Sprintf("%s_%s_%s_total", groupTrimmed, lowDir, vt),
 						Type:       metricslatest.CounterMetric,
+						Help:       fmt.Sprintf("Total %s per %s in %s direction", vt, groupTrimmed, lowDir),
 						ValueField: valueField,
 						Direction:  dir,
 						Labels:     labels,
@@ -70,6 +71,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_sampling", groupTrimmed),
 				Type:       metricslatest.GaugeMetric,
+				Help:       fmt.Sprintf("Sampling per %s", groupTrimmed),
 				ValueField: "Sampling",
 				Labels:     labels,
 			},
@@ -80,6 +82,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_flows_total", groupTrimmed),
 				Type:       "counter",
+				Help:       fmt.Sprintf("Total flows per %s", groupTrimmed),
 				Labels:     labels,
 			},
 			tags: []string{group, group + "-flows", "flows"},
@@ -93,6 +96,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
 				Type:       metricslatest.HistogramMetric,
+				Help:       fmt.Sprintf("Round-trip time latency in seconds per %s", groupTrimmed),
 				ValueField: "TimeFlowRttNs",
 				Filters: []metricslatest.MetricFilter{
 					{Field: "TimeFlowRttNs", MatchType: metricslatest.MatchPresence},
@@ -115,6 +119,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_drop_packets_total", groupTrimmed),
 				Type:       metricslatest.CounterMetric,
+				Help:       fmt.Sprintf("Total dropped packets per %s", groupTrimmed),
 				ValueField: "PktDropPackets",
 				Filters: []metricslatest.MetricFilter{
 					{Field: "PktDropPackets", MatchType: metricslatest.MatchPresence},
@@ -128,6 +133,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_drop_bytes_total", groupTrimmed),
 				Type:       metricslatest.CounterMetric,
+				Help:       fmt.Sprintf("Total dropped bytes per %s", groupTrimmed),
 				ValueField: "PktDropBytes",
 				Filters: []metricslatest.MetricFilter{
 					{Field: "PktDropBytes", MatchType: metricslatest.MatchPresence},
@@ -148,6 +154,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_dns_latency_seconds", groupTrimmed),
 				Type:       metricslatest.HistogramMetric,
+				Help:       fmt.Sprintf("DNS latency in seconds per %s", groupTrimmed),
 				ValueField: "DnsLatencyMs",
 				Filters: []metricslatest.MetricFilter{
 					{Field: "DnsId", MatchType: metricslatest.MatchPresence},
@@ -171,6 +178,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_network_policy_events_total", groupTrimmed),
 				Type:       "counter",
+				Help:       fmt.Sprintf("Total network policy events per %s", groupTrimmed),
 				Labels:     netpolLabels,
 				Filters:    []metricslatest.MetricFilter{{Field: "NetworkEvents>Feature", Value: "acl"}},
 				Flatten:    []string{"NetworkEvents"},
@@ -197,6 +205,7 @@ func init() {
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_ipsec_flows_total", groupTrimmed),
 				Type:       metricslatest.CounterMetric,
+				Help:       fmt.Sprintf("Total IPsec encrypted flows per %s", groupTrimmed),
 				Filters:    []metricslatest.MetricFilter{{Field: "IPSecStatus", MatchType: metricslatest.MatchPresence}},
 				Labels:     ipsecLabels,
 				Charts:     ipsecStatusChart(group),
@@ -209,6 +218,7 @@ func init() {
 		FlowMetricSpec: metricslatest.FlowMetricSpec{
 			MetricName: "node_to_node_ingress_flows_total",
 			Type:       metricslatest.CounterMetric,
+			Help:       "Total ingress flows between nodes",
 			Labels:     mapLabels[tagNodes],
 			Filters: []metricslatest.MetricFilter{
 				{Field: "FlowDirection", Value: "2", MatchType: metricslatest.MatchNotEqual},
