@@ -173,7 +173,11 @@ func podTemplate(
 	annotations["prometheus.io/scrape_port"] = fmt.Sprint(desired.Processor.GetMetricsPort())
 	return corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
-			Labels:      map[string]string{"app": appName, "version": version},
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     appName,
+				"version": version,
+			},
 			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
@@ -197,7 +201,10 @@ func configMap(name, namespace, data, appName string) (*corev1.ConfigMap, string
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
-			Labels:    map[string]string{"app": appName},
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     appName,
+			},
 		},
 		Data: map[string]string{
 			configFile: data,
@@ -275,7 +282,10 @@ func promService(desired *flowslatest.FlowCollectorSpec, svcName, namespace, app
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      svcName,
 			Namespace: namespace,
-			Labels:    map[string]string{"app": appLabel},
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     appLabel,
+			},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": appLabel},
@@ -305,7 +315,11 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      smName,
 			Namespace: namespace,
-			Labels:    map[string]string{"app": appLabel, "version": version},
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     appLabel,
+				"version": version,
+			},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
 			Endpoints: []monitoringv1.Endpoint{
@@ -349,8 +363,12 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 func prometheusRule(rules []monitoringv1.Rule, ruleName, namespace, appLabel, version string) *monitoringv1.PrometheusRule {
 	flpPrometheusRuleObject := monitoringv1.PrometheusRule{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      ruleName,
-			Labels:    map[string]string{"app": appLabel, "version": version},
+			Name: ruleName,
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     appLabel,
+				"version": version,
+			},
 			Namespace: namespace,
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{
