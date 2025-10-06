@@ -153,6 +153,13 @@ For instance, when flattening `Interfaces` on a bytes counter, a flow having Int
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>help</b></td>
+        <td>string</td>
+        <td>
+          Help text of the metric, as it appears in Prometheus.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>labels</b></td>
         <td>[]string</td>
         <td>
