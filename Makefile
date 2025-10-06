@@ -430,7 +430,7 @@ update-bundle: bundle ## Prepare a clean bundle to be commited
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
 	cp ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml tmp-bundle
-	-$(OCI_BIN) build $(OCI_BUILD_OPTS) -f bundle.Dockerfile -t $(BUNDLE_IMAGE) .
+	-$(OCI_BIN) build $(OCI_BUILD_OPTS) --label version=${BUNDLE_VERSION} --label vcs-ref=${BUILD_SHA} -f bundle.Dockerfile -t $(BUNDLE_IMAGE) .
 	mv tmp-bundle ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 
 .PHONY: bundle-push
