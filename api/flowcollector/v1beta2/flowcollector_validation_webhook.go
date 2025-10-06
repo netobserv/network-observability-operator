@@ -420,7 +420,7 @@ func GetElligibleMetricsForAlert(template AlertTemplate, alertDef *AlertVariant)
 func (v *validator) validateNetPol() {
 	if v.fc.DeployNetworkPolicy() && v.fc.UseLoki() && v.fc.Loki.Mode == LokiModeLokiStack {
 		if v.fc.Loki.LokiStack.Namespace == v.fc.Namespace || v.fc.Loki.LokiStack.Namespace == "" {
-			v.errors = append(v.errors, errors.New("cannot deploy the NetObserv network policy with Loki installed in the same namespace: it is recommended to install Loki in a separate namespace. Alternatively, you can disable the NetObserv network policy in spec.networkPolicy, and create your own that covers Loki connectivity."))
+			v.errors = append(v.errors, errors.New("cannot deploy the NetObserv network policy with Loki installed in the same namespace: it is recommended to install Loki in a separate namespace; alternatively, you can disable the NetObserv network policy in spec.networkPolicy, and create your own that covers Loki connectivity"))
 		}
 	}
 }
