@@ -144,7 +144,7 @@ The annotation `netobserv_io_network_health` is optional, and gives you some con
 - `nodeLabels`: one or more labels that hold node names. When provided, the alert will show up under the "Nodes" tab.
 - `threshold`: the alert threshold as a string, expected to match the one defined in PromQL.
 - `unit`: the data unit, used only for display purpose.
-- `upperBound`: an upper bound value used to compute score on a closed scale. It doesn't necessarily have to be a maximum of the metric values, but metric values will be clamped if it's above the upper bound.
+- `upperBound`: an upper bound value used to compute score on a closed scale. It doesn't necessarily have to be a maximum of the metric values, but metric values will be clamped if they are above the upper bound.
 - `links`: a list of links to be displayed contextually to the alert. Each link consists in:
   - `name`: display name.
   - `url`: the link URL.
