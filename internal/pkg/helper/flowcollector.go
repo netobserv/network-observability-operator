@@ -25,10 +25,6 @@ func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
 	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
 }
 
-func DeployNetworkPolicy(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.NetworkPolicy.Enable != nil && *spec.NetworkPolicy.Enable
-}
-
 func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
 	for _, ex := range spec.Exporters {
 		if ex.Type == flowslatest.KafkaExporter {

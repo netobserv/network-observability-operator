@@ -911,3 +911,110 @@ func TestElligibleMetrics(t *testing.T) {
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total", "node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "node_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total", "node_egress_packets_total"}, tot)
 }
+
+func TestValidateNetpol(t *testing.T) {
+	tests := []struct {
+		name             string
+		fc               *FlowCollector
+		expectedError    string
+		expectedWarnings admission.Warnings
+		ocpVersion       string
+	}{
+		{
+			name: "Valid Network Policy without Loki",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					NetworkPolicy: NetworkPolicy{
+						Enable: ptr.To(true),
+					},
+					Loki: FlowCollectorLoki{
+						Enable: ptr.To(false),
+					},
+				},
+			},
+		},
+		{
+			name: "Valid Network Policy with Loki different namespace",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Namespace: "netobserv",
+					NetworkPolicy: NetworkPolicy{
+						Enable: ptr.To(true),
+					},
+					Loki: FlowCollectorLoki{
+						Enable: ptr.To(true),
+						Mode:   LokiModeLokiStack,
+						LokiStack: LokiStackRef{
+							Name:      "loki",
+							Namespace: "loki",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Invalid Network Policy with Loki same namespace",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Namespace: "netobserv",
+					NetworkPolicy: NetworkPolicy{
+						Enable: ptr.To(true),
+					},
+					Loki: FlowCollectorLoki{
+						Enable: ptr.To(true),
+						Mode:   LokiModeLokiStack,
+						LokiStack: LokiStackRef{
+							Name:      "loki",
+							Namespace: "netobserv",
+						},
+					},
+				},
+			},
+			expectedError: "cannot deploy the NetObserv network policy with Loki installed in the same namespace",
+		},
+		{
+			name: "Valid without Network Policy",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					Namespace: "netobserv",
+					NetworkPolicy: NetworkPolicy{
+						Enable: ptr.To(false),
+					},
+					Loki: FlowCollectorLoki{
+						Enable: ptr.To(true),
+						Mode:   LokiModeLokiStack,
+						LokiStack: LokiStackRef{
+							Name:      "loki",
+							Namespace: "netobserv",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	CurrentClusterInfo = &cluster.Info{}
+	r := FlowCollector{}
+	for _, test := range tests {
+		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
+		warnings, err := r.Validate(context.TODO(), test.fc)
+		if test.expectedError == "" {
+			assert.NoError(t, err, test.name)
+		} else {
+			assert.ErrorContains(t, err, test.expectedError, test.name)
+		}
+		assert.Equal(t, test.expectedWarnings, warnings, test.name)
+	}
+}
