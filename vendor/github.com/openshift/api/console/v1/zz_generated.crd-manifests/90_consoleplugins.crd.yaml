@@ -498,5 +498,5 @@ spec:
         - metadata
         - spec
         type: object
-    served: true
+    served: false
     storage: false

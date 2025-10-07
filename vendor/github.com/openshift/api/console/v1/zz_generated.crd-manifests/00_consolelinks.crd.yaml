@@ -26,8 +26,8 @@ spec:
     - jsonPath: .spec.href
       name: URL
       type: string
-    - jsonPath: .spec.menu
-      name: Menu
+    - jsonPath: .spec.location
+      name: Location
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
