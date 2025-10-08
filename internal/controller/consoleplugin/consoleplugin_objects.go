@@ -64,6 +64,7 @@ func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSp
 		info:     info,
 		imageRef: imageToUse,
 		labels: map[string]string{
+			"part-of": constants.OperatorName,
 			"app":     name,
 			"version": helper.MaxLabelLength(version),
 		},
