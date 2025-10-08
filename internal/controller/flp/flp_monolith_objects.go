@@ -49,19 +49,6 @@ func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCol
 	}, nil
 }
 
-func (b *monolithBuilder) appLabel() map[string]string {
-	return map[string]string{
-		"app": monoName,
-	}
-}
-
-func (b *monolithBuilder) appVersionLabels() map[string]string {
-	return map[string]string{
-		"app":     monoName,
-		"version": b.version,
-	}
-}
-
 func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {
 	pod := podTemplate(
 		monoName,
@@ -78,11 +65,15 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      monoName,
 			Namespace: b.info.Namespace,
-			Labels:    b.appVersionLabels(),
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     monoName,
+				"version": b.version,
+			},
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: b.appLabel(),
+				MatchLabels: map[string]string{"app": monoName},
 			},
 			Template: pod,
 		},
@@ -142,7 +133,10 @@ func (b *monolithBuilder) serviceAccount() *corev1.ServiceAccount {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      monoName,
 			Namespace: b.info.Namespace,
-			Labels:    b.appLabel(),
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     monoName,
+			},
 		},
 	}
 }
