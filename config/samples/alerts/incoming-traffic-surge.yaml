@@ -1,0 +1,27 @@
+apiVersion: monitoring.openshift.io/v1
+kind: AlertingRule
+metadata:
+  name: my-custom-rule
+  namespace: openshift-monitoring
+spec:
+  groups:
+  - name: MyAlertsForNetObserv
+    rules:
+    - alert: IncomingTrafficSurge
+      annotations:
+        message: |-
+          NetObserv is detecting a surge of incoming traffic: current traffic to {{ $labels.DstK8S_Namespace }} has increased by more than 100% since yesterday.
+        summary: "Surge in incoming traffic"
+        netobserv_io_network_health: '{"namespaceLabels":["DstK8S_Namespace"],"threshold":"100","unit":"%","upperBound":"500"}'
+      expr: |-
+        (100 *
+          (
+            (sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m])) by (DstK8S_Namespace) > 1000)
+            - sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m] offset 1d)) by (DstK8S_Namespace)
+          )
+          / sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="openshift-ingress"}[30m] offset 1d)) by (DstK8S_Namespace))
+        > 100
+      for: 1m
+      labels:
+        netobserv: "true"
+        severity: warning
