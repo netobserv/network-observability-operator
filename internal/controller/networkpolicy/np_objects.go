@@ -59,6 +59,12 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				networkingv1.PolicyTypeIngress,
 				networkingv1.PolicyTypeEgress,
 			},
+			PodSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					// TODO: remove this restiction when LokiStack implements network policy by default
+					"part-of": constants.OperatorName,
+				},
+			},
 		},
 	}
 	// Allow traffic from the eBPF agents
