@@ -348,11 +348,27 @@ func (b *builder) getLokiConfig() (cfg.LokiConfig, error) {
 	if b.desired.Loki.ReadTimeout != nil {
 		lconf.Timeout = api.Duration{Duration: b.desired.Loki.ReadTimeout.Duration}
 	}
-	if lk.TLS.Enable {
-		if lk.TLS.InsecureSkipVerify {
+	// Console plugin should always use HTTP/gateway TLS config for LokiStack mode
+	// regardless of clientType, since console plugin never uses gRPC
+	tlsConfig := &lk.TLS
+	if b.desired.Loki.Mode == flowslatest.LokiModeLokiStack && b.desired.Processor.HasExperimentalLokiGRPCClientProtocol() {
+		// Create HTTP/gateway TLS config for console plugin
+		tlsConfig = &flowslatest.ClientTLS{
+			Enable: true,
+			CACert: flowslatest.CertificateReference{
+				Type:      flowslatest.RefTypeConfigMap,
+				Name:      fmt.Sprintf("%s-gateway-ca-bundle", b.desired.Loki.LokiStack.Name),
+				Namespace: b.desired.Loki.LokiStack.Namespace,
+				CertFile:  "service-ca.crt",
+			},
+		}
+	}
+
+	if tlsConfig.Enable {
+		if tlsConfig.InsecureSkipVerify {
 			lconf.SkipTLS = true
 		} else {
-			caPath := b.volumes.AddCACertificate(&lk.TLS, "loki-certs")
+			caPath := b.volumes.AddCACertificate(tlsConfig, "loki-certs")
 			if caPath != "" {
 				lconf.CAPath = caPath
 			}

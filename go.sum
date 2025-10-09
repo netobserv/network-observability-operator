@@ -101,6 +101,8 @@ github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
+github.com/leandroberetta/flowlogs-pipeline v0.0.0-20251009164306-d01e3863647a h1:pS4iRF2fco9qLbTvl/s+tLBIHMErMbin6tYXZWcK6S4=
+github.com/leandroberetta/flowlogs-pipeline v0.0.0-20251009164306-d01e3863647a/go.mod h1:nHLh9A9s0lsWGQqbWpooUlB/Y/H2ik1knLjncY1L7BY=
 github.com/mailru/easyjson v0.9.0 h1:PrnmzHw7262yW8sTBwxi1PdJA3Iw/EKBa8psRf7d9a4=
 github.com/mailru/easyjson v0.9.0/go.mod h1:1+xMtQp2MRNVL/V1bOzuP3aP8VNwRW55fQUto+XFtTU=
 github.com/maruel/natural v1.1.1 h1:Hja7XhhmvEFhcByqDoHz9QZbkWey+COd9xWfCfn1ioo=
@@ -117,8 +119,6 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+SVif2QVs3tOP0zanoHgBEVAwHxUSIzRqU=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
-github.com/netobserv/flowlogs-pipeline v1.9.2-community.0.20251006073644-7e3fe86c1e99 h1:amQHvOeTXw04c5PAEJ4yvvIpFrcuBV7qeJsgfRxq4NA=
-github.com/netobserv/flowlogs-pipeline v1.9.2-community.0.20251006073644-7e3fe86c1e99/go.mod h1:RCD0EdA1NFZ1xXhSePB8TRQahfNqYTWlHD2lKDfNBW0=
 github.com/netobserv/netobserv-ebpf-agent v1.9.2-community h1:ghW16OO4QRWj0Uh1gMYX+NjAlgx2sZmCsO3Tkwoj4Do=
 github.com/netobserv/netobserv-ebpf-agent v1.9.2-community/go.mod h1:17OaUNAwx0LxoeV/SaHlJIJP6bpN7zSvUP3GtZelESQ=
 github.com/netsampler/goflow2 v1.3.7 h1:XZaTy8kkMnGXpJ9hS3KbO1McyrFTpVNhVFEx9rNhMmc=
