@@ -386,7 +386,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 				Spec: corev1.PodSpec{
 					// Allows deploying an instance in the master node
 					ServiceAccountName: constants.EBPFServiceAccount,
-					HostNetwork:        true,
+					HostNetwork:        true, // HostNetwork needed for TC programs, regardless of the connection with FLP
 					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 					Volumes:            volumes,
 					Containers: []corev1.Container{{

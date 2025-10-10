@@ -50,11 +50,13 @@ const (
 
 	ClusterNameLabelName = "K8S_ClusterName"
 
-	MonitoringNamespace      = "openshift-monitoring"
-	MonitoringServiceAccount = "prometheus-k8s"
-	UWMonitoringNamespace    = "openshift-user-workload-monitoring"
-	ConsoleNamespace         = "openshift-console"
-	DNSNamespace             = "openshift-dns"
+	OpenShiftAPIServerNamespace     = "openshift-apiserver"
+	OpenShiftKubeAPIServerNamespace = "openshift-kube-apiserver"
+	MonitoringNamespace             = "openshift-monitoring"
+	MonitoringServiceAccount        = "prometheus-k8s"
+	UWMonitoringNamespace           = "openshift-user-workload-monitoring"
+	ConsoleNamespace                = "openshift-console"
+	DNSNamespace                    = "openshift-dns"
 
 	// [Cluster]Roles, must match names in config/rbac/component_roles.yaml (without netobserv- prefix)
 	LokiWriterRole         ClusterRoleName = "netobserv-loki-writer"
