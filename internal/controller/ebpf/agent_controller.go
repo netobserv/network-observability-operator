@@ -366,6 +366,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			Name:      constants.EBPFAgentName,
 			Namespace: c.PrivilegedNamespace(),
 			Labels: map[string]string{
+				"part-of": constants.OperatorName,
 				"app":     constants.EBPFAgentName,
 				"version": helper.MaxLabelLength(version),
 			},
@@ -376,7 +377,10 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      map[string]string{"app": constants.EBPFAgentName},
+					Labels: map[string]string{
+						"part-of": constants.OperatorName,
+						"app":     constants.EBPFAgentName,
+					},
 					Annotations: annotations,
 				},
 				Spec: corev1.PodSpec{

@@ -635,6 +635,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	assert.NotEmpty(t, digest)
 
 	assert.Equal("flowlogs-pipeline", cm.Labels["app"])
+	assert.Equal(constants.OperatorName, cm.Labels["part-of"])
 
 	data, ok := cm.Data[configFile]
 	assert.True(ok)
@@ -769,6 +770,8 @@ func TestLabels(t *testing.T) {
 	depl := tBuilder.deployment(annotate("digest"))
 	assert.Equal("flowlogs-pipeline-transformer", depl.Labels["app"])
 	assert.Equal("flowlogs-pipeline-transformer", depl.Spec.Template.Labels["app"])
+	assert.Equal(constants.OperatorName, depl.Labels["part-of"])
+	assert.Equal(constants.OperatorName, depl.Spec.Template.Labels["part-of"])
 	assert.Equal("dev", depl.Labels["version"])
 	assert.Equal("dev", depl.Spec.Template.Labels["version"])
 
@@ -776,6 +779,8 @@ func TestLabels(t *testing.T) {
 	ds := builder.daemonSet(annotate("digest"))
 	assert.Equal("flowlogs-pipeline", ds.Labels["app"])
 	assert.Equal("flowlogs-pipeline", ds.Spec.Template.Labels["app"])
+	assert.Equal(constants.OperatorName, ds.Labels["part-of"])
+	assert.Equal(constants.OperatorName, ds.Spec.Template.Labels["part-of"])
 	assert.Equal("dev", ds.Labels["version"])
 	assert.Equal("dev", ds.Spec.Template.Labels["version"])
 
@@ -783,6 +788,7 @@ func TestLabels(t *testing.T) {
 	svc := builder.promService()
 	assert.Equal("flowlogs-pipeline", svc.Labels["app"])
 	assert.Equal("flowlogs-pipeline", svc.Spec.Selector["app"])
+	assert.Equal(constants.OperatorName, svc.Labels["part-of"])
 	assert.Empty(svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
 
@@ -790,9 +796,11 @@ func TestLabels(t *testing.T) {
 	smMono := builder.serviceMonitor()
 	assert.Equal("flowlogs-pipeline-monitor", smMono.Name)
 	assert.Equal("flowlogs-pipeline", smMono.Spec.Selector.MatchLabels["app"])
+	assert.Equal(constants.OperatorName, smMono.Labels["part-of"])
 	smTrans := tBuilder.serviceMonitor()
 	assert.Equal("flowlogs-pipeline-transformer-monitor", smTrans.Name)
 	assert.Equal("flowlogs-pipeline-transformer", smTrans.Spec.Selector.MatchLabels["app"])
+	assert.Equal(constants.OperatorName, smMono.Labels["part-of"])
 }
 
 func TestToleration(t *testing.T) {

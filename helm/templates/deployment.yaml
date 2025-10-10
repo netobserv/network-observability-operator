@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: netobserv-controller-manager
   labels:
+    part-of: netobserv-operator
     app: netobserv-operator
     control-plane: controller-manager
 spec:
@@ -15,6 +16,7 @@ spec:
   template:
     metadata:
       labels:
+        part-of: netobserv-operator
         app: netobserv-operator
         control-plane: controller-manager
     spec:

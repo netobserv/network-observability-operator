@@ -50,19 +50,6 @@ func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowColl
 	}, nil
 }
 
-func (b *transfoBuilder) appLabel() map[string]string {
-	return map[string]string{
-		"app": transfoName,
-	}
-}
-
-func (b *transfoBuilder) appVersionLabels() map[string]string {
-	return map[string]string{
-		"app":     transfoName,
-		"version": b.version,
-	}
-}
-
 func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deployment {
 	pod := podTemplate(
 		transfoName,
@@ -79,12 +66,16 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      transfoName,
 			Namespace: b.info.Namespace,
-			Labels:    b.appVersionLabels(),
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     transfoName,
+				"version": b.version,
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: b.desired.Processor.KafkaConsumerReplicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: b.appLabel(),
+				MatchLabels: map[string]string{"app": transfoName},
 			},
 			Template: pod,
 		},
@@ -144,7 +135,10 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      transfoName,
 			Namespace: b.info.Namespace,
-			Labels:    b.appLabel(),
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     transfoName,
+			},
 		},
 		Spec: ascv2.HorizontalPodAutoscalerSpec{
 			ScaleTargetRef: ascv2.CrossVersionObjectReference{
@@ -164,7 +158,10 @@ func (b *transfoBuilder) serviceAccount() *corev1.ServiceAccount {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      transfoName,
 			Namespace: b.info.Namespace,
-			Labels:    b.appLabel(),
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     transfoName,
+			},
 		},
 	}
 }

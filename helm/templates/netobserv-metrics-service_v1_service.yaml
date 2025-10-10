@@ -5,6 +5,7 @@ metadata:
   labels:
     app: netobserv-operator
     control-plane: controller-manager
+    part-of: netobserv-operator
   name: netobserv-metrics-service
 spec:
   ports:
@@ -15,5 +16,6 @@ spec:
   selector:
     app: netobserv-operator
     control-plane: controller-manager
+    part-of: netobserv-operator
 status:
   loadBalancer: {}

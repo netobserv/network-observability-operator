@@ -404,13 +404,16 @@ func TestLabels(t *testing.T) {
 	// Deployment
 	depl := builder.deployment(constants.PluginName, "digest")
 	assert.Equal("netobserv-plugin", depl.Labels["app"])
+	assert.Equal(constants.OperatorName, depl.Labels["part-of"])
 	assert.Equal("netobserv-plugin", depl.Spec.Template.Labels["app"])
+	assert.Equal(constants.OperatorName, depl.Spec.Template.Labels["part-of"])
 	assert.Equal("dev", depl.Labels["version"])
 	assert.Equal("dev", depl.Spec.Template.Labels["version"])
 
 	// Service
 	svc := builder.mainService(constants.PluginName)
 	assert.Equal("netobserv-plugin", svc.Labels["app"])
+	assert.Equal(constants.OperatorName, svc.Labels["part-of"])
 	assert.Equal("netobserv-plugin", svc.Spec.Selector["app"])
 	assert.Equal("dev", svc.Labels["version"])
 	assert.Empty(svc.Spec.Selector["version"])
