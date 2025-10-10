@@ -150,6 +150,10 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
 			}},
 		})
+	} else {
+		// Not OpenShift
+		// Allow fetching from apiserver / kube-system
+		allowedNamespacesOut = append(allowedNamespacesOut, constants.KubeSystemNamespace)
 	}
 
 	allowedNamespacesIn = append(allowedNamespacesIn, desired.Spec.NetworkPolicy.AdditionalNamespaces...)

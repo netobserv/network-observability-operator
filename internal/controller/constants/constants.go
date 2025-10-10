@@ -50,6 +50,7 @@ const (
 
 	ClusterNameLabelName = "K8S_ClusterName"
 
+	KubeSystemNamespace             = "kube-system"
 	OpenShiftAPIServerNamespace     = "openshift-apiserver"
 	OpenShiftKubeAPIServerNamespace = "openshift-kube-apiserver"
 	MonitoringNamespace             = "openshift-monitoring"
