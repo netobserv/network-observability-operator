@@ -99,12 +99,16 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      monoName,
 			Namespace: b.info.Namespace,
-			Labels:    b.appVersionLabels(),
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     monoName,
+				"version": b.version,
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: b.appLabel(),
+				MatchLabels: map[string]string{"app": monoName},
 			},
 			Template: pod,
 		},
@@ -157,10 +161,14 @@ func (b *monolithBuilder) service() *corev1.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      monoName,
 			Namespace: b.info.Namespace,
-			Labels:    b.appLabel(),
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     monoName,
+				"version": b.version,
+			},
 		},
 		Spec: corev1.ServiceSpec{
-			Selector: b.appLabel(),
+			Selector: map[string]string{"app": monoName},
 			Ports: []corev1.ServicePort{{
 				Name:       constants.FLPPortName,
 				Port:       port,
