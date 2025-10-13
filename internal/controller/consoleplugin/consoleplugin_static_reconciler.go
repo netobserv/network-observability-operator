@@ -41,8 +41,14 @@ func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest
 	l := log.FromContext(ctx).WithName("console-plugin")
 	ctx = log.IntoContext(ctx, l)
 
+	// Skip static reconciler on older OpenShift (feature not implemented)
+	less415, err := r.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0")
+	if err != nil && less415 {
+		return nil
+	}
+
 	// Retrieve current owned objects
-	err := r.Managed.FetchAll(ctx)
+	err = r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
