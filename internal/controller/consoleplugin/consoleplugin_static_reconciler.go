@@ -42,13 +42,19 @@ func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest
 	ctx = log.IntoContext(ctx, l)
 
 	// Skip static reconciler on older OpenShift (feature not implemented)
-	less415, err := r.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0")
-	if err != nil && less415 {
+	if err := r.ClusterInfo.CheckClusterInfo(ctx, r.Client); err != nil {
+		l.Error(err, "unable to check cluster info")
+	}
+	if less415, err := r.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0"); less415 {
+		l.Info("Static plugin not supported for this version of OpenShift; skipping")
+		r.Managed.TryDeleteAll(ctx)
 		return nil
+	} else if err != nil {
+		l.Error(err, "Could not determine if static plugin is supported; proceed with deploying")
 	}
 
 	// Retrieve current owned objects
-	err = r.Managed.FetchAll(ctx)
+	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
 	}
