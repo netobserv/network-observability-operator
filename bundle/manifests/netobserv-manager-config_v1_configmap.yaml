@@ -16,4 +16,5 @@ kind: ConfigMap
 metadata:
   labels:
     app: netobserv-operator
+    part-of: netobserv-operator
   name: netobserv-manager-config

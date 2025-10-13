@@ -57,7 +57,8 @@ func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *co
 			Name:      constants.EBPFAgentMetricsSvcName,
 			Namespace: c.PrivilegedNamespace(),
 			Labels: map[string]string{
-				"app": constants.EBPFAgentName,
+				"part-of": constants.OperatorName,
+				"app":     constants.EBPFAgentName,
 			},
 		},
 		Spec: corev1.ServiceSpec{
@@ -88,7 +89,8 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 			Name:      constants.EBPFAgentMetricsSvcMonitoringName,
 			Namespace: c.PrivilegedNamespace(),
 			Labels: map[string]string{
-				"app": constants.EBPFAgentName,
+				"part-of": constants.OperatorName,
+				"app":     constants.EBPFAgentName,
 			},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
@@ -140,7 +142,8 @@ func (c *AgentController) agentPrometheusRule(target *flowslatest.FlowCollectorE
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.EBPFAgentPromAlertRule,
 			Labels: map[string]string{
-				"app": constants.EBPFAgentName,
+				"part-of": constants.OperatorName,
+				"app":     constants.EBPFAgentName,
 			},
 			Namespace: c.PrivilegedNamespace(),
 		},

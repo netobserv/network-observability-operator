@@ -23,7 +23,10 @@ func GetRoleBinding(namespace, shortName, app, sa string, ref constants.RoleName
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      string(ref) + "-" + shortName,
 			Namespace: namespace,
-			Labels:    map[string]string{"app": app},
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     app,
+			},
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
