@@ -18,6 +18,5 @@ spec:
   selector:
     app: netobserv-operator
     control-plane: controller-manager
-    part-of: netobserv-operator
 status:
   loadBalancer: {}
