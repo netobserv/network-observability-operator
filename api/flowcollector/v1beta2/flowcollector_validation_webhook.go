@@ -239,11 +239,16 @@ func (v *validator) validateScheduling() {
 }
 
 func (v *validator) validateFLPLogTypes() {
-	if v.fc.Processor.LogTypes != nil && *v.fc.Processor.LogTypes == LogTypeAll {
-		v.warnings = append(v.warnings, "Enabling all log types (in spec.processor.logTypes) has a high impact on resources footprint")
-	}
-	if v.fc.Processor.LogTypes != nil && *v.fc.Processor.LogTypes != LogTypeFlows && v.fc.Loki.Enable != nil && !*v.fc.Loki.Enable {
-		v.errors = append(v.errors, errors.New("enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit"))
+	if v.fc.Processor.HasConntrack() {
+		if *v.fc.Processor.LogTypes == LogTypeAll {
+			v.warnings = append(v.warnings, "Enabling all log types (in spec.processor.logTypes) has a high impact on resources footprint")
+		}
+		if !v.fc.UseLoki() {
+			v.errors = append(v.errors, errors.New("enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit"))
+		}
+		if v.fc.DeploymentModel == DeploymentModelService {
+			v.errors = append(v.errors, errors.New("cannot enable conversation tracking when spec.deploymentModel is Service: you must disable it, or change the deployment model"))
+		}
 	}
 }
 
