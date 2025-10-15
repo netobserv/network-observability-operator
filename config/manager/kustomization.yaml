@@ -19,4 +19,5 @@ labels:
 - includeSelectors: true
   pairs:
     app: netobserv-operator
+- pairs:
     part-of: netobserv-operator
