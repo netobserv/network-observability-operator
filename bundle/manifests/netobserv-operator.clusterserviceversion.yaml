@@ -253,7 +253,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.9.2-community
-    createdAt: "2025-10-06T09:16:35Z"
+    createdAt: "2025-10-15T13:45:09Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -1042,14 +1042,12 @@ spec:
             matchLabels:
               app: netobserv-operator
               control-plane: controller-manager
-              part-of: netobserv-operator
           strategy: {}
           template:
             metadata:
               labels:
                 app: netobserv-operator
                 control-plane: controller-manager
-                part-of: netobserv-operator
             spec:
               containers:
               - args:
