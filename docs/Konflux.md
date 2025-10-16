@@ -57,7 +57,7 @@ spec:
       source: registry.redhat.io/network-observability/network-observability-rhel9-operator
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-ystream
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-ztream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/flowlogs-pipeline-zstream
       source: registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-ebpf-agent-ystream
@@ -65,11 +65,11 @@ spec:
       source: registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-ystream
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-ztream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-zstream
       source: registry.redhat.io/network-observability/network-observability-console-plugin-rhel9
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-ystream
-      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-ztream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-zstream
       source: registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-cli-ystream
