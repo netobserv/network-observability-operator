@@ -32,7 +32,30 @@ func sumBy(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, e
 		// we need to relabel src / dst labels to the same label name in order to allow adding them
 		// e.g. of desired output:
 		// sum(label_replace(rate(netobserv_workload_ingress_bytes_total[1m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace)
-		replacedLabels := string(promQL)
+
+		// Build label matchers to filter out metrics where K8s labels don't exist or are empty
+		// This prevents alerts from firing with empty namespace/workload/node labels
+		var labelMatchers []string
+		for _, label := range nooLabels {
+			labelMatchers = append(labelMatchers, fmt.Sprintf(`%s!=""`, label))
+		}
+		labelFilterContent := strings.Join(labelMatchers, ",")
+
+		// Insert or merge the label filter into the promQL
+		// Handle two cases:
+		// 1. No existing filter: rate(metric[1m]) -> rate(metric{filter}[1m])
+		// 2. Existing filter: rate(metric{existing}[1m]) -> rate(metric{filter,existing}[1m])
+		promQLStr := string(promQL)
+		var filteredPromQL string
+		if strings.Contains(promQLStr, "{") && strings.Contains(promQLStr, "}") {
+			// Merge with existing label selector
+			filteredPromQL = strings.Replace(promQLStr, "{", "{"+labelFilterContent+",", 1)
+		} else {
+			// Insert new label selector before the time range
+			filteredPromQL = strings.Replace(promQLStr, "[", "{"+labelFilterContent+"}[", 1)
+		}
+
+		replacedLabels := filteredPromQL
 		for i := range labelsOut {
 			in := nooLabels[i]
 			out := labelsOut[i]
