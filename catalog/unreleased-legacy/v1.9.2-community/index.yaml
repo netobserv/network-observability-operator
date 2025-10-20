@@ -1,0 +1,6 @@
+---
+entries:
+  - name: netobserv-operator.v1.9.2-community
+name: latest
+package: netobserv-operator
+schema: olm.channel
