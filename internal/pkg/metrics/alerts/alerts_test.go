@@ -280,11 +280,11 @@ func TestLatencyPromql(t *testing.T) {
 	assert.Equal(t,
 		`100 * `+
 			`((histogram_quantile(0.9, `+
-			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)))`+
+			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket{SrcK8S_Namespace!=""}[2m]), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)))`+
 			` - (histogram_quantile(0.9, `+
-			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le))))`+
+			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket{SrcK8S_Namespace!=""}[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le))))`+
 			` / (histogram_quantile(0.9, `+
-			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)))`+
+			`sum(label_replace(rate(netobserv_namespace_rtt_seconds_bucket{SrcK8S_Namespace!=""}[2h] offset 24h), "namespace", "$1", "SrcK8S_Namespace", "(.*)")) by (namespace,le)))`+
 			` > 100`,
 		rules[0].Expr.StrVal,
 	)

@@ -214,6 +214,33 @@ func buildLabels(severity string, forHealth bool) map[string]string {
 	return m
 }
 
+func (rb *ruleBuilder) buildLabelFilter(additionalFilter string) string {
+	var filters []string
+
+	// Build label matchers to filter out metrics where K8s labels don't exist or are empty
+	// This prevents alerts from firing with empty namespace/workload/node labels
+	switch rb.alert.GroupBy {
+	case flowslatest.GroupByNode:
+		filters = append(filters, string(rb.side)+`K8S_HostName!=""`)
+	case flowslatest.GroupByNamespace:
+		filters = append(filters, string(rb.side)+`K8S_Namespace!=""`)
+	case flowslatest.GroupByWorkload:
+		filters = append(filters, string(rb.side)+`K8S_Namespace!=""`)
+		filters = append(filters, string(rb.side)+`K8S_OwnerName!=""`)
+		filters = append(filters, string(rb.side)+`K8S_OwnerType!=""`)
+	}
+
+	// Add additional business logic filters
+	if additionalFilter != "" {
+		filters = append(filters, additionalFilter)
+	}
+
+	if len(filters) == 0 {
+		return ""
+	}
+	return "{" + strings.Join(filters, ",") + "}"
+}
+
 func (rb *ruleBuilder) getMetricsForAlert() (string, string) {
 	var reqMetric1, reqMetric2 string
 	reqMetrics1, reqMetrics2 := flowslatest.GetElligibleMetricsForAlert(rb.template, rb.alert)
