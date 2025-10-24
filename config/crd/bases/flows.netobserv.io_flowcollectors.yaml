@@ -5443,6 +5443,19 @@ spec:
                           items:
                             type: string
                           type: array
+                        healthMode:
+                          default: alerts
+                          description: |-
+                            `healthMode` defines how to expose network health information.
+                            Possible values are `alerts` (default) or `recording-rules`.
+                            - `alerts`: Generate Prometheus alerts that fire when thresholds are exceeded (current behavior).
+                            - `recording-rules`: Generate Prometheus recording rules that pre-compute health metrics for passive consumption.
+                            Recording rules avoid alert fatigue and are useful for dashboard-based health monitoring.
+                            This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
+                          enum:
+                            - alerts
+                            - recording-rules
+                          type: string
                         includeList:
                           description: |-
                             `includeList` is a list of metric names to specify which ones to generate.

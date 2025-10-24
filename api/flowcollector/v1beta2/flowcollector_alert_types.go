@@ -12,6 +12,7 @@ import (
 
 type AlertTemplate string
 type AlertGroupBy string
+type HealthMode string
 
 const (
 	AlertNoFlows                  AlertTemplate = "NetObservNoFlows"
@@ -28,6 +29,8 @@ const (
 	GroupByNode                   AlertGroupBy  = "Node"
 	GroupByNamespace              AlertGroupBy  = "Namespace"
 	GroupByWorkload               AlertGroupBy  = "Workload"
+	HealthModeAlerts              HealthMode    = "alerts"
+	HealthModeRecordingRules      HealthMode    = "recording-rules"
 )
 
 type FLPAlert struct {
