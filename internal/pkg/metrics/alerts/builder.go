@@ -33,7 +33,22 @@ type ruleBuilder struct {
 	duration          monitoringv1.Duration
 }
 
+// BuildRules is the main entry point that decides whether to build alerts or recording rules
+// based on the healthMode configuration
 func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
+	log := log.FromContext(ctx)
+
+	if fc.Processor.Metrics.HealthMode == string(flowslatest.HealthModeRecordingRules) {
+		log.Info("Building recording rules for health monitoring")
+		return BuildRecordingRules(ctx, fc)
+	}
+
+	log.Info("Building alerts for health monitoring")
+	return BuildAlertRules(ctx, fc)
+}
+
+// BuildAlertRules builds Prometheus alert rules for health monitoring
+func BuildAlertRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
 	log := log.FromContext(ctx)
 	rules := []monitoringv1.Rule{}
 
@@ -60,6 +75,40 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 	}
 	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
 		r := alertLokiError()
+		rules = append(rules, *r)
+	}
+
+	return rules
+}
+
+// BuildRecordingRules builds Prometheus recording rules for health monitoring
+func BuildRecordingRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
+	log := log.FromContext(ctx)
+	rules := []monitoringv1.Rule{}
+
+	if fc.HasExperimentalAlertsHealth() {
+		alerts := fc.GetFLPAlerts()
+		metrics := fc.GetIncludeList()
+		for _, alert := range alerts {
+			if ok, _ := alert.IsAllowed(fc); !ok {
+				continue
+			}
+			for _, variant := range alert.Variants {
+				if r, err := convertToRecordingRules(alert.Template, &variant, metrics); err != nil {
+					log.Error(err, "unable to configure a recording rule")
+				} else if len(r) > 0 {
+					rules = append(rules, r...)
+				}
+			}
+		}
+	}
+
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
+		r := recordingNoFlows()
+		rules = append(rules, *r)
+	}
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
+		r := recordingLokiError()
 		rules = append(rules, *r)
 	}
 

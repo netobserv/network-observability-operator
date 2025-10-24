@@ -11486,6 +11486,21 @@ More information on alerts: https://github.com/netobserv/network-observability-o
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>healthMode</b></td>
+        <td>enum</td>
+        <td>
+          `healthMode` defines how to expose network health information.
+Possible values are `alerts` (default) or `recording-rules`.
+- `alerts`: Generate Prometheus alerts that fire when thresholds are exceeded (current behavior).
+- `recording-rules`: Generate Prometheus recording rules that pre-compute health metrics for passive consumption.
+Recording rules avoid alert fatigue and are useful for dashboard-based health monitoring.
+This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.<br/>
+          <br/>
+            <i>Enum</i>: alerts, recording-rules<br/>
+            <i>Default</i>: alerts<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>includeList</b></td>
         <td>[]enum</td>
         <td>
