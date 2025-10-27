@@ -139,6 +139,14 @@ oc patch components network-observability-console-plugin-pf4-ystream --type='jso
 
 ## Release
 
+When a release candidate is accepted and ready to be released, the catalogs repo must be updated with the accepted bundle image:
+- Find the desired bundle SHA, e.g. by looking at the latest release snapshot in Konflux.
+- Run the following command on the catalogs repo, then commit and push:
+
+```bash
+BUNDLE_SHA=(desired bundle SHA) make final-ystream # (or zstream)
+```
+
 Once it is ready to be released, a new `Release` object needs to be created to trigger the production release pipeline:
 
 ```yaml
