@@ -103,9 +103,8 @@ func (rb *ruleBuilder) buildRecordingRuleLabels() map[string]string {
 
 func (rb *ruleBuilder) kernelDropsRecording() (*monitoringv1.Rule, error) {
 	metric, totalMetric := rb.getMetricsForAlert()
-	filter := rb.buildLabelFilter("")
-	metricsRate := promQLRateFromMetric(metric, "", filter, "5m", "")
-	totalRate := promQLRateFromMetric(totalMetric, "", filter, "5m", "")
+	metricsRate := promQLRateFromMetric(metric, "", "", "5m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "", "", "5m", "")
 	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
 
@@ -149,9 +148,8 @@ func (rb *ruleBuilder) deviceDropsRecording() (*monitoringv1.Rule, error) {
 
 func (rb *ruleBuilder) ipsecErrorsRecording() (*monitoringv1.Rule, error) {
 	metric, totalMetric := rb.getMetricsForAlert()
-	filter := rb.buildLabelFilter("")
-	metricsRate := promQLRateFromMetric(metric, "", filter, "5m", "")
-	totalRate := promQLRateFromMetric(totalMetric, "", filter, "5m", "")
+	metricsRate := promQLRateFromMetric(metric, "", "", "5m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "", "", "5m", "")
 	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
 	promql := fmt.Sprintf("100 * (%s) / (%s)", metricsSumBy, totalSumBy)
@@ -170,10 +168,8 @@ func (rb *ruleBuilder) dnsErrorsRecording() (*monitoringv1.Rule, error) {
 	}
 
 	metric, totalMetric := rb.getMetricsForAlert()
-	metricsFilter := rb.buildLabelFilter(`DnsFlagsResponseCode!="NoError"`)
-	totalFilter := rb.buildLabelFilter("")
-	metricsRate := promQLRateFromMetric(metric, "_count", metricsFilter, "5m", "")
-	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "5m", "")
+	metricsRate := promQLRateFromMetric(metric, "_count", `{DnsFlagsResponseCode!="NoError"}`, "5m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "_count", "", "5m", "")
 	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
 	promql := fmt.Sprintf("100 * (%s) / (%s)", metricsSumBy, totalSumBy)
@@ -187,10 +183,8 @@ func (rb *ruleBuilder) dnsErrorsRecording() (*monitoringv1.Rule, error) {
 
 func (rb *ruleBuilder) netpolDeniedRecording() (*monitoringv1.Rule, error) {
 	metric, totalMetric := rb.getMetricsForAlert()
-	metricsFilter := rb.buildLabelFilter(`action="drop"`)
-	totalFilter := rb.buildLabelFilter("")
-	metricsRate := promQLRateFromMetric(metric, "", metricsFilter, "5m", "")
-	totalRate := promQLRateFromMetric(totalMetric, "", totalFilter, "5m", "")
+	metricsRate := promQLRateFromMetric(metric, "", `{action="drop"}`, "5m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "", "", "5m", "")
 	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
 	promql := fmt.Sprintf("100 * (%s) / (%s)", metricsSumBy, totalSumBy)
@@ -206,9 +200,8 @@ func (rb *ruleBuilder) latencyTrendRecording() (*monitoringv1.Rule, error) {
 	offset, duration := rb.alert.GetTrendParams()
 
 	metric, baseline := rb.getMetricsForAlert()
-	filter := rb.buildLabelFilter("")
-	metricsRate := promQLRateFromMetric(metric, "_bucket", filter, "5m", "")
-	baselineRate := promQLRateFromMetric(baseline, "_bucket", filter, duration, " offset "+offset)
+	metricsRate := promQLRateFromMetric(metric, "_bucket", "", "5m", "")
+	baselineRate := promQLRateFromMetric(baseline, "_bucket", "", duration, " offset "+offset)
 	metricQuantile := histogramQuantile(metricsRate, rb.alert.GroupBy, rb.side, "0.9")
 	baselineQuantile := histogramQuantile(baselineRate, rb.alert.GroupBy, rb.side, "0.9")
 
