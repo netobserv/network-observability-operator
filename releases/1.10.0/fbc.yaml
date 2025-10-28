@@ -1,0 +1,107 @@
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-12-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-12
+  snapshot: catalog-4-12-xlljn
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-14-1
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-14
+  snapshot: catalog-4-14-stcxd
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-15-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-15
+  snapshot: catalog-4-15-2sxjv
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-16-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-16
+  snapshot: catalog-4-16-ndncp
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-17-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-17
+  snapshot: catalog-4-17-kj7n4
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-18-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-18
+  snapshot: catalog-4-18-c5cs4
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-19-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-19
+  snapshot: catalog-4-19-tqgcc
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-20-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-20
+  snapshot: catalog-4-20-6hq75
+---
+# Done
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: netobserv-1-10-0-fbc-4-21-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-fbc-v4-21
+  snapshot: catalog-4-21-vp7dh
