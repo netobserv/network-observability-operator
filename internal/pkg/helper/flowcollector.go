@@ -14,30 +14,6 @@ const (
 	netobservManagedLabel = "netobserv-managed"
 )
 
-func GetSampling(spec *flowslatest.FlowCollectorSpec) int {
-	if spec.Agent.EBPF.Sampling == nil {
-		return 50
-	}
-	return int(*spec.Agent.EBPF.Sampling)
-}
-
-func UseKafka(spec *flowslatest.FlowCollectorSpec) bool {
-	return spec.DeploymentModel == flowslatest.DeploymentModelKafka
-}
-
-func HasKafkaExporter(spec *flowslatest.FlowCollectorSpec) bool {
-	for _, ex := range spec.Exporters {
-		if ex.Type == flowslatest.KafkaExporter {
-			return true
-		}
-	}
-	return false
-}
-
-func HPAEnabled(spec *flowslatest.FlowCollectorHPA) bool {
-	return spec != nil && spec.Status == flowslatest.HPAStatusEnabled
-}
-
 func GetRecordTypes(processor *flowslatest.FlowCollectorFLP) []api.ConnTrackOutputRecordTypeEnum {
 	if processor.LogTypes != nil {
 		switch *processor.LogTypes {
@@ -148,7 +124,8 @@ func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowsla
 
 func GetAdvancedProcessorConfig(spec *flowslatest.FlowCollectorSpec) flowslatest.AdvancedProcessorConfig {
 	var defaultToleration []corev1.Toleration
-	if !UseKafka(spec) { // TODO: with coming-soon Service deploymentModel, this should be replaced with "UseHostNetwork" (conflict should pop up while rebasing).
+	if spec.UseHostNetwork() {
+		// When using host-network ie. 1-1 pairing with agents, FLP should have same toleration as agents
 		defaultToleration = []corev1.Toleration{{Operator: corev1.TolerationOpExists}}
 	}
 	cfg := flowslatest.AdvancedProcessorConfig{

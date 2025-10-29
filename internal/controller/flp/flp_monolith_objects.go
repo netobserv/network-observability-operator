@@ -1,10 +1,6 @@
 package flp
 
 import (
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
@@ -12,6 +8,10 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/volumes"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -50,6 +50,10 @@ func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCol
 }
 
 func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.DaemonSet {
+	netType := hostNetwork
+	if b.info.ClusterInfo.IsOpenShift() {
+		netType = hostPort
+	}
 	pod := podTemplate(
 		monoName,
 		b.version,
@@ -57,8 +61,7 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 		monoConfigMap,
 		b.desired,
 		&b.volumes,
-		true, /*listens*/
-		!b.info.ClusterInfo.IsOpenShift(),
+		netType,
 		annotations,
 	)
 	return &appsv1.DaemonSet{
@@ -72,6 +75,38 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 			},
 		},
 		Spec: appsv1.DaemonSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": monoName},
+			},
+			Template: pod,
+		},
+	}
+}
+
+func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Deployment {
+	pod := podTemplate(
+		monoName,
+		b.version,
+		b.info.Images[reconcilers.MainImage],
+		monoConfigMap,
+		b.desired,
+		&b.volumes,
+		svc,
+		annotations,
+	)
+	replicas := b.desired.Processor.GetFLPReplicas()
+	return &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      monoName,
+			Namespace: b.info.Namespace,
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     monoName,
+				"version": b.version,
+			},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{"app": monoName},
 			},
@@ -117,6 +152,32 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 	}
 
 	return staticCM, digest, dynamicCM, err
+}
+
+func (b *monolithBuilder) service() *corev1.Service {
+	advancedConfig := helper.GetAdvancedProcessorConfig(b.desired)
+	port := *advancedConfig.Port
+	svc := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      monoName,
+			Namespace: b.info.Namespace,
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     monoName,
+				"version": b.version,
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": monoName},
+			Ports: []corev1.ServicePort{{
+				Name:       constants.FLPPortName,
+				Port:       port,
+				Protocol:   corev1.ProtocolTCP,
+				TargetPort: intstr.FromInt32(port),
+			}},
+		},
+	}
+	return &svc
 }
 
 func (b *monolithBuilder) promService() *corev1.Service {

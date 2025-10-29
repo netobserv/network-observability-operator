@@ -27,8 +27,9 @@ import (
 type FlowCollectorDeploymentModel string
 
 const (
-	DeploymentModelDirect FlowCollectorDeploymentModel = "Direct"
-	DeploymentModelKafka  FlowCollectorDeploymentModel = "Kafka"
+	DeploymentModelDirect  FlowCollectorDeploymentModel = "Direct"
+	DeploymentModelKafka   FlowCollectorDeploymentModel = "Kafka"
+	DeploymentModelService FlowCollectorDeploymentModel = "Service"
 )
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
@@ -69,11 +70,13 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-	// - `Direct` (default) to make the flow processor listen directly from the agents.<br>
+	// - `Direct` (default) to make the flow processor listen directly from the agents using the host network, backed by a DaemonSet.<br>
+	// - `Service` to make the flow processor listen as a Kubernetes Service, backed by a scalable Deployment.<br>
 	// - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
-	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
+	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br>
+	// `Direct` is not recommended on large clusters as it is less memory efficient.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Direct";"Kafka"
+	// +kubebuilder:validation:Enum:="Direct";"Service";"Kafka"
 	// +kubebuilder:default:=Direct
 	DeploymentModel FlowCollectorDeploymentModel `json:"deploymentModel,omitempty"`
 
@@ -626,14 +629,25 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=3
-	// `kafkaConsumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
+	// `kafkaConsumerReplicas` [deprecated (*)] defines the number of replicas (pods) to start for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
 	// This setting is ignored when Kafka is disabled.
+	// Deprecation notice: use `spec.processor.consumerReplicas` instead.
 	KafkaConsumerReplicas *int32 `json:"kafkaConsumerReplicas,omitempty"`
 
-	// `kafkaConsumerAutoscaler` is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
+	// `kafkaConsumerAutoscaler` [deprecated (*)] is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
 	// This setting is ignored when Kafka is disabled.
+	// Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.processor.unmanagedReplicas` to `true`.
 	// +optional
 	KafkaConsumerAutoscaler FlowCollectorHPA `json:"kafkaConsumerAutoscaler,omitempty"`
+
+	//+kubebuilder:validation:Minimum=0
+	// `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`.
+	// This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.processor.unmanagedReplicas` is `true`.
+	ConsumerReplicas *int32 `json:"consumerReplicas,omitempty"`
+
+	// If `unmanagedReplicas` is `true`, the operator will not reconcile `consumerReplicas`. This is useful when using a pod autoscaler.
+	// +optional
+	UnmanagedReplicas bool `json:"unmanagedReplicas,omitempty"`
 
 	//+kubebuilder:default:=1000
 	// +optional
@@ -1025,6 +1039,10 @@ type FlowCollectorConsolePlugin struct {
 	// `replicas` defines the number of replicas (pods) to start.
 	Replicas *int32 `json:"replicas,omitempty"`
 
+	// If `unmanagedReplicas` is `true`, the operator will not reconcile `replicas`. This is useful when using a pod autoscaler.
+	// +optional
+	UnmanagedReplicas bool `json:"unmanagedReplicas,omitempty"`
+
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// `imagePullPolicy` is the Kubernetes pull policy for the image defined above
@@ -1041,7 +1059,8 @@ type FlowCollectorConsolePlugin struct {
 	// `logLevel` for the console plugin backend
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// `autoscaler` spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+	// `autoscaler` [deprecated (*)] spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+	// Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.consolePlugin.unmanagedReplicas` to `true`.
 	// +optional
 	Autoscaler FlowCollectorHPA `json:"autoscaler,omitempty"`
 

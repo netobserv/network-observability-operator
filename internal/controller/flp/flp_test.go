@@ -1,19 +1,3 @@
-/*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package flp
 
 import (
@@ -73,7 +57,7 @@ func getConfig() flowslatest.FlowCollectorSpec {
 					},
 				},
 			},
-			KafkaConsumerReplicas: ptr.To(int32(1)),
+			ConsumerReplicas: ptr.To(int32(1)),
 			KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 				Status:      flowslatest.HPAStatusEnabled,
 				MinReplicas: &minReplicas,
@@ -356,7 +340,7 @@ func TestDeploymentNoChange(t *testing.T) {
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, !cfg.Processor.KafkaConsumerAutoscaler.HPAEnabled(), *cfg.Processor.KafkaConsumerReplicas, &report))
+	assert.False(helper.DeploymentChanged(first, second, constants.FLPName, &report))
 	assert.Contains(report.String(), "no change")
 }
 
@@ -380,7 +364,10 @@ func TestDeploymentChanged(t *testing.T) {
 
 	report := helper.NewChangeReport("")
 	checkChanged := func(old, newd *appsv1.Deployment, spec flowslatest.FlowCollectorSpec) bool {
-		return helper.DeploymentChanged(old, newd, constants.FLPName, !cfg.Processor.KafkaConsumerAutoscaler.HPAEnabled(), *spec.Processor.KafkaConsumerReplicas, &report)
+		if spec.Processor.IsUnmanagedFLPReplicas() {
+			newd.Spec.Replicas = old.Spec.Replicas
+		}
+		return helper.DeploymentChanged(old, newd, constants.FLPName, &report)
 	}
 
 	assert.True(checkChanged(first, second, cfg))
@@ -430,7 +417,7 @@ func TestDeploymentChanged(t *testing.T) {
 
 	// Check replicas didn't change because HPA is used
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
+	cfg2.Processor.ConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, _, err = b.configMaps()
 	assert.NoError(err)
@@ -454,14 +441,14 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 
 	// Check replicas changed (need to copy flp, as Spec.Replicas stores a pointer)
 	cfg2 := cfg
-	cfg2.Processor.KafkaConsumerReplicas = ptr.To(int32(5))
+	cfg2.Processor.ConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
 	_, digest, _, err = b.configMaps()
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
 	report := helper.NewChangeReport("")
-	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, !cfg2.Processor.KafkaConsumerAutoscaler.HPAEnabled(), *cfg2.Processor.KafkaConsumerReplicas, &report))
+	assert.True(helper.DeploymentChanged(first, second, constants.FLPName, &report))
 	assert.Contains(report.String(), "Replicas changed")
 }
 

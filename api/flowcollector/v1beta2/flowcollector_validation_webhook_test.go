@@ -509,6 +509,21 @@ func TestValidateConntrack(t *testing.T) {
 			},
 			expectedError: "enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit",
 		},
+		{
+			name: "Conntrack not allowed with deploymentModel Service",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					DeploymentModel: DeploymentModelService,
+					Processor: FlowCollectorFLP{
+						LogTypes: ptr.To(LogTypeConversations),
+					},
+				},
+			},
+			expectedError: "cannot enable conversation tracking when spec.deploymentModel is Service: you must disable it, or change the deployment model",
+		},
 	}
 
 	r := FlowCollector{}

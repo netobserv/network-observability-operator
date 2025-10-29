@@ -46,8 +46,8 @@ func getConfig() flowslatest.FlowCollector {
 			DeploymentModel: flowslatest.DeploymentModelDirect,
 			Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentEBPF},
 			Processor: flowslatest.FlowCollectorFLP{
-				LogLevel:              "trace",
-				KafkaConsumerReplicas: ptr.To(int32(1)),
+				LogLevel:         "trace",
+				ConsumerReplicas: ptr.To(int32(1)),
 				KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 					Status:  flowslatest.HPAStatusEnabled,
 					Metrics: []ascv2.MetricSpec{},
@@ -98,13 +98,6 @@ func TestNpBuilder(t *testing.T) {
 		{From: []networkingv1.NetworkPolicyPeer{
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
-		{From: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "netobserv-privileged",
-				},
-			}},
-		}},
 	}, np.Spec.Ingress)
 
 	assert.Equal([]networkingv1.NetworkPolicyEgressRule{
@@ -112,13 +105,15 @@ func TestNpBuilder(t *testing.T) {
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
 		{To: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "netobserv-privileged",
-				},
+			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "kubernetes.io/metadata.name",
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   []string{"kube-system"},
+				}},
 			}},
 		}},
-	}[1], np.Spec.Egress[1])
+	}, np.Spec.Egress)
 
 	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
@@ -136,24 +131,12 @@ func TestNpBuilder(t *testing.T) {
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
 		{From: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "netobserv-privileged",
-				},
-			}},
-		}},
-		{From: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "foo",
-				},
-			}},
-		}},
-		{From: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "bar",
-				},
+			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "kubernetes.io/metadata.name",
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   []string{"foo", "bar"},
+				}},
 			}},
 		}},
 	}, np.Spec.Ingress)
@@ -163,24 +146,12 @@ func TestNpBuilder(t *testing.T) {
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
 		{To: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "netobserv-privileged",
-				},
-			}},
-		}},
-		{To: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "foo",
-				},
-			}},
-		}},
-		{To: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "bar",
-				},
+			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
+				MatchExpressions: []metav1.LabelSelectorRequirement{{
+					Key:      "kubernetes.io/metadata.name",
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   []string{"kube-system", "foo", "bar"},
+				}},
 			}},
 		}},
 	}, np.Spec.Egress)
@@ -189,19 +160,5 @@ func TestNpBuilder(t *testing.T) {
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
-	assert.Equal([]networkingv1.NetworkPolicyIngressRule{
-		{From: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "foo",
-				},
-			}},
-		}},
-		{From: []networkingv1.NetworkPolicyPeer{
-			{NamespaceSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"kubernetes.io/metadata.name": "bar",
-				},
-			}},
-		}}}, np.Spec.Ingress)
+	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
 }
