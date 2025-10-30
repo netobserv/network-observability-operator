@@ -180,7 +180,7 @@ github.com/netsampler/goflow2/decoders/sflow
 github.com/netsampler/goflow2/decoders/utils
 github.com/netsampler/goflow2/pb
 github.com/netsampler/goflow2/producer
-# github.com/onsi/ginkgo/v2 v2.26.0
+# github.com/onsi/ginkgo/v2 v2.27.1
 ## explicit; go 1.23.0
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
@@ -232,7 +232,7 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.86.0
+# github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.86.1
 ## explicit; go 1.24.0
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1
