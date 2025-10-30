@@ -1,0 +1,34 @@
+# Workload flows matrix for TCP/SYN traffic, including destination port, with labels remapped for focusing on outgoing traffic
+# More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowMetric
+metadata:
+  name: workload-syn-out
+  namespace: netobserv
+spec:
+  type: Counter
+  flatten: [Flags]
+  labels:
+  - SrcSubnetLabel
+  - SrcK8S_Namespace
+  - SrcK8S_OwnerName
+  - SrcK8S_OwnerType
+  - DstSubnetLabel
+  - DstK8S_Namespace
+  - DstK8S_OwnerName
+  - DstK8S_OwnerType
+  - DstPort
+  - Flags
+  filters:
+  - field: Flags
+    value: SYN
+  remap:
+    DstK8S_Namespace: to_namespace
+    DstK8S_OwnerName: to_workload
+    DstK8S_OwnerType: to_kind
+    DstSubnetLabel: to_subnet_label
+    SrcK8S_Namespace: namespace
+    SrcK8S_OwnerName: workload
+    SrcK8S_OwnerType: kind
+    SrcSubnetLabel: subnet_label
+    DstPort: port
