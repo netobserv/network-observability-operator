@@ -6,7 +6,7 @@ This command sets up a complete development environment for NetObserv.
 - Did the user provide a **USER** (quay.io username/repo)?
 - Did the user provide a **VERSION** (image tag)?
 
-If the user specified custom images (e.g., "usando la imagen de mi repo, leandroberetta con el tag v1.2.3"), extract those values. Otherwise, use the defaults: `USER=netobserv` and `VERSION=main`.
+If the user specified custom images (e.g., "using the image from my repo, leandroberetta with tag v1.2.3"), extract those values. Otherwise, use the defaults: `USER=netobserv` and `VERSION=main`.
 
 **Next, determine your platform:**
 - Are you using **OpenShift** or **vanilla Kubernetes**?
