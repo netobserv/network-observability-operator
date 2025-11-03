@@ -74,30 +74,3 @@ To clean up the entire environment:
 ```bash
 make undeploy
 ```
-
-## Building Custom Component Images (Optional)
-
-If you want to build custom images for the other NetObserv components (eBPF agent, flowlogs-pipeline, console plugin), you can do so before deploying:
-
-```bash
-# Example: Build custom eBPF agent
-cd ../netobserv-ebpf-agent
-USER=<your_user> VERSION=<your_tag> make images
-
-# Example: Build custom flowlogs-pipeline
-cd ../flowlogs-pipeline
-USER=<your_user> VERSION=<your_tag> make images
-
-# Return to operator directory
-cd ../network-observability-operator
-```
-
-Then, when deploying the operator in step 1, use the same USER and VERSION values so the operator uses your custom component images.
-
-**Note:** The operator deployment uses the USER and VERSION to determine which component images to reference in the FlowCollector CR it creates.
-
-## Troubleshooting
-
-- **Permission errors**: Ensure your kubeconfig has proper RBAC permissions.
-- **Pod not starting**: Check logs with `kubectl logs -n netobserv <pod-name>`.
-- **Image authentication issues**: Make sure you used `USER=netobserv` in step 1 to use public images.
