@@ -101,28 +101,6 @@ This will trigger a reconciliation and the debugger will pause at your breakpoin
 - See how the operator processes changes
 - Debug any issues in the reconciliation loop
 
-## Using Custom Images
-
-To debug with your own component builds:
-
-```bash
-# Build and push your custom images first
-cd ../netobserv-ebpf-agent
-USER=myuser VERSION=dev make images
-
-cd ../flowlogs-pipeline
-USER=myuser VERSION=dev make images
-
-# Then run the operator with your custom images
-cd ../network-observability-operator
-
-dlv debug ./main.go --headless --listen=:2345 --api-version=2 --accept-multiclient -- \
-  -ebpf-agent-image=quay.io/myuser/netobserv-ebpf-agent:dev \
-  -flowlogs-pipeline-image=quay.io/myuser/flowlogs-pipeline:dev \
-  -console-plugin-image=quay.io/netobserv/network-observability-console-plugin:main \
-  -namespace=netobserv
-```
-
 ## Cleanup
 
 When you're done debugging:
@@ -135,9 +113,3 @@ kubectl scale deployment netobserv-controller-manager -n netobserv --replicas=1
 ```
 
 **Note:** The validating webhook will be automatically recreated by the operator when it starts back up, so you don't need to manually restore it.
-
-## Troubleshooting
-
-- **"Manager already exists" error**: The in-cluster operator is still running. Scale it to 0 replicas.
-- **"Connection refused" in VSCode**: Make sure Delve is running first (step 1 of Option C).
-- **Permission errors**: Ensure your kubeconfig has proper RBAC permissions.
