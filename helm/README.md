@@ -65,6 +65,8 @@ metadata:
   name: cluster
 spec:
   namespace: netobserv
+  networkPolicy:
+    enable: false
   consolePlugin:
     advanced:
       env:
