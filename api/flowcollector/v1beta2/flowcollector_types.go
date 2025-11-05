@@ -590,6 +590,17 @@ type FLPMetrics struct {
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
 	Alerts *[]FLPAlert `json:"alerts"`
+
+	// `healthMode` defines how to expose network health information.
+	// Possible values are `alerts` (default) or `recording-rules`.
+	// - `alerts`: Generate Prometheus alerts that fire when thresholds are exceeded (current behavior).
+	// - `recording-rules`: Generate Prometheus recording rules that pre-compute health metrics for passive consumption.
+	// Recording rules avoid alert fatigue and are useful for dashboard-based health monitoring.
+	// This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
+	// +kubebuilder:validation:Enum:="alerts";"recording-rules"
+	// +kubebuilder:default:="alerts"
+	// +optional
+	HealthMode string `json:"healthMode,omitempty"`
 }
 
 type FLPLogTypes string
