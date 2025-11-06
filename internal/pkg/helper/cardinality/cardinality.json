@@ -67,6 +67,7 @@
   "XlatDstAddr": "avoid",
   "Udns": "careful",
   "IPSecStatus": "fine",
+  "TLSVersion": "fine",
   "_RecordType": "fine",
   "_HashId": "avoid"
 }
