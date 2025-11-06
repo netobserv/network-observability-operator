@@ -101,26 +101,21 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				}},
 			})
 		}
+		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+			// Console plugin pod needs access to cluster monitoring, see its configured URL, even with upstream deployment
+			To: []networkingv1.NetworkPolicyPeer{
+				peerInNamespace(constants.MonitoringNamespace),
+			},
+		})
 		if mgr.Config.DownstreamDeployment {
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{
 					peerInNamespace(constants.MonitoringNamespace),
 				},
 			})
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.MonitoringNamespace),
-				},
-			})
-
 		} else {
 			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
 				From: []networkingv1.NetworkPolicyPeer{
-					peerInNamespace(constants.UWMonitoringNamespace),
-				},
-			})
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				To: []networkingv1.NetworkPolicyPeer{
 					peerInNamespace(constants.UWMonitoringNamespace),
 				},
 			})
