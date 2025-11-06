@@ -25,12 +25,12 @@ fi
 
 echo "Creating new bundle using image ${BUNDLE_IMAGE}..."
 
-dir_catalog="catalog/unreleased/${BUNDLE_TAG}"
-dir_catalog_legacy="catalog/unreleased-legacy/${BUNDLE_TAG}"
+dir_catalog="catalog/out/${BUNDLE_TAG}"
+dir_catalog_legacy="catalog/out-legacy/${BUNDLE_TAG}"
 mkdir -p "${dir_catalog}"
 mkdir -p "${dir_catalog_legacy}"
-cp -f catalog/released/other.yaml ${dir_catalog}
-cp -f catalog/released-legacy/other.yaml ${dir_catalog_legacy}
+cp -f catalog/parts/other.yaml ${dir_catalog}
+cp -f catalog/parts/other.yaml ${dir_catalog_legacy}
 
 ${OPM} render "${BUNDLE_IMAGE}" --output=yaml --migrate-level=bundle-object-to-csv-metadata > "${dir_catalog}/bundle.yaml"
 ${OPM} render "${BUNDLE_IMAGE}" --output=yaml > "${dir_catalog_legacy}/bundle.yaml"
@@ -44,9 +44,6 @@ name: latest
 package: netobserv-operator
 schema: olm.channel
 EOF
-
-sed -i 's/defaultChannel: stable/defaultChannel: latest/' ${dir_catalog}/other.yaml
-sed -i 's/defaultChannel: stable/defaultChannel: latest/' ${dir_catalog_legacy}/other.yaml
 
 cp -f "${dir_catalog}/index.yaml" "${dir_catalog_legacy}"
 

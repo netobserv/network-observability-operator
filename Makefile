@@ -449,17 +449,13 @@ ifneq ($(origin CATALOG_BASE_IMAGE), undefined)
 FROM_INDEX_OPT := --from-index $(CATALOG_BASE_IMAGE)
 endif
 
-.PHONY: refresh-prod-catalogs
-refresh-prod-catalogs: opm YQ ## Refresh FBC from production catalogs. Set REGISTRY_AUTH_FILE=/path/to/pull-secret.json for authentication.
-	YQ=$(YQ) OPM=$(OPM) ./hack/refresh-redhat-catalog.sh
-
 # Build a catalog image by adding bundle images to an empty catalog using the operator package manager tool, 'opm'.
 # This recipe invokes 'opm' in 'semver' bundle add mode. For more information on add modes, see:
 # https://github.com/operator-framework/community-operators/blob/7f1438c/docs/packaging-operator.md#updating-your-existing-operator
 .PHONY: catalog-build
 catalog-build: opm ## Build a catalog image.
 	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" ./hack/update_fbc.sh
-	$(OCI_BIN) build $(OCI_BUILD_OPTS) --build-arg CATALOG_PATH="catalog/unreleased/v$(BUNDLE_VERSION)" -f catalog.Dockerfile -t $(CATALOG_IMAGE) .
+	$(OCI_BIN) build $(OCI_BUILD_OPTS) --build-arg CATALOG_PATH="catalog/out/v$(BUNDLE_VERSION)" -f catalog.Dockerfile -t $(CATALOG_IMAGE) .
 
 shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
 	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
