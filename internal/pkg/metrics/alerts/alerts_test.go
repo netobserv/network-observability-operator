@@ -164,10 +164,11 @@ func TestBuildRules_Overidden(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplatesBut(flowslatest.AlertPacketDropsByKernel),
-				Alerts: &[]flowslatest.FLPAlert{
+				HealthRules: &[]flowslatest.HealthRule{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Mode:     flowslatest.HealthRuleModeAlert,
+						Variants: []flowslatest.HealthRuleVariant{
 							{
 								Thresholds: flowslatest.AlertThresholds{
 									Critical: "50",
@@ -202,10 +203,11 @@ func TestBuildRules_Global(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplatesBut(flowslatest.AlertPacketDropsByKernel),
-				Alerts: &[]flowslatest.FLPAlert{
+				HealthRules: &[]flowslatest.HealthRule{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Mode:     flowslatest.HealthRuleModeAlert,
+						Variants: []flowslatest.HealthRuleVariant{
 							{
 								Thresholds: flowslatest.AlertThresholds{
 									Critical: "50",
@@ -228,7 +230,10 @@ func TestBuildRules_Global(t *testing.T) {
 	assert.Equal(t, "100 * (sum(rate(netobserv_namespace_drop_packets_total[2m]))) / (sum(rate(netobserv_namespace_ingress_packets_total[2m]))) > 50", rules[0].Expr.StrVal)
 }
 
-func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
+func TestBuildRules_ExplicitHealthRulesOverrideDisableAlerts(t *testing.T) {
+	// This test verifies that explicit healthRules override DisableAlerts
+	// If a user explicitly defines a rule in healthRules, it should be generated
+	// even if it's in DisableAlerts
 	fc := flowslatest.FlowCollectorSpec{
 		Agent: flowslatest.FlowCollectorAgent{
 			EBPF: flowslatest.FlowCollectorEBPF{
@@ -239,10 +244,11 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplates(),
-				Alerts: &[]flowslatest.FLPAlert{
+				HealthRules: &[]flowslatest.HealthRule{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Mode:     flowslatest.HealthRuleModeAlert,
+						Variants: []flowslatest.HealthRuleVariant{
 							{
 								Thresholds: flowslatest.AlertThresholds{
 									Critical: "50",
@@ -261,11 +267,13 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 		},
 	}
 	rules := BuildRules(context.Background(), &fc)
-	assert.Empty(t, rules)
+	// Should generate the explicit rule despite DisableAlerts
+	assert.Len(t, rules, 2) // 2 rules: one for Src and one for Dst
+	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 50% of packets dropped by the kernel")
 }
 
 func TestLatencyPromql(t *testing.T) {
-	variant := flowslatest.AlertVariant{
+	variant := flowslatest.HealthRuleVariant{
 		GroupBy: flowslatest.GroupByNamespace,
 		Thresholds: flowslatest.AlertThresholds{
 			Info: "100",

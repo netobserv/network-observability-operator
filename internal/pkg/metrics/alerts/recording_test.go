@@ -11,11 +11,24 @@ import (
 func TestBuildRecordingRules(t *testing.T) {
 	ctx := context.Background()
 
-	// Create a FlowCollectorSpec with recording rules mode
+	// Create health rules with recording-rule mode
+	healthRules := []flowslatest.HealthRule{
+		{
+			Template: flowslatest.AlertDNSErrors,
+			Mode:     flowslatest.HealthRuleModeRecordingRule,
+			Variants: []flowslatest.HealthRuleVariant{
+				{
+					GroupBy: flowslatest.GroupByNamespace,
+				},
+			},
+		},
+	}
+
+	// Create a FlowCollectorSpec with recording rules
 	spec := &flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				HealthMode: string(flowslatest.HealthModeRecordingRules),
+				HealthRules: &healthRules,
 			},
 			Advanced: &flowslatest.AdvancedProcessorConfig{
 				Env: map[string]string{
@@ -33,88 +46,115 @@ func TestBuildRecordingRules(t *testing.T) {
 		},
 	}
 
-	rules := BuildRecordingRules(ctx, spec)
+	rules := BuildRules(ctx, spec)
 
 	// Should have some recording rules
 	assert.NotEmpty(t, rules, "should generate recording rules")
 
-	// Verify we have the basic recording rules (NoFlows, LokiError)
-	foundNoFlows := false
-	foundLokiError := false
-
+	// Verify that recording rules have the correct structure
+	hasRecording := false
 	for _, rule := range rules {
-		if rule.Record == "netobserv:health:no_flows:rate1m" {
-			foundNoFlows = true
-			assert.Contains(t, rule.Labels, "health_template")
-			assert.Equal(t, "NetObservNoFlows", rule.Labels["health_template"])
-		}
-		if rule.Record == "netobserv:health:loki_errors:rate1m" {
-			foundLokiError = true
-			assert.Contains(t, rule.Labels, "health_template")
-			assert.Equal(t, "NetObservLokiError", rule.Labels["health_template"])
-		}
-
-		// Verify that recording rules have the correct structure
 		if rule.Record != "" {
+			hasRecording = true
 			assert.NotEmpty(t, rule.Expr.StrVal, "recording rule should have an expression")
 			assert.Contains(t, rule.Labels, "netobserv", "recording rule should have netobserv label")
 			assert.Equal(t, "health", rule.Labels["netobserv"])
 		}
 	}
 
-	assert.True(t, foundNoFlows, "should have no_flows recording rule")
-	assert.True(t, foundLokiError, "should have loki_errors recording rule")
+	assert.True(t, hasRecording, "should have at least one recording rule")
 }
 
-func TestBuildRules_Dispatcher(t *testing.T) {
+func TestBuildRules_MixedModes(t *testing.T) {
 	ctx := context.Background()
 
-	// Test with alerts mode (default)
-	specAlerts := &flowslatest.FlowCollectorSpec{
-		Processor: flowslatest.FlowCollectorFLP{
-			Metrics: flowslatest.FLPMetrics{
-				HealthMode: string(flowslatest.HealthModeAlerts),
+	// Create health rules with mixed modes
+	healthRules := []flowslatest.HealthRule{
+		{
+			Template: flowslatest.AlertDNSErrors,
+			Mode:     flowslatest.HealthRuleModeAlert,
+			Variants: []flowslatest.HealthRuleVariant{
+				{
+					Thresholds: flowslatest.AlertThresholds{
+						Warning: "5",
+					},
+					GroupBy: flowslatest.GroupByNamespace,
+				},
+			},
+		},
+		{
+			Template: flowslatest.AlertPacketDropsByKernel,
+			Mode:     flowslatest.HealthRuleModeRecordingRule,
+			Variants: []flowslatest.HealthRuleVariant{
+				{
+					GroupBy: flowslatest.GroupByNode,
+				},
 			},
 		},
 	}
 
-	alertRules := BuildRules(ctx, specAlerts)
+	// Disable default templates that we don't want (but not the ones we're overriding)
+	disabledTemplates := []flowslatest.AlertTemplate{
+		flowslatest.AlertPacketDropsByDevice,
+		flowslatest.AlertIPsecErrors,
+		flowslatest.AlertNetpolDenied,
+		flowslatest.AlertLatencyHighTrend,
+		flowslatest.AlertExternalEgressHighTrend,
+		flowslatest.AlertExternalIngressHighTrend,
+		flowslatest.AlertCrossAZ,
+	}
 
-	// Should have alerts (they have Alert field set)
+	// Include necessary metrics
+	includeList := []flowslatest.FLPMetric{
+		"namespace_drop_packets_total",
+		"namespace_ingress_packets_total",
+		"namespace_dns_latency_seconds",
+		"node_drop_packets_total",
+		"node_ingress_packets_total",
+	}
+
+	spec := &flowslatest.FlowCollectorSpec{
+		Processor: flowslatest.FlowCollectorFLP{
+			Metrics: flowslatest.FLPMetrics{
+				HealthRules:   &healthRules,
+				DisableAlerts: disabledTemplates,
+				IncludeList:   &includeList,
+			},
+			Advanced: &flowslatest.AdvancedProcessorConfig{
+				Env: map[string]string{
+					"EXPERIMENTAL_ALERTS_HEALTH": "true",
+				},
+			},
+		},
+		Agent: flowslatest.FlowCollectorAgent{
+			Type: flowslatest.AgentEBPF,
+			EBPF: flowslatest.FlowCollectorEBPF{
+				Privileged: true,
+				Features: []flowslatest.AgentFeature{
+					flowslatest.DNSTracking,
+					flowslatest.PacketDrop,
+				},
+			},
+		},
+	}
+
+	rules := BuildRules(ctx, spec)
+
+	// Should have both alerts and recording rules
 	hasAlerts := false
-	for _, rule := range alertRules {
+	hasRecording := false
+
+	for _, rule := range rules {
 		if rule.Alert != "" {
 			hasAlerts = true
-			break
 		}
-	}
-	assert.True(t, hasAlerts, "alerts mode should generate alert rules")
-
-	// Test with recording rules mode
-	specRecording := &flowslatest.FlowCollectorSpec{
-		Processor: flowslatest.FlowCollectorFLP{
-			Metrics: flowslatest.FLPMetrics{
-				HealthMode: string(flowslatest.HealthModeRecordingRules),
-			},
-		},
-	}
-
-	recordingRules := BuildRules(ctx, specRecording)
-
-	// Should have recording rules (they have Record field set)
-	hasRecording := false
-	for _, rule := range recordingRules {
 		if rule.Record != "" {
 			hasRecording = true
-			break
 		}
 	}
-	assert.True(t, hasRecording, "recording mode should generate recording rules")
 
-	// Verify no alerts in recording mode
-	for _, rule := range recordingRules {
-		assert.Empty(t, rule.Alert, "recording mode should not generate alert rules")
-	}
+	assert.True(t, hasAlerts, "should have alert rules for DNS errors")
+	assert.True(t, hasRecording, "should have recording rules for packet drops")
 }
 
 func TestCamelToSnake(t *testing.T) {
@@ -139,7 +179,7 @@ func TestCamelToSnake(t *testing.T) {
 func TestRecordingRuleName(t *testing.T) {
 	rb := ruleBuilder{
 		template: flowslatest.AlertPacketDropsByKernel,
-		alert: &flowslatest.AlertVariant{
+		alert: &flowslatest.HealthRuleVariant{
 			GroupBy: flowslatest.GroupByNamespace,
 		},
 		side: asSource,
@@ -155,7 +195,7 @@ func TestRecordingRuleName(t *testing.T) {
 func TestRecordingRuleLabels(t *testing.T) {
 	rb := ruleBuilder{
 		template: flowslatest.AlertDNSErrors,
-		alert: &flowslatest.AlertVariant{
+		alert: &flowslatest.HealthRuleVariant{
 			GroupBy: flowslatest.GroupByWorkload,
 		},
 		side: asDest,

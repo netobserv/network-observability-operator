@@ -10,7 +10,7 @@ import (
 )
 
 // convertToRecordingRules converts alert configuration to recording rules
-func convertToRecordingRules(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
+func convertToRecordingRules(template flowslatest.AlertTemplate, alert *flowslatest.HealthRuleVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
 	var rules []monitoringv1.Rule
 	sides := []srcOrDst{asSource, asDest}
 	if alert.GroupBy == "" {

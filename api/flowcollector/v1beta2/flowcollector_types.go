@@ -587,22 +587,12 @@ type FLPMetrics struct {
 	// +optional
 	DisableAlerts []AlertTemplate `json:"disableAlerts"`
 
-	// `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants [Unsupported (*)].
+	// `healthRules` is a list of health monitoring rules to be created, organized by templates, mode (alert or recording-rule), and variants [Unsupported (*)].
+	// Each rule can be configured independently as either an alert or a recording rule via its `mode` field.
 	// This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
-	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+	// More information: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
-	Alerts *[]FLPAlert `json:"alerts"`
-
-	// `healthMode` defines how to expose network health information.
-	// Possible values are `alerts` (default) or `recording-rules`.
-	// - `alerts`: Generate Prometheus alerts that fire when thresholds are exceeded (current behavior).
-	// - `recording-rules`: Generate Prometheus recording rules that pre-compute health metrics for passive consumption.
-	// Recording rules avoid alert fatigue and are useful for dashboard-based health monitoring.
-	// This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
-	// +kubebuilder:validation:Enum:="alerts";"recording-rules"
-	// +kubebuilder:default:="alerts"
-	// +optional
-	HealthMode string `json:"healthMode,omitempty"`
+	HealthRules *[]HealthRule `json:"healthRules"`
 }
 
 type FLPLogTypes string

@@ -22,7 +22,7 @@ const (
 
 type ruleBuilder struct {
 	template          flowslatest.AlertTemplate
-	alert             *flowslatest.AlertVariant
+	alert             *flowslatest.HealthRuleVariant
 	enabledMetrics    []string
 	side              srcOrDst
 	severity          string
@@ -33,35 +33,35 @@ type ruleBuilder struct {
 	duration          monitoringv1.Duration
 }
 
-// BuildRules is the main entry point that decides whether to build alerts or recording rules
-// based on the healthMode configuration
+// BuildRules is the main entry point that builds both alerts and recording rules
+// based on each health rule's mode configuration
 func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
-	log := log.FromContext(ctx)
-
-	if fc.Processor.Metrics.HealthMode == string(flowslatest.HealthModeRecordingRules) {
-		log.Info("Building recording rules for health monitoring")
-		return BuildRecordingRules(ctx, fc)
-	}
-
-	log.Info("Building alerts for health monitoring")
-	return BuildAlertRules(ctx, fc)
-}
-
-// BuildAlertRules builds Prometheus alert rules for health monitoring
-func BuildAlertRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
 	log := log.FromContext(ctx)
 	rules := []monitoringv1.Rule{}
 
 	if fc.HasExperimentalAlertsHealth() {
-		alerts := fc.GetFLPAlerts()
+		healthRules := fc.GetHealthRules()
 		metrics := fc.GetIncludeList()
-		for _, alert := range alerts {
-			if ok, _ := alert.IsAllowed(fc); !ok {
+
+		for _, healthRule := range healthRules {
+			if ok, _ := healthRule.IsAllowed(fc); !ok {
 				continue
 			}
-			for _, variant := range alert.Variants {
-				if r, err := convertToRules(alert.Template, &variant, metrics); err != nil {
-					log.Error(err, "unable to configure an alert")
+
+			for _, variant := range healthRule.Variants {
+				var r []monitoringv1.Rule
+				var err error
+
+				// Decide whether to build alert or recording rule based on mode
+				if healthRule.Mode == flowslatest.HealthRuleModeRecordingRule {
+					r, err = convertToRecordingRules(healthRule.Template, &variant, metrics)
+				} else {
+					// Default to alert mode
+					r, err = convertToRules(healthRule.Template, &variant, metrics)
+				}
+
+				if err != nil {
+					log.Error(err, "unable to configure a health rule", "template", healthRule.Template, "mode", healthRule.Mode)
 				} else if len(r) > 0 {
 					rules = append(rules, r...)
 				}
@@ -69,6 +69,7 @@ func BuildAlertRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []m
 		}
 	}
 
+	// Add system health rules (NoFlows and LokiError)
 	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
 		r := alertNoFlows()
 		rules = append(rules, *r)
@@ -81,41 +82,7 @@ func BuildAlertRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []m
 	return rules
 }
 
-// BuildRecordingRules builds Prometheus recording rules for health monitoring
-func BuildRecordingRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
-	log := log.FromContext(ctx)
-	rules := []monitoringv1.Rule{}
-
-	if fc.HasExperimentalAlertsHealth() {
-		alerts := fc.GetFLPAlerts()
-		metrics := fc.GetIncludeList()
-		for _, alert := range alerts {
-			if ok, _ := alert.IsAllowed(fc); !ok {
-				continue
-			}
-			for _, variant := range alert.Variants {
-				if r, err := convertToRecordingRules(alert.Template, &variant, metrics); err != nil {
-					log.Error(err, "unable to configure a recording rule")
-				} else if len(r) > 0 {
-					rules = append(rules, r...)
-				}
-			}
-		}
-	}
-
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
-		r := recordingNoFlows()
-		rules = append(rules, *r)
-	}
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
-		r := recordingLokiError()
-		rules = append(rules, *r)
-	}
-
-	return rules
-}
-
-func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
+func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.HealthRuleVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
 	var rules []monitoringv1.Rule
 	var upperThreshold string
 	sides := []srcOrDst{asSource, asDest}
