@@ -4960,7 +4960,7 @@ spec:
                       type: string
                     consumerReplicas:
                       description: |-
-                        `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`.
+                        `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`, default is 3.
                         This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.processor.unmanagedReplicas` is `true`.
                       format: int32
                       minimum: 0

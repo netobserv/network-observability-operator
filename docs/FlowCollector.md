@@ -8416,7 +8416,7 @@ such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your 
         <td><b>consumerReplicas</b></td>
         <td>integer</td>
         <td>
-          `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`.
+          `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`, default is 3.
 This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.processor.unmanagedReplicas` is `true`.<br/>
           <br/>
             <i>Format</i>: int32<br/>

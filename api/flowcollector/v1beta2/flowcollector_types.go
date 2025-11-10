@@ -641,7 +641,7 @@ type FlowCollectorFLP struct {
 	KafkaConsumerAutoscaler FlowCollectorHPA `json:"kafkaConsumerAutoscaler,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
-	// `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`.
+	// `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`, default is 3.
 	// This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.processor.unmanagedReplicas` is `true`.
 	ConsumerReplicas *int32 `json:"consumerReplicas,omitempty"`
 
