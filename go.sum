@@ -119,8 +119,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/netobserv/flowlogs-pipeline v1.10.0-community h1:3Km5B+UmDrYPeiwhWY43YYEIlzjbRfErKMQ67PtMZWQ=
 github.com/netobserv/flowlogs-pipeline v1.10.0-community/go.mod h1:CuhvsFU2p15A9RPWSOGZaaCfjsocn7ZYtxKH2hAehZY=
-github.com/netobserv/netobserv-ebpf-agent v1.9.2-community h1:ghW16OO4QRWj0Uh1gMYX+NjAlgx2sZmCsO3Tkwoj4Do=
-github.com/netobserv/netobserv-ebpf-agent v1.9.2-community/go.mod h1:17OaUNAwx0LxoeV/SaHlJIJP6bpN7zSvUP3GtZelESQ=
+github.com/netobserv/netobserv-ebpf-agent v1.10.0-community h1:XLauF3k+G2RV2EgHvYK+r3zq0FRm+k7P3hq0I0J6GzE=
+github.com/netobserv/netobserv-ebpf-agent v1.10.0-community/go.mod h1:n75b6DyE/soLE794JlxILqt8rd/KoPfSoUs1WN4jzqg=
 github.com/netsampler/goflow2 v1.3.7 h1:XZaTy8kkMnGXpJ9hS3KbO1McyrFTpVNhVFEx9rNhMmc=
 github.com/netsampler/goflow2 v1.3.7/go.mod h1:4UZsVGVAs//iMCptUHn3WNScztJeUhZH7kDW2+/vDdQ=
 github.com/onsi/ginkgo/v2 v2.27.2 h1:LzwLj0b89qtIy6SSASkzlNvX6WktqurSHwkk2ipF/Ns=

@@ -137,7 +137,7 @@ type Agent struct {
 	Direction string `env:"DIRECTION" envDefault:"both"`
 	// Logger level. From more to less verbose: trace, debug, info, warn, error, fatal, panic.
 	LogLevel string `env:"LOG_LEVEL" envDefault:"info"`
-	// Sampling holds the rate at which packets should be sampled and sent to the target collector.
+	// Sampling holds the interval at which packets should be sampled and sent to the target collector.
 	// E.g. if set to 100, one out of 100 packets, on average, will be sent to the target collector.
 	Sampling int `env:"SAMPLING" envDefault:"0"`
 	// TCAttachMode defines the eBPF attach mode on traffic controller: tcx (default), tc or any.
@@ -147,6 +147,18 @@ type Agent struct {
 	// TCAttachRetries defines the number of retries in case of attach/detach failures.
 	// Valid only for 'tc' and 'tcx' attach modes.
 	TCAttachRetries int `env:"TC_ATTACH_RETRIES" envDefault:"4"`
+	// TCXAttachAnchorIngress defines the anchor to use when attaching eBPF programs to interfaces using tcx mode for
+	// ingress.
+	// none (default): no specific anchor is used and the eBPF program is generally inserted at the end.
+	// head: eBPF program is inserted at the head.
+	// tail: eBPF program is inserted at the tail.
+	TCXAttachAnchorIngress string `env:"TCX_ATTACH_ANCHOR_INGRESS" envDefault:"none"`
+	// TCXAttachAnchorEgress defines the anchor to use when attaching eBPF programs to interfaces using tcx mode for
+	// egress.
+	// none (default): no specific anchor is used and the eBPF program is generally inserted at the end.
+	// head: eBPF program is inserted at the head.
+	// tail: eBPF program is inserted at the tail.
+	TCXAttachAnchorEgress string `env:"TCX_ATTACH_ANCHOR_EGRESS" envDefault:"none"`
 	// ListenInterfaces specifies the mechanism used by the agent to listen for added or removed
 	// network interfaces. Accepted values are "watch" (default) or "poll".
 	// If the value is "watch", interfaces are traced immediately after they are created. This is
