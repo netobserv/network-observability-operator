@@ -20,6 +20,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	promConfig "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -46,6 +47,15 @@ type WriteLoki struct {
 	TimestampScale string `yaml:"timestampScale,omitempty" json:"timestampScale,omitempty" doc:"timestamp units scale (e.g. for UNIX = 1s)"`
 	Format         string `yaml:"format,omitempty" json:"format,omitempty" doc:"the format of each line: printf (writes using golang's default map printing), fields (writes one key and value field per line) or json (default)"`
 	Reorder        bool   `yaml:"reorder,omitempty" json:"reorder,omitempty" doc:"reorder json map keys"`
+
+	// Client protocol selection
+	ClientProtocol string          `yaml:"clientProtocol,omitempty" json:"clientProtocol,omitempty" doc:"type of client protocol to use: 'http' or 'grpc' (default: 'http')"`
+	GRPCConfig     *GRPCLokiConfig `yaml:"grpcConfig,omitempty" json:"grpcConfig,omitempty" doc:"gRPC client configuration (used only for gRPC client type)"`
+}
+
+type GRPCLokiConfig struct {
+	KeepAlive        string `yaml:"keepAlive,omitempty" json:"keepAlive,omitempty" doc:"keep alive interval"`
+	KeepAliveTimeout string `yaml:"keepAliveTimeout,omitempty" json:"keepAliveTimeout,omitempty" doc:"keep alive timeout"`
 }
 
 func (w *WriteLoki) SetDefaults() {
@@ -76,6 +86,26 @@ func (w *WriteLoki) SetDefaults() {
 	if w.Format == "" {
 		w.Format = "json"
 	}
+	if w.ClientProtocol == "" {
+		w.ClientProtocol = "http"
+	}
+
+	// Set defaults for gRPC config if gRPC client protocol is selected
+	if w.ClientProtocol == "grpc" {
+		if w.GRPCConfig == nil {
+			w.GRPCConfig = &GRPCLokiConfig{}
+		}
+		w.GRPCConfig.SetDefaults()
+	}
+}
+
+func (g *GRPCLokiConfig) SetDefaults() {
+	if g.KeepAlive == "" {
+		g.KeepAlive = "30s"
+	}
+	if g.KeepAliveTimeout == "" {
+		g.KeepAliveTimeout = "5s"
+	}
 }
 
 func (w *WriteLoki) Validate() error {
@@ -85,11 +115,51 @@ func (w *WriteLoki) Validate() error {
 	if w.TimestampScale == "" {
 		return errors.New("timestampUnit must be a valid Duration > 0 (e.g. 1m, 1s or 1ms)")
 	}
-	if w.URL == "" {
-		return errors.New("url can't be empty")
-	}
 	if w.BatchSize <= 0 {
 		return fmt.Errorf("invalid batchSize: %v. Required > 0", w.BatchSize)
 	}
+
+	// Validate client protocol
+	if w.ClientProtocol != "" && w.ClientProtocol != "http" && w.ClientProtocol != "grpc" {
+		return fmt.Errorf("invalid clientProtocol: %s. Must be 'http' or 'grpc'", w.ClientProtocol)
+	}
+
+	// Validate based on client protocol
+	switch w.ClientProtocol {
+	case "http", "":
+		if w.URL == "" {
+			return errors.New("url can't be empty for HTTP client")
+		}
+	case "grpc":
+		if w.URL == "" {
+			return errors.New("url can't be empty for gRPC client")
+		}
+		if w.GRPCConfig == nil {
+			return errors.New("grpcConfig is required when using gRPC client protocol")
+		}
+		if err := w.GRPCConfig.Validate(); err != nil {
+			return fmt.Errorf("gRPC config validation failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (g *GRPCLokiConfig) Validate() error {
+	if g == nil {
+		return errors.New("gRPC config cannot be nil")
+	}
+	// Validate duration fields
+	if g.KeepAlive != "" {
+		if _, err := time.ParseDuration(g.KeepAlive); err != nil {
+			return fmt.Errorf("invalid keepAlive duration: %w", err)
+		}
+	}
+	if g.KeepAliveTimeout != "" {
+		if _, err := time.ParseDuration(g.KeepAliveTimeout); err != nil {
+			return fmt.Errorf("invalid keepAliveTimeout duration: %w", err)
+		}
+	}
+
 	return nil
 }
