@@ -51,7 +51,7 @@ type MetricsItem struct {
 	Type       MetricEncodeOperationEnum `yaml:"type" json:"type" doc:"(enum) one of the following:"`
 	Help       string                    `yaml:"help,omitempty" json:"help,omitempty" doc:"the metric help text"`
 	Filters    []MetricsFilter           `yaml:"filters" json:"filters" doc:"a list of criteria to filter entries by"`
-	ValueKey   string                    `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value"`
+	ValueKey   string                    `yaml:"valueKey" json:"valueKey" doc:"entry key from which to resolve metric value; leave empty to count log lines"`
 	Labels     []string                  `yaml:"labels" json:"labels" doc:"labels to be associated with the metric"`
 	Remap      map[string]string         `yaml:"remap" json:"remap" doc:"optional remapping of labels"`
 	Flatten    []string                  `yaml:"flatten" json:"flatten" doc:"list fields to be flattened"`
