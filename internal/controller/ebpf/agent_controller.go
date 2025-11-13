@@ -484,7 +484,7 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			// Send to FLP service
 			config = append(config, corev1.EnvVar{
 				Name:  envFlowsTargetHost,
-				Value: fmt.Sprintf("%s.%s.svc", constants.FLPName, c.Namespace),
+				Value: fmt.Sprintf("%s.%s.svc.cluster.local.", constants.FLPName, c.Namespace),
 			}, corev1.EnvVar{
 				Name:  envFlowsTargetPort,
 				Value: strconv.Itoa(int(*advancedConfig.Port)),
