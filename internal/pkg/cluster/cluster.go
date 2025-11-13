@@ -12,6 +12,7 @@ import (
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,6 +32,7 @@ type Info struct {
 	apisMap          map[string]bool
 	ready            bool
 	cni              NetworkType
+	nbNodes          uint16
 }
 
 var (
@@ -116,6 +118,13 @@ func (c *Info) postCreate(ctx context.Context, cl client.Client) error {
 		}
 		c.cni = NetworkType(network.Spec.NetworkType)
 	}
+
+	l := v1.NodeList{}
+	if err := cl.List(ctx, &l); err != nil {
+		return fmt.Errorf("could not retrieve number of nodes: %w", err)
+	}
+	c.nbNodes = uint16(len(l.Items))
+
 	c.ready = true
 	return nil
 }
@@ -156,6 +165,13 @@ func (c *Info) GetCNI() (NetworkType, error) {
 		return "", errors.New("cluster info not collected")
 	}
 	return c.cni, nil
+}
+
+func (c *Info) GetNbNodes() (uint16, error) {
+	if !c.ready {
+		return 0, errors.New("cluster info not collected")
+	}
+	return c.nbNodes, nil
 }
 
 func (c *Info) IsOpenShiftVersionLessThan(v string) (bool, string, error) {

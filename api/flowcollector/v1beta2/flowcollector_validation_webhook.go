@@ -60,6 +60,7 @@ func (r *FlowCollector) ValidateDelete(_ context.Context, _ runtime.Object) (adm
 
 func (r *FlowCollector) Validate(_ context.Context, fc *FlowCollector) (admission.Warnings, error) {
 	v := validator{fc: &fc.Spec}
+	v.validateDeploymentModel()
 	v.validateNetPol()
 	v.validateAgent()
 	v.validateFLP()
@@ -79,6 +80,19 @@ func (v *validator) warnLogLevels() {
 	}
 	if v.fc.Processor.LogLevel == "debug" || v.fc.Processor.LogLevel == "trace" {
 		v.warnings = append(v.warnings, fmt.Sprintf("The log level for the processor (flowlogs-pipeline) is %s, which impacts performance and resource footprint.", v.fc.Processor.LogLevel))
+	}
+}
+
+func (v *validator) validateDeploymentModel() {
+	if CurrentClusterInfo != nil {
+		n, err := CurrentClusterInfo.GetNbNodes()
+		if err != nil {
+			v.warnings = append(v.warnings, fmt.Sprintf("Could not get the number of nodes, cannot validate the deployment model: %s", err.Error()))
+		} else if n >= 15 && v.fc.DeploymentModel == DeploymentModelDirect {
+			v.warnings = append(v.warnings, fmt.Sprintf(`The number of nodes is bigger than the recommendation for deployment model "Direct" (%d >= 15), meaning that "flowlogs-pipeline" uses a lot more memory and bandwidth than necessary; it is recommended to use a different deployment model ("Service" or "Kafka").`, n))
+		}
+	} else {
+		v.warnings = append(v.warnings, "Unknown environment, cannot validate the deployment model")
 	}
 }
 
