@@ -12,6 +12,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	config "github.com/netobserv/network-observability-operator/internal/controller/consoleplugin/config"
@@ -110,7 +111,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 func getBuilder(spec *flowslatest.FlowCollectorSpec, lk *helper.LokiConfig) builder {
 	info := reconcilers.Common{Namespace: testNamespace, Loki: lk, ClusterInfo: &cluster.Info{}}
 	b := newBuilder(info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: testImage}, status.Instance{}), spec, constants.PluginName)
-	_, _, _ = b.configMap(context.Background()) // build configmap to update builder's volumes
+	_, _, _ = b.configMap(context.Background(), nil) // build configmap to update builder's volumes
 	return b
 }
 
@@ -223,8 +224,8 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 	}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
 	builder := getBuilder(&spec, &loki)
-	old, _, _ := builder.configMap(context.Background())
-	nEw, _, _ := builder.configMap(context.Background())
+	old, _, _ := builder.configMap(context.Background(), nil)
+	nEw, _, _ := builder.configMap(context.Background(), nil)
 	assert.Equal(old.Data, nEw.Data)
 
 	// update loki
@@ -239,7 +240,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 		}},
 	}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -247,7 +248,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 	loki.LokiManualParams.StatusURL = "http://loki.status:3100/"
 	loki.LokiManualParams.StatusTLS.Enable = true
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -258,7 +259,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 		CertFile: "status-ca.crt",
 	}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -270,7 +271,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 		CertKey:  "tls.key",
 	}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 }
 
@@ -286,8 +287,8 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 	loki := helper.NewLokiConfig(&lokiSpec, "any")
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder := getBuilder(&spec, &loki)
-	old, _, _ := builder.configMap(context.Background())
-	nEw, _, _ := builder.configMap(context.Background())
+	old, _, _ := builder.configMap(context.Background(), nil)
+	nEw, _, _ := builder.configMap(context.Background(), nil)
 	assert.Equal(old.Data, nEw.Data)
 
 	// update lokistack name
@@ -296,7 +297,7 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -306,7 +307,7 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 }
 
@@ -331,7 +332,7 @@ func TestConfigMapContent(t *testing.T) {
 		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
 	}
 	builder := getBuilder(&spec, &loki)
-	cm, _, err := builder.configMap(context.Background())
+	cm, _, err := builder.configMap(context.Background(), nil)
 	assert.NotNil(cm)
 	assert.Nil(err)
 
@@ -479,4 +480,243 @@ func TestNoMissingFields(t *testing.T) {
 		}
 	}
 	assert.Empty(t, missing, "Missing fields should be added in static config file, under 'fields'")
+}
+
+func TestLokiStackStatusEmbedding(t *testing.T) {
+	assert := assert.New(t)
+
+	plugin := getPluginConfig()
+	lokiSpec := flowslatest.FlowCollectorLoki{
+		Mode:      flowslatest.LokiModeLokiStack,
+		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
+	}
+	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
+	builder := getBuilder(&spec, &loki)
+
+	// Test 1: LokiStack with ready status
+	lokiStackReady := &lokiv1.LokiStack{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "lokistack",
+			Namespace: "ls-namespace",
+		},
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:   "Ready",
+					Status: "True",
+					Reason: "ReadyComponents",
+				},
+			},
+		},
+	}
+	cm, _, err := builder.configMap(context.Background(), lokiStackReady)
+	assert.Nil(err)
+	assert.NotNil(cm)
+
+	var cfg config.PluginConfig
+	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &cfg)
+	assert.Nil(err)
+	assert.Equal("ready", cfg.Loki.Status)
+	assert.Empty(cfg.Loki.StatusURL, "StatusURL should be cleared when LokiStack status is embedded")
+
+	// Test 2: LokiStack with pending status (no ready condition)
+	lokiStackPending := &lokiv1.LokiStack{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "lokistack",
+			Namespace: "ls-namespace",
+		},
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:   "Pending",
+					Status: "False",
+					Reason: "PendingComponents",
+				},
+			},
+		},
+	}
+	cm, _, err = builder.configMap(context.Background(), lokiStackPending)
+	assert.Nil(err)
+	assert.NotNil(cm)
+
+	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &cfg)
+	assert.Nil(err)
+	assert.Equal("pending", cfg.Loki.Status)
+	assert.Empty(cfg.Loki.StatusURL)
+
+	// Test 3: LokiStack with ReadyComponents but Status=False
+	lokiStackNotReady := &lokiv1.LokiStack{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "lokistack",
+			Namespace: "ls-namespace",
+		},
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:   "Ready",
+					Status: "False",
+					Reason: "ReadyComponents",
+				},
+			},
+		},
+	}
+	cm, _, err = builder.configMap(context.Background(), lokiStackNotReady)
+	assert.Nil(err)
+	assert.NotNil(cm)
+
+	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &cfg)
+	assert.Nil(err)
+	assert.Equal("pending", cfg.Loki.Status)
+	assert.Empty(cfg.Loki.StatusURL)
+
+	// Test 4: No LokiStack provided (nil)
+	cm, _, err = builder.configMap(context.Background(), nil)
+	assert.Nil(err)
+	assert.NotNil(cm)
+
+	// Create a new config variable to avoid reusing old values
+	var cfgNil config.PluginConfig
+	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &cfgNil)
+	assert.Nil(err)
+	assert.Empty(cfgNil.Loki.Status, "Status should be empty when no LokiStack is provided")
+	// StatusURL should be present when using LokiStack mode without actual LokiStack object
+	assert.NotEmpty(cfgNil.Loki.StatusURL)
+}
+
+func TestGetLokiStatus(t *testing.T) {
+	assert := assert.New(t)
+
+	// Test 1: nil LokiStack
+	status := getLokiStatus(nil)
+	assert.Empty(status)
+
+	// Test 2: Ready status
+	lokiStackReady := &lokiv1.LokiStack{
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:   "Ready",
+					Status: "True",
+					Reason: "ReadyComponents",
+				},
+			},
+		},
+	}
+	status = getLokiStatus(lokiStackReady)
+	assert.Equal("ready", status)
+
+	// Test 3: Pending status (no ReadyComponents)
+	lokiStackPending := &lokiv1.LokiStack{
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:   "Pending",
+					Status: "True",
+					Reason: "Pending",
+				},
+			},
+		},
+	}
+	status = getLokiStatus(lokiStackPending)
+	assert.Equal("pending", status)
+
+	// Test 4: Not ready (ReadyComponents with Status=False)
+	lokiStackNotReady := &lokiv1.LokiStack{
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:   "Ready",
+					Status: "False",
+					Reason: "ReadyComponents",
+				},
+			},
+		},
+	}
+	status = getLokiStatus(lokiStackNotReady)
+	assert.Equal("pending", status)
+
+	// Test 5: Empty conditions
+	lokiStackEmpty := &lokiv1.LokiStack{
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{},
+		},
+	}
+	status = getLokiStatus(lokiStackEmpty)
+	assert.Equal("pending", status)
+}
+
+func TestLokiStackNamespaceDefaulting(t *testing.T) {
+	assert := assert.New(t)
+
+	// Test 1: LokiStack namespace is explicitly set
+	lokiSpec := flowslatest.FlowCollectorLoki{
+		Mode:      flowslatest.LokiModeLokiStack,
+		LokiStack: flowslatest.LokiStackRef{Name: "my-lokistack", Namespace: "custom-namespace"},
+	}
+	loki := helper.NewLokiConfig(&lokiSpec, "default-namespace")
+
+	// Verify URLs use the explicitly set namespace
+	assert.Contains(loki.QuerierURL, "custom-namespace")
+	assert.Contains(loki.StatusURL, "custom-namespace")
+	assert.NotContains(loki.QuerierURL, "default-namespace")
+
+	// Test 2: LokiStack namespace is empty (should default to FlowCollector namespace)
+	lokiSpecDefault := flowslatest.FlowCollectorLoki{
+		Mode:      flowslatest.LokiModeLokiStack,
+		LokiStack: flowslatest.LokiStackRef{Name: "my-lokistack", Namespace: ""},
+	}
+	lokiDefault := helper.NewLokiConfig(&lokiSpecDefault, "flowcollector-namespace")
+
+	// Verify URLs use the defaulted namespace
+	assert.Contains(lokiDefault.QuerierURL, "flowcollector-namespace")
+	assert.Contains(lokiDefault.StatusURL, "flowcollector-namespace")
+
+	// Test 3: Verify the exact URL format with namespace
+	expectedGatewayURL := "https://my-lokistack-gateway-http.flowcollector-namespace.svc.cluster.local.:8080/api/logs/v1/network/"
+	expectedStatusURL := "https://my-lokistack-query-frontend-http.flowcollector-namespace.svc.cluster.local.:3100/"
+	assert.Equal(expectedGatewayURL, lokiDefault.QuerierURL)
+	assert.Equal(expectedGatewayURL, lokiDefault.IngesterURL)
+	assert.Equal(expectedStatusURL, lokiDefault.StatusURL)
+}
+
+func TestLokiStackNotFoundBehavior(t *testing.T) {
+	assert := assert.New(t)
+
+	plugin := getPluginConfig()
+	lokiSpec := flowslatest.FlowCollectorLoki{
+		Mode:      flowslatest.LokiModeLokiStack,
+		LokiStack: flowslatest.LokiStackRef{Name: "missing-lokistack", Namespace: "test-namespace"},
+	}
+	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
+	builder := getBuilder(&spec, &loki)
+
+	// Test behavior when LokiStack is not found (nil is passed)
+	// This simulates the reconciler behavior when Get() returns NotFound
+	cm, digest, err := builder.configMap(context.Background(), nil)
+
+	// ConfigMap should still be created successfully
+	assert.Nil(err)
+	assert.NotNil(cm)
+	assert.NotEmpty(digest)
+
+	// Parse the config
+	var cfg config.PluginConfig
+	err = yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &cfg)
+	assert.Nil(err)
+
+	// Verify that:
+	// 1. Loki URL is still configured (from LokiStack ref)
+	assert.NotEmpty(cfg.Loki.URL)
+	assert.Contains(cfg.Loki.URL, "missing-lokistack")
+
+	// 2. StatusURL is present (from default LokiStack configuration)
+	assert.NotEmpty(cfg.Loki.StatusURL)
+
+	// 3. Status field is not set (because LokiStack object is not available)
+	assert.Empty(cfg.Loki.Status)
+
+	// This ensures the console plugin can still function with a status URL
+	// even if the LokiStack resource is temporarily unavailable
 }
