@@ -685,7 +685,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert.Len(params, 5)
 
 	lokiCfg := params[3].Write.Loki
-	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)
+	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc.cluster.local.:8080/api/logs/v1/network/", lokiCfg.URL)
 	assert.Equal("network", lokiCfg.TenantID)
 	assert.Equal("Bearer", lokiCfg.ClientConfig.Authorization.Type)
 	assert.Equal("/var/run/secrets/tokens/flowlogs-pipeline", lokiCfg.ClientConfig.Authorization.CredentialsFile)

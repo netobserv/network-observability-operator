@@ -151,7 +151,7 @@ spec:
     # Change mode to "LokiStack" to use with the loki operator
     mode: Monolithic
     monolithic:
-      url: 'http://loki.netobserv.svc:3100/'
+      url: 'http://loki.netobserv.svc.cluster.local.:3100/'
       tenantID: netobserv
       tls:
         enable: false
