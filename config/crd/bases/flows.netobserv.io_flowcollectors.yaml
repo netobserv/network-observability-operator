@@ -5647,6 +5647,7 @@ spec:
                                 type: array
                               name:
                                 description: Label name, used to flag matching flows.
+                                pattern: ^[a-zA-Z_:-][a-zA-Z0-9_:-]*$
                                 type: string
                             required:
                               - cidrs
