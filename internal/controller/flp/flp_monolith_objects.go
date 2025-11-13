@@ -87,7 +87,7 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 		b.flowMetrics,
 		b.detectedSubnets,
 		b.info.Loki,
-		b.info.ClusterInfo.ID,
+		b.info.ClusterInfo.GetID(),
 		&b.volumes,
 		&kafkaStage,
 	)

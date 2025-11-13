@@ -60,6 +60,7 @@ func (r *FlowCollector) ValidateDelete(_ context.Context, _ runtime.Object) (adm
 
 func (r *FlowCollector) Validate(_ context.Context, fc *FlowCollector) (admission.Warnings, error) {
 	v := validator{fc: &fc.Spec}
+	v.validateNetPol()
 	v.validateAgent()
 	v.validateFLP()
 	v.warnLogLevels()
@@ -81,16 +82,31 @@ func (v *validator) warnLogLevels() {
 	}
 }
 
+func (v *validator) validateNetPol() {
+	if CurrentClusterInfo != nil {
+		cni, err := CurrentClusterInfo.GetCNI()
+		if err != nil {
+			v.warnings = append(v.warnings, fmt.Sprintf("Could not detect CNI: %s", err.Error()))
+		} else if cni == cluster.OpenShiftSDN && v.fc.NetworkPolicy.Enable != nil && *v.fc.NetworkPolicy.Enable {
+			v.warnings = append(v.warnings, "OpenShiftSDN detected with unsupported setting: spec.networkPolicy.enable; this setting will be ignored; to remove this warning set spec.networkPolicy.enable to false.")
+		} else if cni != cluster.OVNKubernetes && v.fc.DeployNetworkPolicyOtherCNI() {
+			v.warnings = append(v.warnings, "Network policy is enabled via spec.networkPolicy.enable, despite not running OVN-Kubernetes: this configuration has not been tested; to remove this warning set spec.networkPolicy.enable to false.")
+		}
+	} else {
+		v.warnings = append(v.warnings, "Unknown environment, cannot detect the CNI in use")
+	}
+}
+
 func (v *validator) validateAgent() {
 	for feat, minVersion := range neededOpenShiftVersion {
 		if slices.Contains(v.fc.Agent.EBPF.Features, feat) {
 			if CurrentClusterInfo != nil && CurrentClusterInfo.IsOpenShift() {
 				// Make sure required version of ocp is installed
-				ok, err := CurrentClusterInfo.IsOpenShiftVersionAtLeast(minVersion)
+				ok, actual, err := CurrentClusterInfo.IsOpenShiftVersionAtLeast(minVersion)
 				if err != nil {
 					v.warnings = append(v.warnings, fmt.Sprintf("Could not detect OpenShift cluster version: %s", err.Error()))
 				} else if !ok {
-					v.warnings = append(v.warnings, fmt.Sprintf("The %s feature requires OpenShift %s or above (version detected: %s)", feat, minVersion, CurrentClusterInfo.GetOpenShiftVersion()))
+					v.warnings = append(v.warnings, fmt.Sprintf("The %s feature requires OpenShift %s or above (version detected: %s)", feat, minVersion, actual))
 				}
 			} else {
 				v.warnings = append(v.warnings, fmt.Sprintf("Unknown environment, cannot detect if the feature %s is supported", feat))

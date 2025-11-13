@@ -439,7 +439,7 @@ func TestValidateAgent(t *testing.T) {
 
 	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
-		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
+		CurrentClusterInfo.Mock(test.ocpVersion, "")
 		v := validator{fc: &test.fc.Spec}
 		v.validateAgent()
 		if test.expectedError == "" {
@@ -513,6 +513,7 @@ func TestValidateConntrack(t *testing.T) {
 
 	r := FlowCollector{}
 	CurrentClusterInfo = &cluster.Info{}
+	CurrentClusterInfo.Mock("", "")
 	for _, test := range tests {
 		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
@@ -718,7 +719,7 @@ func TestValidateFLP(t *testing.T) {
 	CurrentClusterInfo = &cluster.Info{}
 	r := FlowCollector{}
 	for _, test := range tests {
-		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
+		CurrentClusterInfo.Mock(test.ocpVersion, "")
 		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.NoError(t, err, test.name)
@@ -877,7 +878,7 @@ func TestValidateScheduling(t *testing.T) {
 	CurrentClusterInfo = &cluster.Info{}
 	r := FlowCollector{}
 	for _, test := range tests {
-		CurrentClusterInfo.MockOpenShiftVersion(test.ocpVersion)
+		CurrentClusterInfo.Mock(test.ocpVersion, "")
 		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.NoError(t, err, test.name)
@@ -910,4 +911,97 @@ func TestElligibleMetrics(t *testing.T) {
 	met, tot = GetElligibleMetricsForAlert(AlertPacketDropsByKernel, &AlertVariant{})
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total", "node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "node_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total", "node_egress_packets_total"}, tot)
+}
+
+func TestValidateNetPol(t *testing.T) {
+	tests := []struct {
+		name             string
+		fc               *FlowCollector
+		cni              cluster.NetworkType
+		expectedError    string
+		expectedWarnings admission.Warnings
+	}{
+		{
+			name: "Empty config is valid for ovn-k",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{},
+			},
+			cni: cluster.OVNKubernetes,
+		},
+		{
+			name: "Empty config is valid for sdn",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{},
+			},
+			cni: cluster.OpenShiftSDN,
+		},
+		{
+			name: "Empty config is valid for unknown",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{},
+			},
+			cni: "unknown",
+		},
+		{
+			name: "Enabled netpol is valid for ovn-k",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					NetworkPolicy: NetworkPolicy{Enable: ptr.To(true)},
+				},
+			},
+			cni: cluster.OVNKubernetes,
+		},
+		{
+			name: "Enabled netpol triggers warning for sdn",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					NetworkPolicy: NetworkPolicy{Enable: ptr.To(true)},
+				},
+			},
+			cni:              cluster.OpenShiftSDN,
+			expectedWarnings: admission.Warnings{"OpenShiftSDN detected with unsupported setting: spec.networkPolicy.enable; this setting will be ignored; to remove this warning set spec.networkPolicy.enable to false."},
+		},
+		{
+			name: "Enabled netpol triggers warning for unknown",
+			fc: &FlowCollector{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster",
+				},
+				Spec: FlowCollectorSpec{
+					NetworkPolicy: NetworkPolicy{Enable: ptr.To(true)},
+				},
+			},
+			cni:              "unknown",
+			expectedWarnings: admission.Warnings{"Network policy is enabled via spec.networkPolicy.enable, despite not running OVN-Kubernetes: this configuration has not been tested; to remove this warning set spec.networkPolicy.enable to false."},
+		},
+	}
+
+	CurrentClusterInfo = &cluster.Info{}
+	for _, test := range tests {
+		CurrentClusterInfo.Mock("4.20.0", test.cni)
+		v := validator{fc: &test.fc.Spec}
+		v.validateNetPol()
+		if test.expectedError == "" {
+			assert.Empty(t, v.errors, test.name)
+		} else {
+			assert.Len(t, v.errors, 1, test.name)
+			assert.ErrorContains(t, v.errors[0], test.expectedError, test.name)
+		}
+		assert.Equal(t, test.expectedWarnings, v.warnings, test.name)
+	}
 }

@@ -171,7 +171,7 @@ func TestGetEnvConfig_OCP4_14(t *testing.T) {
 	}
 
 	info := cluster.Info{}
-	info.MockOpenShiftVersion("4.14.5")
+	info.Mock("4.14.5", "")
 	env := getEnvConfig(&fc, &info)
 	assert.Equal(t, []corev1.EnvVar{
 		{Name: "GOMEMLIMIT", Value: "0"},

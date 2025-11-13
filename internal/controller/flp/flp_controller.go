@@ -122,11 +122,6 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 
 	r.watcher.Reset(ns)
 
-	// obtain default cluster ID - api is specific to openshift
-	if err := r.mgr.ClusterInfo.CheckClusterInfo(ctx, r.Client); err != nil {
-		log.Error(err, "unable to obtain cluster ID")
-	}
-
 	// Auto-detect subnets
 	var subnetLabels []flowslatest.SubnetLabel
 	if r.mgr.ClusterInfo.IsOpenShift() && fc.Spec.Processor.HasAutoDetectOpenShiftNetworks() {
