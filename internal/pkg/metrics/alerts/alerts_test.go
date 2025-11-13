@@ -17,6 +17,7 @@ func allTemplates() []flowslatest.AlertTemplate {
 		flowslatest.AlertPacketDropsByKernel,
 		flowslatest.AlertPacketDropsByDevice,
 		flowslatest.AlertDNSErrors,
+		flowslatest.AlertDNSNxDomain,
 		flowslatest.AlertIPsecErrors,
 		flowslatest.AlertLatencyHighTrend,
 		flowslatest.AlertNetpolDenied,
@@ -289,4 +290,17 @@ func TestLatencyPromql(t *testing.T) {
 		rules[0].Expr.StrVal,
 	)
 	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"100","unit":"%","upperBound":"500"}`, rules[0].Annotations["netobserv_io_network_health"])
+}
+
+func TestExtraLinks(t *testing.T) {
+	variant := flowslatest.AlertVariant{
+		GroupBy: flowslatest.GroupByNamespace,
+		Thresholds: flowslatest.AlertThresholds{
+			Info: "80",
+		},
+	}
+	rules, err := convertToRules(flowslatest.AlertDNSNxDomain, &variant, []string{"namespace_dns_bla"})
+	assert.NoError(t, err)
+	assert.Len(t, rules, 1)
+	assert.Contains(t, rules[0].Annotations["netobserv_io_network_health"], `"links":[{"name":"Trailing dot optimization","url":"https://tech.evaneos.com/how-a-single-dot-can-drastically-improve-performance-771cd3ca888d"}]`)
 }

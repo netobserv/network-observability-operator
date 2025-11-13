@@ -18,7 +18,8 @@ Here is the list of alerts installed by default:
 - `IPsecErrors`: triggered when NetObserv detects IPsec encyption errors; it requires the `IPSec` agent feature.
 - `NetpolDenied`: triggered when NetObserv detects traffic denied by network policies; it requires the `NetworkEvents` agent feature.
 - `LatencyHighTrend`: triggered when NetObserv detects an increase of TCP latency; it requires the `FlowRTT` agent feature.
-- `DNSErrors`: triggered when NetObserv detects DNS errors; it requires the `DNSTracking` agent feature.
+- `DNSErrors`: triggered when NetObserv detects DNS errors, other than NX_DOMAIN; it requires the `DNSTracking` agent feature.
+- `DNSNxDomain`: triggered when NetObserv detects DNS NX_DOMAIN errors; it requires the `DNSTracking` agent feature.
 - `ExternalEgressHighTrend`: TODO.
 - `ExternalIngressHighTrend`: TODO.
 

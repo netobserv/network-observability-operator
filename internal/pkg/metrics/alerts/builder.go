@@ -21,16 +21,28 @@ const (
 )
 
 type ruleBuilder struct {
-	template          flowslatest.AlertTemplate
-	alert             *flowslatest.AlertVariant
-	enabledMetrics    []string
-	side              srcOrDst
-	severity          string
-	threshold         string
-	upperThreshold    string
-	upperValueRange   string
-	trafficLinkFilter string
-	duration          monitoringv1.Duration
+	template        flowslatest.AlertTemplate
+	alert           *flowslatest.AlertVariant
+	enabledMetrics  []string
+	side            srcOrDst
+	severity        string
+	threshold       string
+	upperThreshold  string
+	upperValueRange string
+	trafficLink     *trafficLink
+	extraLinks      []link
+	duration        monitoringv1.Duration
+}
+
+type trafficLink struct {
+	ExtraFilter       string `json:"extraFilter"`
+	BackAndForth      bool   `json:"backAndForth"`
+	FilterDestination bool   `json:"filterDestination"`
+}
+
+type link struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
@@ -118,11 +130,14 @@ func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
 		return rb.ipsecErrors()
 	case flowslatest.AlertDNSErrors:
 		return rb.dnsErrors()
+	case flowslatest.AlertDNSNxDomain:
+		return rb.dnsNxDomainErrors()
 	case flowslatest.AlertNetpolDenied:
 		return rb.netpolDenied()
 	case flowslatest.AlertLatencyHighTrend:
 		return rb.latencyTrend()
-	case flowslatest.AlertCrossAZ, flowslatest.AlertExternalEgressHighTrend, flowslatest.AlertExternalIngressHighTrend: // TODO
+	case flowslatest.AlertCrossAZ, flowslatest.AlertExternalEgressHighTrend, flowslatest.AlertExternalIngressHighTrend:
+		return nil, nil // TODO
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error
 	}
@@ -184,8 +199,11 @@ func (rb *ruleBuilder) buildHealthAnnotation(override map[string]any) ([]byte, e
 	if rb.upperValueRange != "" {
 		annotation["upperBound"] = rb.upperValueRange
 	}
-	if rb.trafficLinkFilter != "" {
-		annotation["trafficLinkFilter"] = rb.trafficLinkFilter
+	if rb.trafficLink != nil {
+		annotation["trafficLink"] = rb.trafficLink
+	}
+	if len(rb.extraLinks) > 0 {
+		annotation["links"] = rb.extraLinks
 	}
 	switch rb.alert.GroupBy {
 	case flowslatest.GroupByNode:
