@@ -171,7 +171,7 @@ For the record, store the created Release in the `releases` directory of this re
 After a release, the following steps should be done:
 1. bump / update all repos for next version: you can run [this script](https://github.com/netobserv/documents/blob/main/hack/prepare-next-version.sh) from each repo.
 2. merge the nudging PRs that are generated after those changes
-3. update ystream and zstream in netobserv-catalog:
+3. update ystream and zstream in [netobserv-catalog](https://github.com/netobserv/netobserv-catalog):
   - updating the dependency graph (replace tags...) with the version just-released
   - only after step 2. is complete AND the bundle on-push jobs succeeded, regenerate all catalogs
 
@@ -222,3 +222,11 @@ oc -n ocp-network-observab-tenant annotate component/network-observability-opera
 oc -n ocp-network-observab-tenant annotate component/network-observability-operator-bundle-zstream mintmaker.appstudio.redhat.com/disabled-
 oc -n ocp-network-observab-tenant annotate component/network-observability-cli-zstream mintmaker.appstudio.redhat.com/disabled-
 ```
+
+### Summary of changes
+
+To summarize, after a release, we should have:
+- In all repos, for `main` (=ystream) and `release-1.n` (=zstream) branches, tekton pipelines (in `.tekton` directory) and `Dockerfile-args` files correctly set up as explained [here](https://github.com/netobserv/documents/blob/main/hack/prepare-next-version.sh#L180-L183).
+- In Konflux, ystream and zstream components pointing to the expected branches.
+- In [netobserv-catalog](https://github.com/netobserv/netobserv-catalog), `templates/y-stream.yaml` is prepared for the 1.nextY, with OLM dependency set up for upgrading from the last version, and `network-observability-operator-bundle-ystream:latest` referenced as the next version.
+- In [netobserv-catalog](https://github.com/netobserv/netobserv-catalog), `templates/z-stream.yaml` is prepared for the 1.Y.nextZ, with OLM dependency set up for upgrading from the last version, and `network-observability-operator-bundle-zstream:latest` referenced as the next version.
