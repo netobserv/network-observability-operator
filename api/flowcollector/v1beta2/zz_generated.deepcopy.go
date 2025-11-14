@@ -692,6 +692,11 @@ func (in *FlowCollectorFLP) DeepCopyInto(out *FlowCollectorFLP) {
 		**out = **in
 	}
 	in.KafkaConsumerAutoscaler.DeepCopyInto(&out.KafkaConsumerAutoscaler)
+	if in.ConsumerReplicas != nil {
+		in, out := &in.ConsumerReplicas, &out.ConsumerReplicas
+		*out = new(int32)
+		**out = **in
+	}
 	if in.LogTypes != nil {
 		in, out := &in.LogTypes, &out.LogTypes
 		*out = new(FLPLogTypes)

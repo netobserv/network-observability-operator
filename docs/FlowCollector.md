@@ -112,11 +112,13 @@ for these features as a best effort only.
         <td>enum</td>
         <td>
           `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-- `Direct` (default) to make the flow processor listen directly from the agents.<br>
+- `Direct` (default) to make the flow processor listen directly from the agents using the host network, backed by a DaemonSet.<br>
+- `Service` to make the flow processor listen as a Kubernetes Service, backed by a scalable Deployment.<br>
 - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
-Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br/>
+Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br>
+`Direct` is not recommended on large clusters as it is less memory efficient.<br/>
           <br/>
-            <i>Enum</i>: Direct, Kafka<br/>
+            <i>Enum</i>: Direct, Service, Kafka<br/>
             <i>Default</i>: Direct<br/>
         </td>
         <td>false</td>
@@ -3006,7 +3008,8 @@ such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your 
         <td><b><a href="#flowcollectorspecconsolepluginautoscaler">autoscaler</a></b></td>
         <td>object</td>
         <td>
-          `autoscaler` spec of a horizontal pod autoscaler to set up for the plugin Deployment.<br/>
+          `autoscaler` [deprecated (*)] spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.consolePlugin.unmanagedReplicas` to `true`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3075,6 +3078,13 @@ such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your 
 For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>unmanagedReplicas</b></td>
+        <td>boolean</td>
+        <td>
+          If `unmanagedReplicas` is `true`, the operator will not reconcile `replicas`. This is useful when using a pod autoscaler.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -4897,7 +4907,8 @@ If the operator is Exists, the value should be empty, otherwise just a regular s
 
 
 
-`autoscaler` spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+`autoscaler` [deprecated (*)] spec of a horizontal pod autoscaler to set up for the plugin Deployment.
+Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.consolePlugin.unmanagedReplicas` to `true`.
 
 <table>
     <thead>
@@ -8402,6 +8413,17 @@ such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your 
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>consumerReplicas</b></td>
+        <td>integer</td>
+        <td>
+          `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`, default is 3.
+This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.processor.unmanagedReplicas` is `true`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessordeduper">deduper</a></b></td>
         <td>object</td>
         <td>
@@ -8431,8 +8453,9 @@ but with a lesser improvement in performance.<br/>
         <td><b><a href="#flowcollectorspecprocessorkafkaconsumerautoscaler">kafkaConsumerAutoscaler</a></b></td>
         <td>object</td>
         <td>
-          `kafkaConsumerAutoscaler` is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
-This setting is ignored when Kafka is disabled.<br/>
+          `kafkaConsumerAutoscaler` [deprecated (*)] is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
+This setting is ignored when Kafka is disabled.
+Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.processor.unmanagedReplicas` to `true`.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8457,8 +8480,9 @@ This setting is ignored when Kafka is disabled.<br/>
         <td><b>kafkaConsumerReplicas</b></td>
         <td>integer</td>
         <td>
-          `kafkaConsumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
-This setting is ignored when Kafka is disabled.<br/>
+          `kafkaConsumerReplicas` [deprecated (*)] defines the number of replicas (pods) to start for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
+This setting is ignored when Kafka is disabled.
+Deprecation notice: use `spec.processor.consumerReplicas` instead.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 3<br/>
@@ -8521,6 +8545,13 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         <td>
           `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>unmanagedReplicas</b></td>
+        <td>boolean</td>
+        <td>
+          If `unmanagedReplicas` is `true`, the operator will not reconcile `consumerReplicas`. This is useful when using a pod autoscaler.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -10528,8 +10559,9 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 
 
 
-`kafkaConsumerAutoscaler` is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
+`kafkaConsumerAutoscaler` [deprecated (*)] is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
 This setting is ignored when Kafka is disabled.
+Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.processor.unmanagedReplicas` to `true`.
 
 <table>
     <thead>

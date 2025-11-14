@@ -33,10 +33,6 @@ func (spec *FlowCollectorSpec) HasKafkaExporter() bool {
 	return false
 }
 
-func (spec *FlowCollectorHPA) HPAEnabled() bool {
-	return spec != nil && spec.Status == HPAStatusEnabled
-}
-
 func (cfg *SASLConfig) UseSASL() bool {
 	return cfg.Type == SASLPlain || cfg.Type == SASLScramSHA512
 }
@@ -65,6 +61,10 @@ func (spec *FlowCollectorSpec) UseTestConsolePlugin() bool {
 		return err == nil && b
 	}
 	return false
+}
+
+func (spec *FlowCollectorSpec) UseHostNetwork() bool {
+	return spec.DeploymentModel == DeploymentModelDirect
 }
 
 func (spec *FlowCollectorEBPF) IsAgentFeatureEnabled(feature AgentFeature) bool {
@@ -195,4 +195,31 @@ func (spec *FlowCollectorSpec) HasExperimentalAlertsHealth() bool {
 
 func (spec *FlowCollectorSpec) DeployNetworkPolicy() bool {
 	return spec.NetworkPolicy.Enable != nil && *spec.NetworkPolicy.Enable
+}
+
+func (spec *FlowCollectorFLP) GetFLPReplicas() int32 {
+	if spec.ConsumerReplicas != nil {
+		return *spec.ConsumerReplicas
+	} else if spec.KafkaConsumerReplicas != nil {
+		return *spec.KafkaConsumerReplicas
+	}
+	return 3
+}
+
+func (spec *FlowCollectorHPA) IsHPAEnabled() bool {
+	return spec != nil && spec.Status == HPAStatusEnabled
+}
+
+func (spec *FlowCollectorFLP) IsUnmanagedFLPReplicas() bool {
+	if spec.UnmanagedReplicas {
+		return true
+	}
+	return spec.KafkaConsumerAutoscaler.IsHPAEnabled()
+}
+
+func (spec *FlowCollectorConsolePlugin) IsUnmanagedConsolePluginReplicas() bool {
+	if spec.UnmanagedReplicas {
+		return true
+	}
+	return spec.Autoscaler.IsHPAEnabled()
 }

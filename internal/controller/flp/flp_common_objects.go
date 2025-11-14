@@ -73,24 +73,41 @@ func getPromTLS(desired *flowslatest.FlowCollectorSpec, serviceName string) (*fl
 	return promTLS, nil
 }
 
+type flowNetworkType int
+
+const (
+	hostNetwork flowNetworkType = iota
+	hostPort
+	svc
+	pull
+)
+
 func podTemplate(
 	appName, version, imageName, cmName string,
 	desired *flowslatest.FlowCollectorSpec,
 	vols *volumes.Builder,
-	hasHostPort, hostNetwork bool,
+	netType flowNetworkType,
 	annotations map[string]string,
 ) corev1.PodTemplateSpec {
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
 	var ports []corev1.ContainerPort
-	if hasHostPort {
+	switch netType {
+	case hostNetwork, hostPort:
 		ports = []corev1.ContainerPort{{
 			Name:          constants.FLPPortName,
 			HostPort:      *advancedConfig.Port,
 			ContainerPort: *advancedConfig.Port,
 			Protocol:      corev1.ProtocolTCP,
 		}}
+	case svc:
+		ports = []corev1.ContainerPort{{
+			Name:          constants.FLPPortName,
+			ContainerPort: *advancedConfig.Port,
+			Protocol:      corev1.ProtocolTCP,
+		}}
+	case pull:
+		// does not listen for flows => no port
 	}
-
 	ports = append(ports, corev1.ContainerPort{
 		Name:          healthPortName,
 		ContainerPort: *advancedConfig.HealthPort,
@@ -166,7 +183,7 @@ func podTemplate(
 		}
 	}
 	dnsPolicy := corev1.DNSClusterFirst
-	if hostNetwork {
+	if netType == hostNetwork {
 		dnsPolicy = corev1.DNSClusterFirstWithHostNet
 	}
 	annotations["prometheus.io/scrape"] = "true"
@@ -184,7 +201,7 @@ func podTemplate(
 			Volumes:            volumes,
 			Containers:         []corev1.Container{container},
 			ServiceAccountName: appName,
-			HostNetwork:        hostNetwork,
+			HostNetwork:        netType == hostNetwork,
 			DNSPolicy:          dnsPolicy,
 			NodeSelector:       advancedConfig.Scheduling.NodeSelector,
 			Tolerations:        advancedConfig.Scheduling.Tolerations,
