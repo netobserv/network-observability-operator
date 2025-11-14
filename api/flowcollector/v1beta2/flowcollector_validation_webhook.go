@@ -89,7 +89,7 @@ func (v *validator) validateDeploymentModel() {
 		if err != nil {
 			v.warnings = append(v.warnings, fmt.Sprintf("Could not get the number of nodes, cannot validate the deployment model: %s", err.Error()))
 		} else if n >= 15 && v.fc.DeploymentModel == DeploymentModelDirect {
-			v.warnings = append(v.warnings, fmt.Sprintf(`The number of nodes is bigger than the recommendation for deployment model "Direct" (%d >= 15), meaning that "flowlogs-pipeline" uses a lot more memory and bandwidth than necessary; it is recommended to use a different deployment model ("Service" or "Kafka").`, n))
+			v.warnings = append(v.warnings, fmt.Sprintf(`The number of nodes is bigger than the recommendation for deployment model "Direct" (%d >= 15), meaning that "flowlogs-pipeline" uses a lot more memory and bandwidth than necessary; it is recommended to use "Kafka" deployment model.`, n))
 		}
 	} else {
 		v.warnings = append(v.warnings, "Unknown environment, cannot validate the deployment model")

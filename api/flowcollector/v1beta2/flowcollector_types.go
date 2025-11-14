@@ -69,7 +69,7 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-	// - `Direct` (default) to make the flow processor listen directly from the agents.<br>
+	// - `Direct` (default) to make the flow processor listen directly from the agents. Only recommended on small clusters, below 15 nodes.<br>
 	// - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
 	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +unionDiscriminator
