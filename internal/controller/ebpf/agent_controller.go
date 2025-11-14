@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-logr/logr"
 	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/config"
+	ebpfmaps "github.com/netobserv/netobserv-ebpf-agent/pkg/maps"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/ebpf/internal/permissions"
@@ -344,8 +345,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Driver: "csi.bpfman.io",
 					VolumeAttributes: map[string]string{
 						"csi.bpfman.io/program": "netobserv",
-						"csi.bpfman.io/maps": "aggregated_flows,additional_flow_metrics,direct_flows," +
-							"dns_flows,filter_map,peer_filter_map,global_counters,packet_record,ipsec_ingress_map,ipsec_egress_map",
+						"csi.bpfman.io/maps":    strings.Join(ebpfmaps.Maps, ","),
 					},
 				},
 			},
