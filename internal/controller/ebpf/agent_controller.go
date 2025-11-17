@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-logr/logr"
 	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/config"
 	ebpfmaps "github.com/netobserv/netobserv-ebpf-agent/pkg/maps"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
@@ -153,7 +152,7 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return fmt.Errorf("reconciling prometheus service: %w", err)
 	}
 
-	desired, err := c.desired(ctx, target, rlog)
+	desired, err := c.desired(ctx, target)
 	if err != nil {
 		return err
 	}
@@ -209,10 +208,11 @@ func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropaga
 	return mode
 }
 
-func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
+func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector) (*v1.DaemonSet, error) {
 	if coll == nil {
 		return nil, nil
 	}
+	rlog := log.FromContext(ctx).WithName("ebpf")
 	version := helper.ExtractVersion(c.Images[reconcilers.MainImage])
 	annotations := make(map[string]string)
 	env, err := c.envConfig(ctx, coll, annotations)
