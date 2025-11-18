@@ -9,7 +9,7 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
-	github.com/netobserv/flowlogs-pipeline v1.10.0-community.0.20251205170812-75a990e42a64
+	github.com/netobserv/flowlogs-pipeline v1.10.0-community.0.20251210194924-86e5b0087faa
 	github.com/netobserv/netobserv-ebpf-agent v1.10.0-community.0.20251125162210-4be10c36721e
 	github.com/onsi/ginkgo/v2 v2.27.3
 	github.com/onsi/gomega v1.38.3
@@ -75,7 +75,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
-	github.com/spf13/cobra v1.9.1 // indirect
+	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
