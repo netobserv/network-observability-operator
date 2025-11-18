@@ -3,6 +3,8 @@ package flp
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
@@ -18,6 +20,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,6 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
+const netpolLabel = "netobserv.io/label-ipblocks"
 
 // Reconciler reconciles the current flowlogs-pipeline state with the desired configuration
 type Reconciler struct {
@@ -58,6 +65,19 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
 				if o.GetNamespace() == r.currentNamespace {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+				}
+				return []reconcile.Request{}
+			}),
+			reconcilers.IgnoreStatusChange,
+		).
+		Watches(
+			&networkingv1.NetworkPolicy{},
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
+				lbls := o.GetLabels()
+				if lbls != nil {
+					if _, ok := lbls[netpolLabel]; ok {
+						return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+					}
 				}
 				return []reconcile.Request{}
 			}),
@@ -127,14 +147,24 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 		log.Error(err, "unable to obtain cluster ID")
 	}
 
+	// Get subnets from netpols
+	netpols := networkingv1.NetworkPolicyList{}
+	selector := labels.NewSelector()
+	req, _ := labels.NewRequirement(netpolLabel, selection.Exists, nil)
+	selector = selector.Add(*req)
+	if err := r.Client.List(ctx, &netpols, &client.ListOptions{LabelSelector: selector}); err != nil {
+		return r.status.Error("CantListNetworkPolicies", err)
+	}
+	subnetLabels := getSubnetsFromPolicies(netpols.Items)
+
 	// Auto-detect subnets
-	var subnetLabels []flowslatest.SubnetLabel
 	if r.mgr.ClusterInfo.IsOpenShift() && fc.Spec.Processor.HasAutoDetectOpenShiftNetworks() {
 		var err error
-		subnetLabels, err = r.getOpenShiftSubnets(ctx)
+		openshiftLabels, err := r.getOpenShiftSubnets(ctx)
 		if err != nil {
 			log.Error(err, "error while reading subnet definitions")
 		}
+		subnetLabels = append(subnetLabels, openshiftLabels...)
 	}
 
 	// List custom metrics
@@ -285,6 +315,42 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	}
 
 	return subnets, nil
+}
+
+func getSubnetsFromPolicies(netpols []networkingv1.NetworkPolicy) []flowslatest.SubnetLabel {
+	var subnets []flowslatest.SubnetLabel
+	for _, np := range netpols {
+		if len(np.Labels) > 0 {
+			name := np.Labels[netpolLabel]
+			if len(name) > 0 {
+				var cidrs []string
+				for _, rule := range np.Spec.Ingress {
+					for _, peer := range rule.From {
+						if peer.IPBlock != nil && peer.IPBlock.CIDR != "" && !slices.Contains(cidrs, peer.IPBlock.CIDR) {
+							cidrs = append(cidrs, peer.IPBlock.CIDR)
+						}
+					}
+				}
+				for _, rule := range np.Spec.Egress {
+					for _, peer := range rule.To {
+						if peer.IPBlock != nil && peer.IPBlock.CIDR != "" && !slices.Contains(cidrs, peer.IPBlock.CIDR) {
+							cidrs = append(cidrs, peer.IPBlock.CIDR)
+						}
+					}
+				}
+				if len(cidrs) > 0 {
+					// sort CIDRs
+					slices.Sort(cidrs)
+					subnets = append(subnets, flowslatest.SubnetLabel{Name: name, CIDRs: cidrs})
+				}
+			}
+		}
+	}
+	// Sort subnet by name
+	slices.SortFunc(subnets, func(a, b flowslatest.SubnetLabel) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return subnets
 }
 
 func readMachineNetworks(cm *corev1.ConfigMap) ([]flowslatest.SubnetLabel, error) {
