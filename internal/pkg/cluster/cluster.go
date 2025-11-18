@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/coreos/go-semver/semver"
 	configv1 "github.com/openshift/api/config/v1"
@@ -27,12 +28,17 @@ const (
 )
 
 type Info struct {
+	apisMap          map[string]bool
+	apisMapLock      sync.RWMutex
 	id               string
 	openShiftVersion *semver.Version
-	apisMap          map[string]bool
-	ready            bool
 	cni              NetworkType
 	nbNodes          uint16
+	ready            bool
+	readinessLock    sync.RWMutex
+	dcl              *discovery.DiscoveryClient
+	cl               client.Client
+	onRefresh        func()
 }
 
 var (
@@ -43,32 +49,32 @@ var (
 	ocpSecurity   = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
 )
 
-func NewInfo(ctx context.Context, dcl *discovery.DiscoveryClient) (*Info, func(ctx context.Context, cl client.Client) error, error) {
-	info := Info{}
-	if err := info.fetchAvailableAPIs(ctx, dcl); err != nil {
+func NewInfo(ctx context.Context, cl client.Client, dcl *discovery.DiscoveryClient, onRefresh func()) (*Info, func(ctx context.Context) error, error) {
+	info := Info{cl: cl, dcl: dcl, onRefresh: onRefresh}
+	if err := info.fetchAvailableAPIs(ctx); err != nil {
 		return &info, nil, err
 	}
 	return &info, info.postCreate, nil
 }
 
-func (c *Info) fetchAvailableAPIs(ctx context.Context, client *discovery.DiscoveryClient) error {
+func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 	log := log.FromContext(ctx)
-	c.apisMap = map[string]bool{
+	_, resources, err := c.dcl.ServerGroupsAndResources()
+	// We may receive partial data along with an error
+	var discErr *discovery.ErrGroupDiscoveryFailed
+	if err != nil && (!errors.As(err, &discErr) || len(resources) == 0) {
+		return err
+	}
+	apisMap := map[string]bool{
 		consolePlugin: false,
 		cno:           false,
 		svcMonitor:    false,
 		promRule:      false,
 		ocpSecurity:   false,
 	}
-	_, resources, err := client.ServerGroupsAndResources()
-	// We may receive partial data along with an error
-	var discErr *discovery.ErrGroupDiscoveryFailed
-	if err != nil && (!errors.As(err, &discErr) || len(resources) == 0) {
-		return err
-	}
-	for apiName := range c.apisMap {
+	for apiName := range apisMap {
 		if hasAPI(apiName, resources) {
-			c.apisMap[apiName] = true
+			apisMap[apiName] = true
 		} else if discErr != nil {
 			// Check if the wanted API is in error
 			for gv, err := range discErr.Groups {
@@ -78,6 +84,10 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context, client *discovery.Discove
 			}
 		}
 	}
+
+	c.apisMapLock.Lock()
+	defer c.apisMapLock.Unlock()
+	c.apisMap = apisMap
 
 	return nil
 }
@@ -94,39 +104,61 @@ func hasAPI(apiName string, resources []*metav1.APIResourceList) bool {
 	return false
 }
 
-func (c *Info) postCreate(ctx context.Context, cl client.Client) error {
+func (c *Info) postCreate(ctx context.Context) error {
+	if err := c.fetchClusterInfo(ctx); err != nil {
+		return err
+	}
+	c.startRefreshLoop(ctx)
+	return nil
+}
+
+func (c *Info) fetchClusterInfo(ctx context.Context) error {
+	var id string
+	var openShiftVersion *semver.Version
+	var cni NetworkType
+	var nbNodes uint16
 	if c.IsOpenShift() {
 		// Fetch cluster ID, version and CNI
 		key := client.ObjectKey{Name: "version"}
 		cversion := &configv1.ClusterVersion{}
-		if err := cl.Get(ctx, key, cversion); err != nil {
+		if err := c.cl.Get(ctx, key, cversion); err != nil {
 			return fmt.Errorf("could not fetch ClusterVersion: %w", err)
 		}
-		c.id = string(cversion.Spec.ClusterID)
+		id = string(cversion.Spec.ClusterID)
 		// Get version; use the same method as via `oc get clusterversion`, where printed column uses jsonPath:
 		// .status.history[?(@.state=="Completed")].version
 		for _, history := range cversion.Status.History {
 			if history.State == "Completed" {
-				c.openShiftVersion = semver.New(history.Version)
+				openShiftVersion = semver.New(history.Version)
 				break
 			}
 		}
 		network := &configv1.Network{}
-		err := cl.Get(ctx, client.ObjectKey{Name: "cluster"}, network)
+		err := c.cl.Get(ctx, client.ObjectKey{Name: "cluster"}, network)
 		if err != nil {
 			return fmt.Errorf("could not fetch Network resource: %w", err)
 		}
-		c.cni = NetworkType(network.Spec.NetworkType)
+		cni = NetworkType(network.Spec.NetworkType)
 	}
 
 	l := v1.NodeList{}
-	if err := cl.List(ctx, &l); err != nil {
+	if err := c.cl.List(ctx, &l); err != nil {
 		return fmt.Errorf("could not retrieve number of nodes: %w", err)
 	}
-	c.nbNodes = uint16(len(l.Items))
+	nbNodes = uint16(len(l.Items))
+	c.setInfo(id, openShiftVersion, cni, nbNodes)
 
-	c.ready = true
 	return nil
+}
+
+func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni NetworkType, nbNodes uint16) {
+	c.readinessLock.Lock()
+	defer c.readinessLock.Unlock()
+	c.id = id
+	c.openShiftVersion = openShiftVersion
+	c.cni = cni
+	c.nbNodes = nbNodes
+	c.ready = true
 }
 
 // Mock shouldn't be used except for testing
@@ -147,10 +179,14 @@ func (c *Info) Mock(v string, cni NetworkType) {
 }
 
 func (c *Info) GetID() string {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
 	return c.id
 }
 
 func (c *Info) GetOpenShiftVersion() (string, error) {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
 	if !c.ready {
 		return "", errors.New("cluster info not collected")
 	}
@@ -161,6 +197,8 @@ func (c *Info) GetOpenShiftVersion() (string, error) {
 }
 
 func (c *Info) GetCNI() (NetworkType, error) {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
 	if !c.ready {
 		return "", errors.New("cluster info not collected")
 	}
@@ -168,6 +206,8 @@ func (c *Info) GetCNI() (NetworkType, error) {
 }
 
 func (c *Info) GetNbNodes() (uint16, error) {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
 	if !c.ready {
 		return 0, errors.New("cluster info not collected")
 	}
@@ -175,6 +215,8 @@ func (c *Info) GetNbNodes() (uint16, error) {
 }
 
 func (c *Info) IsOpenShiftVersionLessThan(v string) (bool, string, error) {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
 	if !c.ready {
 		return false, "", errors.New("cluster info not collected")
 	}
@@ -203,25 +245,35 @@ func (c *Info) IsOpenShift() bool {
 
 // HasConsolePlugin returns true if "consoleplugins.console.openshift.io" API was found
 func (c *Info) HasConsolePlugin() bool {
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
 	return c.apisMap[consolePlugin]
 }
 
 // HasOCPSecurity returns true if "consoles.config.openshift.io" API was found
 func (c *Info) HasOCPSecurity() bool {
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
 	return c.apisMap[ocpSecurity]
 }
 
 // HasCNO returns true if "networks.operator.openshift.io" API was found
 func (c *Info) HasCNO() bool {
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
 	return c.apisMap[cno]
 }
 
 // HasSvcMonitor returns true if "servicemonitors.monitoring.coreos.com" API was found
 func (c *Info) HasSvcMonitor() bool {
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
 	return c.apisMap[svcMonitor]
 }
 
 // HasPromRule returns true if "prometheusrules.monitoring.coreos.com" API was found
 func (c *Info) HasPromRule() bool {
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
 	return c.apisMap[promRule]
 }
