@@ -20,6 +20,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -808,4 +809,79 @@ func TestToleration(t *testing.T) {
 	ds := builder.daemonSet(annotate("digest"))
 	assert.Len(ds.Spec.Template.Spec.Tolerations, 1)
 	assert.Equal(corev1.Toleration{Operator: "Exists"}, ds.Spec.Template.Spec.Tolerations[0])
+}
+
+func TestSubnetsFromNetpols(t *testing.T) {
+	netpols := []networkingv1.NetworkPolicy{
+		{
+			ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
+				netpolLabel: "my-database",
+			}},
+			Spec: networkingv1.NetworkPolicySpec{
+				Egress: []networkingv1.NetworkPolicyEgressRule{
+					{
+						To: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "1.2.3.4/32",
+								},
+							},
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "1.2.3.3/32",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{
+				netpolLabel: "01-vm",
+			}},
+			Spec: networkingv1.NetworkPolicySpec{
+				Egress: []networkingv1.NetworkPolicyEgressRule{
+					{
+						To: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "20.20.20.20/24",
+								},
+							},
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "10.10.10.10/24",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			// Ignored due to missing label
+			Spec: networkingv1.NetworkPolicySpec{
+				Egress: []networkingv1.NetworkPolicyEgressRule{
+					{
+						To: []networkingv1.NetworkPolicyPeer{
+							{
+								IPBlock: &networkingv1.IPBlock{
+									CIDR: "8.8.8.8/32",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	subnetLabels := getSubnetsFromPolicies(netpols)
+
+	// Should be ordered by name, and nexted CIDRs should be sorted
+	assert.Equal(t, []flowslatest.SubnetLabel{
+		{Name: "01-vm", CIDRs: []string{"10.10.10.10/24", "20.20.20.20/24"}},
+		{Name: "my-database", CIDRs: []string{"1.2.3.3/32", "1.2.3.4/32"}},
+	}, subnetLabels)
 }
