@@ -74,23 +74,23 @@ func TestNpBuilder(t *testing.T) {
 	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	name, np := buildMainNetworkPolicy(&desired, mgr)
+	name, np := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv", name.Namespace)
-	assert.Nil(np)
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
+	assert.NotNil(np)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv-privileged", name.Namespace)
-	assert.Nil(np)
+	assert.NotNil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(false)
-	_, np = buildMainNetworkPolicy(&desired, mgr)
+	_, np = buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	name, np = buildMainNetworkPolicy(&desired, mgr)
+	name, np = buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -115,14 +115,14 @@ func TestNpBuilder(t *testing.T) {
 		}},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
 	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
 
 	desired.Spec.NetworkPolicy.AdditionalNamespaces = []string{"foo", "bar"}
-	name, np = buildMainNetworkPolicy(&desired, mgr)
+	name, np = buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -156,9 +156,47 @@ func TestNpBuilder(t *testing.T) {
 		}},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
 	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
+}
+
+func TestNpBuilderSDN(t *testing.T) {
+	assert := assert.New(t)
+
+	desired := getConfig()
+	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
+
+	desired.Spec.NetworkPolicy.Enable = nil
+	_, np := buildMainNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN)
+	assert.Nil(np)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN)
+	assert.Nil(np)
+
+	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
+	_, np = buildMainNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN)
+	assert.Nil(np)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN)
+	assert.Nil(np)
+}
+
+func TestNpBuilderOtherCNI(t *testing.T) {
+	assert := assert.New(t)
+
+	desired := getConfig()
+	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
+
+	desired.Spec.NetworkPolicy.Enable = nil
+	_, np := buildMainNetworkPolicy(&desired, mgr, "other")
+	assert.Nil(np)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, "other")
+	assert.Nil(np)
+
+	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
+	_, np = buildMainNetworkPolicy(&desired, mgr, "other")
+	assert.NotNil(np)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, "other")
+	assert.NotNil(np)
 }

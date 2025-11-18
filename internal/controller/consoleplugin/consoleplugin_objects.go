@@ -53,7 +53,7 @@ type builder struct {
 
 func newBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, name string) builder {
 	imageToUse := reconcilers.MainImage
-	needsPF4, err := info.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0")
+	needsPF4, _, err := info.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0")
 	if err == nil && needsPF4 {
 		imageToUse = reconcilers.ConsolePluginCompatImage
 	}

@@ -89,7 +89,7 @@ func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Config
 		b.flowMetrics,
 		b.detectedSubnets,
 		b.info.Loki,
-		b.info.ClusterInfo.ID,
+		b.info.ClusterInfo.GetID(),
 		&b.volumes,
 		&kafkaStage,
 	)

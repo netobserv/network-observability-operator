@@ -193,7 +193,11 @@ func (spec *FlowCollectorSpec) HasExperimentalAlertsHealth() bool {
 	return false
 }
 
-func (spec *FlowCollectorSpec) DeployNetworkPolicy() bool {
+func (spec *FlowCollectorSpec) DeployNetworkPolicyOVN() bool {
+	return spec.NetworkPolicy.Enable == nil || *spec.NetworkPolicy.Enable
+}
+
+func (spec *FlowCollectorSpec) DeployNetworkPolicyOtherCNI() bool {
 	return spec.NetworkPolicy.Enable != nil && *spec.NetworkPolicy.Enable
 }
 

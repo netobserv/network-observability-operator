@@ -143,6 +143,14 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	})
 	Expect(err).NotTo(HaveOccurred())
 
+	err = k8sClient.Create(ctx, &configv1.Network{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Spec: configv1.NetworkSpec{
+			NetworkType: "OVNKubernetes",
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
+
 	k8sManager, err := manager.NewManager(
 		ctx,
 		cfg,
