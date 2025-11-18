@@ -90,12 +90,14 @@ func NewManager(
 		return nil, fmt.Errorf("unable to create narrow cache client: %w", err)
 	}
 
+	statusMgr := status.NewManager()
+
 	log.Info("Discovering APIs")
 	dc, err := discovery.NewDiscoveryClientForConfig(kcfg)
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate discovery client: %w", err)
 	}
-	info, postCreate, err := cluster.NewInfo(ctx, dc)
+	info, postCreate, err := cluster.NewInfo(ctx, client, dc, func() { statusMgr.Sync(ctx, client) })
 	if err != nil {
 		return nil, fmt.Errorf("can't collect cluster info: %w", err)
 	}
@@ -104,7 +106,7 @@ func NewManager(
 	this := &Manager{
 		Manager:     internalManager,
 		ClusterInfo: info,
-		Status:      status.NewManager(),
+		Status:      statusMgr,
 		Client:      client,
 		Config:      opcfg,
 	}
@@ -127,7 +129,7 @@ func NewManager(
 	}
 
 	if err := internalManager.Add(manager.RunnableFunc(func(ctx context.Context) error {
-		return postCreate(ctx, client)
+		return postCreate(ctx)
 	})); err != nil {
 		return nil, fmt.Errorf("can't collect more cluster info: %w", err)
 	}

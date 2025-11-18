@@ -70,13 +70,22 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	r.status.SetUnknown()
 	defer r.status.Commit(ctx, r.Client)
 
+	isSupported := r.mgr.ClusterInfo.IsOpenShift()
+	if isSupported {
+		var err error
+		isSupported, _, err = r.mgr.ClusterInfo.IsOpenShiftVersionAtLeast("4.15.0")
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	// always reconcile static console plugin
 	scp, err := helper.NewControllerClientHelper(ctx, r.mgr.Config.Namespace, r.Client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to get controller deployment: %w", err)
 	}
 	staticPluginReconciler := consoleplugin.NewStaticReconciler(r.newDefaultReconcilerInstance(scp))
-	if err := staticPluginReconciler.ReconcileStaticPlugin(ctx, true); err != nil {
+	if err := staticPluginReconciler.ReconcileStaticPlugin(ctx, isSupported, true); err != nil {
 		l.Error(err, "Static plugin reconcile failure")
 		// Set status failure unless it was already set
 		if !r.status.HasFailure() {
