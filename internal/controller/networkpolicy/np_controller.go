@@ -70,11 +70,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 }
 
 func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
-	npName, desiredNp := buildMainNetworkPolicy(desired, r.mgr)
+	cni, err := r.mgr.ClusterInfo.GetCNI()
+	if err != nil {
+		return err
+	}
+	npName, desiredNp := buildMainNetworkPolicy(desired, r.mgr, cni)
 	if err := reconcilers.ReconcileNetworkPolicy(ctx, clh, npName, desiredNp); err != nil {
 		return err
 	}
 
-	privilegedNpName, desiredPrivilegedNp := buildPrivilegedNetworkPolicy(desired, r.mgr)
+	privilegedNpName, desiredPrivilegedNp := buildPrivilegedNetworkPolicy(desired, r.mgr, cni)
 	return reconcilers.ReconcileNetworkPolicy(ctx, clh, privilegedNpName, desiredPrivilegedNp)
 }
