@@ -156,15 +156,15 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 			},
 			Ports: hostNetworkPorts,
 		})
-		// Allow fetching from apiserver
+
+		// Allow fetching from external apiserver (HyperShift and other external control planes)
+		// The kubernetes service may redirect to external endpoints on port 6443
 		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-			To: []networkingv1.NetworkPolicyPeer{
-				peerInNamespaces([]string{constants.OpenShiftAPIServerNamespace, constants.OpenShiftKubeAPIServerNamespace}),
-			},
 			Ports: []networkingv1.NetworkPolicyPort{{
 				Protocol: ptr.To(corev1.ProtocolTCP),
 				Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
 			}},
+			// Empty To allows traffic to any destination on this port
 		})
 	} else {
 		// Not OpenShift
