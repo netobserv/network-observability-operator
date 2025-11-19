@@ -763,7 +763,7 @@ func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1
 	})
 
 	defaultAttach := "tcx"
-	if old, _ := cinfo.IsOpenShiftVersionLessThan("4.16.0"); old {
+	if old, _, _ := cinfo.IsOpenShiftVersionLessThan("4.16.0"); old {
 		defaultAttach = "tc"
 	}
 

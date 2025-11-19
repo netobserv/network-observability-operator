@@ -95,15 +95,15 @@ func NewManager(
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate discovery client: %w", err)
 	}
-	info, err := cluster.NewInfo(ctx, dc)
+	info, postCreate, err := cluster.NewInfo(ctx, dc)
 	if err != nil {
 		return nil, fmt.Errorf("can't collect cluster info: %w", err)
 	}
-	flowslatest.CurrentClusterInfo = &info
+	flowslatest.CurrentClusterInfo = info
 
 	this := &Manager{
 		Manager:     internalManager,
-		ClusterInfo: &info,
+		ClusterInfo: info,
 		Status:      status.NewManager(),
 		Client:      client,
 		Config:      opcfg,
@@ -127,7 +127,7 @@ func NewManager(
 	}
 
 	if err := internalManager.Add(manager.RunnableFunc(func(ctx context.Context) error {
-		return info.CheckClusterInfo(ctx, internalManager.GetClient())
+		return postCreate(ctx, client)
 	})); err != nil {
 		return nil, fmt.Errorf("can't collect more cluster info: %w", err)
 	}

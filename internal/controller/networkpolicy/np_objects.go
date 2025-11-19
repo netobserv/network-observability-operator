@@ -3,6 +3,7 @@ package networkpolicy
 import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
+	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager"
 	corev1 "k8s.io/api/core/v1"
@@ -23,12 +24,21 @@ func peerInNamespace(ns string) networkingv1.NetworkPolicyPeer {
 	}
 }
 
-func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager) (types.NamespacedName, *networkingv1.NetworkPolicy) {
+func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager, cni cluster.NetworkType) (types.NamespacedName, *networkingv1.NetworkPolicy) {
 	ns := desired.Spec.GetNamespace()
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
-	if !desired.Spec.DeployNetworkPolicy() {
+	switch cni {
+	case cluster.OpenShiftSDN:
 		return name, nil
+	case cluster.OVNKubernetes:
+		if !desired.Spec.DeployNetworkPolicyOVN() {
+			return name, nil
+		}
+	default:
+		if !desired.Spec.DeployNetworkPolicyOtherCNI() {
+			return name, nil
+		}
 	}
 
 	privNs := ns + constants.EBPFPrivilegedNSSuffix
@@ -192,13 +202,22 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	return name, &np
 }
 
-func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager) (types.NamespacedName, *networkingv1.NetworkPolicy) {
+func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager, cni cluster.NetworkType) (types.NamespacedName, *networkingv1.NetworkPolicy) {
 	mainNs := desired.Spec.GetNamespace()
 	privNs := mainNs + constants.EBPFPrivilegedNSSuffix
 
 	name := types.NamespacedName{Name: netpolName, Namespace: privNs}
-	if !desired.Spec.DeployNetworkPolicy() {
+	switch cni {
+	case cluster.OpenShiftSDN:
 		return name, nil
+	case cluster.OVNKubernetes:
+		if !desired.Spec.DeployNetworkPolicyOVN() {
+			return name, nil
+		}
+	default:
+		if !desired.Spec.DeployNetworkPolicyOtherCNI() {
+			return name, nil
+		}
 	}
 
 	np := networkingv1.NetworkPolicy{

@@ -69,7 +69,7 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-	// - `Direct` (default) to make the flow processor listen directly from the agents.<br>
+	// - `Direct` (default) to make the flow processor listen directly from the agents. Only recommended on small clusters, below 15 nodes.<br>
 	// - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
 	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).
 	// +unionDiscriminator
@@ -87,15 +87,14 @@ type FlowCollectorSpec struct {
 	Exporters []*FlowCollectorExporter `json:"exporters"`
 
 	// `networkPolicy` defines network policy settings for NetObserv components isolation.
-	// +k8s:conversion-gen=false
-	// +kubebuilder:default:={enable:true}
 	NetworkPolicy NetworkPolicy `json:"networkPolicy,omitempty"`
 }
 
 type NetworkPolicy struct {
 	// Deploys network policies on the namespaces used by NetObserv (main and privileged).
-	// These network policies better isolate the NetObserv components to prevent undesired connections to them.
-	// This option is enabled by default, disable it to manually manage network policies
+	// These network policies better isolate the NetObserv components to prevent undesired connections from and to them.
+	// This option is enabled by default when using with OVNKubernetes, and disabled otherwise (it has not been tested with other CNIs).
+	// When disabled, you can create manually the network policies for the NetObserv components.
 	// +optional
 	Enable *bool `json:"enable,omitempty"`
 
