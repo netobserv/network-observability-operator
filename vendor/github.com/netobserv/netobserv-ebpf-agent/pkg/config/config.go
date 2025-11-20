@@ -137,7 +137,7 @@ type Agent struct {
 	Direction string `env:"DIRECTION" envDefault:"both"`
 	// Logger level. From more to less verbose: trace, debug, info, warn, error, fatal, panic.
 	LogLevel string `env:"LOG_LEVEL" envDefault:"info"`
-	// Sampling holds the rate at which packets should be sampled and sent to the target collector.
+	// Sampling holds the interval at which packets should be sampled and sent to the target collector.
 	// E.g. if set to 100, one out of 100 packets, on average, will be sent to the target collector.
 	Sampling int `env:"SAMPLING" envDefault:"0"`
 	// TCAttachMode defines the eBPF attach mode on traffic controller: tcx (default), tc or any.
