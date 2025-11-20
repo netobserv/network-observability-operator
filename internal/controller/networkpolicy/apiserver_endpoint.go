@@ -66,8 +66,9 @@ func getEndpointIPsFromEndpointSlice(ctx context.Context, cl client.Client) ([]s
 	}
 
 	var ips []string
-	for _, endpointSlice := range endpointSliceList.Items {
-		for _, endpoint := range endpointSlice.Endpoints {
+	for i := range endpointSliceList.Items {
+		for j := range endpointSliceList.Items[i].Endpoints {
+			endpoint := &endpointSliceList.Items[i].Endpoints[j]
 			// Only use ready endpoints
 			if endpoint.Conditions.Ready != nil && *endpoint.Conditions.Ready {
 				ips = append(ips, endpoint.Addresses...)
@@ -80,6 +81,7 @@ func getEndpointIPsFromEndpointSlice(ctx context.Context, cl client.Client) ([]s
 
 // getEndpointIPsFromEndpoints retrieves endpoint IPs using the legacy Endpoints API
 func getEndpointIPsFromEndpoints(ctx context.Context, cl client.Client) ([]string, error) {
+	//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
 	endpoints := &corev1.Endpoints{}
 	err := cl.Get(ctx, types.NamespacedName{
 		Name:      kubernetesServiceName,

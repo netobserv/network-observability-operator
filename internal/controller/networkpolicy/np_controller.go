@@ -26,6 +26,17 @@ type Reconciler struct {
 	status status.Instance
 }
 
+// enqueueFlowCollectorOnEndpointChange is a handler that triggers reconciliation when kubernetes service endpoints change
+func enqueueFlowCollectorOnEndpointChange(ctx context.Context, obj client.Object) []reconcile.Request {
+	// Only watch the kubernetes service in default namespace
+	if obj.GetNamespace() == kubernetesServiceNamespace && obj.GetName() == kubernetesServiceName {
+		log.FromContext(ctx).V(1).Info("Kubernetes service endpoint changed, triggering reconciliation")
+		// Trigger reconciliation for all FlowCollectors
+		return []reconcile.Request{{}}
+	}
+	return nil
+}
+
 func Start(ctx context.Context, mgr *manager.Manager) error {
 	log := log.FromContext(ctx)
 	log.Info("Starting Network Policy controller")
@@ -35,17 +46,6 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		status: mgr.Status.ForComponent(status.NetworkPolicy),
 	}
 
-	// Handler to trigger reconciliation when kubernetes service endpoints change
-	enqueueFlowCollector := handler.EnqueueRequestsFromMapFunc(func(ctx context.Context, obj client.Object) []reconcile.Request {
-		// Only watch the kubernetes service in default namespace
-		if obj.GetNamespace() == kubernetesServiceNamespace && obj.GetName() == kubernetesServiceName {
-			log.V(1).Info("Kubernetes service endpoint changed, triggering reconciliation")
-			// Trigger reconciliation for all FlowCollectors
-			return []reconcile.Request{{}}
-		}
-		return nil
-	})
-
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("networkPolicy").
@@ -54,10 +54,11 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 	// Watch EndpointSlice if available (preferred, k8s >= 1.21), otherwise fallback to Endpoints
 	if isEndpointSliceAvailable(mgr) {
 		log.V(1).Info("EndpointSlice API available, watching for kubernetes service changes")
-		builder = builder.Watches(&discoveryv1.EndpointSlice{}, enqueueFlowCollector)
+		builder = builder.Watches(&discoveryv1.EndpointSlice{}, handler.EnqueueRequestsFromMapFunc(enqueueFlowCollectorOnEndpointChange))
 	} else {
 		log.Info("EndpointSlice API not available (requires k8s >= 1.21), using Endpoints API")
-		builder = builder.Watches(&corev1.Endpoints{}, enqueueFlowCollector)
+		//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
+		builder = builder.Watches(&corev1.Endpoints{}, handler.EnqueueRequestsFromMapFunc(enqueueFlowCollectorOnEndpointChange))
 	}
 
 	return builder.Complete(&r)
