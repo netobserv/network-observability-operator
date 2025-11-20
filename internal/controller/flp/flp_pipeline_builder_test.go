@@ -293,16 +293,10 @@ publish: External`,
 		},
 	}
 
-	machines, err := readMachineNetworks(&cm)
+	machines, err := readMachineFromConfig(&cm)
 	assert.NoError(t, err)
 
-	assert.Equal(t,
-		[]flowslatest.SubnetLabel{
-			{
-				Name:  "Machines",
-				CIDRs: []string{"10.0.0.0/16"},
-			},
-		}, machines)
+	assert.Equal(t, []string{"10.0.0.0/16"}, machines)
 }
 
 func TestPipelineWithSubnetLabels(t *testing.T) {
