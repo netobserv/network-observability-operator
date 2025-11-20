@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-logr/logr"
 	ebpfconfig "github.com/netobserv/netobserv-ebpf-agent/pkg/config"
+	ebpfmaps "github.com/netobserv/netobserv-ebpf-agent/pkg/maps"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/ebpf/internal/permissions"
@@ -152,7 +152,7 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 		return fmt.Errorf("reconciling prometheus service: %w", err)
 	}
 
-	desired, err := c.desired(ctx, target, rlog)
+	desired, err := c.desired(ctx, target)
 	if err != nil {
 		return err
 	}
@@ -208,10 +208,11 @@ func newMountPropagationMode(m corev1.MountPropagationMode) *corev1.MountPropaga
 	return mode
 }
 
-func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector, rlog logr.Logger) (*v1.DaemonSet, error) {
+func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCollector) (*v1.DaemonSet, error) {
 	if coll == nil {
 		return nil, nil
 	}
+	rlog := log.FromContext(ctx).WithName("ebpf")
 	version := helper.ExtractVersion(c.Images[reconcilers.MainImage])
 	annotations := make(map[string]string)
 	env, err := c.envConfig(ctx, coll, annotations)
@@ -344,8 +345,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 					Driver: "csi.bpfman.io",
 					VolumeAttributes: map[string]string{
 						"csi.bpfman.io/program": "netobserv",
-						"csi.bpfman.io/maps": "aggregated_flows,additional_flow_metrics,direct_flows," +
-							"dns_flows,filter_map,peer_filter_map,global_counters,packet_record,ipsec_ingress_map,ipsec_egress_map",
+						"csi.bpfman.io/maps":    strings.Join(ebpfmaps.Maps, ","),
 					},
 				},
 			},

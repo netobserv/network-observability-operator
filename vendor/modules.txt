@@ -168,9 +168,10 @@ github.com/netobserv/flowlogs-pipeline/pkg/config
 github.com/netobserv/flowlogs-pipeline/pkg/dsl
 github.com/netobserv/flowlogs-pipeline/pkg/utils
 github.com/netobserv/flowlogs-pipeline/pkg/utils/filters
-# github.com/netobserv/netobserv-ebpf-agent v1.9.2-community
+# github.com/netobserv/netobserv-ebpf-agent v1.9.2-community.0.20251120073747-9501be6e52f0
 ## explicit; go 1.24.0
 github.com/netobserv/netobserv-ebpf-agent/pkg/config
+github.com/netobserv/netobserv-ebpf-agent/pkg/maps
 # github.com/netsampler/goflow2 v1.3.7
 ## explicit; go 1.18
 github.com/netsampler/goflow2/decoders/netflow
@@ -235,7 +236,7 @@ github.com/pmezard/go-difflib/difflib
 ## explicit; go 1.24.0
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1
-# github.com/prometheus/client_golang v1.23.0
+# github.com/prometheus/client_golang v1.23.2
 ## explicit; go 1.23.0
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil/header
@@ -393,8 +394,8 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.23.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.35.0
-## explicit; go 1.23.0
+# golang.org/x/sys v0.36.0
+## explicit; go 1.24.0
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -515,7 +516,7 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.36.8
+# google.golang.org/protobuf v1.36.9
 ## explicit; go 1.23
 google.golang.org/protobuf/encoding/protodelim
 google.golang.org/protobuf/encoding/protojson

@@ -1,11 +1,14 @@
 package ebpf
 
 import (
+	"context"
 	"testing"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
+	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -190,4 +193,30 @@ func TestGetEnvConfig_OCP4_14(t *testing.T) {
 		{Name: "PREFERRED_INTERFACE_FOR_MAC_PREFIX", Value: "0a:58=eth0"},
 		{Name: "TC_ATTACH_MODE", Value: "tc"},
 	}, env)
+}
+
+func TestBpfmanConfig(t *testing.T) {
+	fc := flowslatest.FlowCollector{
+		Spec: flowslatest.FlowCollectorSpec{
+			Agent: flowslatest.FlowCollectorAgent{
+				EBPF: flowslatest.FlowCollectorEBPF{
+					Features: []flowslatest.AgentFeature{flowslatest.EbpfManager},
+				},
+			},
+		},
+	}
+
+	info := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &cluster.Info{}}
+	inst := info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: "ebpf-agent"}, status.Instance{})
+	agent := NewAgentController(inst)
+	ds, err := agent.desired(context.Background(), &fc)
+	assert.NoError(t, err)
+	assert.NotNil(t, ds)
+
+	assert.Equal(t, corev1.EnvVar{Name: "EBPF_PROGRAM_MANAGER_MODE", Value: "true"}, ds.Spec.Template.Spec.Containers[0].Env[0])
+	assert.Equal(t, "bpfman-maps", ds.Spec.Template.Spec.Volumes[0].Name)
+	assert.Equal(t, map[string]string{
+		"csi.bpfman.io/maps":    "direct_flows,aggregated_flows,additional_flow_metrics,packet_record,dns_flows,global_counters,filter_map,peer_filter_map,ipsec_ingress_map,ipsec_egress_map",
+		"csi.bpfman.io/program": "netobserv",
+	}, ds.Spec.Template.Spec.Volumes[0].CSI.VolumeAttributes)
 }
