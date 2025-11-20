@@ -233,13 +233,12 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 }
 
 func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.SubnetLabel, error) {
-	// Pods and Services subnets are found in CNO config
 	if !r.mgr.ClusterInfo.HasCNO() {
 		return nil, nil
 	}
-
 	var pods, services, machines, extIPs []string
 
+	// Pods and Services subnets are found in CNO config
 	network := &configv1.Network{}
 	err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
 	if err != nil {
@@ -277,13 +276,16 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	internalSubnet := "100.64.0.0/16"
 	transitSwitchSubnet := "100.88.0.0/16"
 	masqueradeSubnet := "169.254.0.0/17"
-	if networkOp.Spec.DefaultNetwork.OVNKubernetesConfig != nil {
-		ovnk := networkOp.Spec.DefaultNetwork.OVNKubernetesConfig
+	ovnk := networkOp.Spec.DefaultNetwork.OVNKubernetesConfig
+	if ovnk != nil {
 		if ovnk.V4InternalSubnet != "" {
 			internalSubnet = ovnk.V4InternalSubnet
 		}
 		if ovnk.IPv4 != nil && ovnk.IPv4.InternalTransitSwitchSubnet != "" {
 			transitSwitchSubnet = ovnk.IPv4.InternalTransitSwitchSubnet
+		}
+		if ovnk.GatewayConfig != nil && ovnk.GatewayConfig.IPv4.InternalMasqueradeSubnet != "" {
+			masqueradeSubnet = ovnk.GatewayConfig.IPv4.InternalMasqueradeSubnet
 		}
 	}
 	machines = append(machines, internalSubnet)
