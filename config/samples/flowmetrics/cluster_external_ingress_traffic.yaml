@@ -9,10 +9,13 @@ spec:
   type: Counter
   valueField: Bytes
   direction: Ingress
-  labels: [DstK8S_HostName,DstK8S_Namespace,DstK8S_OwnerName,DstK8S_OwnerType]
+  labels: [DstK8S_HostName,DstK8S_Namespace,DstK8S_OwnerName,DstK8S_OwnerType,SrcSubnetLabel]
   filters:
   - field: SrcSubnetLabel
     matchType: Absence
+  - field: SrcSubnetLabel
+    matchType: MatchRegex
+    value: "^EXT:.*"
   charts:
   - dashboardName: Main
     title: External ingress traffic
