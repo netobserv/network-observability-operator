@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	sliceslatest "github.com/netobserv/network-observability-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -67,7 +68,7 @@ func (r *transformerReconciler) getStatus() *status.Instance {
 	return &r.Status
 }
 
-func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) error {
+func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowCollector, flowMetrics *metricslatest.FlowMetricList, fcSlices []sliceslatest.FlowCollectorSlice, detectedSubnets []flowslatest.SubnetLabel) error {
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
@@ -82,7 +83,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 
 	r.Status.SetReady() // will be overidden if necessary, as error or pending
 
-	builder, err := newTransfoBuilder(r.Instance, &desired.Spec, flowMetrics, detectedSubnets)
+	builder, err := newTransfoBuilder(r.Instance, &desired.Spec, flowMetrics, fcSlices, detectedSubnets)
 	if err != nil {
 		return err
 	}

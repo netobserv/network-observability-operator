@@ -7,6 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	sliceslatest "github.com/netobserv/network-observability-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -28,13 +29,14 @@ type transfoBuilder struct {
 	info            *reconcilers.Instance
 	desired         *flowslatest.FlowCollectorSpec
 	flowMetrics     *metricslatest.FlowMetricList
+	fcSlices        []sliceslatest.FlowCollectorSlice
 	detectedSubnets []flowslatest.SubnetLabel
 	version         string
 	promTLS         *flowslatest.CertificateReference
 	volumes         volumes.Builder
 }
 
-func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
+func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, fcSlices []sliceslatest.FlowCollectorSlice, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
 	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
 	promTLS, err := getPromTLS(desired, constants.FLPTransfoMetricsSvcName)
 	if err != nil {
@@ -44,6 +46,7 @@ func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowColl
 		info:            info,
 		desired:         desired,
 		flowMetrics:     flowMetrics,
+		fcSlices:        fcSlices,
 		detectedSubnets: detectedSubnets,
 		version:         helper.MaxLabelLength(version),
 		promTLS:         promTLS,
@@ -87,6 +90,7 @@ func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Config
 	pipeline := newPipelineBuilder(
 		b.desired,
 		b.flowMetrics,
+		b.fcSlices,
 		b.detectedSubnets,
 		b.info.Loki,
 		b.info.ClusterInfo.GetID(),
