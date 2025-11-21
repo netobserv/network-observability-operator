@@ -7,6 +7,7 @@ kind: Kustomization
 resources:
 - bases/flows.netobserv.io_flowcollectors.yaml
 - bases/flows.netobserv.io_flowmetrics.yaml
+- bases/flows.netobserv.io_flowcollectorslices.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
