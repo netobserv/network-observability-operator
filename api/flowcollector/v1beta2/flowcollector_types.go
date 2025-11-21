@@ -1436,7 +1436,9 @@ type SubnetLabel struct {
 	// List of CIDRs, such as `["1.2.3.4/32"]`.
 	//+required
 	CIDRs []string `json:"cidrs,omitempty"` // Note, starting with k8s 1.31 / ocp 4.16 there's a new way to validate CIDR such as `+kubebuilder:validation:XValidation:rule="isCIDR(self)",message="field should be in CIDR notation format"`. But older versions would reject the CRD so we cannot implement it now to maintain compatibility.
+
 	// Label name, used to flag matching flows.
+	// +kubebuilder:validation:Pattern:="^[a-zA-Z_:-][a-zA-Z0-9_:-]*$"
 	//+required
 	Name string `json:"name,omitempty"`
 }
