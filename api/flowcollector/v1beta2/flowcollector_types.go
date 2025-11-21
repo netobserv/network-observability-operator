@@ -697,6 +697,10 @@ type FlowCollectorFLP struct {
 	// but with a lesser improvement in performance.
 	Filters []FLPFilterSet `json:"filters"`
 
+	// Global configuration managing FlowCollectorSlices custom resources.
+	//+optional
+	SlicesConfig *SlicesConfig `json:"slicesConfig,omitempty"`
+
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
@@ -785,6 +789,33 @@ type FlowCollectorHPA struct {
 	// Metrics used by the pod autoscaler. For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
 	// +optional
 	Metrics []ascv2.MetricSpec `json:"metrics"`
+}
+
+type SliceCollectionMode string
+
+const (
+	CollectionAlwaysCollect SliceCollectionMode = "AlwaysCollect"
+	CollectionAllowList     SliceCollectionMode = "AllowList"
+)
+
+type SlicesConfig struct {
+	// `enable` determines if the FlowCollectorSlice feature is enabled. If not, all resources of kind FlowCollectorSlice are simply ignored.
+	//+kubebuilder:default:=false
+	//+kubebuilder:validation:Required
+	Enable bool `json:"enable,omitempty"`
+
+	// `collectionMode` determines how the FlowCollectorSlice custom resources impacts the flow collection process:<br>
+	// - When set to `AlwaysCollect`, all flows are collected regardless of the presence of FlowCollectorSlice.<br>
+	// - When set to `AllowList`, only the flows related to namespaces where a FlowCollectorSlice resource is present, or configured via the global `namespacesAllowList`, are collected.<br>
+	//+kubebuilder:validation:Enum=AlwaysCollect;AllowList
+	//+kubebuilder:default:="AlwaysCollect"
+	CollectionMode SliceCollectionMode `json:"collectionMode,omitempty"`
+
+	// `namespacesAllowList` is a list of namespaces for which flows are always collected, regardless of the presence of FlowCollectorSlice in those namespaces.
+	// An entry enclosed by slashes, such as `/openshift-.*/`, is matched as a regular expression.
+	// This setting is ignored if `collectionMode` is different from `AllowList`.
+	//+kubebuilder:validation:optional
+	NamespacesAllowList []string `json:"namespacesAllowList,omitempty"`
 }
 
 type LokiAuthToken string

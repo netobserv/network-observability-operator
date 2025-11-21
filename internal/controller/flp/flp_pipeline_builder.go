@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	sliceslatest "github.com/netobserv/network-observability-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/flp/fmstatus"
@@ -30,7 +31,8 @@ const (
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
 	desired         *flowslatest.FlowCollectorSpec
-	flowMetrics     metricslatest.FlowMetricList
+	flowMetrics     *metricslatest.FlowMetricList
+	fcSlices        []sliceslatest.FlowCollectorSlice
 	detectedSubnets []flowslatest.SubnetLabel
 	volumes         *volumes.Builder
 	loki            *helper.LokiConfig
@@ -40,6 +42,7 @@ type PipelineBuilder struct {
 func newPipelineBuilder(
 	desired *flowslatest.FlowCollectorSpec,
 	flowMetrics *metricslatest.FlowMetricList,
+	fcSlices []sliceslatest.FlowCollectorSlice,
 	detectedSubnets []flowslatest.SubnetLabel,
 	loki *helper.LokiConfig,
 	clusterID string,
@@ -49,7 +52,8 @@ func newPipelineBuilder(
 	return PipelineBuilder{
 		PipelineBuilderStage: pipeline,
 		desired:              desired,
-		flowMetrics:          *flowMetrics,
+		flowMetrics:          flowMetrics,
+		fcSlices:             fcSlices,
 		detectedSubnets:      detectedSubnets,
 		loki:                 loki,
 		clusterID:            clusterID,
@@ -68,7 +72,13 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	addZone := b.desired.Processor.IsZoneEnabled()
 
 	// Get all subnet labels
+	// Highest priority: admin-defined labels
 	allLabels := b.desired.Processor.SubnetLabels.CustomLabels
+	// Then: slice labels
+	if b.desired.IsSliceEnabled() {
+		allLabels = append(allLabels, slicesToFCSubnetLabels(b.fcSlices)...)
+	}
+	// Finally: detected/fallback labels
 	allLabels = append(allLabels, b.detectedSubnets...)
 	flpLabels := subnetLabelsToFLP(allLabels)
 
@@ -199,6 +209,10 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 
 	// Custom filters
 	filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetAll)
+	sliceFilters := slicesToFilters(b.desired, b.fcSlices)
+	if len(sliceFilters) > 0 {
+		filters = append(filters, sliceFilters...)
+	}
 	if len(filters) > 0 {
 		nextStage = nextStage.TransformFilter("filters", newTransformFilter(filters))
 	}

@@ -5,7 +5,7 @@ set -e
 mkdir -p _tmp
 oc get --raw /openapi/v2 | jq . > _tmp/openapi.1.json
 
-jq '.definitions |= ({"io.netobserv.flows.v1beta2.FlowCollector", "io.netobserv.flows.v1alpha1.FlowMetric"})
+jq '.definitions |= ({"io.netobserv.flows.v1beta2.FlowCollector", "io.netobserv.flows.v1alpha1.FlowMetric", "io.netobserv.flows.v1alpha1.FlowCollectorSlice"})
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.status)
   | del(.definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.metadata."$ref")
   | .definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.metadata += {type:"object"}
@@ -25,7 +25,10 @@ jq '.definitions |= ({"io.netobserv.flows.v1beta2.FlowCollector", "io.netobserv.
   | .definitions."io.netobserv.flows.v1beta2.FlowCollector".properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.description |= . + " Refer to HorizontalPodAutoscaler documentation (autoscaling/v2)."
   | del(.definitions."io.netobserv.flows.v1alpha1.FlowMetric".properties.status)
   | del(.definitions."io.netobserv.flows.v1alpha1.FlowMetric".properties.metadata."$ref")
-  | .definitions."io.netobserv.flows.v1alpha1.FlowMetric".properties.metadata += {type:"object"}' \
+  | .definitions."io.netobserv.flows.v1alpha1.FlowMetric".properties.metadata += {type:"object"}
+  | del(.definitions."io.netobserv.flows.v1alpha1.FlowCollectorSlice".properties.status)
+  | del(.definitions."io.netobserv.flows.v1alpha1.FlowCollectorSlice".properties.metadata."$ref")
+  | .definitions."io.netobserv.flows.v1alpha1.FlowCollectorSlice".properties.metadata += {type:"object"}' \
   _tmp/openapi.1.json > _tmp/openapi.2.json
 
 openshift-apidocs-gen build -c hack/asciidoc-gen-config.yaml _tmp/openapi.2.json
@@ -57,3 +60,4 @@ amend_doc() {
 
 amend_doc "flowcollector-flows-netobserv-io-v1beta2.adoc"
 amend_doc "flowmetric-flows-netobserv-io-v1alpha1.adoc"
+amend_doc "flowcollectorslice-flows-netobserv-io-v1alpha1.adoc"
