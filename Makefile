@@ -279,6 +279,7 @@ endif
 doc: crdoc ## Generate markdown documentation
 	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowcollectors.yaml --output docs/FlowCollector.md
 	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowmetrics.yaml --output docs/FlowMetric.md
+	$(CRDOC) --resources config/crd/bases/flows.netobserv.io_flowcollectorslices.yaml --output docs/FlowCollectorSlice.md
 
 # Hack to reintroduce when the API stored version != latest version; see also envtest.go (CRD path config)
 # .PHONY: hack-crd-for-test
@@ -288,6 +289,7 @@ doc: crdoc ## Generate markdown documentation
 # 		'(.spec.versions.[]|select(.name != "v1beta2").storage) = false,(.spec.versions.[]|select(.name == "v1beta2").storage) = true' \
 # 		> ./hack/cloned.flows.netobserv.io_flowcollectors.yaml
 # 	cp ./config/crd/bases/flows.netobserv.io_flowmetrics.yaml ./hack/cloned.flows.netobserv.io_flowmetrics.yaml
+# 	cp ./config/crd/bases/flows.netobserv.io_flowcollectorslices.yaml ./hack/cloned.flows.netobserv.io_flowcollectorslices.yaml
 
 generate: gencode manifests doc ## Run all code/file generators
 
