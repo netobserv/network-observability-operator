@@ -6,6 +6,16 @@ metadata:
       [
         {
           "apiVersion": "flows.netobserv.io/v1alpha1",
+          "kind": "FlowCollectorSlice",
+          "metadata": {
+            "name": "flowcollectorslice-sample"
+          },
+          "spec": {
+            "sampling": 10
+          }
+        },
+        {
+          "apiVersion": "flows.netobserv.io/v1alpha1",
           "kind": "FlowMetric",
           "metadata": {
             "labels": {
@@ -628,6 +638,14 @@ spec:
         path: processor.metrics.includeList
       - displayName: Port
         path: processor.metrics.server.port
+      - displayName: Slices config
+        path: processor.slicesConfig
+      - displayName: Collection mode
+        path: processor.slicesConfig.collectionMode
+      - displayName: Enable
+        path: processor.slicesConfig.enable
+      - displayName: Namespaces allow list
+        path: processor.slicesConfig.namespacesAllowList
       - displayName: Subnet labels
         path: processor.subnetLabels
       - displayName: Custom labels
@@ -663,6 +681,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.conditions
       version: v1beta2
+    - description: '`FlowCollectorSlice` is the schema allowing delegated configuration
+        per namespace.'
+      displayName: Flow Collector Slice
+      kind: FlowCollectorSlice
+      name: flowcollectorslices.flows.netobserv.io
+      version: v1alpha1
     - description: '`FlowMetric` is the schema for the custom metrics API, which allows
         to generate more metrics out of flow logs. You can find examples here: https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics'
       displayName: Flow Metric
@@ -913,6 +937,7 @@ spec:
           - flows.netobserv.io
           resources:
           - flowcollectors
+          - flowcollectorslices
           - flowmetrics
           verbs:
           - create
@@ -932,6 +957,7 @@ spec:
           - flows.netobserv.io
           resources:
           - flowcollectors/status
+          - flowcollectorslices/status
           - flowmetrics/status
           verbs:
           - get

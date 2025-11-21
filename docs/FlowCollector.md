@@ -8539,6 +8539,13 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorslicesconfig">slicesConfig</a></b></td>
+        <td>object</td>
+        <td>
+          Global configuration managing FlowCollectorSlices custom resources.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprocessorsubnetlabels">subnetLabels</a></b></td>
         <td>object</td>
         <td>
@@ -11976,6 +11983,56 @@ inside a container.<br/>
           Request is the name chosen for a request in the referenced claim.
 If empty, everything from the claim is made available, otherwise
 only the result of this request.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.slicesConfig
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+Global configuration managing FlowCollectorSlices custom resources.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          `enable` determines if the FlowCollectorSlice feature is enabled. If not, all resources of kind FlowCollectorSlice are simply ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>collectionMode</b></td>
+        <td>enum</td>
+        <td>
+          `collectionMode` determines how the FlowCollectorSlice custom resources impacts the flow collection process:<br>
+- When set to `AlwaysCollect`, all flows are collected regardless of the presence of FlowCollectorSlice.<br>
+- When set to `AllowList`, only the flows related to namespaces where a FlowCollectorSlice resource is present, or configured via the global `namespacesAllowList`, are collected.<br><br/>
+          <br/>
+            <i>Enum</i>: AlwaysCollect, AllowList<br/>
+            <i>Default</i>: AlwaysCollect<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespacesAllowList</b></td>
+        <td>[]string</td>
+        <td>
+          `namespacesAllowList` is a list of namespaces for which flows are always collected, regardless of the presence of FlowCollectorSlice in those namespaces.
+An entry enclosed by slashes, such as `/openshift-.*/`, is matched as a regular expression.
+This setting is ignored if `collectionMode` is different from `AllowList`.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

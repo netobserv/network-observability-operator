@@ -227,3 +227,7 @@ func (spec *FlowCollectorConsolePlugin) IsUnmanagedConsolePluginReplicas() bool 
 	}
 	return spec.Autoscaler.IsHPAEnabled()
 }
+
+func (spec *FlowCollectorSpec) IsSliceEnabled() bool {
+	return spec.Processor.SlicesConfig != nil && spec.Processor.SlicesConfig.Enable
+}
