@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
 - flows_v1beta2_flowcollector.yaml
 - flows_v1alpha1_flowmetric.yaml
+- flows_v1alpha1_flowcollectorslice.yaml
