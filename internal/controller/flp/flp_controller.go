@@ -268,7 +268,7 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 
 	// Additional OVN subnets
 	networkOp := &operatorv1.Network{}
-	err = r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
+	err = r.Get(ctx, types.NamespacedName{Name: "cluster"}, networkOp)
 	if err != nil {
 		return nil, fmt.Errorf("can't get Network (operator) information: %w", err)
 	}
