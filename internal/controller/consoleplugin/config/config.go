@@ -3,6 +3,7 @@ package config
 import (
 	_ "embed"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"gopkg.in/yaml.v2"
@@ -24,18 +25,19 @@ type LokiConfig struct {
 	URL    string   `yaml:"url" json:"url"`
 	Labels []string `yaml:"labels" json:"labels"`
 
-	StatusURL          string       `yaml:"statusUrl,omitempty" json:"statusUrl,omitempty"`
-	Timeout            api.Duration `yaml:"timeout,omitempty" json:"timeout,omitempty"`
-	TenantID           string       `yaml:"tenantID,omitempty" json:"tenantID,omitempty"`
-	TokenPath          string       `yaml:"tokenPath,omitempty" json:"tokenPath,omitempty"`
-	SkipTLS            bool         `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`
-	CAPath             string       `yaml:"caPath,omitempty" json:"caPath,omitempty"`
-	StatusSkipTLS      bool         `yaml:"statusSkipTls,omitempty" json:"statusSkipTls,omitempty"`
-	StatusCAPath       string       `yaml:"statusCaPath,omitempty" json:"statusCaPath,omitempty"`
-	StatusUserCertPath string       `yaml:"statusUserCertPath,omitempty" json:"statusUserCertPath,omitempty"`
-	StatusUserKeyPath  string       `yaml:"statusUserKeyPath,omitempty" json:"statusUserKeyPath,omitempty"`
-	UseMocks           bool         `yaml:"useMocks,omitempty" json:"useMocks,omitempty"`
-	ForwardUserToken   bool         `yaml:"forwardUserToken,omitempty" json:"forwardUserToken,omitempty"`
+	Status             *lokiv1.LokiStackStatus `yaml:"status,omitempty" json:"status,omitempty"`
+	StatusURL          string                  `yaml:"statusUrl,omitempty" json:"statusUrl,omitempty"`
+	Timeout            api.Duration            `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+	TenantID           string                  `yaml:"tenantID,omitempty" json:"tenantID,omitempty"`
+	TokenPath          string                  `yaml:"tokenPath,omitempty" json:"tokenPath,omitempty"`
+	SkipTLS            bool                    `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`
+	CAPath             string                  `yaml:"caPath,omitempty" json:"caPath,omitempty"`
+	StatusSkipTLS      bool                    `yaml:"statusSkipTls,omitempty" json:"statusSkipTls,omitempty"`
+	StatusCAPath       string                  `yaml:"statusCaPath,omitempty" json:"statusCaPath,omitempty"`
+	StatusUserCertPath string                  `yaml:"statusUserCertPath,omitempty" json:"statusUserCertPath,omitempty"`
+	StatusUserKeyPath  string                  `yaml:"statusUserKeyPath,omitempty" json:"statusUserKeyPath,omitempty"`
+	UseMocks           bool                    `yaml:"useMocks,omitempty" json:"useMocks,omitempty"`
+	ForwardUserToken   bool                    `yaml:"forwardUserToken,omitempty" json:"forwardUserToken,omitempty"`
 }
 
 type PrometheusConfig struct {
