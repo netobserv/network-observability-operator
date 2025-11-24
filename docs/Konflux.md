@@ -137,6 +137,22 @@ oc patch components network-observability-console-plugin-pf4-ystream --type='jso
 
 - review the `ReleasePlanAdmission` objects to make sure they are targetting the next release.
 
+## Release candidates
+
+To generate release candidates:
+- Make sure we're in a good state: all the desired work is merged on the release branch, konflux 'on-push' jobs have succeeded, the related nudging PRs are merged, and the operator-bundle 'on-push' job (consecutive to nudging) has succeeded as well. With that all set, you should have your bundle image ready with tag `latest` at [quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-ystream:latest](https://quay.io/repository/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-ystream?tab=tags) or [quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-zstream:latest](https://quay.io/repository/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-zstream?tab=tags).
+
+- Go to your local clone of [netobserv-catalog](https://github.com/netobserv/netobserv-catalog) and run:
+
+```bash
+REGISTRY_AUTH_FILE=/path/to/authfile.json make gen-ystream # (or gen-zstream)
+```
+(It will take a while because it regenerates the full dependency tree, which includes all past versions of netobserv)
+
+- Commit and push
+
+That's going to trigger on-push jobs on [catalog-ystream](https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/ocp-network-observab-tenant/applications/catalog-ystream/activity/pipelineruns) and/or  [catalog-zstream](https://konflux-ui.apps.stone-prd-rh01.pg1f.p1.openshiftapps.com/ns/ocp-network-observab-tenant/applications/catalog-zstream/activity/pipelineruns). When that succeeds, you can consume the release candidate `catalog-ystream:latest` or `catalog-zstream:latest` as described in the [Deploying section](#deploying).
+
 ## Release
 
 When a release candidate is accepted and ready to be released, the catalogs repo must be updated with the accepted bundle image:
