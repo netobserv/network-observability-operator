@@ -8361,7 +8361,7 @@ configuration, you can disable it and install your own instead.<br/>
           Deploys network policies on the namespaces used by NetObserv (main and privileged).
 These network policies better isolate the NetObserv components to prevent undesired connections from and to them.
 This option is enabled by default when using with OVNKubernetes, and disabled otherwise (it has not been tested with other CNIs).
-When disabled, you can create manually the network policies for the NetObserv components.<br/>
+When disabled, you can manually create the network policies for the NetObserv components.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
