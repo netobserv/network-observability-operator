@@ -119,7 +119,7 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 }
 
 func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
-	kafkaStage := newGRPCPipeline(b.desired)
+	grpcStage := newGRPCPipeline(b.desired)
 	pipeline := newPipelineBuilder(
 		b.desired,
 		b.flowMetrics,
@@ -128,7 +128,7 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 		b.info.Loki,
 		b.info.ClusterInfo.GetID(),
 		&b.volumes,
-		&kafkaStage,
+		&grpcStage,
 	)
 	err := pipeline.AddProcessorStages()
 	if err != nil {
