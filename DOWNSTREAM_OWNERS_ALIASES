@@ -1,0 +1,23 @@
+
+aliases:
+  # Contributors who can approve any PRs in the repo.
+  netobserv-team-approvers:
+  - jotak
+  - jpinsonneau
+  - OlivierCazade
+  - stleerh
+  - memodi
+  - mffiedler
+  # Contributors who can review and LGTM any PRs in the repo.
+  netobserv-reviewers:
+  - jotak
+  - jpinsonneau
+  - OlivierCazade
+  - stleerh
+  - memodi
+  - Amoghrd
+  - luisjira
+  - oliver-smakal
+  - kapjain-rh
+  - leandroberetta
+  - mffiedler
