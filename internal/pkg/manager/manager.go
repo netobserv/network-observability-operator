@@ -43,7 +43,8 @@ import (
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=k8s.ovn.org,resources=userdefinednetworks;clusteruserdefinednetworks,verbs=get;list;watch
 
-type Registerer func(context.Context, *Manager) error
+type Registerer func(context.Context, *Manager) (PostCreateHook, error)
+type PostCreateHook = func(ctx context.Context) error
 
 type Manager struct {
 	manager.Manager
@@ -113,8 +114,12 @@ func NewManager(
 
 	log.Info("Building controllers")
 	for _, f := range ctrls {
-		if err := f(ctx, this); err != nil {
+		if hook, err := f(ctx, this); err != nil {
 			return nil, fmt.Errorf("unable to create controller: %w", err)
+		} else if hook != nil {
+			if err := internalManager.Add(manager.RunnableFunc(hook)); err != nil {
+				return nil, fmt.Errorf("unable to register controller post-create hook: %w", err)
+			}
 		}
 	}
 

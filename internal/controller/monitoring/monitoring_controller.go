@@ -33,7 +33,7 @@ type Reconciler struct {
 	currentNamespace string
 }
 
-func Start(ctx context.Context, mgr *manager.Manager) error {
+func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, error) {
 	log := log.FromContext(ctx)
 	log.Info("Starting Monitoring controller")
 	r := Reconciler{
@@ -41,7 +41,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		mgr:    mgr,
 		status: mgr.Status.ForComponent(status.Monitoring),
 	}
-	return ctrl.NewControllerManagedBy(mgr).
+	return nil, ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("monitoring").
 		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).

@@ -22,7 +22,7 @@ type Reconciler struct {
 	status status.Instance
 }
 
-func Start(ctx context.Context, mgr *manager.Manager) error {
+func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, error) {
 	log := log.FromContext(ctx)
 	log.Info("Starting Network Policy controller")
 	r := Reconciler{
@@ -30,7 +30,7 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		mgr:    mgr,
 		status: mgr.Status.ForComponent(status.NetworkPolicy),
 	}
-	return ctrl.NewControllerManagedBy(mgr).
+	return nil, ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("networkPolicy").
 		Owns(&networkingv1.NetworkPolicy{}, reconcilers.UpdateOrDeleteOnlyPred).
