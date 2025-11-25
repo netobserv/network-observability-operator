@@ -16,28 +16,33 @@ func slicesToFilters(fc *flowslatest.FlowCollectorSpec, fcSlices []sliceslatest.
 	if fc.Processor.SlicesConfig.CollectionMode == flowslatest.CollectionAlwaysCollect {
 		return nil
 	}
+	processed := make(map[string]any)
 	var rules []api.TransformFilterRule
 	for _, ns := range fc.Processor.SlicesConfig.NamespacesAllowList {
-		var query string
 		if len(ns) >= 2 && strings.HasPrefix(ns, "/") && strings.HasSuffix(ns, "/") {
 			// Regex
 			pattern := strings.TrimPrefix(strings.TrimSuffix(ns, "/"), "/")
-			query = fmt.Sprintf(`SrcK8S_Namespace=~"%s" or DstK8S_Namespace=~"%s"`, pattern, pattern)
-		} else {
-			query = fmt.Sprintf(`SrcK8S_Namespace="%s" or DstK8S_Namespace="%s"`, ns, ns)
+			rules = append(rules, api.TransformFilterRule{
+				Type:           api.KeepEntryQuery,
+				KeepEntryQuery: fmt.Sprintf(`SrcK8S_Namespace=~"%s" or DstK8S_Namespace=~"%s"`, pattern, pattern),
+			})
+		} else if _, found := processed[ns]; !found {
+			rules = append(rules, api.TransformFilterRule{
+				Type:           api.KeepEntryQuery,
+				KeepEntryQuery: fmt.Sprintf(`SrcK8S_Namespace="%s" or DstK8S_Namespace="%s"`, ns, ns),
+			})
+			processed[ns] = nil
 		}
-		rules = append(rules, api.TransformFilterRule{
-			Type:           api.KeepEntryQuery,
-			KeepEntryQuery: query,
-		})
 	}
 	for i := range fcSlices {
-		query := fmt.Sprintf(`SrcK8S_Namespace="%s" or DstK8S_Namespace="%s"`, fcSlices[i].Namespace, fcSlices[i].Namespace)
-		rules = append(rules, api.TransformFilterRule{
-			Type:              api.KeepEntryQuery,
-			KeepEntryQuery:    query,
-			KeepEntrySampling: uint16(fcSlices[i].Spec.Sampling),
-		})
+		if _, found := processed[fcSlices[i].Namespace]; !found {
+			rules = append(rules, api.TransformFilterRule{
+				Type:              api.KeepEntryQuery,
+				KeepEntryQuery:    fmt.Sprintf(`SrcK8S_Namespace="%s" or DstK8S_Namespace="%s"`, fcSlices[i].Namespace, fcSlices[i].Namespace),
+				KeepEntrySampling: uint16(fcSlices[i].Spec.Sampling),
+			})
+			processed[fcSlices[i].Namespace] = nil
+		}
 	}
 	return rules
 }
