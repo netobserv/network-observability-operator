@@ -35,7 +35,7 @@ type Reconciler struct {
 	currentNamespace string
 }
 
-func Start(ctx context.Context, mgr *manager.Manager) error {
+func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, error) {
 	log := log.FromContext(ctx)
 	log.Info("Starting Flowlogs Pipeline parent controller")
 
@@ -66,11 +66,11 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 
 	ctrl, err := builder.Build(&r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	r.watcher = watchers.NewWatcher(ctrl)
 
-	return nil
+	return nil, nil
 }
 
 type subReconciler interface {

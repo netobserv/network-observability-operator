@@ -43,7 +43,8 @@ import (
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
 //+kubebuilder:rbac:groups=k8s.ovn.org,resources=userdefinednetworks;clusteruserdefinednetworks,verbs=get;list;watch
 
-type Registerer func(context.Context, *Manager) error
+type Registerer func(context.Context, *Manager) (PostCreateHook, error)
+type PostCreateHook = func(ctx context.Context) error
 
 type Manager struct {
 	manager.Manager
@@ -90,12 +91,14 @@ func NewManager(
 		return nil, fmt.Errorf("unable to create narrow cache client: %w", err)
 	}
 
+	statusMgr := status.NewManager()
+
 	log.Info("Discovering APIs")
 	dc, err := discovery.NewDiscoveryClientForConfig(kcfg)
 	if err != nil {
 		return nil, fmt.Errorf("can't instantiate discovery client: %w", err)
 	}
-	info, postCreate, err := cluster.NewInfo(ctx, dc)
+	info, postCreate, err := cluster.NewInfo(ctx, client, dc, func() { statusMgr.Sync(ctx, client) })
 	if err != nil {
 		return nil, fmt.Errorf("can't collect cluster info: %w", err)
 	}
@@ -104,15 +107,19 @@ func NewManager(
 	this := &Manager{
 		Manager:     internalManager,
 		ClusterInfo: info,
-		Status:      status.NewManager(),
+		Status:      statusMgr,
 		Client:      client,
 		Config:      opcfg,
 	}
 
 	log.Info("Building controllers")
 	for _, f := range ctrls {
-		if err := f(ctx, this); err != nil {
+		if hook, err := f(ctx, this); err != nil {
 			return nil, fmt.Errorf("unable to create controller: %w", err)
+		} else if hook != nil {
+			if err := internalManager.Add(manager.RunnableFunc(hook)); err != nil {
+				return nil, fmt.Errorf("unable to register controller post-create hook: %w", err)
+			}
 		}
 	}
 
@@ -127,7 +134,7 @@ func NewManager(
 	}
 
 	if err := internalManager.Add(manager.RunnableFunc(func(ctx context.Context) error {
-		return postCreate(ctx, client)
+		return postCreate(ctx)
 	})); err != nil {
 		return nil, fmt.Errorf("can't collect more cluster info: %w", err)
 	}
