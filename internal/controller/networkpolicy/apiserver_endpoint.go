@@ -49,11 +49,12 @@ func GetAPIServerEndpointIPs(ctx context.Context, cl client.Client) ([]string, e
 
 // getEndpointIPsFromEndpointSlice retrieves endpoint IPs using the EndpointSlice API
 func getEndpointIPsFromEndpointSlice(ctx context.Context, cl client.Client) ([]string, error) {
-	// List all EndpointSlices for the kubernetes service
-	endpointSliceList := &discoveryv1.EndpointSliceList{}
-	err := cl.List(ctx, endpointSliceList, client.InNamespace(kubernetesServiceNamespace), client.MatchingLabels{
-		discoveryv1.LabelServiceName: kubernetesServiceName,
-	})
+	// Get the EndpointSlice directly by name
+	endpointSlice := &discoveryv1.EndpointSlice{}
+	err := cl.Get(ctx, types.NamespacedName{
+		Name:      kubernetesServiceName,
+		Namespace: kubernetesServiceNamespace,
+	}, endpointSlice)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil, fmt.Errorf("EndpointSlice for kubernetes service not found")
@@ -61,18 +62,12 @@ func getEndpointIPsFromEndpointSlice(ctx context.Context, cl client.Client) ([]s
 		return nil, err
 	}
 
-	if len(endpointSliceList.Items) == 0 {
-		return nil, fmt.Errorf("no EndpointSlices found for kubernetes service")
-	}
-
 	var ips []string
-	for i := range endpointSliceList.Items {
-		for j := range endpointSliceList.Items[i].Endpoints {
-			endpoint := &endpointSliceList.Items[i].Endpoints[j]
-			// Only use ready endpoints
-			if endpoint.Conditions.Ready != nil && *endpoint.Conditions.Ready {
-				ips = append(ips, endpoint.Addresses...)
-			}
+	for j := range endpointSlice.Endpoints {
+		endpoint := &endpointSlice.Endpoints[j]
+		// Only use ready endpoints
+		if endpoint.Conditions.Ready != nil && *endpoint.Conditions.Ready {
+			ips = append(ips, endpoint.Addresses...)
 		}
 	}
 

@@ -4,14 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
-	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -26,17 +22,6 @@ type Reconciler struct {
 	status status.Instance
 }
 
-// enqueueFlowCollectorOnEndpointChange is a handler that triggers reconciliation when kubernetes service endpoints change
-func enqueueFlowCollectorOnEndpointChange(ctx context.Context, obj client.Object) []reconcile.Request {
-	// Only watch the kubernetes service in default namespace
-	if obj.GetNamespace() == kubernetesServiceNamespace && obj.GetName() == kubernetesServiceName {
-		log.FromContext(ctx).V(1).Info("Kubernetes service endpoint changed, triggering reconciliation")
-		// Trigger reconciliation for all FlowCollectors
-		return []reconcile.Request{{}}
-	}
-	return nil
-}
-
 func Start(ctx context.Context, mgr *manager.Manager) error {
 	log := log.FromContext(ctx)
 	log.Info("Starting Network Policy controller")
@@ -46,32 +31,11 @@ func Start(ctx context.Context, mgr *manager.Manager) error {
 		status: mgr.Status.ForComponent(status.NetworkPolicy),
 	}
 
-	builder := ctrl.NewControllerManagedBy(mgr).
+	return ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("networkPolicy").
-		Owns(&networkingv1.NetworkPolicy{}, reconcilers.UpdateOrDeleteOnlyPred)
-
-	// Watch EndpointSlice if available (preferred, k8s >= 1.21), otherwise fallback to Endpoints
-	if isEndpointSliceAvailable(mgr) {
-		log.V(1).Info("EndpointSlice API available, watching for kubernetes service changes")
-		builder = builder.Watches(&discoveryv1.EndpointSlice{}, handler.EnqueueRequestsFromMapFunc(enqueueFlowCollectorOnEndpointChange))
-	} else {
-		log.Info("EndpointSlice API not available (requires k8s >= 1.21), using Endpoints API")
-		//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
-		builder = builder.Watches(&corev1.Endpoints{}, handler.EnqueueRequestsFromMapFunc(enqueueFlowCollectorOnEndpointChange))
-	}
-
-	return builder.Complete(&r)
-}
-
-// isEndpointSliceAvailable checks if the EndpointSlice API (discovery.k8s.io/v1) is available
-// in the cluster. This API was introduced in Kubernetes 1.21.
-func isEndpointSliceAvailable(mgr *manager.Manager) bool {
-	gvk := discoveryv1.SchemeGroupVersion.WithKind("EndpointSlice")
-	restMapper := mgr.GetRESTMapper()
-
-	_, err := restMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
-	return err == nil
+		Owns(&networkingv1.NetworkPolicy{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Complete(&r)
 }
 
 // Reconcile is the controller entry point for reconciling current state with desired state.
@@ -119,9 +83,8 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 	if r.mgr.ClusterInfo.IsOpenShift() {
 		apiServerIPs, err = GetAPIServerEndpointIPs(ctx, r.Client)
 		if err != nil {
-			l.Error(err, "Failed to get API server endpoint IPs, network policy will allow all IPs on port 6443")
-			// Continue without IPs - will fallback to allowing all IPs on port 6443
-			apiServerIPs = nil
+			l.Error(err, "Failed to get API server endpoint IPs")
+			return fmt.Errorf("cannot determine API server endpoint IPs: %w", err)
 		}
 	}
 

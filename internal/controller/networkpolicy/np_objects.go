@@ -189,7 +189,6 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 		// Allow fetching from external apiserver (HyperShift and other external control planes)
 		// The kubernetes service may redirect to external endpoints on port 6443
 		if len(apiServerIPs) > 0 {
-			// If we have specific API server IPs, restrict to those (more secure)
 			// Build a single egress rule with multiple IP peers
 			peers := []networkingv1.NetworkPolicyPeer{}
 			for _, ip := range apiServerIPs {
@@ -208,15 +207,6 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 					Protocol: ptr.To(corev1.ProtocolTCP),
 					Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
 				}},
-			})
-		} else {
-			// Fallback: if we can't get specific IPs, allow all (less secure but ensures connectivity)
-			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
-				Ports: []networkingv1.NetworkPolicyPort{{
-					Protocol: ptr.To(corev1.ProtocolTCP),
-					Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
-				}},
-				// Empty To allows traffic to any destination on this port
 			})
 		}
 	} else {

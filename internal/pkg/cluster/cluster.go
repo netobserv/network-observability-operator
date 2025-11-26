@@ -13,6 +13,7 @@ import (
 	securityv1 "github.com/openshift/api/security/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,11 +37,12 @@ type Info struct {
 }
 
 var (
-	consolePlugin = "consoleplugins." + osv1.GroupVersion.String()
-	cno           = "networks." + operatorv1.GroupVersion.String()
-	svcMonitor    = "servicemonitors." + monv1.SchemeGroupVersion.String()
-	promRule      = "prometheusrules." + monv1.SchemeGroupVersion.String()
-	ocpSecurity   = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
+	consolePlugin  = "consoleplugins." + osv1.GroupVersion.String()
+	cno            = "networks." + operatorv1.GroupVersion.String()
+	svcMonitor     = "servicemonitors." + monv1.SchemeGroupVersion.String()
+	promRule       = "prometheusrules." + monv1.SchemeGroupVersion.String()
+	ocpSecurity    = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
+	endpointSlices = "endpointslices." + discoveryv1.SchemeGroupVersion.String()
 )
 
 func NewInfo(ctx context.Context, dcl *discovery.DiscoveryClient) (*Info, func(ctx context.Context, cl client.Client) error, error) {
@@ -54,11 +56,12 @@ func NewInfo(ctx context.Context, dcl *discovery.DiscoveryClient) (*Info, func(c
 func (c *Info) fetchAvailableAPIs(ctx context.Context, client *discovery.DiscoveryClient) error {
 	log := log.FromContext(ctx)
 	c.apisMap = map[string]bool{
-		consolePlugin: false,
-		cno:           false,
-		svcMonitor:    false,
-		promRule:      false,
-		ocpSecurity:   false,
+		consolePlugin:  false,
+		cno:            false,
+		svcMonitor:     false,
+		promRule:       false,
+		ocpSecurity:    false,
+		endpointSlices: false,
 	}
 	_, resources, err := client.ServerGroupsAndResources()
 	// We may receive partial data along with an error
@@ -224,4 +227,9 @@ func (c *Info) HasSvcMonitor() bool {
 // HasPromRule returns true if "prometheusrules.monitoring.coreos.com" API was found
 func (c *Info) HasPromRule() bool {
 	return c.apisMap[promRule]
+}
+
+// HasEndpointSlices returns true if "endpointslices.discovery.k8s.io" API was found
+func (c *Info) HasEndpointSlices() bool {
+	return c.apisMap[endpointSlices]
 }
