@@ -80,7 +80,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 	// Get API server endpoint IPs for network policy
 	var apiServerIPs []string
 	if r.mgr.ClusterInfo.IsOpenShift() {
-		apiServerIPs, err = GetAPIServerEndpointIPs(ctx, r.Client)
+		apiServerIPs, err = GetAPIServerEndpointIPs(ctx, r.Client, r.mgr.ClusterInfo)
 		if err != nil {
 			l.Error(err, "Failed to get API server endpoint IPs")
 			return fmt.Errorf("cannot determine API server endpoint IPs: %w", err)

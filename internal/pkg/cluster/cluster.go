@@ -68,12 +68,12 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 		return err
 	}
 	apisMap := map[string]bool{
-		consolePlugin: false,
-		cno:           false,
-		svcMonitor:    false,
-		promRule:      false,
-		ocpSecurity:   false,
-    endpointSlices: false,
+		consolePlugin:  false,
+		cno:            false,
+		svcMonitor:     false,
+		promRule:       false,
+		ocpSecurity:    false,
+		endpointSlices: false,
 	}
 	for apiName := range apisMap {
 		if hasAPI(apiName, resources) {
@@ -283,5 +283,7 @@ func (c *Info) HasPromRule() bool {
 
 // HasEndpointSlices returns true if "endpointslices.discovery.k8s.io" API was found
 func (c *Info) HasEndpointSlices() bool {
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
 	return c.apisMap[endpointSlices]
 }

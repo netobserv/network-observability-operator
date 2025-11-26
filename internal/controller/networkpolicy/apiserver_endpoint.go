@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -18,32 +19,35 @@ const (
 )
 
 // GetAPIServerEndpointIPs retrieves the API server endpoint IP addresses.
-// It first tries to use EndpointSlice API (v1), and falls back to Endpoints API if unavailable.
-func GetAPIServerEndpointIPs(ctx context.Context, cl client.Client) ([]string, error) {
+// It uses EndpointSlice API if available, otherwise falls back to Endpoints API.
+func GetAPIServerEndpointIPs(ctx context.Context, cl client.Client, clusterInfo *cluster.Info) ([]string, error) {
 	logger := log.FromContext(ctx)
 
-	// Try EndpointSlice first (discovery.k8s.io/v1, available since k8s 1.21)
-	ips, err := getEndpointIPsFromEndpointSlice(ctx, cl)
-	if err == nil && len(ips) > 0 {
+	var ips []string
+	var err error
+
+	// Use EndpointSlice if available (discovery.k8s.io/v1, available since k8s 1.21)
+	if clusterInfo.HasEndpointSlices() {
+		logger.V(1).Info("Using EndpointSlice API to get API server endpoint IPs")
+		ips, err = getEndpointIPsFromEndpointSlice(ctx, cl)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get API server endpoint IPs from EndpointSlice: %w", err)
+		}
 		logger.V(1).Info("Retrieved API server endpoint IPs from EndpointSlice", "ips", ips)
-		return ips, nil
-	}
-
-	if err != nil {
-		logger.V(1).Info("Failed to get EndpointSlice, falling back to Endpoints API", "error", err)
-	}
-
-	// Fallback to Endpoints API (core/v1, deprecated but widely available)
-	ips, err = getEndpointIPsFromEndpoints(ctx, cl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get API server endpoint IPs: %w", err)
+	} else {
+		// Fallback to Endpoints API (core/v1, deprecated but widely available)
+		logger.V(1).Info("EndpointSlice API not available, using Endpoints API")
+		ips, err = getEndpointIPsFromEndpoints(ctx, cl)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get API server endpoint IPs from Endpoints: %w", err)
+		}
+		logger.V(1).Info("Retrieved API server endpoint IPs from Endpoints", "ips", ips)
 	}
 
 	if len(ips) == 0 {
 		return nil, fmt.Errorf("no API server endpoint IPs found")
 	}
 
-	logger.V(1).Info("Retrieved API server endpoint IPs from Endpoints", "ips", ips)
 	return ips, nil
 }
 
