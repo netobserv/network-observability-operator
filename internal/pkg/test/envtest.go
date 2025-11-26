@@ -138,9 +138,22 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 		Expect(err).NotTo(HaveOccurred())
 	}
 
-	err = k8sClient.Create(ctx, &configv1.ClusterVersion{
+	cv := &configv1.ClusterVersion{
 		ObjectMeta: metav1.ObjectMeta{Name: "version"},
-	})
+		Spec:       configv1.ClusterVersionSpec{ClusterID: "test-id"},
+	}
+	err = k8sClient.Create(ctx, cv)
+	Expect(err).NotTo(HaveOccurred())
+	cv.Status = configv1.ClusterVersionStatus{
+		History: []configv1.UpdateHistory{
+			{
+				State:       configv1.CompletedUpdate,
+				Version:     "4.20.0",
+				StartedTime: metav1.Now(),
+			},
+		},
+	}
+	err = k8sClient.Status().Update(ctx, cv)
 	Expect(err).NotTo(HaveOccurred())
 
 	err = k8sClient.Create(ctx, &configv1.Network{

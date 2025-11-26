@@ -552,6 +552,15 @@ columns:
     default: false
     width: 5
     feature: dnsTracking
+  - id: DNSName
+    group: DNS
+    name: DNS Name
+    tooltip: DNS name.
+    field: DnsName
+    filter: dns_name
+    default: false
+    width: 15
+    feature: dnsTracking
   - id: DNSLatency
     group: DNS
     name: DNS Latency
@@ -1019,6 +1028,10 @@ filters:
     name: DNS Id
     component: number
     hint: Specify a single DNS Id.
+  - id: dns_name
+    name: DNS Name
+    component: text
+    hint: Specify a single DNS name.
   - id: dns_latency
     name: DNS Latency
     component: number
@@ -1386,6 +1399,9 @@ fields:
   - name: DnsId
     type: number
     description: DNS record id
+  - name: DnsName
+    type: string
+    description: DNS queried name
   - name: DnsLatencyMs
     type: number
     description: Time between a DNS request and response, in milliseconds

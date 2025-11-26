@@ -38,17 +38,8 @@ func (r *CPReconciler) ReconcileStaticPlugin(ctx context.Context, enable bool) e
 
 // Reconcile is the reconciler entry point to reconcile the static plugin state with the desired configuration
 func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest.FlowCollector) error {
-	l := log.FromContext(ctx).WithName("console-plugin")
+	l := log.FromContext(ctx).WithName("static-console-plugin")
 	ctx = log.IntoContext(ctx, l)
-
-	// Skip static reconciler on older OpenShift (feature not implemented)
-	if less415, _, err := r.ClusterInfo.IsOpenShiftVersionLessThan("4.15.0"); less415 {
-		l.Info("Static plugin not supported for this version of OpenShift; skipping")
-		r.Managed.TryDeleteAll(ctx)
-		return nil
-	} else if err != nil {
-		l.Error(err, "Could not determine if static plugin is supported; proceed with deploying")
-	}
 
 	// Retrieve current owned objects
 	err := r.Managed.FetchAll(ctx)
