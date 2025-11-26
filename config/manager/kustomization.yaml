@@ -13,8 +13,8 @@ patches:
 - path: manager_webhook_patch.yaml
 images:
 - name: controller
-  newName: quay.io/leandroberetta/network-observability-operator
-  newTag: main
+  newName: quay.io/netobserv/network-observability-operator
+  newTag: 1.10.0-community
 labels:
 - includeSelectors: true
   pairs:
