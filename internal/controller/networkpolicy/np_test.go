@@ -230,19 +230,24 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 	}
 	assert.True(found, "Expected to find a single egress rule with multiple API server IPs")
 
-	// Test without API server IPs (fallback scenario)
-	_, npFallback := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, nil)
-	assert.NotNil(npFallback)
+	// Test without API server IPs - should not create the external API server egress rule
+	_, npWithoutIPs := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, nil)
+	assert.NotNil(npWithoutIPs)
 
-	// Verify that we have a fallback egress rule allowing all IPs on port 6443
-	foundFallback := false
-	for _, egressRule := range npFallback.Spec.Egress {
+	// Verify that we do NOT have an egress rule for external API server when IPs are not provided
+	// This is more secure - we prefer breaking connectivity over opening all IPs on port 6443
+	foundExternalAPIRule := false
+	for _, egressRule := range npWithoutIPs.Spec.Egress {
+		// Check if this is an external API server rule (would have IPBlock or empty To with port 6443)
 		if len(egressRule.To) == 0 && len(egressRule.Ports) > 0 {
-			// This is the fallback rule (empty To, only Ports specified)
-			foundFallback = true
+			for _, port := range egressRule.Ports {
+				if port.Port != nil && port.Port.IntVal == 6443 {
+					foundExternalAPIRule = true
+				}
+			}
 		}
 	}
-	assert.True(foundFallback, "Expected to find fallback egress rule allowing all IPs on port 6443")
+	assert.False(foundExternalAPIRule, "Should not create external API server egress rule without specific IPs")
 
 	// Test with IPv6 addresses
 	apiServerIPsV6 := []string{"2001:db8::1", "2001:db8::2"}
