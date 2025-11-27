@@ -14,6 +14,7 @@ import (
 	securityv1 "github.com/openshift/api/security/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -42,11 +43,12 @@ type Info struct {
 }
 
 var (
-	consolePlugin = "consoleplugins." + osv1.GroupVersion.String()
-	cno           = "networks." + operatorv1.GroupVersion.String()
-	svcMonitor    = "servicemonitors." + monv1.SchemeGroupVersion.String()
-	promRule      = "prometheusrules." + monv1.SchemeGroupVersion.String()
-	ocpSecurity   = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
+	consolePlugin  = "consoleplugins." + osv1.GroupVersion.String()
+	cno            = "networks." + operatorv1.GroupVersion.String()
+	svcMonitor     = "servicemonitors." + monv1.SchemeGroupVersion.String()
+	promRule       = "prometheusrules." + monv1.SchemeGroupVersion.String()
+	ocpSecurity    = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
+	endpointSlices = "endpointslices." + discoveryv1.SchemeGroupVersion.String()
 )
 
 func NewInfo(ctx context.Context, cl client.Client, dcl *discovery.DiscoveryClient, onRefresh func()) (*Info, func(ctx context.Context) error, error) {
@@ -66,11 +68,12 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 		return err
 	}
 	apisMap := map[string]bool{
-		consolePlugin: false,
-		cno:           false,
-		svcMonitor:    false,
-		promRule:      false,
-		ocpSecurity:   false,
+		consolePlugin:  false,
+		cno:            false,
+		svcMonitor:     false,
+		promRule:       false,
+		ocpSecurity:    false,
+		endpointSlices: false,
 	}
 	for apiName := range apisMap {
 		if hasAPI(apiName, resources) {
@@ -276,4 +279,11 @@ func (c *Info) HasPromRule() bool {
 	c.apisMapLock.RLock()
 	defer c.apisMapLock.RUnlock()
 	return c.apisMap[promRule]
+}
+
+// HasEndpointSlices returns true if "endpointslices.discovery.k8s.io" API was found
+func (c *Info) HasEndpointSlices() bool {
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
+	return c.apisMap[endpointSlices]
 }

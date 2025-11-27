@@ -1,6 +1,8 @@
 package networkpolicy
 
 import (
+	"net"
+
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
@@ -15,6 +17,22 @@ import (
 )
 
 const netpolName = "netobserv"
+
+// ipToCIDR converts an IP address to a CIDR with proper prefix length
+// IPv4 addresses get /32, IPv6 addresses get /128
+func ipToCIDR(ipStr string) string {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return ""
+	}
+
+	// Check if it's IPv4 (net.IP.To4() returns nil for IPv6)
+	if ip.To4() != nil {
+		return ipStr + "/32"
+	}
+	// IPv6
+	return ipStr + "/128"
+}
 
 func peerInNamespace(ns string) networkingv1.NetworkPolicyPeer {
 	return networkingv1.NetworkPolicyPeer{
@@ -50,7 +68,7 @@ func addAllowedNamespaces(np *networkingv1.NetworkPolicy, in, out []string) {
 	}
 }
 
-func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager, cni cluster.NetworkType) (types.NamespacedName, *networkingv1.NetworkPolicy) {
+func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager, cni cluster.NetworkType, apiServerIPs []string) (types.NamespacedName, *networkingv1.NetworkPolicy) {
 	ns := desired.Spec.GetNamespace()
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
@@ -156,7 +174,8 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 			},
 			Ports: hostNetworkPorts,
 		})
-		// Allow fetching from apiserver
+
+		// Allow fetching from in-cluster apiserver namespaces
 		np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
 			To: []networkingv1.NetworkPolicyPeer{
 				peerInNamespaces([]string{constants.OpenShiftAPIServerNamespace, constants.OpenShiftKubeAPIServerNamespace}),
@@ -166,6 +185,30 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 				Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
 			}},
 		})
+
+		// Allow fetching from external apiserver (HyperShift and other external control planes)
+		// The kubernetes service may redirect to external endpoints on port 6443
+		if len(apiServerIPs) > 0 {
+			// Build a single egress rule with multiple IP peers
+			peers := []networkingv1.NetworkPolicyPeer{}
+			for _, ip := range apiServerIPs {
+				cidr := ipToCIDR(ip)
+				if cidr != "" {
+					peers = append(peers, networkingv1.NetworkPolicyPeer{
+						IPBlock: &networkingv1.IPBlock{
+							CIDR: cidr,
+						},
+					})
+				}
+			}
+			np.Spec.Egress = append(np.Spec.Egress, networkingv1.NetworkPolicyEgressRule{
+				To: peers,
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: ptr.To(corev1.ProtocolTCP),
+					Port:     ptr.To(intstr.FromInt32(constants.K8sAPIServerPort)),
+				}},
+			})
+		}
 	} else {
 		// Not OpenShift
 		// Allow fetching from apiserver / kube-system
