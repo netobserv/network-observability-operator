@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -83,7 +84,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			}
 		}
 
-		cmDigest, err := r.reconcileConfigMap(ctx, &builder)
+		cmDigest, err := r.reconcileConfigMap(ctx, &builder, &desired.Spec)
 		if err != nil {
 			return err
 		}
@@ -179,8 +180,22 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 	return nil
 }
 
-func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder) (string, error) {
-	newCM, configDigest, err := builder.configMap(ctx)
+func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) (string, error) {
+	lokiStack := &lokiv1.LokiStack{}
+	if desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		if r.ClusterInfo.HasLokiStack() {
+			ns := desired.Loki.LokiStack.Namespace
+			if ns == "" {
+				ns = desired.Namespace
+			}
+			if err := r.Client.Get(ctx, types.NamespacedName{Name: desired.Loki.LokiStack.Name, Namespace: ns}, lokiStack); err != nil {
+				lokiStack = nil
+				log.FromContext(ctx).Info("Could not get the LokiStack resource.")
+			}
+		}
+	}
+
+	newCM, configDigest, err := builder.configMap(ctx, lokiStack)
 	if err != nil {
 		return "", err
 	}

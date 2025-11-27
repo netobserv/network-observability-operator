@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/coreos/go-semver/semver"
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	configv1 "github.com/openshift/api/config/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
@@ -47,6 +48,7 @@ var (
 	svcMonitor    = "servicemonitors." + monv1.SchemeGroupVersion.String()
 	promRule      = "prometheusrules." + monv1.SchemeGroupVersion.String()
 	ocpSecurity   = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
+	lokistacks    = "lokistacks." + lokiv1.GroupVersion.String()
 )
 
 func NewInfo(ctx context.Context, cl client.Client, dcl *discovery.DiscoveryClient, onRefresh func()) (*Info, func(ctx context.Context) error, error) {
@@ -71,6 +73,7 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 		svcMonitor:    false,
 		promRule:      false,
 		ocpSecurity:   false,
+		lokistacks:    false,
 	}
 	for apiName := range apisMap {
 		if hasAPI(apiName, resources) {
@@ -276,4 +279,9 @@ func (c *Info) HasPromRule() bool {
 	c.apisMapLock.RLock()
 	defer c.apisMapLock.RUnlock()
 	return c.apisMap[promRule]
+}
+
+// HasLokiStack returns true if "lokistack" API was found
+func (c *Info) HasLokiStack() bool {
+	return c.apisMap[lokistacks]
 }
