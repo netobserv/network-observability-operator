@@ -1,0 +1,6 @@
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowCollectorSlice
+metadata:
+  name: flowcollectorslice-sample
+spec:
+  sampling: 10

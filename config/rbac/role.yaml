@@ -131,6 +131,7 @@ rules:
   - flows.netobserv.io
   resources:
   - flowcollectors
+  - flowcollectorslices
   - flowmetrics
   verbs:
   - create
@@ -150,6 +151,7 @@ rules:
   - flows.netobserv.io
   resources:
   - flowcollectors/status
+  - flowcollectorslices/status
   - flowmetrics/status
   verbs:
   - get
