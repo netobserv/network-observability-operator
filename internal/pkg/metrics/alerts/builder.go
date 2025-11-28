@@ -22,7 +22,7 @@ const (
 
 type ruleBuilder struct {
 	template          flowslatest.AlertTemplate
-	alert             *flowslatest.AlertVariant
+	alert             *flowslatest.HealthRuleVariant
 	enabledMetrics    []string
 	side              srcOrDst
 	severity          string
@@ -33,40 +33,108 @@ type ruleBuilder struct {
 	duration          monitoringv1.Duration
 }
 
+// BuildRules is the main entry point that builds both alerts and recording rules
+// based on each health rule's mode configuration
 func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monitoringv1.Rule {
-	log := log.FromContext(ctx)
 	rules := []monitoringv1.Rule{}
 
 	if fc.HasExperimentalAlertsHealth() {
-		alerts := fc.GetFLPAlerts()
+		healthRules := fc.GetHealthRules()
 		metrics := fc.GetIncludeList()
-		for _, alert := range alerts {
-			if ok, _ := alert.IsAllowed(fc); !ok {
-				continue
-			}
-			for _, variant := range alert.Variants {
-				if r, err := convertToRules(alert.Template, &variant, metrics); err != nil {
-					log.Error(err, "unable to configure an alert")
-				} else if len(r) > 0 {
-					rules = append(rules, r...)
-				}
-			}
-		}
-	}
 
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
-		r := alertNoFlows()
-		rules = append(rules, *r)
-	}
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
-		r := alertLokiError()
-		rules = append(rules, *r)
+		// Build health rules and track system rules mode
+		addNoFlowsRecording, addLokiErrorRecording := buildHealthRules(ctx, fc, healthRules, metrics, &rules)
+
+		// Add system health rules based on mode
+		addSystemHealthRules(fc, addNoFlowsRecording, addLokiErrorRecording, &rules)
+	} else {
+		// If experimental alerts are not enabled, add default alert rules
+		addDefaultSystemAlerts(fc, &rules)
 	}
 
 	return rules
 }
 
-func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
+// buildHealthRules processes health rules and returns flags indicating if NoFlows/LokiError should be recording rules
+func buildHealthRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec, healthRules []flowslatest.HealthRule, metrics []string, rules *[]monitoringv1.Rule) (bool, bool) {
+	log := log.FromContext(ctx)
+	addNoFlowsRecording := false
+	addLokiErrorRecording := false
+
+	for _, healthRule := range healthRules {
+		if ok, _ := healthRule.IsAllowed(fc); !ok {
+			continue
+		}
+
+		// Check if NoFlows or LokiError are configured as recording rules
+		if healthRule.Mode == flowslatest.HealthRuleModeRecordingRule {
+			if healthRule.Template == flowslatest.AlertNoFlows {
+				addNoFlowsRecording = true
+			}
+			if healthRule.Template == flowslatest.AlertLokiError {
+				addLokiErrorRecording = true
+			}
+		}
+
+		for _, variant := range healthRule.Variants {
+			var r []monitoringv1.Rule
+			var err error
+
+			// Decide whether to build alert or recording rule based on mode
+			if healthRule.Mode == flowslatest.HealthRuleModeRecordingRule {
+				r, err = convertToRecordingRules(healthRule.Template, &variant, metrics)
+			} else {
+				// Default to alert mode
+				r, err = convertToRules(healthRule.Template, &variant, metrics)
+			}
+
+			if err != nil {
+				log.Error(err, "unable to configure a health rule", "template", healthRule.Template, "mode", healthRule.Mode)
+			} else if len(r) > 0 {
+				*rules = append(*rules, r...)
+			}
+		}
+	}
+
+	return addNoFlowsRecording, addLokiErrorRecording
+}
+
+// addSystemHealthRules adds NoFlows and LokiError rules based on configured mode
+func addSystemHealthRules(fc *flowslatest.FlowCollectorSpec, addNoFlowsRecording, addLokiErrorRecording bool, rules *[]monitoringv1.Rule) {
+	// Add system health recording rules (NoFlows and LokiError) if configured
+	if addNoFlowsRecording && !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
+		r := RecordingNoFlows()
+		*rules = append(*rules, *r)
+	}
+	if addLokiErrorRecording && !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
+		r := RecordingLokiError()
+		*rules = append(*rules, *r)
+	}
+
+	// Add system health alert rules (NoFlows and LokiError) - only if not configured as recording rules
+	if !addNoFlowsRecording && !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
+		r := alertNoFlows()
+		*rules = append(*rules, *r)
+	}
+	if !addLokiErrorRecording && !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
+		r := alertLokiError()
+		*rules = append(*rules, *r)
+	}
+}
+
+// addDefaultSystemAlerts adds default alert rules when experimental alerts are not enabled
+func addDefaultSystemAlerts(fc *flowslatest.FlowCollectorSpec, rules *[]monitoringv1.Rule) {
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
+		r := alertNoFlows()
+		*rules = append(*rules, *r)
+	}
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
+		r := alertLokiError()
+		*rules = append(*rules, *r)
+	}
+}
+
+func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.HealthRuleVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
 	var rules []monitoringv1.Rule
 	var upperThreshold string
 	sides := []srcOrDst{asSource, asDest}

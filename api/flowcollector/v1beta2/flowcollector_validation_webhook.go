@@ -248,8 +248,8 @@ func (v *validator) validateFLP() {
 	v.validateScheduling()
 	v.validateFLPLogTypes()
 	v.validateFLPFilters()
-	v.validateFLPAlerts()
-	v.validateFLPMetricsForAlerts()
+	v.validateHealthRules()
+	v.validateMetricsForHealthRules()
 }
 
 func (v *validator) validateScheduling() {
@@ -290,60 +290,73 @@ func (v *validator) validateFLPFilters() {
 	}
 }
 
-func (v *validator) validateFLPAlerts() {
-	if v.fc.Processor.Metrics.Alerts != nil {
-		for i, alert := range *v.fc.Processor.Metrics.Alerts {
-			if _, msg := alert.IsAllowed(v.fc); len(msg) > 0 {
+func (v *validator) validateHealthRules() {
+	if v.fc.Processor.Metrics.HealthRules != nil {
+		for i, healthRule := range *v.fc.Processor.Metrics.HealthRules {
+			if _, msg := healthRule.IsAllowed(v.fc); len(msg) > 0 {
 				v.warnings = append(v.warnings, msg)
 			}
-			for j, variant := range alert.Variants {
+			for j, variant := range healthRule.Variants {
 				// Check allowed groups
-				if !v.isFLPAlertGroupBySupported(alert.Template, &variant) {
+				if !v.isHealthRuleGroupBySupported(healthRule.Template, &variant) {
 					v.errors = append(
 						v.errors,
 						fmt.Errorf(
-							`%s alert template does not support grouping by %s, in spec.processor.metrics.alerts[%d].variants[%d]`,
-							alert.Template, variant.GroupBy, i, j,
+							`%s health rule template does not support grouping by %s, in spec.processor.metrics.healthRules[%d].variants[%d]`,
+							healthRule.Template, variant.GroupBy, i, j,
 						),
 					)
 				}
-				lastThreshold := float64(-1)
-				thresholds := []struct {
-					s string
-					t string
-				}{
-					{s: "critical", t: variant.Thresholds.Critical},
-					{s: "warning", t: variant.Thresholds.Warning},
-					{s: "info", t: variant.Thresholds.Info},
-				}
-				for _, st := range thresholds {
-					if st.t != "" {
-						val, err := strconv.ParseFloat(st.t, 64)
-						if err != nil {
-							v.errors = append(
-								v.errors,
-								fmt.Errorf(`cannot parse %s threshold as float in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
-							)
-						} else if val < 0 {
-							v.errors = append(
-								v.errors,
-								fmt.Errorf(`%s threshold must be positive in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
-							)
-						} else if lastThreshold > 0 && val > lastThreshold {
-							v.errors = append(
-								v.errors,
-								fmt.Errorf(`%s threshold must be lower than %.0f, which is defined for a higher severity, in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, st.s, lastThreshold, i, j, st.t),
-							)
+
+				// Only validate thresholds for alert mode
+				if healthRule.Mode == HealthRuleModeAlert || healthRule.Mode == "" {
+					lastThreshold := float64(-1)
+					thresholds := []struct {
+						s string
+						t string
+					}{
+						{s: "critical", t: variant.Thresholds.Critical},
+						{s: "warning", t: variant.Thresholds.Warning},
+						{s: "info", t: variant.Thresholds.Info},
+					}
+					for _, st := range thresholds {
+						if st.t != "" {
+							val, err := strconv.ParseFloat(st.t, 64)
+							if err != nil {
+								v.errors = append(
+									v.errors,
+									fmt.Errorf(`cannot parse %s threshold as float in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
+								)
+							} else if val < 0 {
+								v.errors = append(
+									v.errors,
+									fmt.Errorf(`%s threshold must be positive in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
+								)
+							} else if lastThreshold > 0 && val > lastThreshold {
+								v.errors = append(
+									v.errors,
+									fmt.Errorf(`%s threshold must be lower than %.0f, which is defined for a higher severity, in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, st.s, lastThreshold, i, j, st.t),
+								)
+							}
+							lastThreshold = val
 						}
-						lastThreshold = val
+					}
+				} else if healthRule.Mode == HealthRuleModeRecordingRule {
+					// Warn if thresholds are specified for recording-rule mode
+					if variant.Thresholds.Info != "" || variant.Thresholds.Warning != "" || variant.Thresholds.Critical != "" {
+						v.warnings = append(
+							v.warnings,
+							fmt.Sprintf("Thresholds are ignored for recording-rule mode in spec.processor.metrics.healthRules[%d].variants[%d]", i, j),
+						)
 					}
 				}
+
 				if variant.LowVolumeThreshold != "" {
 					_, err := strconv.ParseFloat(variant.LowVolumeThreshold, 64)
 					if err != nil {
 						v.errors = append(
 							v.errors,
-							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, i, j, variant.LowVolumeThreshold),
+							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, i, j, variant.LowVolumeThreshold),
 						)
 					}
 				}
@@ -352,7 +365,7 @@ func (v *validator) validateFLPAlerts() {
 	}
 }
 
-func (v *validator) isFLPAlertGroupBySupported(template AlertTemplate, variant *AlertVariant) bool {
+func (v *validator) isHealthRuleGroupBySupported(template AlertTemplate, variant *HealthRuleVariant) bool {
 	switch template {
 	case AlertPacketDropsByDevice:
 		return variant.GroupBy != GroupByWorkload
@@ -366,10 +379,10 @@ func (v *validator) isFLPAlertGroupBySupported(template AlertTemplate, variant *
 	return true
 }
 
-func (v *validator) validateFLPMetricsForAlerts() {
+func (v *validator) validateMetricsForHealthRules() {
 	metrics := v.fc.GetIncludeList()
-	alerts := v.fc.GetFLPAlerts()
-	for _, g := range alerts {
+	healthRules := v.fc.GetHealthRules()
+	for _, g := range healthRules {
 		for _, a := range g.Variants {
 			reqMetrics1, reqMetrics2 := GetElligibleMetricsForAlert(g.Template, &a)
 			// At least one metric from reqMetrics1 should be present, same for reqMetrics2
@@ -402,7 +415,7 @@ func GetFirstRequiredMetrics(anyRequired, actual []string) string {
 	return ""
 }
 
-func GetElligibleMetricsForAlert(template AlertTemplate, alertDef *AlertVariant) ([]string, []string) {
+func GetElligibleMetricsForAlert(template AlertTemplate, alertDef *HealthRuleVariant) ([]string, []string) {
 	var metricPatterns, totalMetricPatterns []string
 	switch template {
 	case AlertPacketDropsByKernel:

@@ -45,10 +45,11 @@ var (
 		"node_ipsec_flows_total",
 		"node_to_node_ingress_flows_total",
 	}
-	DefaultAlerts = []FLPAlert{
+	DefaultHealthRules = []HealthRule{
 		{
 			Template: AlertPacketDropsByKernel,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Info:    "10",
@@ -68,7 +69,8 @@ var (
 		},
 		{
 			Template: AlertPacketDropsByDevice,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Warning: "5",
@@ -79,7 +81,8 @@ var (
 		},
 		{
 			Template: AlertIPsecErrors,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Critical: "2",
@@ -95,7 +98,8 @@ var (
 		},
 		{
 			Template: AlertDNSErrors,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Warning: "5",
@@ -112,7 +116,8 @@ var (
 		},
 		{
 			Template: AlertNetpolDenied,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Info:    "5",
@@ -124,7 +129,8 @@ var (
 		},
 		{
 			Template: AlertLatencyHighTrend,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Info: "100",
@@ -138,7 +144,8 @@ var (
 		},
 		{
 			Template: AlertExternalEgressHighTrend,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Warning: "5",
@@ -156,7 +163,8 @@ var (
 		},
 		{
 			Template: AlertExternalIngressHighTrend,
-			Variants: []AlertVariant{
+			Mode:     HealthRuleModeAlert,
+			Variants: []HealthRuleVariant{
 				{
 					Thresholds: AlertThresholds{
 						Warning: "5",

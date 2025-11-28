@@ -253,7 +253,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.10.0-community
-    createdAt: "2025-11-25T09:57:07Z"
+    createdAt: "2025-11-28T14:33:48Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -620,10 +620,10 @@ spec:
         path: processor.filters
       - displayName: Log types
         path: processor.logTypes
-      - displayName: Alerts
-        path: processor.metrics.alerts
       - displayName: Disable alerts
         path: processor.metrics.disableAlerts
+      - displayName: Health rules
+        path: processor.metrics.healthRules
       - displayName: Include list
         path: processor.metrics.includeList
       - displayName: Port
