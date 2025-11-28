@@ -10,7 +10,7 @@ import (
 func TestBuildLabelFilter(t *testing.T) {
 	// Test GroupByNode with source side
 	rb := &ruleBuilder{
-		alert: &flowslatest.AlertVariant{
+		alert: &flowslatest.HealthRuleVariant{
 			GroupBy: flowslatest.GroupByNode,
 		},
 		side: asSource,
