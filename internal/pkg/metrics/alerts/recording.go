@@ -215,7 +215,7 @@ func (rb *ruleBuilder) latencyTrendRecording() (*monitoringv1.Rule, error) {
 	}, nil
 }
 
-func recordingNoFlows() *monitoringv1.Rule {
+func RecordingNoFlows() *monitoringv1.Rule {
 	return &monitoringv1.Rule{
 		Record: "netobserv:health:no_flows:rate1m",
 		Expr:   intstr.FromString("sum(rate(netobserv_ingest_flows_processed[1m]))"),
@@ -226,7 +226,7 @@ func recordingNoFlows() *monitoringv1.Rule {
 	}
 }
 
-func recordingLokiError() *monitoringv1.Rule {
+func RecordingLokiError() *monitoringv1.Rule {
 	return &monitoringv1.Rule{
 		Record: "netobserv:health:loki_errors:rate1m",
 		Expr:   intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[1m]))"),

@@ -207,3 +207,59 @@ func TestRecordingRuleLabels(t *testing.T) {
 	assert.Equal(t, "Workload", labels["health_groupby"])
 	assert.Equal(t, "Dst", labels["health_side"])
 }
+
+func TestBuildRules_SystemRecordingRules(t *testing.T) {
+	ctx := context.Background()
+
+	// Create health rules with NoFlows and LokiError as recording rules
+	healthRules := []flowslatest.HealthRule{
+		{
+			Template: flowslatest.AlertNoFlows,
+			Mode:     flowslatest.HealthRuleModeRecordingRule,
+			Variants: []flowslatest.HealthRuleVariant{{}},
+		},
+		{
+			Template: flowslatest.AlertLokiError,
+			Mode:     flowslatest.HealthRuleModeRecordingRule,
+			Variants: []flowslatest.HealthRuleVariant{{}},
+		},
+	}
+
+	spec := &flowslatest.FlowCollectorSpec{
+		Processor: flowslatest.FlowCollectorFLP{
+			Metrics: flowslatest.FLPMetrics{
+				HealthRules: &healthRules,
+			},
+			Advanced: &flowslatest.AdvancedProcessorConfig{
+				Env: map[string]string{
+					"EXPERIMENTAL_ALERTS_HEALTH": "true",
+				},
+			},
+		},
+	}
+
+	rules := BuildRules(ctx, spec)
+
+	// Should have recording rules for NoFlows and LokiError
+	var noFlowsRecording, lokiErrorRecording bool
+	for _, rule := range rules {
+		if rule.Record == "netobserv:health:no_flows:rate1m" {
+			noFlowsRecording = true
+			assert.Equal(t, "health", rule.Labels["netobserv"])
+			assert.Equal(t, "NetObservNoFlows", rule.Labels["health_template"])
+			assert.Contains(t, rule.Expr.StrVal, "netobserv_ingest_flows_processed")
+		}
+		if rule.Record == "netobserv:health:loki_errors:rate1m" {
+			lokiErrorRecording = true
+			assert.Equal(t, "health", rule.Labels["netobserv"])
+			assert.Equal(t, "NetObservLokiError", rule.Labels["health_template"])
+			assert.Contains(t, rule.Expr.StrVal, "netobserv_loki_dropped_entries_total")
+		}
+		// Should not have alert versions
+		assert.NotEqual(t, "NetObservNoFlows", rule.Alert)
+		assert.NotEqual(t, "NetObservLokiError", rule.Alert)
+	}
+
+	assert.True(t, noFlowsRecording, "should have NoFlows recording rule")
+	assert.True(t, lokiErrorRecording, "should have LokiError recording rule")
+}
