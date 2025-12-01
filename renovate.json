@@ -21,6 +21,14 @@
   "helmv3": {
     "schedule": ["* * 7 */3 *"]
   },
+  "lockFileMaintenance": {
+    "packageRules": [
+      {
+        "matchManagers": ["helmv3"]
+      }
+    ],
+    "schedule": ["* * 7 */3 *"]
+  },
   "dockerfile": {
     "packageRules": [
       {
