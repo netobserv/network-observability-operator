@@ -67,6 +67,11 @@ func (spec *FlowCollectorSpec) UseHostNetwork() bool {
 	return spec.DeploymentModel == DeploymentModelDirect
 }
 
+func (spec *FlowCollectorSpec) UseServiceNetwork() bool {
+	return spec.DeploymentModel == DeploymentModelServiceNoTLS ||
+		spec.DeploymentModel == DeploymentModelServiceTLS
+}
+
 func (spec *FlowCollectorEBPF) IsAgentFeatureEnabled(feature AgentFeature) bool {
 	for _, f := range spec.Features {
 		if f == feature {
