@@ -33,10 +33,23 @@ const (
 	startupPeriodSeconds    = 10
 )
 
-func newGRPCPipeline(desired *flowslatest.FlowCollectorSpec) config.PipelineBuilderStage {
-	return config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
+func newGRPCPipeline(desired *flowslatest.FlowCollectorSpec, volumes *volumes.Builder) config.PipelineBuilderStage {
+	cfg := api.IngestGRPCProto{
 		Port: int(*helper.GetAdvancedProcessorConfig(desired).Port),
-	})
+	}
+	if desired.DeploymentModel == flowslatest.DeploymentModelServiceTLS {
+		// Communication from agents uses TLS or mTLS: set up server certificate
+		ref := flowslatest.CertificateReference{
+			Type:     flowslatest.RefTypeSecret,
+			Name:     monoCertSecretName,
+			CertFile: "tls.crt",
+			CertKey:  "tls.key",
+		}
+		cert, key := volumes.AddCertificate(&ref, "svc-certs")
+		cfg.CertPath = cert
+		cfg.KeyPath = key
+	}
+	return config.NewGRPCPipeline("grpc", cfg)
 }
 
 func newKafkaPipeline(desired *flowslatest.FlowCollectorSpec, volumes *volumes.Builder) config.PipelineBuilderStage {

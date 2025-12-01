@@ -22,6 +22,7 @@ const (
 	monoDynConfigMap   = monoName + "-config-dynamic"
 	monoServiceMonitor = monoName + "-monitor"
 	monoPromRule       = monoName + "-alert"
+	monoCertSecretName = monoName + "-cert"
 )
 
 type monolithBuilder struct {
@@ -41,6 +42,7 @@ func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCol
 	if err != nil {
 		return monolithBuilder{}, err
 	}
+
 	return monolithBuilder{
 		info:            info,
 		desired:         desired,
@@ -119,7 +121,7 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 }
 
 func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
-	grpcStage := newGRPCPipeline(b.desired)
+	grpcStage := newGRPCPipeline(b.desired, &b.volumes)
 	pipeline := newPipelineBuilder(
 		b.desired,
 		b.flowMetrics,
@@ -165,6 +167,9 @@ func (b *monolithBuilder) service() *corev1.Service {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      monoName,
 			Namespace: b.info.Namespace,
+			Annotations: map[string]string{
+				constants.OpenShiftCertificateAnnotation: monoCertSecretName,
+			},
 			Labels: map[string]string{
 				"part-of": constants.OperatorName,
 				"app":     monoName,

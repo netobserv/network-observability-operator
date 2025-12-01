@@ -37,6 +37,7 @@ const (
 	envAgentIP                    = "AGENT_IP"
 	envFlowsTargetHost            = "TARGET_HOST"
 	envFlowsTargetPort            = "TARGET_PORT"
+	envTargetTLSCACertPath        = "TARGET_TLS_CA_CERT_PATH"
 	envSampling                   = "SAMPLING"
 	envExport                     = "EXPORT"
 	envKafkaBrokers               = "KAFKA_BROKERS"
@@ -481,7 +482,20 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				Value: strconv.Itoa(int(*advancedConfig.Port)),
 			})
 		} else {
-			// Send to FLP service
+			// Send to FLP service...
+			if coll.Spec.DeploymentModel == flowslatest.DeploymentModelServiceTLS {
+				// ... using TLS
+				tlsCfg := flowslatest.ClientTLS{
+					Enable: true,
+					CACert: flowslatest.CertificateReference{
+						Type:     flowslatest.RefTypeConfigMap,
+						Name:     "openshift-service-ca.crt",
+						CertFile: "service-ca.crt",
+					},
+				}
+				caPath := c.volumes.AddCACertificate(&tlsCfg, "svc-certs")
+				config = append(config, corev1.EnvVar{Name: envTargetTLSCACertPath, Value: caPath})
+			}
 			config = append(config, corev1.EnvVar{
 				Name: envFlowsTargetHost,
 				// NB: trailing dot (...local.) is a DNS optimization for exact name match without extra search
