@@ -32,6 +32,10 @@ USER 65532:65532
 
 ENTRYPOINT ["/manager"]
 
+LABEL distribution-scope="public"
+LABEL url="https://catalog.redhat.com/en/search?searchType=containers"
+LABEL vendor="Red Hat, Inc."
+LABEL release=$BUILDVERSION
 LABEL com.redhat.component="network-observability-operator-container"
 LABEL name="network-observability/network-observability-rhel9-operator"
 LABEL cpe="cpe:/a:redhat:network_observ_optr:$BUILDVERSION_Y::el9"
