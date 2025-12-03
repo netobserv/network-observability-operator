@@ -697,7 +697,7 @@ func TestValidateFLP(t *testing.T) {
 					},
 				},
 			},
-			expectedError: `cannot parse info threshold as float in spec.processor.metrics.alerts[0].variants[0]: "nope"`,
+			expectedError: `cannot parse info threshold as float in spec.processor.metrics.healthRules[0].variants[0]: "nope"`,
 		},
 		{
 			name:       "Invalid alert threshold severities",
@@ -908,25 +908,25 @@ func TestValidateScheduling(t *testing.T) {
 }
 
 func TestElligibleMetrics(t *testing.T) {
-	met, tot := GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{
+	met, tot := GetElligibleMetricsForHealthRule(HealthRulePacketDropsByKernel, &HealthRuleVariant{
 		GroupBy: GroupByNamespace,
 	})
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{
+	met, tot = GetElligibleMetricsForHealthRule(HealthRulePacketDropsByKernel, &HealthRuleVariant{
 		GroupBy: GroupByWorkload,
 	})
 	assert.Equal(t, []string{"workload_drop_packets_total"}, met)
 	assert.Equal(t, []string{"workload_ingress_packets_total", "workload_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{
+	met, tot = GetElligibleMetricsForHealthRule(HealthRulePacketDropsByKernel, &HealthRuleVariant{
 		GroupBy: GroupByNode,
 	})
 	assert.Equal(t, []string{"node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"node_ingress_packets_total", "node_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{})
+	met, tot = GetElligibleMetricsForHealthRule(HealthRulePacketDropsByKernel, &HealthRuleVariant{})
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total", "node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "node_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total", "node_egress_packets_total"}, tot)
 }
