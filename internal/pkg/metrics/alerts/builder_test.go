@@ -175,7 +175,11 @@ func TestRecordingRuleNames(t *testing.T) {
 				healthRule: &flowslatest.HealthRuleVariant{
 					GroupBy: tt.groupBy,
 				},
+<<<<<<< HEAD
 				mode: flowslatest.ModeRecording,
+=======
+				mode: flowslatest.ModeMetricOnly,
+>>>>>>> abe46249 (Health Rules)
 				side: tt.side,
 			}
 
