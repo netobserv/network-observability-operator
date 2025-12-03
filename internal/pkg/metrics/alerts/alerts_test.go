@@ -96,6 +96,8 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"DNSErrors_Warning",
 		"DNSErrors_PerDstNamespaceWarning",
 		"DNSErrors_PerDstNamespaceInfo",
+		"DNSNxDomain_PerDstNamespaceWarning",
+		"DNSNxDomain_PerDstNamespaceInfo",
 		"NetpolDenied_PerSrcNamespaceWarning",
 		"NetpolDenied_PerDstNamespaceWarning",
 		"NetpolDenied_PerSrcNamespaceInfo",
