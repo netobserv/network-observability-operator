@@ -163,7 +163,7 @@ func removeMetricsByPattern(list []string, search string) []string {
 }
 
 func (s *FlowCollectorSpec) GetFLPHealthRules() []FLPHealthRule {
-	var ret []FLPHealthRule
+	var rules []FLPHealthRule
 	var templates []HealthRuleTemplate // for reproducible ordering
 
 	tplMap := make(map[HealthRuleTemplate]FLPHealthRule)
@@ -188,11 +188,11 @@ func (s *FlowCollectorSpec) GetFLPHealthRules() []FLPHealthRule {
 	for _, name := range templates {
 		tpl := tplMap[name]
 		if ok, _ := tpl.IsAllowed(s); ok {
-			ret = append(ret, tpl)
+			rules = append(rules, tpl)
 		}
 	}
 
-	return ret
+	return rules
 }
 
 func (g *FLPHealthRule) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
