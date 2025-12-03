@@ -11515,14 +11515,6 @@ available.<br/>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertsindex">alerts</a></b></td>
-        <td>[]object</td>
-        <td>
-          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
-More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>disableAlerts</b></td>
         <td>[]string</td>
         <td>
@@ -11530,6 +11522,15 @@ More information on alerts: https://github.com/netobserv/network-observability-o
 Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
 `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricshealthrulesindex">healthRules</a></b></td>
+        <td>[]object</td>
+        <td>
+          `healthRules` is a list of health rules to be created for Prometheus, organized by templates and variants.
+Each health rule can be configured to generate either alerts or recording rules based on the mode field.
+More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11559,7 +11560,7 @@ More information, with full list of available metrics: https://github.com/netobs
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alerts[index]
+### FlowCollector.spec.processor.metrics.healthRules[index]
 <sup><sup>[↩ Parent](#flowcollectorspecprocessormetrics)</sup></sup>
 
 
@@ -11579,27 +11580,42 @@ More information, with full list of available metrics: https://github.com/netobs
         <td><b>template</b></td>
         <td>enum</td>
         <td>
-          Alert template name.
+          Health rule template name.
 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
 `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
-More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
+Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
+More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
           <br/>
             <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, DNSNxDomain, ExternalEgressHighTrend, ExternalIngressHighTrend<br/>
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindex">variants</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricshealthrulesindexvariantsindex">variants</a></b></td>
         <td>[]object</td>
         <td>
           A list of variants for this template<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          Mode defines whether this health rule should be generated as an alert or a recording rule.
+Possible values are: `Alert` (default), `MetricOnly`.
+MetricOnly rules violations are visible in the Network Health dashboard without generating any Prometheus alert.
+This provides an alternative way of getting Health information for SRE and cluster admins who may find
+many new alerts burdensome.<br/>
+          <br/>
+            <i>Enum</i>: Alert, MetricOnly<br/>
+            <i>Default</i>: Alert<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alerts[index].variants[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindex)</sup></sup>
+### FlowCollector.spec.processor.metrics.healthRules[index].variants[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricshealthrulesindex)</sup></sup>
 
 
 
@@ -11615,11 +11631,12 @@ More information on alerts: https://github.com/netobserv/network-observability-o
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindexthresholds">thresholds</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricshealthrulesindexvariantsindexthresholds">thresholds</a></b></td>
         <td>object</td>
         <td>
-          Thresholds of the alert per severity.
-They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.<br/>
+          Thresholds of the health rule per severity.
+They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+Required for both alert and recording modes<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -11644,27 +11661,28 @@ When provided, it must be parsable as a float.<br/>
         <td><b>trendDuration</b></td>
         <td>string</td>
         <td>
-          For trending alerts, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.<br/>
+          For trending health rules, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>trendOffset</b></td>
         <td>string</td>
         <td>
-          For trending alerts, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.<br/>
+          For trending health rules, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alerts[index].variants[index].thresholds
-<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindexvariantsindex)</sup></sup>
+### FlowCollector.spec.processor.metrics.healthRules[index].variants[index].thresholds
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricshealthrulesindexvariantsindex)</sup></sup>
 
 
 
-Thresholds of the alert per severity.
+Thresholds of the health rule per severity.
 They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+Required for both alert and recording modes
 
 <table>
     <thead>
