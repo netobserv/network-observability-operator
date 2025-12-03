@@ -11569,10 +11569,11 @@ More information, with full list of available metrics: https://github.com/netobs
         <td><b>template</b></td>
         <td>enum</td>
         <td>
-          Alert template name.
+          Health rule template name.
 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
 `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
-More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
+Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
+More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
           <br/>
             <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, DNSNxDomain, ExternalEgressHighTrend, ExternalIngressHighTrend<br/>
         </td>
@@ -11584,6 +11585,20 @@ More information on alerts: https://github.com/netobserv/network-observability-o
           A list of variants for this template<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          Mode defines whether this health rule should be generated as an alert or a recording rule.
+Possible values are: `alert` (default), `recording`.
+Recording rules violations are visible in the Network Health dashboard without generating any Prometheus alert.
+This provides an alternative way of getting Health information for SRE and cluster admins who may find
+many new alerts burdensome.<br/>
+          <br/>
+            <i>Enum</i>: alert, recording<br/>
+            <i>Default</i>: alert<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 
@@ -11608,7 +11623,7 @@ More information on alerts: https://github.com/netobserv/network-observability-o
         <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindexthresholds">thresholds</a></b></td>
         <td>object</td>
         <td>
-          Thresholds of the alert per severity.
+          Thresholds of the health rule per severity.
 They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.<br/>
         </td>
         <td>true</td>
@@ -11634,14 +11649,14 @@ When provided, it must be parsable as a float.<br/>
         <td><b>trendDuration</b></td>
         <td>string</td>
         <td>
-          For trending alerts, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.<br/>
+          For trending health rules, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.<br/>
         </td>
         <td>false</td>
       </tr><tr>
         <td><b>trendOffset</b></td>
         <td>string</td>
         <td>
-          For trending alerts, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.<br/>
+          For trending health rules, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -11653,7 +11668,7 @@ When provided, it must be parsable as a float.<br/>
 
 
 
-Thresholds of the alert per severity.
+Thresholds of the health rule per severity.
 They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
 
 <table>

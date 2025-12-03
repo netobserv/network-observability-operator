@@ -218,7 +218,7 @@ func ControllerSpecs() {
 					LogTypes: &outputRecordTypes,
 					Metrics: flowslatest.FLPMetrics{
 						IncludeList:   &[]flowslatest.FLPMetric{"node_ingress_bytes_total"},
-						DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
+						DisableHealthRules: []flowslatest.HealthRuleTemplate{flowslatest.HealthRuleLokiError},
 					},
 				}
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}

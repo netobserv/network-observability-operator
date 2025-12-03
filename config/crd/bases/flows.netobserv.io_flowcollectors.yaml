@@ -5368,12 +5368,25 @@ spec:
                             More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                           items:
                             properties:
+                              mode:
+                                default: alert
+                                description: |-
+                                  Mode defines whether this health rule should be generated as an alert or a recording rule.
+                                  Possible values are: `alert` (default), `recording`.
+                                  Recording rules violations are visible in the Network Health dashboard without generating any Prometheus alert.
+                                  This provides an alternative way of getting Health information for SRE and cluster admins who may find
+                                  many new alerts burdensome.
+                                enum:
+                                  - alert
+                                  - recording
+                                type: string
                               template:
                                 description: |-
-                                  Alert template name.
+                                  Health rule template name.
                                   Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
                                   `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
-                                  More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                                  Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
+                                  More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                                 enum:
                                   - PacketDropsByKernel
                                   - PacketDropsByDevice
@@ -5405,7 +5418,7 @@ spec:
                                       type: string
                                     thresholds:
                                       description: |-
-                                        Thresholds of the alert per severity.
+                                        Thresholds of the health rule per severity.
                                         They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
                                       properties:
                                         critical:
@@ -5419,10 +5432,10 @@ spec:
                                           type: string
                                       type: object
                                     trendDuration:
-                                      description: For trending alerts, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.
+                                      description: For trending health rules, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.
                                       type: string
                                     trendOffset:
-                                      description: For trending alerts, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.
+                                      description: For trending health rules, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.
                                       type: string
                                   required:
                                     - thresholds

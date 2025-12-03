@@ -291,14 +291,14 @@ func (v *validator) validateFLPFilters() {
 }
 
 func (v *validator) validateFLPAlerts() {
-	if v.fc.Processor.Metrics.Alerts != nil {
-		for i, alert := range *v.fc.Processor.Metrics.Alerts {
+	if v.fc.Processor.Metrics.HealthRules != nil {
+		for i, alert := range *v.fc.Processor.Metrics.HealthRules {
 			if _, msg := alert.IsAllowed(v.fc); len(msg) > 0 {
 				v.warnings = append(v.warnings, msg)
 			}
 			for j, variant := range alert.Variants {
 				// Check allowed groups
-				if !v.isFLPAlertGroupBySupported(alert.Template, &variant) {
+				if !v.isFLPHealthRuleGroupBySupported(alert.Template, &variant) {
 					v.errors = append(
 						v.errors,
 						fmt.Errorf(
@@ -352,7 +352,7 @@ func (v *validator) validateFLPAlerts() {
 	}
 }
 
-func (v *validator) isFLPAlertGroupBySupported(template AlertTemplate, variant *AlertVariant) bool {
+func (v *validator) isFLPHealthRuleGroupBySupported(template HealthRuleTemplate, variant *HealthRuleVariant) bool {
 	switch template {
 	case AlertPacketDropsByDevice:
 		return variant.GroupBy != GroupByWorkload
@@ -368,7 +368,7 @@ func (v *validator) isFLPAlertGroupBySupported(template AlertTemplate, variant *
 
 func (v *validator) validateFLPMetricsForAlerts() {
 	metrics := v.fc.GetIncludeList()
-	alerts := v.fc.GetFLPAlerts()
+	alerts := v.fc.GetFLPHealthRules()
 	for _, g := range alerts {
 		for _, a := range g.Variants {
 			reqMetrics1, reqMetrics2 := GetElligibleMetricsForAlert(g.Template, &a)
@@ -402,7 +402,7 @@ func GetFirstRequiredMetrics(anyRequired, actual []string) string {
 	return ""
 }
 
-func GetElligibleMetricsForAlert(template AlertTemplate, alertDef *AlertVariant) ([]string, []string) {
+func GetElligibleMetricsForAlert(template HealthRuleTemplate, alertDef *HealthRuleVariant) ([]string, []string) {
 	var metricPatterns, totalMetricPatterns []string
 	switch template {
 	case AlertPacketDropsByKernel:

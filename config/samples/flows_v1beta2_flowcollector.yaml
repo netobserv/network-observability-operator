@@ -92,7 +92,7 @@ spec:
     metrics:
       server:
         port: 9401
-      disableAlerts: []
+      disableHealthRules: []
       # includeList:
       # - "node_ingress_bytes_total"
       # - "node_ingress_packets_total"
@@ -102,8 +102,9 @@ spec:
       # - "namespace_drop_packets_total"
       # - "node_drop_packets_total"
       # - "namespace_rtt_seconds"
-      # alerts:
+      # healthRules:
       # - template: PacketDropsByKernel
+      #   mode: alert  # or "recording" to generate recording rules instead of alerts
       #   variants:
       #   - thresholds:
       #       critical: "15"

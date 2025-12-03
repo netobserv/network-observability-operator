@@ -592,17 +592,17 @@ func TestValidateFLP(t *testing.T) {
 				Spec: FlowCollectorSpec{
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							Alerts: &[]FLPAlert{
+							HealthRules: &[]FLPHealthRule{
 								{
-									Template: AlertPacketDropsByKernel,
-									Variants: []AlertVariant{},
+									Template: HealthRulePacketDropsByKernel,
+									Variants: []HealthRuleVariant{},
 								},
 							},
 						},
 					},
 				},
 			},
-			expectedWarnings: admission.Warnings{"Alert PacketDropsByKernel requires the PacketDrop agent feature to be enabled"},
+			expectedWarnings: admission.Warnings{"HealthRule PacketDropsByKernel requires the PacketDrop agent feature to be enabled"},
 		},
 		{
 			name:       "No missing metrics for alerts by default",
@@ -615,13 +615,13 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							Alerts: &[]FLPAlert{
+							HealthRules: &[]FLPHealthRule{
 								{
-									Template: AlertPacketDropsByKernel,
-									Variants: []AlertVariant{
+									Template: HealthRulePacketDropsByKernel,
+									Variants: []HealthRuleVariant{
 										{
 											GroupBy: GroupByNode,
-											Thresholds: AlertThresholds{
+											Thresholds: HealthRuleThresholds{
 												Info: "5.5",
 											},
 										},
@@ -644,13 +644,13 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							Alerts: &[]FLPAlert{
+							HealthRules: &[]FLPHealthRule{
 								{
-									Template: AlertPacketDropsByKernel,
-									Variants: []AlertVariant{
+									Template: HealthRulePacketDropsByKernel,
+									Variants: []HealthRuleVariant{
 										{
 											GroupBy: GroupByNode,
-											Thresholds: AlertThresholds{
+											Thresholds: HealthRuleThresholds{
 												Info: "5",
 											},
 										},
@@ -664,8 +664,8 @@ func TestValidateFLP(t *testing.T) {
 				},
 			},
 			expectedWarnings: admission.Warnings{
-				"Alert PacketDropsByKernel/Node requires enabling at least one metric from this list: node_drop_packets_total",
-				"Alert PacketDropsByKernel/Node requires enabling at least one metric from this list: node_ingress_packets_total, node_egress_packets_total",
+				"HealthRule PacketDropsByKernel/Node requires enabling at least one metric from this list: node_drop_packets_total",
+				"HealthRule PacketDropsByKernel/Node requires enabling at least one metric from this list: node_ingress_packets_total, node_egress_packets_total",
 			},
 		},
 		{
@@ -679,12 +679,12 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							Alerts: &[]FLPAlert{
+							HealthRules: &[]FLPHealthRule{
 								{
-									Template: AlertPacketDropsByKernel,
-									Variants: []AlertVariant{
+									Template: HealthRulePacketDropsByKernel,
+									Variants: []HealthRuleVariant{
 										{
-											Thresholds: AlertThresholds{
+											Thresholds: HealthRuleThresholds{
 												Info: "nope",
 											},
 										},
@@ -710,12 +710,12 @@ func TestValidateFLP(t *testing.T) {
 					}},
 					Processor: FlowCollectorFLP{
 						Metrics: FLPMetrics{
-							Alerts: &[]FLPAlert{
+							HealthRules: &[]FLPHealthRule{
 								{
-									Template: AlertPacketDropsByKernel,
-									Variants: []AlertVariant{
+									Template: HealthRulePacketDropsByKernel,
+									Variants: []HealthRuleVariant{
 										{
-											Thresholds: AlertThresholds{
+											Thresholds: HealthRuleThresholds{
 												Info:     "5",
 												Warning:  "50",
 												Critical: "10",
@@ -908,25 +908,25 @@ func TestValidateScheduling(t *testing.T) {
 }
 
 func TestElligibleMetrics(t *testing.T) {
-	met, tot := GetElligibleMetricsForAlert(AlertPacketDropsByKernel, &AlertVariant{
+	met, tot := GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{
 		GroupBy: GroupByNamespace,
 	})
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForAlert(AlertPacketDropsByKernel, &AlertVariant{
+	met, tot = GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{
 		GroupBy: GroupByWorkload,
 	})
 	assert.Equal(t, []string{"workload_drop_packets_total"}, met)
 	assert.Equal(t, []string{"workload_ingress_packets_total", "workload_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForAlert(AlertPacketDropsByKernel, &AlertVariant{
+	met, tot = GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{
 		GroupBy: GroupByNode,
 	})
 	assert.Equal(t, []string{"node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"node_ingress_packets_total", "node_egress_packets_total"}, tot)
 
-	met, tot = GetElligibleMetricsForAlert(AlertPacketDropsByKernel, &AlertVariant{})
+	met, tot = GetElligibleMetricsForHealthRule(AlertPacketDropsByKernel, &HealthRuleVariant{})
 	assert.Equal(t, []string{"namespace_drop_packets_total", "workload_drop_packets_total", "node_drop_packets_total"}, met)
 	assert.Equal(t, []string{"namespace_ingress_packets_total", "workload_ingress_packets_total", "node_ingress_packets_total", "namespace_egress_packets_total", "workload_egress_packets_total", "node_egress_packets_total"}, tot)
 }

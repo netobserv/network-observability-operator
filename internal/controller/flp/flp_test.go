@@ -590,7 +590,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	first := b.prometheusRule(r)
 
 	// Check enabled rule change
-	cfg.Processor.Metrics.DisableAlerts = []flowslatest.AlertTemplate{flowslatest.AlertNoFlows}
+	cfg.Processor.Metrics.DisableHealthRules = []flowslatest.HealthRuleTemplate{flowslatest.HealthRuleNoFlows}
 	b = monoBuilder("namespace", &cfg)
 	r = alerts.BuildRules(context.Background(), &cfg)
 	second := b.prometheusRule(r)

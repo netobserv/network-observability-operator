@@ -45,12 +45,12 @@ var (
 		"node_ipsec_flows_total",
 		"node_to_node_ingress_flows_total",
 	}
-	DefaultAlerts = []FLPAlert{
+	DefaultHealthRules = []FLPHealthRule{
 		{
 			Template: AlertPacketDropsByKernel,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "10",
 						Warning: "20",
 					},
@@ -58,7 +58,7 @@ var (
 					GroupBy:            GroupByNamespace,
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "5",
 						Warning: "10",
 					},
@@ -68,9 +68,9 @@ var (
 		},
 		{
 			Template: AlertPacketDropsByDevice,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Warning: "5",
 					},
 					GroupBy: GroupByNode,
@@ -79,14 +79,14 @@ var (
 		},
 		{
 			Template: AlertIPsecErrors,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Critical: "2",
 					},
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Critical: "2",
 					},
 					GroupBy: GroupByNode,
@@ -95,14 +95,14 @@ var (
 		},
 		{
 			Template: AlertDNSErrors,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Warning: "5",
 					},
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "5",
 						Warning: "10",
 					},
@@ -112,9 +112,9 @@ var (
 		},
 		{
 			Template: AlertDNSNxDomain,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "10",
 						Warning: "80",
 					},
@@ -124,9 +124,9 @@ var (
 		},
 		{
 			Template: AlertNetpolDenied,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "5",
 						Warning: "10",
 					},
@@ -136,9 +136,9 @@ var (
 		},
 		{
 			Template: AlertLatencyHighTrend,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info: "100",
 					},
 					GroupBy:       GroupByNamespace,
@@ -149,9 +149,9 @@ var (
 		},
 		{
 			Template: AlertExternalEgressHighTrend,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Warning: "200",
 					},
 					GroupBy:       GroupByNode,
@@ -159,7 +159,7 @@ var (
 					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "100",
 						Warning: "500",
 					},
@@ -171,9 +171,9 @@ var (
 		},
 		{
 			Template: AlertExternalIngressHighTrend,
-			Variants: []AlertVariant{
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Warning: "200",
 					},
 					GroupBy:       GroupByNode,
@@ -181,7 +181,7 @@ var (
 					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "100",
 						Warning: "500",
 					},

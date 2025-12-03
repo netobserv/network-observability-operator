@@ -13,7 +13,7 @@ func promQLRateFromMetric(metric, suffix, filters, interval, offset string) prom
 	return promQLRate(fmt.Sprintf("rate(netobserv_%s%s%s[%s]%s)", metric, suffix, filters, interval, offset))
 }
 
-func sumBy(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, extraLabel string) string {
+func sumBy(promQL promQLRate, groupBy flowslatest.HealthRuleGroupBy, side srcOrDst, extraLabel string) string {
 	var nooLabels []string
 	var labelsOut []string
 	switch groupBy {
@@ -49,7 +49,7 @@ func sumBy(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, e
 	return fmt.Sprintf("sum(%s)", promQL)
 }
 
-func histogramQuantile(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, quantile string) string {
+func histogramQuantile(promQL promQLRate, groupBy flowslatest.HealthRuleGroupBy, side srcOrDst, quantile string) string {
 	sumQL := sumBy(promQL, groupBy, side, "le")
 	return fmt.Sprintf("histogram_quantile(%s, %s)", quantile, sumQL)
 }

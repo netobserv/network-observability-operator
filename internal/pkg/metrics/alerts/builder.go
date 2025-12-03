@@ -21,8 +21,9 @@ const (
 )
 
 type ruleBuilder struct {
-	template        flowslatest.AlertTemplate
-	alert           *flowslatest.AlertVariant
+	template        flowslatest.HealthRuleTemplate
+	healthRule      *flowslatest.HealthRuleVariant
+	mode            flowslatest.HealthRuleMode
 	enabledMetrics  []string
 	side            srcOrDst
 	severity        string
@@ -49,14 +50,14 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 	log := log.FromContext(ctx)
 	rules := []monitoringv1.Rule{}
 
-	alerts := fc.GetFLPAlerts()
+	healthRules := fc.GetFLPHealthRules()
 	metrics := fc.GetIncludeList()
-	for _, alert := range alerts {
-		if ok, _ := alert.IsAllowed(fc); !ok {
+	for _, healthRule := range healthRules {
+		if ok, _ := healthRule.IsAllowed(fc); !ok {
 			continue
 		}
-		for _, variant := range alert.Variants {
-			if r, err := convertToRules(alert.Template, &variant, metrics); err != nil {
+		for _, variant := range healthRule.Variants {
+			if r, err := convertToRules(healthRule.Template, healthRule.Mode, &variant, metrics); err != nil {
 				log.Error(err, "unable to configure an alert")
 			} else if len(r) > 0 {
 				rules = append(rules, r...)
@@ -64,11 +65,11 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 		}
 	}
 
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.HealthRuleNoFlows) {
 		r := alertNoFlows()
 		rules = append(rules, *r)
 	}
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.HealthRuleLokiError) {
 		r := alertLokiError()
 		rules = append(rules, *r)
 	}
@@ -76,11 +77,11 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 	return rules
 }
 
-func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.AlertVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
+func convertToRules(template flowslatest.HealthRuleTemplate, mode flowslatest.HealthRuleMode, healthRule *flowslatest.HealthRuleVariant, enabledMetrics []string) ([]monitoringv1.Rule, error) {
 	var rules []monitoringv1.Rule
 	var upperThreshold string
 	sides := []srcOrDst{asSource, asDest}
-	if alert.GroupBy == "" {
+	if healthRule.GroupBy == "" {
 		// No side for global group
 		sides = []srcOrDst{""}
 	}
@@ -89,16 +90,17 @@ func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.Alert
 		s string
 		t string
 	}{
-		{s: "critical", t: alert.Thresholds.Critical},
-		{s: "warning", t: alert.Thresholds.Warning},
-		{s: "info", t: alert.Thresholds.Info},
+		{s: "critical", t: healthRule.Thresholds.Critical},
+		{s: "warning", t: healthRule.Thresholds.Warning},
+		{s: "info", t: healthRule.Thresholds.Info},
 	}
 	for _, st := range thresholds {
 		if st.t != "" {
 			for _, side := range sides {
 				rb := ruleBuilder{
 					template:       template,
-					alert:          alert,
+					healthRule:     healthRule,
+					mode:           mode,
 					enabledMetrics: enabledMetrics,
 					side:           side,
 					severity:       st.s,
@@ -120,25 +122,25 @@ func convertToRules(template flowslatest.AlertTemplate, alert *flowslatest.Alert
 
 func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
 	switch rb.template {
-	case flowslatest.AlertPacketDropsByDevice:
+	case flowslatest.HealthRulePacketDropsByDevice:
 		return rb.deviceDrops()
-	case flowslatest.AlertPacketDropsByKernel:
+	case flowslatest.HealthRulePacketDropsByKernel:
 		return rb.kernelDrops()
-	case flowslatest.AlertIPsecErrors:
+	case flowslatest.HealthRuleIPsecErrors:
 		return rb.ipsecErrors()
-	case flowslatest.AlertDNSErrors:
+	case flowslatest.HealthRuleDNSErrors:
 		return rb.dnsErrors()
-	case flowslatest.AlertDNSNxDomain:
+	case flowslatest.HealthRuleDNSNxDomain:
 		return rb.dnsNxDomainErrors()
-	case flowslatest.AlertNetpolDenied:
+	case flowslatest.HealthRuleNetpolDenied:
 		return rb.netpolDenied()
-	case flowslatest.AlertLatencyHighTrend:
+	case flowslatest.HealthRuleLatencyHighTrend:
 		return rb.latencyTrend()
-	case flowslatest.AlertExternalEgressHighTrend:
+	case flowslatest.HealthRuleExternalEgressHighTrend:
 		return rb.externalTrend(false)
-	case flowslatest.AlertExternalIngressHighTrend:
+	case flowslatest.HealthRuleExternalIngressHighTrend:
 		return rb.externalTrend(true)
-	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
+	case flowslatest.HealthRuleLokiError, flowslatest.HealthRuleNoFlows:
 		// error
 	}
 	return nil, fmt.Errorf("unknown alert template: %s", rb.template)
@@ -155,8 +157,8 @@ func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitor
 	}
 
 	var gr string
-	if rb.alert.GroupBy != "" {
-		gr = "Per" + string(rb.side) + string(rb.alert.GroupBy)
+	if rb.healthRule.GroupBy != "" {
+		gr = "Per" + string(rb.side) + string(rb.healthRule.GroupBy)
 	}
 	return &monitoringv1.Rule{
 		Alert: fmt.Sprintf("%s_%s%s", rb.template, gr, strings.ToUpper(rb.severity[:1])+rb.severity[1:]),
@@ -179,7 +181,7 @@ func (rb *ruleBuilder) getAlertLegend() string {
 	case asDest:
 		sideText = "dest. "
 	}
-	switch rb.alert.GroupBy {
+	switch rb.healthRule.GroupBy {
 	case flowslatest.GroupByNode:
 		return " [" + sideText + "node={{ $labels.node }}]"
 	case flowslatest.GroupByNamespace:
@@ -205,7 +207,7 @@ func (rb *ruleBuilder) buildHealthAnnotation(override map[string]any) ([]byte, e
 	if len(rb.extraLinks) > 0 {
 		annotation["links"] = rb.extraLinks
 	}
-	switch rb.alert.GroupBy {
+	switch rb.healthRule.GroupBy {
 	case flowslatest.GroupByNode:
 		annotation["nodeLabels"] = []string{"node"}
 	case flowslatest.GroupByNamespace, flowslatest.GroupByWorkload:
@@ -237,7 +239,7 @@ func (rb *ruleBuilder) buildLabelFilter(additionalFilter string) string {
 
 	// Build label matchers to filter out metrics where K8s labels don't exist or are empty
 	// This prevents alerts from firing with empty namespace/workload/node labels
-	switch rb.alert.GroupBy {
+	switch rb.healthRule.GroupBy {
 	case flowslatest.GroupByNode:
 		filters = append(filters, string(rb.side)+`K8S_HostName!=""`)
 	case flowslatest.GroupByNamespace:
@@ -261,7 +263,7 @@ func (rb *ruleBuilder) buildLabelFilter(additionalFilter string) string {
 
 func (rb *ruleBuilder) getMetricsForAlert() (string, string) {
 	var reqMetric1, reqMetric2 string
-	reqMetrics1, reqMetrics2 := flowslatest.GetElligibleMetricsForAlert(rb.template, rb.alert)
+	reqMetrics1, reqMetrics2 := flowslatest.GetElligibleMetricsForAlert(rb.template, rb.healthRule)
 	if len(reqMetrics1) > 0 {
 		reqMetric1 = flowslatest.GetFirstRequiredMetrics(reqMetrics1, rb.enabledMetrics)
 	}
