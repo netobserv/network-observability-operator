@@ -90,7 +90,8 @@ type HealthRuleVariant struct {
 
 	// Thresholds of the health rule per severity.
 	// They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
-	// +required
+	// Required for alert mode, optional for recording mode.
+	// +optional
 	Thresholds HealthRuleThresholds `json:"thresholds,omitempty"`
 
 	// Optional grouping criteria, possible values are: `Node`, `Namespace`, `Workload`.

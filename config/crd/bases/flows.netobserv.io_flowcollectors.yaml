@@ -5420,6 +5420,7 @@ spec:
                                       description: |-
                                         Thresholds of the health rule per severity.
                                         They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+                                        Required for alert mode, optional for recording mode.
                                       properties:
                                         critical:
                                           description: Threshold for severity `critical`. Leave empty to not generate a Critical alert.
@@ -5437,8 +5438,6 @@ spec:
                                     trendOffset:
                                       description: For trending health rules, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.
                                       type: string
-                                  required:
-                                    - thresholds
                                   type: object
                                 type: array
                             required:
