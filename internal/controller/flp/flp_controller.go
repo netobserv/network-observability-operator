@@ -2,6 +2,7 @@ package flp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
@@ -9,6 +10,7 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/flp/fmstatus"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
+	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
@@ -236,61 +238,70 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	if !r.mgr.ClusterInfo.HasCNO() {
 		return nil, nil
 	}
+	var errs []error
 	var pods, services, machines, extIPs []string
 
 	// Pods and Services subnets are found in CNO config
 	network := &configv1.Network{}
-	err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
-	if err != nil {
-		return nil, fmt.Errorf("can't get Network (config) information: %w", err)
+	if err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network); err == nil {
+		for _, podsNet := range network.Spec.ClusterNetwork {
+			pods = append(pods, podsNet.CIDR)
+		}
+		services = network.Spec.ServiceNetwork
+		if network.Spec.ExternalIP != nil && len(network.Spec.ExternalIP.AutoAssignCIDRs) > 0 {
+			extIPs = network.Spec.ExternalIP.AutoAssignCIDRs
+		}
+	} else {
+		errs = append(errs, fmt.Errorf("can't get Network (config) information: %w", err))
 	}
-	for _, podsNet := range network.Spec.ClusterNetwork {
-		pods = append(pods, podsNet.CIDR)
-	}
-	services = network.Spec.ServiceNetwork
+
 	// API server
-	// TODO: get IP from EndpointSlice kubernetes
-	services = append(services, "172.20.0.1/32")
-	if network.Spec.ExternalIP != nil && len(network.Spec.ExternalIP.AutoAssignCIDRs) > 0 {
-		extIPs = network.Spec.ExternalIP.AutoAssignCIDRs
+	if apiserverIPs, err := cluster.GetAPIServerEndpointIPs(ctx, r, r.mgr.ClusterInfo); err == nil {
+		for _, ip := range apiserverIPs {
+			cidr := helper.IPToCIDR(ip)
+			services = append(services, cidr)
+		}
+	} else {
+		errs = append(errs, fmt.Errorf("can't get API server endpoint IPs: %w", err))
 	}
 
 	// Nodes subnet found in CM cluster-config-v1 (kube-system)
 	cm := &corev1.ConfigMap{}
-	if err := r.Get(ctx, types.NamespacedName{Name: "cluster-config-v1", Namespace: "kube-system"}, cm); err != nil {
-		return nil, fmt.Errorf(`can't read "cluster-config-v1" ConfigMap: %w`, err)
-	}
-	// Machines
-	machines, err = readMachineFromConfig(cm)
-	if err != nil {
-		return nil, err
+	if err := r.Get(ctx, types.NamespacedName{Name: "cluster-config-v1", Namespace: "kube-system"}, cm); err == nil {
+		// Machines
+		machines, err = readMachineFromConfig(cm)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	} else {
+		errs = append(errs, fmt.Errorf(`can't read "cluster-config-v1" ConfigMap: %w`, err))
 	}
 
 	// Additional OVN subnets
 	networkOp := &operatorv1.Network{}
-	err = r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
-	if err != nil {
-		return nil, fmt.Errorf("can't get Network (operator) information: %w", err)
+	if err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network); err == nil {
+		// Additional CIDRs: https://github.com/openshift/cluster-network-operator/blob/fda7a9f07ab6f78d032d310cdd77f21d04f1289a/pkg/network/ovn_kubernetes.go#L76-L77
+		internalSubnet := "100.64.0.0/16"
+		transitSwitchSubnet := "100.88.0.0/16"
+		masqueradeSubnet := "169.254.0.0/17"
+		ovnk := networkOp.Spec.DefaultNetwork.OVNKubernetesConfig
+		if ovnk != nil {
+			if ovnk.V4InternalSubnet != "" {
+				internalSubnet = ovnk.V4InternalSubnet
+			}
+			if ovnk.IPv4 != nil && ovnk.IPv4.InternalTransitSwitchSubnet != "" {
+				transitSwitchSubnet = ovnk.IPv4.InternalTransitSwitchSubnet
+			}
+			if ovnk.GatewayConfig != nil && ovnk.GatewayConfig.IPv4.InternalMasqueradeSubnet != "" {
+				masqueradeSubnet = ovnk.GatewayConfig.IPv4.InternalMasqueradeSubnet
+			}
+		}
+		machines = append(machines, internalSubnet)
+		machines = append(machines, transitSwitchSubnet)
+		machines = append(machines, masqueradeSubnet)
+	} else {
+		errs = append(errs, fmt.Errorf("can't get Network (operator) information: %w", err))
 	}
-	// Additional CIDRs: https://github.com/openshift/cluster-network-operator/blob/fda7a9f07ab6f78d032d310cdd77f21d04f1289a/pkg/network/ovn_kubernetes.go#L76-L77
-	internalSubnet := "100.64.0.0/16"
-	transitSwitchSubnet := "100.88.0.0/16"
-	masqueradeSubnet := "169.254.0.0/17"
-	ovnk := networkOp.Spec.DefaultNetwork.OVNKubernetesConfig
-	if ovnk != nil {
-		if ovnk.V4InternalSubnet != "" {
-			internalSubnet = ovnk.V4InternalSubnet
-		}
-		if ovnk.IPv4 != nil && ovnk.IPv4.InternalTransitSwitchSubnet != "" {
-			transitSwitchSubnet = ovnk.IPv4.InternalTransitSwitchSubnet
-		}
-		if ovnk.GatewayConfig != nil && ovnk.GatewayConfig.IPv4.InternalMasqueradeSubnet != "" {
-			masqueradeSubnet = ovnk.GatewayConfig.IPv4.InternalMasqueradeSubnet
-		}
-	}
-	machines = append(machines, internalSubnet)
-	machines = append(machines, transitSwitchSubnet)
-	machines = append(machines, masqueradeSubnet)
 
 	var subnets []flowslatest.SubnetLabel
 	if len(machines) > 0 {
@@ -317,7 +328,7 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 			CIDRs: extIPs,
 		})
 	}
-	return subnets, nil
+	return subnets, errors.Join(errs...)
 }
 
 func readMachineFromConfig(cm *corev1.ConfigMap) ([]string, error) {

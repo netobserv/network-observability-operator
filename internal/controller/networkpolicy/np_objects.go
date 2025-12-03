@@ -1,8 +1,6 @@
 package networkpolicy
 
 import (
-	"net"
-
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
@@ -17,22 +15,6 @@ import (
 )
 
 const netpolName = "netobserv"
-
-// ipToCIDR converts an IP address to a CIDR with proper prefix length
-// IPv4 addresses get /32, IPv6 addresses get /128
-func ipToCIDR(ipStr string) string {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return ""
-	}
-
-	// Check if it's IPv4 (net.IP.To4() returns nil for IPv6)
-	if ip.To4() != nil {
-		return ipStr + "/32"
-	}
-	// IPv6
-	return ipStr + "/128"
-}
 
 func peerInNamespace(ns string) networkingv1.NetworkPolicyPeer {
 	return networkingv1.NetworkPolicyPeer{
@@ -192,7 +174,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 			// Build a single egress rule with multiple IP peers
 			peers := []networkingv1.NetworkPolicyPeer{}
 			for _, ip := range apiServerIPs {
-				cidr := ipToCIDR(ip)
+				cidr := helper.IPToCIDR(ip)
 				if cidr != "" {
 					peers = append(peers, networkingv1.NetworkPolicyPeer{
 						IPBlock: &networkingv1.IPBlock{
