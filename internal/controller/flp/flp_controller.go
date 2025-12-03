@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
@@ -240,6 +241,7 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	}
 	var errs []error
 	var pods, services, machines, extIPs []string
+	var svcMachineCIDRs []*net.IPNet
 
 	// Pods and Services subnets are found in CNO config
 	network := &configv1.Network{}
@@ -248,21 +250,16 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 			pods = append(pods, podsNet.CIDR)
 		}
 		services = network.Spec.ServiceNetwork
+		for _, strCIDR := range services {
+			if _, parsed, err := net.ParseCIDR(strCIDR); err == nil {
+				svcMachineCIDRs = append(svcMachineCIDRs, parsed)
+			}
+		}
 		if network.Spec.ExternalIP != nil && len(network.Spec.ExternalIP.AutoAssignCIDRs) > 0 {
 			extIPs = network.Spec.ExternalIP.AutoAssignCIDRs
 		}
 	} else {
 		errs = append(errs, fmt.Errorf("can't get Network (config) information: %w", err))
-	}
-
-	// API server
-	if apiserverIPs, err := cluster.GetAPIServerEndpointIPs(ctx, r, r.mgr.ClusterInfo); err == nil {
-		for _, ip := range apiserverIPs {
-			cidr := helper.IPToCIDR(ip)
-			services = append(services, cidr)
-		}
-	} else {
-		errs = append(errs, fmt.Errorf("can't get API server endpoint IPs: %w", err))
 	}
 
 	// Nodes subnet found in CM cluster-config-v1 (kube-system)
@@ -273,8 +270,35 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 		if err != nil {
 			errs = append(errs, err)
 		}
+		for _, strCIDR := range machines {
+			if _, parsed, err := net.ParseCIDR(strCIDR); err == nil {
+				svcMachineCIDRs = append(svcMachineCIDRs, parsed)
+			}
+		}
 	} else {
 		errs = append(errs, fmt.Errorf(`can't read "cluster-config-v1" ConfigMap: %w`, err))
+	}
+
+	// API server
+	if apiserverIPs, err := cluster.GetAPIServerEndpointIPs(ctx, r, r.mgr.ClusterInfo); err == nil {
+		// Check if this isn't already an IP covered in Services or Machines subnets
+		for _, ip := range apiserverIPs {
+			if parsed := net.ParseIP(ip); parsed != nil {
+				var alreadyCovered bool
+				for _, cidr := range svcMachineCIDRs {
+					if cidr.Contains(parsed) {
+						alreadyCovered = true
+						break
+					}
+				}
+				if !alreadyCovered {
+					cidr := helper.IPToCIDR(ip)
+					services = append(services, cidr)
+				}
+			}
+		}
+	} else {
+		errs = append(errs, fmt.Errorf("can't get API server endpoint IPs: %w", err))
 	}
 
 	// Additional OVN subnets
