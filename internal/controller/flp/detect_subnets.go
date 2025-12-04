@@ -94,7 +94,7 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	}
 	if len(extIPs) > 0 {
 		subnets = append(subnets, flowslatest.SubnetLabel{
-			Name:  "ExternalIP",
+			Name:  "EXT:ExternalIP",
 			CIDRs: extIPs,
 		})
 	}
