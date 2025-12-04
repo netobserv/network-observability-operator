@@ -229,6 +229,14 @@ rules:
   - update
   - watch
 - apiGroups:
+  - operator.openshift.io
+  resources:
+  - networks
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - rbac.authorization.k8s.io
   resources:
   - clusterrolebindings
