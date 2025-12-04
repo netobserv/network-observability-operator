@@ -322,46 +322,55 @@ columns:
   - id: K8S_Name
     name: Names
     calculated: '[SrcK8S_Name,DstK8S_Name]'
+    filter: name
     default: false
     width: 15
   - id: K8S_Type
     name: Kinds
     calculated: '[SrcK8S_Type,DstK8S_Type]'
+    filter: kind
     default: false
     width: 10
   - id: K8S_OwnerName
     name: Owners
     calculated: '[SrcK8S_OwnerName,DstK8S_OwnerName]'
+    filter: owner_name
     default: false
     width: 15
   - id: K8S_OwnerType
     name: Owner Kinds
     calculated: '[SrcK8S_OwnerType,DstK8S_OwnerType]'
+    filter: kind
     default: false
     width: 10
   - id: K8S_Namespace
     name: Namespaces
     calculated: '[SrcK8S_Namespace,DstK8S_Namespace]'
+    filter: namespace
     default: false
     width: 15
   - id: Addr
     name: IP
     calculated: '[SrcAddr,DstAddr]'
+    filter: address
     default: false
     width: 10
   - id: Port
     name: Ports
     calculated: '[SrcPort,DstPort]'
+    filter: port
     default: false
     width: 10
   - id: Mac
     name: MAC
     calculated: '[SrcMac,DstMac]'
+    filter: mac
     default: false
     width: 10
   - id: K8S_HostIP
     name: Node IP
     calculated: '[SrcK8S_HostIP,DstK8S_HostIP]'
+    filter: host_address
     default: false
     width: 10
   - id: Sampling
@@ -372,16 +381,19 @@ columns:
   - id: K8S_HostName
     name: Node Name
     calculated: '[SrcK8S_HostName,DstK8S_HostName]'
+    filter: host_name
     default: false
     width: 15
   - id: K8S_Object
     name: Kubernetes Objects
     calculated: '[column.SrcK8S_Object,column.DstK8S_Object]'
+    filter: resource
     default: false
     width: 15
   - id: K8S_OwnerObject
     name: Owner Kubernetes Objects
     calculated: '[column.SrcK8S_OwnerObject,column.DstK8S_OwnerObject]'
+    filter: resource
     default: false
     width: 15
   - id: K8S_FlowLayer
@@ -682,6 +694,22 @@ filters:
     name: Cluster
     component: autocomplete
     hint: Specify a cluster ID or name.
+  - id: namespace
+    name: Namespace
+    component: autocomplete
+    autoCompleteAddsQuotes: true
+    category: targeteable
+    placeholder: 'E.g: netobserv'
+    hint: Specify a single kubernetes name.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
   - id: src_namespace
     name: Namespace
     component: autocomplete
@@ -704,6 +732,21 @@ filters:
     autoCompleteAddsQuotes: true
     category: destination
     placeholder: 'E.g: netobserv'
+    hint: Specify a single kubernetes name.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: name
+    name: Name
+    component: text
+    category: targeteable
+    placeholder: 'E.g: my-pod'
     hint: Specify a single kubernetes name.
     examples: |-
       Specify a single kubernetes name following these rules:
@@ -744,6 +787,12 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: kind
+    name: Kind
+    component: autocomplete
+    autoCompleteAddsQuotes: true
+    category: targeteable
+    placeholder: 'E.g: Pod, Service'
   - id: src_kind
     name: Kind
     component: autocomplete
@@ -756,6 +805,21 @@ filters:
     autoCompleteAddsQuotes: true
     category: destination
     placeholder: 'E.g: Pod, Service'
+  - id: owner_name
+    name: Owner Name
+    component: text
+    category: targeteable
+    placeholder: 'E.g: my-deployment'
+    hint: Specify a single kubernetes name.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
   - id: src_owner_name
     name: Owner Name
     component: text
@@ -786,6 +850,11 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: zone
+    name: Zone
+    component: autocomplete
+    category: targeteable
+    hint: Specify a single zone.
   - id: src_zone
     name: Zone
     component: autocomplete
@@ -796,6 +865,11 @@ filters:
     component: autocomplete
     category: destination
     hint: Specify a single zone.
+  - id: subnet_label
+    name: Subnet Label
+    component: autocomplete
+    category: targeteable
+    hint: Specify a subnet label, or an empty string to get unmatched sources.
   - id: src_subnet_label
     name: Subnet Label
     component: autocomplete
@@ -806,6 +880,17 @@ filters:
     component: autocomplete
     category: destination
     hint: Specify a subnet label, or an empty string to get unmatched destinations.
+  - id: resource
+    name: Resource
+    component: autocomplete
+    category: targeteable
+    placeholder: 'E.g: Deployment.example.my-dep or Pod.default.my-pod'
+    hint: Specify an existing resource from its kind, namespace and name.
+    examples: |-
+      Specify a kind, namespace and name from existing:
+              - Select kind first from suggestions
+              - Then select namespace from suggestions
+              - Finally select name from suggestions
   - id: src_resource
     name: Resource
     component: autocomplete
@@ -828,6 +913,17 @@ filters:
               - Select kind first from suggestions
               - Then select namespace from suggestions
               - Finally select name from suggestions
+  - id: address
+    name: IP
+    component: text
+    category: targeteable
+    hint: Specify a single IP or range.
+    placeholder: 'E.g: 192.0.2.0'
+    examples: |-
+      Specify IP following one of these rules:
+          - A single IPv4 or IPv6 address like 192.0.2.0, ::1
+          - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
+          - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
   - id: src_address
     name: IP
     component: text
@@ -850,6 +946,17 @@ filters:
           - A single IPv4 or IPv6 address like 192.0.2.0, ::1
           - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
           - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
+  - id: port
+    name: Port
+    component: autocomplete
+    category: targeteable
+    hint: Specify a single port number or name.
+    placeholder: 'E.g: 80'
+    examples: |-
+      Specify a single port following one of these rules:
+              - A port number like 80, 21
+              - A IANA name like HTTP, FTP
+    docUrl: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
   - id: src_port
     name: Port
     component: autocomplete
@@ -872,6 +979,12 @@ filters:
               - A port number like 80, 21
               - A IANA name like HTTP, FTP
     docUrl: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
+  - id: mac
+    name: MAC
+    component: text
+    category: targeteable
+    placeholder: 'E.g: 42:01:0A:00:00:01'
+    hint: Specify a single MAC address.
   - id: src_mac
     name: MAC
     component: text
@@ -884,6 +997,17 @@ filters:
     category: destination
     placeholder: 'E.g: 42:01:0A:00:00:01'
     hint: Specify a single MAC address.
+  - id: host_address
+    name: Node IP
+    component: text
+    category: targeteable
+    placeholder: 'E.g: 10.0.0.1'
+    hint: Specify a single IP or range.
+    examples: |-
+      Specify IP following one of these rules:
+          - A single IPv4 or IPv6 address like 192.0.2.0, ::1
+          - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
+          - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
   - id: src_host_address
     name: Node IP
     component: text
@@ -906,6 +1030,21 @@ filters:
           - A single IPv4 or IPv6 address like 192.0.2.0, ::1
           - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
           - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
+  - id: host_name
+    name: Node Name
+    component: text
+    category: targeteable
+    placeholder: 'E.g: my-node'
+    hint: Specify a single kubernetes name.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
   - id: src_host_name
     name: Node Name
     component: text
@@ -936,6 +1075,10 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: network
+    name: Network Name
+    component: text
+    category: targeteable
   - id: src_network
     name: Network Name
     component: text
