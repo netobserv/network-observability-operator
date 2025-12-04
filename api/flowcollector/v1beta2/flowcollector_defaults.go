@@ -45,12 +45,12 @@ var (
 		"node_ipsec_flows_total",
 		"node_to_node_ingress_flows_total",
 	}
-	DefaultAlerts = []FLPAlert{
+	DefaultHealthRules = []FLPHealthRule{
 		{
-			Template: AlertPacketDropsByKernel,
-			Variants: []AlertVariant{
+			Template: HealthRulePacketDropsByKernel,
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "10",
 						Warning: "20",
 					},
@@ -58,7 +58,7 @@ var (
 					GroupBy:            GroupByNamespace,
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "5",
 						Warning: "10",
 					},
@@ -67,10 +67,10 @@ var (
 			},
 		},
 		{
-			Template: AlertPacketDropsByDevice,
-			Variants: []AlertVariant{
+			Template: HealthRulePacketDropsByDevice,
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Warning: "5",
 					},
 					GroupBy: GroupByNode,
@@ -78,15 +78,15 @@ var (
 			},
 		},
 		{
-			Template: AlertIPsecErrors,
-			Variants: []AlertVariant{
+			Template: HealthRuleIPsecErrors,
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Critical: "2",
 					},
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Critical: "2",
 					},
 					GroupBy: GroupByNode,
@@ -94,15 +94,15 @@ var (
 			},
 		},
 		{
-			Template: AlertDNSErrors,
-			Variants: []AlertVariant{
+			Template: HealthRuleDNSErrors,
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Warning: "5",
 					},
 				},
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "5",
 						Warning: "10",
 					},
@@ -111,10 +111,10 @@ var (
 			},
 		},
 		{
-			Template: AlertNetpolDenied,
-			Variants: []AlertVariant{
+			Template: HealthRuleNetpolDenied,
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info:    "5",
 						Warning: "10",
 					},
@@ -123,10 +123,10 @@ var (
 			},
 		},
 		{
-			Template: AlertLatencyHighTrend,
-			Variants: []AlertVariant{
+			Template: HealthRuleLatencyHighTrend,
+			Variants: []HealthRuleVariant{
 				{
-					Thresholds: AlertThresholds{
+					Thresholds: HealthRuleThresholds{
 						Info: "100",
 					},
 					GroupBy: GroupByNamespace,
@@ -136,41 +136,6 @@ var (
 				},
 			},
 		},
-		{
-			Template: AlertExternalEgressHighTrend,
-			Variants: []AlertVariant{
-				{
-					Thresholds: AlertThresholds{
-						Warning: "5",
-					},
-					GroupBy: GroupByNode,
-				},
-				{
-					Thresholds: AlertThresholds{
-						Info:    "5",
-						Warning: "10",
-					},
-					GroupBy: GroupByNamespace,
-				},
-			},
-		},
-		{
-			Template: AlertExternalIngressHighTrend,
-			Variants: []AlertVariant{
-				{
-					Thresholds: AlertThresholds{
-						Warning: "5",
-					},
-					GroupBy: GroupByNode,
-				},
-				{
-					Thresholds: AlertThresholds{
-						Info:    "5",
-						Warning: "10",
-					},
-					GroupBy: GroupByNamespace,
-				},
-			},
-		},
+		// TODO: Implement ExternalEgressHighTrend, ExternalIngressHighTrend, CrossAZ templates
 	}
 )

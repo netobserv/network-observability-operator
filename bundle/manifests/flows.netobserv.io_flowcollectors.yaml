@@ -5801,19 +5801,38 @@ spec:
                     description: '`Metrics` define the processor configuration regarding
                       metrics'
                     properties:
-                      alerts:
+                      disableHealthRules:
                         description: |-
-                          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants [Unsupported (*)].
+                          `disableHealthRules` is a list of health rule templates that should be disabled from the default set.
+                          Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+                          `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+                          More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                        items:
+                          type: string
+                        type: array
+                      healthRules:
+                        description: |-
+                          `healthRules` is a list of health rules to be created for Prometheus, organized by templates and variants [Unsupported (*)].
+                          Each health rule can be configured to generate either alerts or recording rules based on the mode field.
                           This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
-                          More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                          More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                         items:
                           properties:
+                            mode:
+                              default: alert
+                              description: |-
+                                Mode defines whether this health rule should be generated as an alert or a recording rule.
+                                Possible values are: `alert` (default), `recording`.
+                              enum:
+                              - alert
+                              - recording
+                              type: string
                             template:
                               description: |-
-                                Alert template name.
+                                Health rule template name.
                                 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
                                 `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
-                                More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                                More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                               enum:
                               - PacketDropsByKernel
                               - PacketDropsByDevice
@@ -5846,8 +5865,9 @@ spec:
                                     type: string
                                   thresholds:
                                     description: |-
-                                      Thresholds of the alert per severity.
+                                      Thresholds of the health rule per severity.
                                       They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
+                                      Required for alert mode, optional for recording mode.
                                     properties:
                                       critical:
                                         description: Threshold for severity `critical`.
@@ -5863,33 +5883,23 @@ spec:
                                         type: string
                                     type: object
                                   trendDuration:
-                                    description: For trending alerts, the duration
+                                    description: For trending health rules, the duration
                                       interval for baseline comparison. For example,
                                       "2h" means comparing against a 2-hours average.
                                       Defaults to 2h.
                                     type: string
                                   trendOffset:
-                                    description: For trending alerts, the time offset
-                                      for baseline comparison. For example, "1d" means
-                                      comparing against yesterday. Defaults to 1d.
+                                    description: For trending health rules, the time
+                                      offset for baseline comparison. For example,
+                                      "1d" means comparing against yesterday. Defaults
+                                      to 1d.
                                     type: string
-                                required:
-                                - thresholds
                                 type: object
                               type: array
                           required:
                           - template
                           - variants
                           type: object
-                        type: array
-                      disableAlerts:
-                        description: |-
-                          `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
-                          Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-                          `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
-                          More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-                        items:
-                          type: string
                         type: array
                       includeList:
                         description: |-

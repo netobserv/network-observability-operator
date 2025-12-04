@@ -580,18 +580,19 @@ type FLPMetrics struct {
 	// +optional
 	IncludeList *[]FLPMetric `json:"includeList,omitempty"`
 
-	// `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
+	// `disableHealthRules` is a list of health rule templates that should be disabled from the default set.
 	// Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
 	// `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
-	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
-	DisableAlerts []AlertTemplate `json:"disableAlerts"`
+	DisableHealthRules []HealthRuleTemplate `json:"disableHealthRules"`
 
-	// `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants [Unsupported (*)].
+	// `healthRules` is a list of health rules to be created for Prometheus, organized by templates and variants [Unsupported (*)].
+	// Each health rule can be configured to generate either alerts or recording rules based on the mode field.
 	// This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
-	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
-	Alerts *[]FLPAlert `json:"alerts"`
+	HealthRules *[]FLPHealthRule `json:"healthRules"`
 }
 
 type FLPLogTypes string

@@ -51,12 +51,28 @@ func TestSumBy(t *testing.T) {
 }
 
 func TestPercentagePromQL(t *testing.T) {
-	pql := percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "", "")
+	// Test alert mode (isRecording = false)
+	pql := percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "", "", false)
 	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10", pql)
 
-	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "")
+	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "", false)
 	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10 < 20", pql)
 
-	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "2")
+	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "2", false)
 	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])) > 2) > 10 < 20", pql)
+
+	// Test recording mode (isRecording = true) - no threshold comparisons
+	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "", "", true)
+	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])))", pql)
+	assert.NotContains(t, pql, ">", "recording rules should not have threshold comparisons")
+
+	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "", true)
+	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])))", pql)
+	assert.NotContains(t, pql, ">", "recording rules should not have threshold comparisons")
+	assert.NotContains(t, pql, "<", "recording rules should not have threshold comparisons")
+
+	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "2", true)
+	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])) > 2)", pql)
+	assert.Contains(t, pql, "> 2", "recording rules should keep lowVolumeThreshold filter")
+	assert.NotContains(t, pql, "> 10", "recording rules should not have threshold comparison")
 }
