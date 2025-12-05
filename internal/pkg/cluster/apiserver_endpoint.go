@@ -1,10 +1,9 @@
-package networkpolicy
+package cluster
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -20,7 +19,7 @@ const (
 
 // GetAPIServerEndpointIPs retrieves the API server endpoint IP addresses.
 // It uses EndpointSlice API if available, otherwise falls back to Endpoints API.
-func GetAPIServerEndpointIPs(ctx context.Context, cl client.Client, clusterInfo *cluster.Info) ([]string, error) {
+func GetAPIServerEndpointIPs(ctx context.Context, cl client.Client, clusterInfo *Info) ([]string, error) {
 	logger := log.FromContext(ctx)
 
 	var ips []string

@@ -13,12 +13,9 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/internal/pkg/watchers"
-	configv1 "github.com/openshift/api/config/v1"
-	"gopkg.in/yaml.v2"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -229,90 +226,4 @@ func reconcileMonitoringCerts(ctx context.Context, info *reconcilers.Common, tls
 	}
 
 	return nil
-}
-
-func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.SubnetLabel, error) {
-	var subnets []flowslatest.SubnetLabel
-
-	// Pods and Services subnets are found in CNO config
-	if r.mgr.ClusterInfo.HasCNO() {
-		network := &configv1.Network{}
-		err := r.Get(ctx, types.NamespacedName{Name: "cluster"}, network)
-		if err != nil {
-			return nil, fmt.Errorf("can't get Network information: %w", err)
-		}
-		var podCIDRs []string
-		for _, podsNet := range network.Spec.ClusterNetwork {
-			podCIDRs = append(podCIDRs, podsNet.CIDR)
-		}
-		if len(podCIDRs) > 0 {
-			subnets = append(subnets, flowslatest.SubnetLabel{
-				Name:  "Pods",
-				CIDRs: podCIDRs,
-			})
-		}
-		if len(network.Spec.ServiceNetwork) > 0 {
-			subnets = append(subnets, flowslatest.SubnetLabel{
-				Name:  "Services",
-				CIDRs: network.Spec.ServiceNetwork,
-			})
-		}
-		if network.Spec.ExternalIP != nil && len(network.Spec.ExternalIP.AutoAssignCIDRs) > 0 {
-			subnets = append(subnets, flowslatest.SubnetLabel{
-				Name:  "ExternalIP",
-				CIDRs: network.Spec.ExternalIP.AutoAssignCIDRs,
-			})
-		}
-	}
-
-	// Nodes subnet found in CM cluster-config-v1 (kube-system)
-	cm := &corev1.ConfigMap{}
-	if err := r.Get(ctx, types.NamespacedName{Name: "cluster-config-v1", Namespace: "kube-system"}, cm); err != nil {
-		return nil, fmt.Errorf(`can't read "cluster-config-v1" ConfigMap: %w`, err)
-	}
-	machines, err := readMachineNetworks(cm)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(machines) > 0 {
-		subnets = append(subnets, machines...)
-	}
-
-	return subnets, nil
-}
-
-func readMachineNetworks(cm *corev1.ConfigMap) ([]flowslatest.SubnetLabel, error) {
-	var subnets []flowslatest.SubnetLabel
-
-	type ClusterConfig struct {
-		Networking struct {
-			MachineNetwork []struct {
-				CIDR string `yaml:"cidr"`
-			} `yaml:"machineNetwork"`
-		} `yaml:"networking"`
-	}
-
-	var rawConfig string
-	var ok bool
-	if rawConfig, ok = cm.Data["install-config"]; !ok {
-		return nil, fmt.Errorf(`can't find key "install-config" in "cluster-config-v1" ConfigMap`)
-	}
-	var config ClusterConfig
-	if err := yaml.Unmarshal([]byte(rawConfig), &config); err != nil {
-		return nil, fmt.Errorf(`can't deserialize content of "cluster-config-v1" ConfigMap: %w`, err)
-	}
-
-	var cidrs []string
-	for _, cidr := range config.Networking.MachineNetwork {
-		cidrs = append(cidrs, cidr.CIDR)
-	}
-	if len(cidrs) > 0 {
-		subnets = append(subnets, flowslatest.SubnetLabel{
-			Name:  "Machines",
-			CIDRs: cidrs,
-		})
-	}
-
-	return subnets, nil
 }
