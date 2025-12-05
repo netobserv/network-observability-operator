@@ -58,8 +58,12 @@ var (
 			Spec: sliceslatest.FlowCollectorSliceSpec{
 				SubnetLabels: []sliceslatest.SubnetLabel{
 					{
-						Name:  "my-label-2",
-						CIDRs: []string{"100.51.0.0/24"},
+						Name:  "skipped-overlap",
+						CIDRs: []string{"10.0.0.0/24"},
+					},
+					{
+						Name:  "partial-overlap",
+						CIDRs: []string{"100.0.0.0/23"},
 					},
 				},
 			},
@@ -96,6 +100,7 @@ func defaultBuilderWithSlices(cfg *flowslatest.SlicesConfig) (monolithBuilder, e
 
 func TestSlicesDisabled(t *testing.T) {
 	fmstatus.Reset()
+	slicesstatus.Reset(&sliceslatest.FlowCollectorSliceList{})
 	b, err := defaultBuilderWithSlices(&flowslatest.SlicesConfig{Enable: false})
 	assert.NoError(t, err)
 	cm, _, _, err := b.configMaps()
@@ -112,6 +117,12 @@ func TestSlicesDisabled(t *testing.T) {
 			CIDRs: []string{"1.2.3.4/32", "10.0.0.0/8"},
 		},
 	}, subnets)
+	for _, slice := range slicez {
+		assert.Nil(t, slicesstatus.GetReadyCondition(&slice))
+		assert.Nil(t, slicesstatus.GetSubnetWarningCondition(&slice))
+		assert.Equal(t, 0, slice.Status.SubnetLabelsConfigured)
+		assert.Equal(t, "", slice.Status.FilterApplied)
+	}
 }
 
 func TestSlicesEnablesCollectAll(t *testing.T) {
@@ -141,14 +152,37 @@ func TestSlicesEnablesCollectAll(t *testing.T) {
 			CIDRs: []string{"100.0.0.0/24"},
 		},
 		{
-			Name:  "my-label-2",
-			CIDRs: []string{"100.51.0.0/24"},
+			Name:  "partial-overlap",
+			CIDRs: []string{"100.0.0.0/23"},
 		},
 		{
 			Name:  "test",
 			CIDRs: []string{"1.2.3.4/32", "10.0.0.0/8"},
 		},
 	}, subnets)
+	// Slice 0
+	ready := slicesstatus.GetReadyCondition(&slicez[0])
+	assert.NotNil(t, ready)
+	assert.Equal(t, v1.ConditionTrue, ready.Status)
+	assert.Nil(t, slicesstatus.GetSubnetWarningCondition(&slicez[0]))
+	assert.Equal(t, 0, slicez[0].Status.SubnetLabelsConfigured)
+	assert.Equal(t, "", slicez[0].Status.FilterApplied)
+	// Slice 1
+	ready = slicesstatus.GetReadyCondition(&slicez[1])
+	assert.NotNil(t, ready)
+	assert.Equal(t, v1.ConditionTrue, ready.Status)
+	assert.Nil(t, slicesstatus.GetSubnetWarningCondition(&slicez[1]))
+	assert.Equal(t, 2, slicez[1].Status.SubnetLabelsConfigured)
+	assert.Equal(t, "", slicez[1].Status.FilterApplied)
+	// Slice 2
+	ready = slicesstatus.GetReadyCondition(&slicez[2])
+	assert.NotNil(t, ready)
+	assert.Equal(t, v1.ConditionTrue, ready.Status)
+	warnings := slicesstatus.GetSubnetWarningCondition(&slicez[2])
+	assert.NotNil(t, warnings)
+	assert.Equal(t, `CIDR for 'skipped-overlap' (10.0.0.0/24) is fully overlapped by config (admin: 10.0.0.0/16) and will be ignored; CIDR for 'partial-overlap' (100.0.0.0/23) overlaps with config (ns-b/b1: 100.0.0.0/24)`, warnings.Message)
+	assert.Equal(t, 1, slicez[2].Status.SubnetLabelsConfigured)
+	assert.Equal(t, "", slicez[2].Status.FilterApplied)
 }
 
 func TestSlicesEnablesWhitelist(t *testing.T) {
@@ -195,12 +229,34 @@ func TestSlicesEnablesWhitelist(t *testing.T) {
 			CIDRs: []string{"100.0.0.0/24"},
 		},
 		{
-			Name:  "my-label-2",
-			CIDRs: []string{"100.51.0.0/24"},
+			Name:  "partial-overlap",
+			CIDRs: []string{"100.0.0.0/23"},
 		},
 		{
 			Name:  "test",
 			CIDRs: []string{"1.2.3.4/32", "10.0.0.0/8"},
 		},
 	}, subnets)
+	// Slice 0
+	ready := slicesstatus.GetReadyCondition(&slicez[0])
+	assert.NotNil(t, ready)
+	assert.Equal(t, v1.ConditionTrue, ready.Status)
+	assert.Nil(t, slicesstatus.GetSubnetWarningCondition(&slicez[0]))
+	assert.Equal(t, 0, slicez[0].Status.SubnetLabelsConfigured)
+	assert.Equal(t, `SrcK8S_Namespace="ns-a" or DstK8S_Namespace="ns-a"`, slicez[0].Status.FilterApplied)
+	// Slice 1
+	ready = slicesstatus.GetReadyCondition(&slicez[1])
+	assert.NotNil(t, ready)
+	assert.Equal(t, v1.ConditionTrue, ready.Status)
+	assert.Nil(t, slicesstatus.GetSubnetWarningCondition(&slicez[1]))
+	assert.Equal(t, 2, slicez[1].Status.SubnetLabelsConfigured)
+	assert.Equal(t, `SrcK8S_Namespace="ns-b" or DstK8S_Namespace="ns-b"`, slicez[1].Status.FilterApplied)
+	// Slice 2
+	ready = slicesstatus.GetReadyCondition(&slicez[2])
+	assert.NotNil(t, ready)
+	assert.Equal(t, v1.ConditionTrue, ready.Status)
+	warnings := slicesstatus.GetSubnetWarningCondition(&slicez[2])
+	assert.NotNil(t, warnings)
+	assert.Equal(t, 1, slicez[2].Status.SubnetLabelsConfigured)
+	assert.Equal(t, `(skipped, not needed)`, slicez[2].Status.FilterApplied)
 }
