@@ -203,7 +203,7 @@ metadata:
                   },
                   "enable": false
                 },
-                "url": "http://loki.netobserv.svc:3100/"
+                "url": "http://loki.netobserv.svc.cluster.local.:3100/"
               },
               "readTimeout": "30s",
               "writeBatchSize": 10485760,
@@ -253,7 +253,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.10.0-community
-    createdAt: "2025-11-26T13:16:01Z"
+    createdAt: "2025-11-13T07:42:38Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'

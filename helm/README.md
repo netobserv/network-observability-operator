@@ -74,11 +74,11 @@ spec:
   loki:
     mode: Monolithic
     monolithic:
-      url: 'http://my-netobserv-loki.netobserv.svc:3100/'
+      url: 'http://my-netobserv-loki.netobserv.svc.cluster.local.:3100/'
   prometheus:
     querier:
       manual:
-        url: http://my-netobserv-prometheus-server.netobserv.svc/
+        url: http://my-netobserv-prometheus-server.netobserv.svc.cluster.local./
 EOF
 ```
 
