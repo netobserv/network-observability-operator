@@ -11,6 +11,7 @@ import (
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/flp/fmstatus"
+	"github.com/netobserv/network-observability-operator/internal/controller/flp/slicesstatus"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager"
@@ -155,6 +156,8 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 		slices.SortFunc(fcSlices.Items, func(a, b sliceslatest.FlowCollectorSlice) int {
 			return strings.Compare(a.Name, b.Name)
 		})
+		slicesstatus.Reset(&fcSlices)
+		defer slicesstatus.Sync(ctx, r.Client, &fcSlices)
 	}
 
 	// Create sub-reconcilers

@@ -164,6 +164,20 @@ FlowCollectorSliceStatus defines the observed state of FlowCollectorSlice
           `conditions` represent the latest available observations of an object's state<br/>
         </td>
         <td>true</td>
+      </tr><tr>
+        <td><b>filterApplied</b></td>
+        <td>string</td>
+        <td>
+          Filter that is applied for flow collection<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>subnetLabelsConfigured</b></td>
+        <td>integer</td>
+        <td>
+          Number of subnet labels configured<br/>
+        </td>
+        <td>false</td>
       </tr></tbody>
 </table>
 

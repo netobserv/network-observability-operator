@@ -33,6 +33,12 @@ type SubnetLabel struct {
 type FlowCollectorSliceStatus struct {
 	// `conditions` represent the latest available observations of an object's state
 	Conditions []metav1.Condition `json:"conditions"`
+	// Filter that is applied for flow collection
+	// +optional
+	FilterApplied string `json:"filterApplied"`
+	// Number of subnet labels configured
+	// +optional
+	SubnetLabelsConfigured int `json:"subnetLabelsConfigured"`
 }
 
 // +kubebuilder:object:root=true

@@ -126,6 +126,12 @@ spec:
                       - type
                     type: object
                   type: array
+                filterApplied:
+                  description: Filter that is applied for flow collection
+                  type: string
+                subnetLabelsConfigured:
+                  description: Number of subnet labels configured
+                  type: integer
               required:
                 - conditions
               type: object

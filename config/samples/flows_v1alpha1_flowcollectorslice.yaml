@@ -4,3 +4,7 @@ metadata:
   name: flowcollectorslice-sample
 spec:
   sampling: 10
+  # subnetLabels:
+  # - name: my-database
+  #   cidrs:
+  #   - 1.2.3.4/24

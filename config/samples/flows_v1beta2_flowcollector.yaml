@@ -121,6 +121,11 @@ spec:
       #       info: "5"
       #     groupBy: Namespace
       #     lowVolumeThreshold: "5"
+    slicesConfig:
+      enable: false
+      collectionMode: AllowList
+      namespacesAllowList:
+      - /openshift-.*|netobserv.*/
     # Kafka consumer stage configuration
     kafkaConsumerReplicas: 3
     kafkaConsumerAutoscaler: null
