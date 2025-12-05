@@ -18,6 +18,7 @@ rules:
   - apps
   resources:
   - replicasets
+  - deployments
   verbs:
   - get
   - list
