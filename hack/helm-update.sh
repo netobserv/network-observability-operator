@@ -3,7 +3,7 @@
 mkdir -p _tmp
 
 # Copy and edit CRDs
-for crd in "flows.netobserv.io_flowcollectors.yaml" "flows.netobserv.io_flowmetrics.yaml"; do
+for crd in "flows.netobserv.io_flowcollectors.yaml" "flows.netobserv.io_flowmetrics.yaml" "flows.netobserv.io_flowcollectorslices.yaml"; do
   cp "bundle/manifests/$crd" helm/crds
   sed -i -r 's/(`[^`]*\{\{[^`]*`)/{{\1}}/g' helm/crds/$crd # escape "{{" for helm
   yq -i 'del(.spec.conversion)' helm/crds/$crd

@@ -297,6 +297,11 @@ spec:
       kind: FlowMetric
       name: flowmetrics.flows.netobserv.io
       version: v1alpha1
+    - description: '`FlowCollectorSlice` is the schema allowing delegated configuration per namespace.'
+      displayName: Flow Collector Slice
+      kind: FlowCollectorSlice
+      name: flowcollectorslices.flows.netobserv.io
+      version: v1alpha1
   description: ':full-description:'
   displayName: NetObserv Operator
   icon:
