@@ -138,7 +138,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 			Protocol: ptr.To(corev1.ProtocolTCP),
 			Port:     ptr.To(intstr.FromInt32(constants.WebhookPort)),
 		}}
-		if desired.Spec.UseServiceNetwork() {
+		if desired.Spec.DeploymentModel == flowslatest.DeploymentModelService {
 			// Can be counter-intuitive, but only the DeploymentModelService mode needs an explicit rule for host-network (agents are still hostnetwork pods)
 			advanced := helper.GetAdvancedProcessorConfig(&desired.Spec)
 			hostNetworkPorts = append(hostNetworkPorts, networkingv1.NetworkPolicyPort{

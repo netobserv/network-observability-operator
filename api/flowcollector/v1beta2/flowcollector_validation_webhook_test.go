@@ -516,7 +516,7 @@ func TestValidateConntrack(t *testing.T) {
 					Name: "cluster",
 				},
 				Spec: FlowCollectorSpec{
-					DeploymentModel: DeploymentModelServiceNoTLS,
+					DeploymentModel: DeploymentModelService,
 					Processor: FlowCollectorFLP{
 						LogTypes: ptr.To(LogTypeConversations),
 					},

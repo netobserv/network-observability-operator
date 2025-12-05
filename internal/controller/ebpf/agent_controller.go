@@ -482,9 +482,9 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				Value: strconv.Itoa(int(*advancedConfig.Port)),
 			})
 		} else {
-			// Send to FLP service...
-			if coll.Spec.DeploymentModel == flowslatest.DeploymentModelServiceTLS {
-				// ... using TLS
+			skipTLS := flowslatest.IsEnvEnabled(advancedConfig.Env, "SERVER_NOTLS")
+			if !skipTLS {
+				// Send to FLP service using TLS
 				tlsCfg := flowslatest.ClientTLS{
 					Enable: true,
 					CACert: flowslatest.CertificateReference{
@@ -496,13 +496,16 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				caPath := c.volumes.AddCACertificate(&tlsCfg, "svc-certs")
 				config = append(config, corev1.EnvVar{Name: envTargetTLSCACertPath, Value: caPath})
 			}
-			config = append(config, corev1.EnvVar{
-				Name:  envFlowsTargetHost,
-				Value: fmt.Sprintf("%s.%s.svc", constants.FLPName, c.Namespace),
-			}, corev1.EnvVar{
-				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(*advancedConfig.Port)),
-			})
+			config = append(config,
+				corev1.EnvVar{
+					Name:  envFlowsTargetHost,
+					Value: fmt.Sprintf("%s.%s.svc", constants.FLPName, c.Namespace),
+				},
+				corev1.EnvVar{
+					Name:  envFlowsTargetPort,
+					Value: strconv.Itoa(int(*advancedConfig.Port)),
+				},
+			)
 		}
 	}
 

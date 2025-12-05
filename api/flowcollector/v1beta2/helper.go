@@ -55,21 +55,13 @@ func (spec *FlowCollectorSpec) UseConsolePlugin() bool {
 
 func (spec *FlowCollectorSpec) UseTestConsolePlugin() bool {
 	if spec.ConsolePlugin.Advanced != nil {
-		env := spec.ConsolePlugin.Advanced.Env[constants.EnvTestConsole]
-		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
-		b, err := strconv.ParseBool(env)
-		return err == nil && b
+		return IsEnvEnabled(spec.ConsolePlugin.Advanced.Env, constants.EnvTestConsole)
 	}
 	return false
 }
 
 func (spec *FlowCollectorSpec) UseHostNetwork() bool {
 	return spec.DeploymentModel == DeploymentModelDirect
-}
-
-func (spec *FlowCollectorSpec) UseServiceNetwork() bool {
-	return spec.DeploymentModel == DeploymentModelServiceNoTLS ||
-		spec.DeploymentModel == DeploymentModelServiceTLS
 }
 
 func (spec *FlowCollectorEBPF) IsAgentFeatureEnabled(feature AgentFeature) bool {
@@ -190,10 +182,7 @@ func (spec *FlowCollectorFLP) GetMetricsPort() int32 {
 
 func (spec *FlowCollectorSpec) HasExperimentalAlertsHealth() bool {
 	if spec.Processor.Advanced != nil {
-		env := spec.Processor.Advanced.Env["EXPERIMENTAL_ALERTS_HEALTH"]
-		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
-		b, err := strconv.ParseBool(env)
-		return err == nil && b
+		return IsEnvEnabled(spec.Processor.Advanced.Env, "EXPERIMENTAL_ALERTS_HEALTH")
 	}
 	return false
 }
@@ -231,4 +220,11 @@ func (spec *FlowCollectorConsolePlugin) IsUnmanagedConsolePluginReplicas() bool 
 		return true
 	}
 	return spec.Autoscaler.IsHPAEnabled()
+}
+
+func IsEnvEnabled(vars map[string]string, key string) bool {
+	env := vars[key]
+	// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
+	b, err := strconv.ParseBool(env)
+	return err == nil && b
 }
