@@ -56,12 +56,19 @@ func slicesToFilters(fc *flowslatest.FlowCollectorSpec, fcSlices []sliceslatest.
 }
 
 func slicesToFCSubnetLabels(fcSlices []sliceslatest.FlowCollectorSlice, configuredCIDRs []*net.IPNet) []flowslatest.SubnetLabel {
+	// In order to report any overlap warning with higher priority config, store the existing CIDRs in a temporary structure
+	type cidrsPerOwner struct {
+		cidrs []*net.IPNet
+		owner string
+	}
+	cidrsToCheck := []cidrsPerOwner{{cidrs: configuredCIDRs, owner: "admin"}}
 	var fcLabels []flowslatest.SubnetLabel
 	for i := range fcSlices {
 		var hasError bool
 		var countConfigured int
 		for _, sl := range fcSlices[i].Spec.SubnetLabels {
-			var cidrs []string
+			var strCIDRs []string
+			var cidrs []*net.IPNet
 			for _, strCIDR := range sl.CIDRs {
 				// Check for parse error
 				if _, cidr, err := net.ParseCIDR(strCIDR); err != nil {
@@ -70,35 +77,39 @@ func slicesToFCSubnetLabels(fcSlices []sliceslatest.FlowCollectorSlice, configur
 				} else {
 					var skip bool
 					// Check for overlap with higher priority CIDRs
-					for _, other := range configuredCIDRs {
-						if other.Contains(cidr.IP) {
-							thisMaskSize, _ := cidr.Mask.Size()
-							otherMaskSize, _ := other.Mask.Size()
-							if thisMaskSize >= otherMaskSize {
-								// E.g: admin defined 10.100.0.0/16 and slice defined 10.100.10.0/24
-								// => fully included, warn and skip adding for FLP
-								slicesstatus.AddSubnetWarning(&fcSlices[i], fmt.Sprintf("CIDR for '%s' (%v) is fully included in admin config (%v) and will be ignored", sl.Name, cidr, other))
-								skip = true
-							} else {
-								// E.g: admin defined 10.100.0.0/17 and slice defined 10.100.0.0/16
+					for _, otherOwner := range cidrsToCheck {
+						for _, other := range otherOwner.cidrs {
+							if other.Contains(cidr.IP) {
+								thisMaskSize, _ := cidr.Mask.Size()
+								otherMaskSize, _ := other.Mask.Size()
+								if thisMaskSize >= otherMaskSize {
+									// E.g: admin defined 10.100.0.0/16 and slice defined 10.100.10.0/24
+									// => fully included, warn and skip adding for FLP
+									slicesstatus.AddSubnetWarning(&fcSlices[i], fmt.Sprintf("CIDR for '%s' (%v) is fully overlapped by config (%s: %v) and will be ignored", sl.Name, cidr, otherOwner.owner, other))
+									skip = true
+								} else {
+									// E.g: admin defined 10.100.0.0/17 and slice defined 10.100.0.0/16
+									// => slice includes admin config, warn but add to FLP
+									slicesstatus.AddSubnetWarning(&fcSlices[i], fmt.Sprintf("CIDR for '%s' (%v) overlaps with config (%s: %v)", sl.Name, cidr, otherOwner.owner, other))
+								}
+							} else if cidr.Contains(other.IP) {
+								// E.g: admin defined 10.100.10.0/24 and slice defined 10.100.0.0/16
 								// => slice includes admin config, warn but add to FLP
-								slicesstatus.AddSubnetWarning(&fcSlices[i], fmt.Sprintf("CIDR for '%s' (%v) overlaps with admin config (%v)", sl.Name, cidr, other))
+								slicesstatus.AddSubnetWarning(&fcSlices[i], fmt.Sprintf("CIDR for '%s' (%v) overlaps with config (%s: %v)", sl.Name, cidr, otherOwner.owner, other))
 							}
-						} else if cidr.Contains(other.IP) {
-							// E.g: admin defined 10.100.10.0/24 and slice defined 10.100.0.0/16
-							// => slice includes admin config, warn but add to FLP
-							slicesstatus.AddSubnetWarning(&fcSlices[i], fmt.Sprintf("CIDR for '%s' (%v) overlaps with admin config (%v)", sl.Name, cidr, other))
 						}
 					}
 					if !skip {
-						cidrs = append(cidrs, strCIDR)
+						strCIDRs = append(strCIDRs, strCIDR)
+						cidrs = append(cidrs, cidr)
 					}
 				}
 			}
 			if len(cidrs) > 0 {
+				cidrsToCheck = append(cidrsToCheck, cidrsPerOwner{cidrs: cidrs, owner: fcSlices[i].Namespace + "/" + fcSlices[i].Name})
 				fcLabels = append(fcLabels, flowslatest.SubnetLabel{
 					Name:  sl.Name,
-					CIDRs: cidrs,
+					CIDRs: strCIDRs,
 				})
 				countConfigured++
 			}

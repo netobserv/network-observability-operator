@@ -93,6 +93,16 @@ func Sync(ctx context.Context, c client.Client, fcs *sliceslatest.FlowCollectorS
 	}
 }
 
+func GetReadyCondition(slice *sliceslatest.FlowCollectorSlice) *metav1.Condition {
+	nsname := types.NamespacedName{Name: slice.Name, Namespace: slice.Namespace}
+	return mapStatuses[nsname]
+}
+
+func GetSubnetWarningCondition(slice *sliceslatest.FlowCollectorSlice) *metav1.Condition {
+	nsname := types.NamespacedName{Name: slice.Name, Namespace: slice.Namespace}
+	return mapSubnetWarnings[nsname]
+}
+
 func setStatus(ctx context.Context, c client.Client, nsname types.NamespacedName, applyStatus func(s *sliceslatest.FlowCollectorSliceStatus)) {
 	log := log.FromContext(ctx)
 
