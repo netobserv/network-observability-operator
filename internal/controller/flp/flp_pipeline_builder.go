@@ -2,6 +2,7 @@ package flp
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -74,9 +75,19 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	// Get all subnet labels
 	// Highest priority: admin-defined labels
 	allLabels := b.desired.Processor.SubnetLabels.CustomLabels
+	var cidrs []*net.IPNet
+	for _, label := range allLabels {
+		for _, strCIDR := range label.CIDRs {
+			_, cidr, err := net.ParseCIDR(strCIDR)
+			if err != nil {
+				return fmt.Errorf("wrong CIDR for subnet label '%s': %w", label.Name, err)
+			}
+			cidrs = append(cidrs, cidr)
+		}
+	}
 	// Then: slice labels
 	if b.desired.IsSliceEnabled() {
-		allLabels = append(allLabels, slicesToFCSubnetLabels(b.fcSlices)...)
+		allLabels = append(allLabels, slicesToFCSubnetLabels(b.fcSlices, cidrs)...)
 	}
 	// Finally: detected/fallback labels
 	allLabels = append(allLabels, b.detectedSubnets...)

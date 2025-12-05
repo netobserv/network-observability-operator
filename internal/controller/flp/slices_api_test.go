@@ -14,6 +14,7 @@ import (
 	sliceslatest "github.com/netobserv/network-observability-operator/api/flowcollectorslice/v1alpha1"
 	"github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/flp/fmstatus"
+	"github.com/netobserv/network-observability-operator/internal/controller/flp/slicesstatus"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
@@ -115,6 +116,7 @@ func TestSlicesDisabled(t *testing.T) {
 
 func TestSlicesEnablesCollectAll(t *testing.T) {
 	fmstatus.Reset()
+	slicesstatus.Reset(&sliceslatest.FlowCollectorSliceList{})
 	b, err := defaultBuilderWithSlices(&flowslatest.SlicesConfig{
 		Enable:              true,
 		CollectionMode:      flowslatest.CollectionAlwaysCollect,
@@ -151,6 +153,7 @@ func TestSlicesEnablesCollectAll(t *testing.T) {
 
 func TestSlicesEnablesWhitelist(t *testing.T) {
 	fmstatus.Reset()
+	slicesstatus.Reset(&sliceslatest.FlowCollectorSliceList{})
 	b, err := defaultBuilderWithSlices(&flowslatest.SlicesConfig{
 		Enable:              true,
 		CollectionMode:      flowslatest.CollectionAllowList,

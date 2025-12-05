@@ -247,6 +247,13 @@ metadata:
                   "cpu": "100m",
                   "memory": "100Mi"
                 }
+              },
+              "slicesConfig": {
+                "collectionMode": "AllowList",
+                "enable": false,
+                "namespacesAllowList": [
+                  "/openshift-.*|netobserv.*/"
+                ]
               }
             },
             "prometheus": {
