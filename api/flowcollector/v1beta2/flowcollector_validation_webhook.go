@@ -276,7 +276,7 @@ func (v *validator) validateFLPLogTypes() {
 		if !v.fc.UseLoki() {
 			v.errors = append(v.errors, errors.New("enabling conversation tracking without Loki is not allowed, as it generates extra processing for no benefit"))
 		}
-		if v.fc.UseServiceNetwork() {
+		if v.fc.DeploymentModel == DeploymentModelService {
 			v.errors = append(v.errors, errors.New("cannot enable conversation tracking when spec.deploymentModel is Service: you must disable it, or change the deployment model"))
 		}
 	}

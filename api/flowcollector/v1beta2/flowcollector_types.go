@@ -27,10 +27,9 @@ import (
 type FlowCollectorDeploymentModel string
 
 const (
-	DeploymentModelDirect       FlowCollectorDeploymentModel = "Direct"
-	DeploymentModelKafka        FlowCollectorDeploymentModel = "Kafka"
-	DeploymentModelServiceNoTLS FlowCollectorDeploymentModel = "Service-NoTLS"
-	DeploymentModelServiceTLS   FlowCollectorDeploymentModel = "Service-TLS"
+	DeploymentModelDirect  FlowCollectorDeploymentModel = "Direct"
+	DeploymentModelKafka   FlowCollectorDeploymentModel = "Kafka"
+	DeploymentModelService FlowCollectorDeploymentModel = "Service"
 )
 
 // Please notice that the FlowCollectorSpec's properties MUST redefine one of the default
@@ -71,15 +70,14 @@ type FlowCollectorSpec struct {
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
-	// - `Service-TLS` (default) to make the flow processor listen as a Kubernetes Service, backed by a scalable Deployment.<br>
-	// - `Service-NoTLS` to make the flow processor listen as a Kubernetes Service, backed by a scalable Deployment. Version without TLS.<br>
+	// - `Service` (default) to make the flow processor listen as a Kubernetes Service, backed by a scalable Deployment.<br>
 	// - `Kafka` to make flows sent to a Kafka pipeline before consumption by the processor.<br>
 	// - `Direct` to make the flow processor listen directly from the agents using the host network, backed by a DaemonSet. Only recommended on small clusters, below 15 nodes.<br>
 	// Kafka can provide better scalability, resiliency, and high availability (for more details, see https://www.redhat.com/en/topics/integration/what-is-apache-kafka).<br>
 	// `Direct` is not recommended on large clusters as it is less memory efficient.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Service-TLS";"Service-NoTLS";"Direct";"Kafka"
-	// +kubebuilder:default:=Service-TLS
+	// +kubebuilder:validation:Enum:="Service";"Direct";"Kafka"
+	// +kubebuilder:default:=Service
 	DeploymentModel FlowCollectorDeploymentModel `json:"deploymentModel,omitempty"`
 
 	// Kafka configuration, allowing to use Kafka as a broker as part of the flow collection pipeline. Available when the `spec.deploymentModel` is `Kafka`.

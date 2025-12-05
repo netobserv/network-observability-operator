@@ -34,11 +34,11 @@ const (
 )
 
 func newGRPCPipeline(desired *flowslatest.FlowCollectorSpec, volumes *volumes.Builder) config.PipelineBuilderStage {
-	cfg := api.IngestGRPCProto{
-		Port: int(*helper.GetAdvancedProcessorConfig(desired).Port),
-	}
-	if desired.DeploymentModel == flowslatest.DeploymentModelServiceTLS {
-		// Communication from agents uses TLS or mTLS: set up server certificate
+	adv := helper.GetAdvancedProcessorConfig(desired)
+	cfg := api.IngestGRPCProto{Port: int(*adv.Port)}
+	skipTLS := flowslatest.IsEnvEnabled(adv.Env, "SERVER_NOTLS")
+	if desired.DeploymentModel == flowslatest.DeploymentModelService && !skipTLS {
+		// Communication from agents uses TLS: set up server certificate
 		ref := flowslatest.CertificateReference{
 			Type:     flowslatest.RefTypeSecret,
 			Name:     monoCertSecretName,

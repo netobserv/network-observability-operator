@@ -482,9 +482,9 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				Value: strconv.Itoa(int(*advancedConfig.Port)),
 			})
 		} else {
-			// Send to FLP service...
-			if coll.Spec.DeploymentModel == flowslatest.DeploymentModelServiceTLS {
-				// ... using TLS
+			skipTLS := flowslatest.IsEnvEnabled(advancedConfig.Env, "SERVER_NOTLS")
+			if !skipTLS {
+				// Send to FLP service using TLS
 				tlsCfg := flowslatest.ClientTLS{
 					Enable: true,
 					CACert: flowslatest.CertificateReference{
