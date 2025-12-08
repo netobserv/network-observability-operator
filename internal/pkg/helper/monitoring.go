@@ -28,10 +28,10 @@ func GetSecretOrConfigMap(file *flowslatest.FileReference) monitoringv1.SecretOr
 	}
 }
 
-func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, isDownstream bool) (string, *monitoringv1.TLSConfig) {
+func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, isDownstream bool) (monitoringv1.Scheme, *monitoringv1.TLSConfig) {
 	if tls.Type == flowslatest.ServerTLSAuto {
 		if isDownstream {
-			return "https", &monitoringv1.TLSConfig{
+			return monitoringv1.SchemeHTTPS, &monitoringv1.TLSConfig{
 				SafeTLSConfig: monitoringv1.SafeTLSConfig{
 					ServerName: ptr.To(serverName),
 				},
@@ -39,7 +39,7 @@ func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, i
 			}
 		}
 		// Upstream prometheus disallows CAFile
-		return "https", &monitoringv1.TLSConfig{
+		return monitoringv1.SchemeHTTPS, &monitoringv1.TLSConfig{
 			SafeTLSConfig: monitoringv1.SafeTLSConfig{
 				ServerName: ptr.To(serverName),
 				CA: monitoringv1.SecretOrConfigMap{
@@ -64,8 +64,8 @@ func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, i
 		if !tls.InsecureSkipVerify && tls.ProvidedCaFile != nil && tls.ProvidedCaFile.File != "" {
 			tlsOut.SafeTLSConfig.CA = GetSecretOrConfigMap(tls.ProvidedCaFile)
 		}
-		return "https", &tlsOut
+		return monitoringv1.SchemeHTTPS, &tlsOut
 	}
 
-	return "http", nil
+	return monitoringv1.SchemeHTTP, nil
 }
