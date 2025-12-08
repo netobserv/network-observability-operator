@@ -1,0 +1,13 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: release-netobserv-1-10-1-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'lberetta'
+spec:
+  releasePlan: netobserv-zstream
+  snapshot: netobserv-zstream-dbrzw
+  data:
+    releaseNotes:
+      type: RHEA
