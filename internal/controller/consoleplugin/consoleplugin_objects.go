@@ -395,6 +395,7 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 	}
 	if b.desired.Prometheus.Querier.Mode == "" || b.desired.Prometheus.Querier.Mode == flowslatest.PromModeAuto {
 		if b.info.ClusterInfo.IsOpenShift() {
+			// NB: trailing dot (...local.:9091) is a DNS optimization for exact name match without extra search
 			config.URL = "https://thanos-querier.openshift-monitoring.svc.cluster.local.:9091/"    // requires cluster-monitoringv-view cluster role
 			config.DevURL = "https://thanos-querier.openshift-monitoring.svc.cluster.local.:9092/" // restricted to a particular namespace
 			config.ForwardUserToken = true

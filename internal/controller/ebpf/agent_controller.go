@@ -483,7 +483,8 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		} else {
 			// Send to FLP service
 			config = append(config, corev1.EnvVar{
-				Name:  envFlowsTargetHost,
+				Name: envFlowsTargetHost,
+				// NB: trailing dot (...local.) is a DNS optimization for exact name match without extra search
 				Value: fmt.Sprintf("%s.%s.svc.cluster.local.", constants.FLPName, c.Namespace),
 			}, corev1.EnvVar{
 				Name:  envFlowsTargetPort,
