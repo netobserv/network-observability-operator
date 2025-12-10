@@ -9,7 +9,7 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
-	github.com/netobserv/flowlogs-pipeline v1.10.0-community
+	github.com/netobserv/flowlogs-pipeline v1.10.0-community.0.20251210152116-25aa7fa1fa23
 	github.com/netobserv/netobserv-ebpf-agent v1.10.0-community
 	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
