@@ -72,28 +72,28 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRuleDNSErrors,
 			groupBy:  "",
 			side:     asDest,
-			expected: "netobserv:health:dns_errors:rate5m",
+			expected: "netobserv:health:dns_errors:rate2m",
 		},
 		{
 			name:     "DNSErrors by Namespace",
 			template: flowslatest.HealthRuleDNSErrors,
 			groupBy:  flowslatest.GroupByNamespace,
 			side:     asDest,
-			expected: "netobserv:health:dns_errors:namespace:dst:rate5m",
+			expected: "netobserv:health:dns_errors:namespace:dst:rate2m",
 		},
 		{
 			name:     "DNSErrors by Node",
 			template: flowslatest.HealthRuleDNSErrors,
 			groupBy:  flowslatest.GroupByNode,
 			side:     asDest,
-			expected: "netobserv:health:dns_errors:node:dst:rate5m",
+			expected: "netobserv:health:dns_errors:node:dst:rate2m",
 		},
 		{
 			name:     "DNSErrors by Workload",
 			template: flowslatest.HealthRuleDNSErrors,
 			groupBy:  flowslatest.GroupByWorkload,
 			side:     asDest,
-			expected: "netobserv:health:dns_errors:workload:dst:rate5m",
+			expected: "netobserv:health:dns_errors:workload:dst:rate2m",
 		},
 
 		// Packet Drops By Kernel
@@ -102,21 +102,21 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRulePacketDropsByKernel,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:packet_drops_by_kernel:rate5m",
+			expected: "netobserv:health:packet_drops_by_kernel:rate2m",
 		},
 		{
 			name:     "PacketDropsByKernel by Namespace src",
 			template: flowslatest.HealthRulePacketDropsByKernel,
 			groupBy:  flowslatest.GroupByNamespace,
 			side:     asSource,
-			expected: "netobserv:health:packet_drops_by_kernel:namespace:src:rate5m",
+			expected: "netobserv:health:packet_drops_by_kernel:namespace:src:rate2m",
 		},
 		{
 			name:     "PacketDropsByKernel by Namespace dst",
 			template: flowslatest.HealthRulePacketDropsByKernel,
 			groupBy:  flowslatest.GroupByNamespace,
 			side:     asDest,
-			expected: "netobserv:health:packet_drops_by_kernel:namespace:dst:rate5m",
+			expected: "netobserv:health:packet_drops_by_kernel:namespace:dst:rate2m",
 		},
 
 		// IPsec Errors
@@ -125,14 +125,14 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRuleIPsecErrors,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:ipsec_errors:rate5m",
+			expected: "netobserv:health:ipsec_errors:rate2m",
 		},
 		{
 			name:     "IPsecErrors by Node",
 			template: flowslatest.HealthRuleIPsecErrors,
 			groupBy:  flowslatest.GroupByNode,
 			side:     asSource,
-			expected: "netobserv:health:ipsec_errors:node:src:rate5m",
+			expected: "netobserv:health:ipsec_errors:node:src:rate2m",
 		},
 
 		// Netpol Denied
@@ -141,14 +141,14 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRuleNetpolDenied,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:netpol_denied:rate5m",
+			expected: "netobserv:health:netpol_denied:rate2m",
 		},
 		{
 			name:     "NetpolDenied by Workload",
 			template: flowslatest.HealthRuleNetpolDenied,
 			groupBy:  flowslatest.GroupByWorkload,
 			side:     asDest,
-			expected: "netobserv:health:netpol_denied:workload:dst:rate5m",
+			expected: "netobserv:health:netpol_denied:workload:dst:rate2m",
 		},
 
 		// Cross AZ
@@ -157,14 +157,14 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRuleCrossAZ,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:cross_az:rate5m",
+			expected: "netobserv:health:cross_az:rate2m",
 		},
 		{
 			name:     "CrossAZ by Namespace",
 			template: flowslatest.HealthRuleCrossAZ,
 			groupBy:  flowslatest.GroupByNamespace,
 			side:     asSource,
-			expected: "netobserv:health:cross_az:namespace:src:rate5m",
+			expected: "netobserv:health:cross_az:namespace:src:rate2m",
 		},
 
 		// Latency High Trend
@@ -173,14 +173,14 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRuleLatencyHighTrend,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:latency_high_trend:rate5m",
+			expected: "netobserv:health:latency_high_trend:rate2m",
 		},
 		{
 			name:     "LatencyHighTrend by Node",
 			template: flowslatest.HealthRuleLatencyHighTrend,
 			groupBy:  flowslatest.GroupByNode,
 			side:     asDest,
-			expected: "netobserv:health:latency_high_trend:node:dst:rate5m",
+			expected: "netobserv:health:latency_high_trend:node:dst:rate2m",
 		},
 	}
 
