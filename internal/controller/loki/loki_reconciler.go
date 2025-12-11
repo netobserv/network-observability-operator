@@ -114,8 +114,7 @@ func (r *LReconciler) reconcileDeployment(ctx context.Context, builder *builder,
 		r.deployment,
 		builder.deployment(name, cm),
 		name,
-		1,
-		nil,
+		false,
 		&report,
 	)
 }
