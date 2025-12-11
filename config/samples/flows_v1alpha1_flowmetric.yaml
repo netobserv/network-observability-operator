@@ -1,36 +1,29 @@
 apiVersion: flows.netobserv.io/v1alpha1
 kind: FlowMetric
 metadata:
-  labels:
-    app.kubernetes.io/name: flowmetric
-    app.kubernetes.io/instance: flowmetric-sample
-    app.kubernetes.io/part-of: netobserv-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: netobserv-operator
   name: flowmetric-sample
 spec:
   # More examples in https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics
-  metricName: cluster_external_ingress_bytes_total
   type: Counter
   valueField: Bytes
   direction: Ingress
-  labels: [DstK8S_HostName,DstK8S_Namespace,DstK8S_OwnerName,DstK8S_OwnerType]
-  filters:
-  - field: SrcSubnetLabel
-    matchType: Absence
-  charts:
-  - dashboardName: Main
-    title: External ingress traffic
-    unit: Bps
-    type: SingleStat
-    queries:
-    - promQL: "sum(rate($METRIC[2m]))"
-      legend: ""
-  - dashboardName: Main
-    sectionName: External
-    title: Top external ingress traffic per workload
-    unit: Bps
-    type: StackArea
-    queries:
-    - promQL: "sum(rate($METRIC{DstK8S_Namespace!=\"\"}[2m])) by (DstK8S_Namespace, DstK8S_OwnerName)"
-      legend: "{{DstK8S_Namespace}} / {{DstK8S_OwnerName}}"
+  labels: [SrcK8S_Namespace,DstK8S_Namespace]
+  # filters:
+  # - field: SrcSubnetLabel
+  #   matchType: Absence
+  # charts:
+  # - dashboardName: Main
+  #   title: External ingress traffic
+  #   unit: Bps
+  #   type: SingleStat
+  #   queries:
+  #   - promQL: "sum(rate($METRIC[2m]))"
+  #     legend: ""
+  # - dashboardName: Main
+  #   sectionName: External
+  #   title: Top external ingress traffic per workload
+  #   unit: Bps
+  #   type: StackArea
+  #   queries:
+  #   - promQL: "sum(rate($METRIC{DstK8S_Namespace!=\"\"}[2m])) by (DstK8S_Namespace, DstK8S_OwnerName)"
+  #     legend: "{{DstK8S_Namespace}} / {{DstK8S_OwnerName}}"

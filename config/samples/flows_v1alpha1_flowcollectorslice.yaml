@@ -3,7 +3,7 @@ kind: FlowCollectorSlice
 metadata:
   name: flowcollectorslice-sample
 spec:
-  sampling: 10
+  sampling: 1
   # subnetLabels:
   # - name: my-database
   #   cidrs:
