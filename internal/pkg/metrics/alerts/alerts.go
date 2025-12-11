@@ -185,10 +185,6 @@ func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
 		ExtraFilter:       `dns_flag_response_code="NXDomain"`,
 		FilterDestination: true,
 	}
-	rb.extraLinks = []link{
-		// TODO: write our own blog
-		{Name: "Trailing dot optimization", URL: "https://tech.evaneos.com/how-a-single-dot-can-drastically-improve-performance-771cd3ca888d"},
-	}
 
 	return rb.createRule(promql, "Too many DNS NX_DOMAIN errors", description)
 }
