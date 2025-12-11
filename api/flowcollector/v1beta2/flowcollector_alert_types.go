@@ -10,64 +10,75 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type AlertTemplate string
-type AlertGroupBy string
+type HealthRuleTemplate string
+type HealthRuleGroupBy string
+type HealthRuleMode string
 
 const (
-	AlertNoFlows                  AlertTemplate = "NetObservNoFlows"
-	AlertLokiError                AlertTemplate = "NetObservLokiError"
-	AlertPacketDropsByKernel      AlertTemplate = "PacketDropsByKernel"
-	AlertPacketDropsByDevice      AlertTemplate = "PacketDropsByDevice"
-	AlertIPsecErrors              AlertTemplate = "IPsecErrors"
-	AlertNetpolDenied             AlertTemplate = "NetpolDenied"
-	AlertLatencyHighTrend         AlertTemplate = "LatencyHighTrend"
-	AlertDNSErrors                AlertTemplate = "DNSErrors"
-	AlertExternalEgressHighTrend  AlertTemplate = "ExternalEgressHighTrend"
-	AlertExternalIngressHighTrend AlertTemplate = "ExternalIngressHighTrend"
-	AlertCrossAZ                  AlertTemplate = "CrossAZ"
-	GroupByNode                   AlertGroupBy  = "Node"
-	GroupByNamespace              AlertGroupBy  = "Namespace"
-	GroupByWorkload               AlertGroupBy  = "Workload"
+	HealthRuleNoFlows                  HealthRuleTemplate = "NetObservNoFlows"
+	HealthRuleLokiError                HealthRuleTemplate = "NetObservLokiError"
+	HealthRulePacketDropsByKernel      HealthRuleTemplate = "PacketDropsByKernel"
+	HealthRulePacketDropsByDevice      HealthRuleTemplate = "PacketDropsByDevice"
+	HealthRuleIPsecErrors              HealthRuleTemplate = "IPsecErrors"
+	HealthRuleNetpolDenied             HealthRuleTemplate = "NetpolDenied"
+	HealthRuleLatencyHighTrend         HealthRuleTemplate = "LatencyHighTrend"
+	HealthRuleDNSErrors                HealthRuleTemplate = "DNSErrors"
+	HealthRuleExternalEgressHighTrend  HealthRuleTemplate = "ExternalEgressHighTrend"
+	HealthRuleExternalIngressHighTrend HealthRuleTemplate = "ExternalIngressHighTrend"
+	HealthRuleCrossAZ                  HealthRuleTemplate = "CrossAZ"
+	GroupByNode                        HealthRuleGroupBy  = "Node"
+	GroupByNamespace                   HealthRuleGroupBy  = "Namespace"
+	GroupByWorkload                    HealthRuleGroupBy  = "Workload"
+	ModeAlert                          HealthRuleMode     = "alert"
+	ModeRecording                      HealthRuleMode     = "recording"
 )
 
-type FLPAlert struct {
-	// Alert template name.
+type FLPHealthRule struct {
+	// Health rule template name.
 	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
 	// `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
-	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"CrossAZ"
 	// +required
-	Template AlertTemplate `json:"template,omitempty"`
+	Template HealthRuleTemplate `json:"template,omitempty"`
+
+	// Mode defines whether this health rule should be generated as an alert or a recording rule.
+	// Possible values are: `alert` (default), `recording`.
+	// +kubebuilder:validation:Enum:="alert";"recording"
+	// +kubebuilder:default:="alert"
+	// +optional
+	Mode HealthRuleMode `json:"mode,omitempty"`
 
 	// A list of variants for this template
 	// +required
-	Variants []AlertVariant `json:"variants,omitempty"`
+	Variants []HealthRuleVariant `json:"variants,omitempty"`
 }
 
-type AlertVariant struct {
+type HealthRuleVariant struct {
 	// The low volume threshold allows to ignore metrics with a too low volume of traffic, in order to improve signal-to-noise.
 	// It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
 	// When provided, it must be parsable as a float.
 	LowVolumeThreshold string `json:"lowVolumeThreshold,omitempty"`
 
-	// Thresholds of the alert per severity.
+	// Thresholds of the health rule per severity.
 	// They are expressed as a percentage of errors above which the alert is triggered. They must be parsable as floats.
-	// +required
-	Thresholds AlertThresholds `json:"thresholds,omitempty"`
+	// Required for alert mode, optional for recording mode.
+	// +optional
+	Thresholds HealthRuleThresholds `json:"thresholds,omitempty"`
 
 	// Optional grouping criteria, possible values are: `Node`, `Namespace`, `Workload`.
 	// +kubebuilder:validation:Enum:="";"Node";"Namespace";"Workload"
 	// +optional
-	GroupBy AlertGroupBy `json:"groupBy,omitempty"`
+	GroupBy HealthRuleGroupBy `json:"groupBy,omitempty"`
 
-	// For trending alerts, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.
+	// For trending health rules, the time offset for baseline comparison. For example, "1d" means comparing against yesterday. Defaults to 1d.
 	TrendOffset *metav1.Duration `json:"trendOffset,omitempty"`
 
-	// For trending alerts, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.
+	// For trending health rules, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.
 	TrendDuration *metav1.Duration `json:"trendDuration,omitempty"`
 }
 
-type AlertThresholds struct {
+type HealthRuleThresholds struct {
 	// Threshold for severity `info`. Leave empty to not generate an Info alert.
 	Info string `json:"info,omitempty"`
 
@@ -123,20 +134,20 @@ func removeMetricsByPattern(list []string, search string) []string {
 	return filtered
 }
 
-func (s *FlowCollectorSpec) GetFLPAlerts() []FLPAlert {
-	var ret []FLPAlert
-	var templates []AlertTemplate // for reproducible ordering
+func (s *FlowCollectorSpec) GetFLPHealthRules() []FLPHealthRule {
+	var rules []FLPHealthRule
+	var templates []HealthRuleTemplate // for reproducible ordering
 
-	tplMap := make(map[AlertTemplate]FLPAlert)
-	for _, group := range DefaultAlerts {
-		if !slices.Contains(s.Processor.Metrics.DisableAlerts, group.Template) {
+	tplMap := make(map[HealthRuleTemplate]FLPHealthRule)
+	for _, group := range DefaultHealthRules {
+		if !slices.Contains(s.Processor.Metrics.DisableHealthRules, group.Template) {
 			tplMap[group.Template] = group
 			templates = append(templates, group.Template)
 		}
 	}
-	if s.Processor.Metrics.Alerts != nil {
-		for _, group := range *s.Processor.Metrics.Alerts {
-			if !slices.Contains(s.Processor.Metrics.DisableAlerts, group.Template) {
+	if s.Processor.Metrics.HealthRules != nil {
+		for _, group := range *s.Processor.Metrics.HealthRules {
+			if !slices.Contains(s.Processor.Metrics.DisableHealthRules, group.Template) {
 				// A group defined in FC overrides the default group
 				tplMap[group.Template] = group
 				if !slices.Contains(templates, group.Template) {
@@ -149,42 +160,42 @@ func (s *FlowCollectorSpec) GetFLPAlerts() []FLPAlert {
 	for _, name := range templates {
 		tpl := tplMap[name]
 		if ok, _ := tpl.IsAllowed(s); ok {
-			ret = append(ret, tpl)
+			rules = append(rules, tpl)
 		}
 	}
 
-	return ret
+	return rules
 }
 
-func (g *FLPAlert) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
+func (g *FLPHealthRule) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 	switch g.Template {
-	case AlertPacketDropsByKernel:
+	case HealthRulePacketDropsByKernel:
 		if !spec.Agent.EBPF.IsPktDropEnabled() {
-			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, PacketDrop)
+			return false, fmt.Sprintf("HealthRule %s requires the %s agent feature to be enabled", g.Template, PacketDrop)
 		}
-	case AlertIPsecErrors:
+	case HealthRuleIPsecErrors:
 		if !spec.Agent.EBPF.IsIPSecEnabled() {
-			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, IPSec)
+			return false, fmt.Sprintf("HealthRule %s requires the %s agent feature to be enabled", g.Template, IPSec)
 		}
-	case AlertDNSErrors:
+	case HealthRuleDNSErrors:
 		if !spec.Agent.EBPF.IsDNSTrackingEnabled() {
-			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, DNSTracking)
+			return false, fmt.Sprintf("HealthRule %s requires the %s agent feature to be enabled", g.Template, DNSTracking)
 		}
-	case AlertLatencyHighTrend:
+	case HealthRuleLatencyHighTrend:
 		if !spec.Agent.EBPF.IsFlowRTTEnabled() {
-			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, FlowRTT)
+			return false, fmt.Sprintf("HealthRule %s requires the %s agent feature to be enabled", g.Template, FlowRTT)
 		}
-	case AlertNetpolDenied:
+	case HealthRuleNetpolDenied:
 		if !spec.Agent.EBPF.IsNetworkEventsEnabled() {
-			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, NetworkEvents)
+			return false, fmt.Sprintf("HealthRule %s requires the %s agent feature to be enabled", g.Template, NetworkEvents)
 		}
-	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend, AlertCrossAZ:
+	case HealthRuleNoFlows, HealthRuleLokiError, HealthRulePacketDropsByDevice, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend, HealthRuleCrossAZ:
 		return true, ""
 	}
 	return true, ""
 }
 
-func (v *AlertVariant) GetTrendParams() (string, string) {
+func (v *HealthRuleVariant) GetTrendParams() (string, string) {
 	offset := metav1.Duration{Duration: 24 * time.Hour}
 	if v.TrendOffset != nil {
 		offset = *v.TrendOffset

@@ -10,21 +10,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func allTemplates() []flowslatest.AlertTemplate {
-	return []flowslatest.AlertTemplate{
-		flowslatest.AlertLokiError,
-		flowslatest.AlertNoFlows,
-		flowslatest.AlertPacketDropsByKernel,
-		flowslatest.AlertPacketDropsByDevice,
-		flowslatest.AlertDNSErrors,
-		flowslatest.AlertIPsecErrors,
-		flowslatest.AlertLatencyHighTrend,
-		flowslatest.AlertNetpolDenied,
+func allTemplates() []flowslatest.HealthRuleTemplate {
+	return []flowslatest.HealthRuleTemplate{
+		flowslatest.HealthRuleLokiError,
+		flowslatest.HealthRuleNoFlows,
+		flowslatest.HealthRulePacketDropsByKernel,
+		flowslatest.HealthRulePacketDropsByDevice,
+		flowslatest.HealthRuleDNSErrors,
+		flowslatest.HealthRuleIPsecErrors,
+		flowslatest.HealthRuleLatencyHighTrend,
+		flowslatest.HealthRuleNetpolDenied,
 	}
 }
 
-func allTemplatesBut(tpls ...flowslatest.AlertTemplate) []flowslatest.AlertTemplate {
-	var ret []flowslatest.AlertTemplate
+func allTemplatesBut(tpls ...flowslatest.HealthRuleTemplate) []flowslatest.HealthRuleTemplate {
+	var ret []flowslatest.HealthRuleTemplate
 	for _, tpl := range allTemplates() {
 		if !slices.Contains(tpls, tpl) {
 			ret = append(ret, tpl)
@@ -37,7 +37,7 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 	fc := flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByDevice},
+				DisableHealthRules: []flowslatest.HealthRuleTemplate{flowslatest.HealthRuleLokiError, flowslatest.HealthRulePacketDropsByDevice},
 			},
 			Advanced: &flowslatest.AdvancedProcessorConfig{
 				Env: map[string]string{
@@ -69,7 +69,7 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
+				DisableHealthRules: []flowslatest.HealthRuleTemplate{flowslatest.HealthRuleLokiError},
 			},
 			Advanced: &flowslatest.AdvancedProcessorConfig{
 				Env: map[string]string{
@@ -122,7 +122,7 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled_MissingFeatureGate(t *testing
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
+				DisableHealthRules: []flowslatest.HealthRuleTemplate{flowslatest.HealthRuleLokiError},
 			},
 		},
 	}
@@ -140,7 +140,7 @@ func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: allTemplates(),
+				DisableHealthRules: allTemplates(),
 			},
 			Advanced: &flowslatest.AdvancedProcessorConfig{
 				Env: map[string]string{
@@ -163,13 +163,13 @@ func TestBuildRules_Overidden(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: allTemplatesBut(flowslatest.AlertPacketDropsByKernel),
-				Alerts: &[]flowslatest.FLPAlert{
+				DisableHealthRules: allTemplatesBut(flowslatest.HealthRulePacketDropsByKernel),
+				HealthRules: &[]flowslatest.FLPHealthRule{
 					{
-						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Template: flowslatest.HealthRulePacketDropsByKernel,
+						Variants: []flowslatest.HealthRuleVariant{
 							{
-								Thresholds: flowslatest.AlertThresholds{
+								Thresholds: flowslatest.HealthRuleThresholds{
 									Critical: "50",
 								},
 								GroupBy: flowslatest.GroupByWorkload,
@@ -201,13 +201,13 @@ func TestBuildRules_Global(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: allTemplatesBut(flowslatest.AlertPacketDropsByKernel),
-				Alerts: &[]flowslatest.FLPAlert{
+				DisableHealthRules: allTemplatesBut(flowslatest.HealthRulePacketDropsByKernel),
+				HealthRules: &[]flowslatest.FLPHealthRule{
 					{
-						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Template: flowslatest.HealthRulePacketDropsByKernel,
+						Variants: []flowslatest.HealthRuleVariant{
 							{
-								Thresholds: flowslatest.AlertThresholds{
+								Thresholds: flowslatest.HealthRuleThresholds{
 									Critical: "50",
 								},
 							},
@@ -238,13 +238,13 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: allTemplates(),
-				Alerts: &[]flowslatest.FLPAlert{
+				DisableHealthRules: allTemplates(),
+				HealthRules: &[]flowslatest.FLPHealthRule{
 					{
-						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Template: flowslatest.HealthRulePacketDropsByKernel,
+						Variants: []flowslatest.HealthRuleVariant{
 							{
-								Thresholds: flowslatest.AlertThresholds{
+								Thresholds: flowslatest.HealthRuleThresholds{
 									Critical: "50",
 								},
 								GroupBy: flowslatest.GroupByWorkload,
@@ -265,13 +265,13 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 }
 
 func TestLatencyPromql(t *testing.T) {
-	variant := flowslatest.AlertVariant{
+	variant := flowslatest.HealthRuleVariant{
 		GroupBy: flowslatest.GroupByNamespace,
-		Thresholds: flowslatest.AlertThresholds{
+		Thresholds: flowslatest.HealthRuleThresholds{
 			Info: "100",
 		},
 	}
-	rules, err := convertToRules(flowslatest.AlertLatencyHighTrend, &variant, []string{"namespace_rtt_seconds"})
+	rules, err := convertToRules(flowslatest.HealthRuleLatencyHighTrend, flowslatest.ModeAlert, &variant, []string{"namespace_rtt_seconds"})
 	assert.NoError(t, err)
 	assert.Len(t, rules, 2)
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting TCP latency increased by more than 100% [source namespace={{ $labels.namespace }}], compared to baseline (offset: 24h).")
