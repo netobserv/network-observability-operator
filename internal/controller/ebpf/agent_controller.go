@@ -37,6 +37,8 @@ const (
 	envAgentIP                    = "AGENT_IP"
 	envFlowsTargetHost            = "TARGET_HOST"
 	envFlowsTargetPort            = "TARGET_PORT"
+	envGRPCReconnect              = "GRPC_RECONNECT_TIMER"
+	envGRPCReconnectRnd           = "GRPC_RECONNECT_TIMER_RANDOMIZATION"
 	envSampling                   = "SAMPLING"
 	envExport                     = "EXPORT"
 	envKafkaBrokers               = "KAFKA_BROKERS"
@@ -482,13 +484,18 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			})
 		} else {
 			// Send to FLP service
-			config = append(config, corev1.EnvVar{
-				Name:  envFlowsTargetHost,
-				Value: fmt.Sprintf("%s.%s.svc", constants.FLPName, c.Namespace),
-			}, corev1.EnvVar{
-				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(*advancedConfig.Port)),
-			})
+			config = append(config,
+				corev1.EnvVar{
+					Name:  envFlowsTargetHost,
+					Value: fmt.Sprintf("%s.%s.svc", constants.FLPName, c.Namespace),
+				},
+				corev1.EnvVar{
+					Name:  envFlowsTargetPort,
+					Value: strconv.Itoa(int(*advancedConfig.Port)),
+				},
+				corev1.EnvVar{Name: envGRPCReconnect, Value: "5m"},
+				corev1.EnvVar{Name: envGRPCReconnectRnd, Value: "30s"},
+			)
 		}
 	}
 
