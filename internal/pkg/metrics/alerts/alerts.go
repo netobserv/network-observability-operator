@@ -135,14 +135,14 @@ func (rb *ruleBuilder) dnsErrors() (*monitoringv1.Rule, error) {
 		return nil, nil
 	}
 	description := fmt.Sprintf(
-		"NetObserv is detecting more than %s%% of DNS errors%s. %s",
+		"NetObserv is detecting more than %s%% of DNS errors%s (other than NX_DOMAIN). %s",
 		rb.threshold,
 		rb.getAlertLegend(),
 		rb.additionalDescription(),
 	)
 
 	metric, totalMetric := rb.getMetricsForAlert()
-	metricsFilter := rb.buildLabelFilter(`DnsFlagsResponseCode!="NoError"`)
+	metricsFilter := rb.buildLabelFilter(`DnsFlagsResponseCode!~"NoError|NXDomain"`)
 	totalFilter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "_count", metricsFilter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "2m", "")
@@ -150,9 +150,43 @@ func (rb *ruleBuilder) dnsErrors() (*monitoringv1.Rule, error) {
 	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
 
-	rb.trafficLinkFilter = `dns_flag_response_code!=""`
+	rb.trafficLink = &trafficLink{
+		BackAndForth:      false,
+		ExtraFilter:       `dns_flag_response_code!="NoError,NXDomain"`,
+		FilterDestination: true,
+	}
 
 	return rb.createRule(promql, "Too many DNS errors", description)
+}
+
+func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
+	// DNS errors are in return traffic only
+	if rb.side == asSource {
+		return nil, nil
+	}
+	description := fmt.Sprintf(
+		"NetObserv is detecting more than %s%% of DNS NX_DOMAIN errors%s. In Kubernetes, this is a common error due to the resolution using several search suffixes. It can be optimized by using trailing dots in domain names. %s",
+		rb.threshold,
+		rb.getAlertLegend(),
+		rb.additionalDescription(),
+	)
+
+	metric, totalMetric := rb.getMetricsForAlert()
+	metricsFilter := rb.buildLabelFilter(`DnsFlagsResponseCode="NXDomain"`)
+	totalFilter := rb.buildLabelFilter("")
+	metricsRate := promQLRateFromMetric(metric, "_count", metricsFilter, "2m", "")
+	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "2m", "")
+	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
+	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
+
+	rb.trafficLink = &trafficLink{
+		BackAndForth:      false,
+		ExtraFilter:       `dns_flag_response_code="NXDomain"`,
+		FilterDestination: true,
+	}
+
+	return rb.createRule(promql, "Too many DNS NX_DOMAIN errors", description)
 }
 
 func (rb *ruleBuilder) netpolDenied() (*monitoringv1.Rule, error) {

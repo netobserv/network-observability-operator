@@ -358,7 +358,7 @@ func (v *validator) isFLPAlertGroupBySupported(template AlertTemplate, variant *
 		return variant.GroupBy != GroupByWorkload
 	case AlertIPsecErrors:
 		return variant.GroupBy != GroupByWorkload && variant.GroupBy != GroupByNamespace
-	case AlertPacketDropsByKernel, AlertDNSErrors, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend, AlertLatencyHighTrend, AlertNetpolDenied, AlertCrossAZ:
+	case AlertPacketDropsByKernel, AlertDNSErrors, AlertDNSNxDomain, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend, AlertLatencyHighTrend, AlertNetpolDenied, AlertCrossAZ:
 		return true
 	case AlertLokiError, AlertNoFlows: // not applicable
 		return false
@@ -410,7 +410,7 @@ func GetElligibleMetricsForAlert(template AlertTemplate, alertDef *AlertVariant)
 		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
 	case AlertIPsecErrors:
 		return []string{"node_ipsec_flows_total"}, []string{"node_to_node_ingress_flows_total"}
-	case AlertDNSErrors:
+	case AlertDNSErrors, AlertDNSNxDomain:
 		metricPatterns = []string{`%s_dns_latency_seconds`}
 		totalMetricPatterns = []string{"%s_dns_latency_seconds"}
 	case AlertExternalEgressHighTrend: // TODO

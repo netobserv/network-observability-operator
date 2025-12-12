@@ -341,8 +341,8 @@ func TestConfigMapContent(t *testing.T) {
 	assert.Nil(err)
 
 	// loki config
-	assert.Equal(config.Loki.URL, "https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/")
-	assert.Equal(config.Loki.StatusURL, "https://lokistack-query-frontend-http.ls-namespace.svc:3100/")
+	assert.Equal(config.Loki.URL, "https://lokistack-gateway-http.ls-namespace.svc.cluster.local.:8080/api/logs/v1/network/")
+	assert.Equal(config.Loki.StatusURL, "https://lokistack-query-frontend-http.ls-namespace.svc.cluster.local.:3100/")
 
 	// frontend params
 	assert.Equal(config.Frontend.RecordTypes, []api.ConnTrackOutputRecordTypeEnum{api.ConnTrackFlowLog})

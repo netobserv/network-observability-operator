@@ -18,11 +18,12 @@ func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiCo
 		if len(spec.LokiStack.Namespace) > 0 {
 			ns = spec.LokiStack.Namespace
 		}
-		gatewayURL := fmt.Sprintf("https://%s-gateway-http.%s.svc:8080/api/logs/v1/network/", spec.LokiStack.Name, ns)
+		// NB: trailing dot (...local.:8080) is a DNS optimization for exact name match without extra search
+		gatewayURL := fmt.Sprintf("https://%s-gateway-http.%s.svc.cluster.local.:8080/api/logs/v1/network/", spec.LokiStack.Name, ns)
 		loki.LokiManualParams = flowslatest.LokiManualParams{
 			QuerierURL:  gatewayURL,
 			IngesterURL: gatewayURL,
-			StatusURL:   fmt.Sprintf("https://%s-query-frontend-http.%s.svc:3100/", spec.LokiStack.Name, ns),
+			StatusURL:   fmt.Sprintf("https://%s-query-frontend-http.%s.svc.cluster.local.:3100/", spec.LokiStack.Name, ns),
 			TenantID:    "network",
 			AuthToken:   flowslatest.LokiAuthForwardUserToken,
 			TLS: flowslatest.ClientTLS{

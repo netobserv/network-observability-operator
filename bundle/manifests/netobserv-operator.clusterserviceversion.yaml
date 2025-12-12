@@ -170,7 +170,7 @@ metadata:
                   },
                   "enable": false
                 },
-                "url": "http://loki.netobserv.svc:3100/"
+                "url": "http://loki.netobserv.svc.cluster.local.:3100/"
               },
               "readTimeout": "30s",
               "writeBatchSize": 10485760,

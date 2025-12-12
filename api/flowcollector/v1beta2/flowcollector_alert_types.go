@@ -22,6 +22,7 @@ const (
 	AlertNetpolDenied             AlertTemplate = "NetpolDenied"
 	AlertLatencyHighTrend         AlertTemplate = "LatencyHighTrend"
 	AlertDNSErrors                AlertTemplate = "DNSErrors"
+	AlertDNSNxDomain              AlertTemplate = "DNSNxDomain"
 	AlertExternalEgressHighTrend  AlertTemplate = "ExternalEgressHighTrend"
 	AlertExternalIngressHighTrend AlertTemplate = "ExternalIngressHighTrend"
 	AlertCrossAZ                  AlertTemplate = "CrossAZ"
@@ -33,9 +34,9 @@ const (
 type FLPAlert struct {
 	// Alert template name.
 	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-	// `LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"CrossAZ"
+	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"DNSNxDomain";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"CrossAZ"
 	// +required
 	Template AlertTemplate `json:"template,omitempty"`
 
@@ -166,7 +167,7 @@ func (g *FLPAlert) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 		if !spec.Agent.EBPF.IsIPSecEnabled() {
 			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, IPSec)
 		}
-	case AlertDNSErrors:
+	case AlertDNSErrors, AlertDNSNxDomain:
 		if !spec.Agent.EBPF.IsDNSTrackingEnabled() {
 			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, DNSTracking)
 		}

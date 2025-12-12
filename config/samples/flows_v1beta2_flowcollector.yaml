@@ -156,7 +156,8 @@ spec:
     # Change mode to "LokiStack" to use with the loki operator
     mode: Monolithic
     monolithic:
-      url: 'http://loki.netobserv.svc:3100/'
+      # NB: trailing dot (...local.:3100) is a DNS optimization for exact name match without extra search
+      url: 'http://loki.netobserv.svc.cluster.local.:3100/'
       tenantID: netobserv
       tls:
         enable: false

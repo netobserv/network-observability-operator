@@ -111,6 +111,18 @@ var (
 			},
 		},
 		{
+			Template: AlertDNSNxDomain,
+			Variants: []AlertVariant{
+				{
+					Thresholds: AlertThresholds{
+						Info:    "10",
+						Warning: "80",
+					},
+					GroupBy: GroupByNamespace,
+				},
+			},
+		},
+		{
 			Template: AlertNetpolDenied,
 			Variants: []AlertVariant{
 				{
