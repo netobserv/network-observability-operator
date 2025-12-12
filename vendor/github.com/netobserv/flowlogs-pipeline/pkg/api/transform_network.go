@@ -52,6 +52,7 @@ type NetworkTransformKubeConfig struct {
 	ConfigPath        string             `yaml:"configPath,omitempty" json:"configPath,omitempty" doc:"path to kubeconfig file (optional)"`
 	SecondaryNetworks []SecondaryNetwork `yaml:"secondaryNetworks,omitempty" json:"secondaryNetworks,omitempty" doc:"configuration for secondary networks"`
 	ManagedCNI        []string           `yaml:"managedCNI,omitempty" json:"managedCNI,omitempty" doc:"a list of CNI (network plugins) to manage, for detecting additional interfaces. Currently supported: ovn"`
+	TrackedKinds      []string           `yaml:"trackedKinds,omitempty" json:"trackedKinds,omitempty" doc:"list of Kubernetes resource kinds to track for ownership chain (e.g., Deployment, Gateway, VirtualMachine). If a resource's owner is in this list, FLP will continue tracking up the ownership chain."`
 }
 
 type TransformNetworkOperationEnum string
@@ -98,15 +99,26 @@ type K8sReference struct {
 }
 
 type K8sRule struct {
-	IPField         string        `yaml:"ipField,omitempty" json:"ipField,omitempty" doc:"entry IP input field"`
-	InterfacesField string        `yaml:"interfacesField,omitempty" json:"interfacesField,omitempty" doc:"entry Interfaces input field"`
-	UDNsField       string        `yaml:"udnsField,omitempty" json:"udnsField,omitempty" doc:"entry UDNs input field"`
-	MACField        string        `yaml:"macField,omitempty" json:"macField,omitempty" doc:"entry MAC input field"`
-	Output          string        `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
-	Assignee        string        `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
-	LabelsPrefix    string        `yaml:"labels_prefix,omitempty" json:"labels_prefix,omitempty" doc:"labels prefix to use to copy input lables, if empty labels will not be copied"`
-	AddZone         bool          `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"if true the rule will add the zone"`
-	OutputKeys      K8SOutputKeys `yaml:"-" json:"-"`
+	IPField                  string              `yaml:"ipField,omitempty" json:"ipField,omitempty" doc:"entry IP input field"`
+	InterfacesField          string              `yaml:"interfacesField,omitempty" json:"interfacesField,omitempty" doc:"entry Interfaces input field"`
+	UDNsField                string              `yaml:"udnsField,omitempty" json:"udnsField,omitempty" doc:"entry UDNs input field"`
+	MACField                 string              `yaml:"macField,omitempty" json:"macField,omitempty" doc:"entry MAC input field"`
+	Output                   string              `yaml:"output,omitempty" json:"output,omitempty" doc:"entry output field"`
+	Assignee                 string              `yaml:"assignee,omitempty" json:"assignee,omitempty" doc:"value needs to assign to output field"`
+	LabelsPrefix             string              `yaml:"labels_prefix,omitempty" json:"labels_prefix,omitempty" doc:"labels prefix to use to copy input labels, if empty labels will not be copied"`
+	LabelInclusions          []string            `yaml:"label_inclusions,omitempty" json:"label_inclusions,omitempty" doc:"labels to include, if empty all labels will be included. Only used if labels_prefix is specified"`
+	LabelExclusions          []string            `yaml:"label_exclusions,omitempty" json:"label_exclusions,omitempty" doc:"labels to exclude, if empty no labels will be excluded. Only used if labels_prefix is specified"`
+	LabelValueMaxLength      *int                `yaml:"label_value_max_length,omitempty" json:"label_value_max_length,omitempty" doc:"label value max length, if specified, will trim label values to this length"`
+	AnnotationsPrefix        string              `yaml:"annotations_prefix,omitempty" json:"annotations_prefix,omitempty" doc:"annotations prefix to use to copy input annotations, if empty annotations will not be copied"`
+	AnnotationInclusions     []string            `yaml:"annotation_inclusions,omitempty" json:"annotation_inclusions,omitempty" doc:"annotations to include, if empty all annotations will be included. Only used if annotations_prefix is specified"`
+	AnnotationExclusions     []string            `yaml:"annotation_exclusions,omitempty" json:"annotation_exclusions,omitempty" doc:"annotations to exclude, if empty no annotations will be excluded. Only used if annotations_prefix is specified"`
+	AnnotationValueMaxLength *int                `yaml:"annotation_value_max_length,omitempty" json:"annotation_value_max_length,omitempty" doc:"annotation value max length, if specified, will trim annotation values to this length"`
+	AddZone                  bool                `yaml:"add_zone,omitempty" json:"add_zone,omitempty" doc:"if true the rule will add the zone"`
+	OutputKeys               K8SOutputKeys       `yaml:"-" json:"-"`
+	LabelInclusionsMap       map[string]struct{} `yaml:"-" json:"-"`
+	LabelExclusionsMap       map[string]struct{} `yaml:"-" json:"-"`
+	AnnotationInclusionsMap  map[string]struct{} `yaml:"-" json:"-"`
+	AnnotationExclusionsMap  map[string]struct{} `yaml:"-" json:"-"`
 }
 
 type K8SOutputKeys struct {
@@ -150,6 +162,11 @@ func (r *K8sRule) preprocess() {
 			Zone:        r.Output + "_Zone",
 		}
 	}
+
+	r.LabelInclusionsMap = buildStringMap(r.LabelInclusions)
+	r.LabelExclusionsMap = buildStringMap(r.LabelExclusions)
+	r.AnnotationInclusionsMap = buildStringMap(r.AnnotationInclusions)
+	r.AnnotationExclusionsMap = buildStringMap(r.AnnotationExclusions)
 }
 
 type SecondaryNetwork struct {
@@ -198,4 +215,12 @@ type NetworkTransformRules []NetworkTransformRule
 type NetworkTransformSubnetLabel struct {
 	CIDRs []string `yaml:"cidrs,omitempty" json:"cidrs,omitempty" doc:"list of CIDRs to match a label"`
 	Name  string   `yaml:"name,omitempty" json:"name,omitempty" doc:"name of the label"`
+}
+
+func buildStringMap(items []string) map[string]struct{} {
+	m := make(map[string]struct{}, len(items))
+	for _, item := range items {
+		m[item] = struct{}{}
+	}
+	return m
 }
