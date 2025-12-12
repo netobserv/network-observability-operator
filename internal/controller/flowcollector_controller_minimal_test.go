@@ -57,10 +57,10 @@ func flowCollectorMinimalSpecs() {
 				return k8sClient.Get(ctx, agentKey, &ds)
 			}, timeout, interval).Should(Succeed())
 
-			By("Expecting to create the flowlogs-pipeline DaemonSet")
+			By("Expecting to create the flowlogs-pipeline Deployment")
 			Eventually(func() error {
-				ds := appsv1.DaemonSet{}
-				return k8sClient.Get(ctx, flpKey, &ds)
+				depl := appsv1.Deployment{}
+				return k8sClient.Get(ctx, flpKey, &depl)
 			}, timeout, interval).Should(Succeed())
 
 			By("Expecting to create the console plugin Deployment")
