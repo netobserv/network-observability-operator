@@ -6,59 +6,26 @@ metadata:
       [
         {
           "apiVersion": "flows.netobserv.io/v1alpha1",
+          "kind": "FlowCollectorSlice",
+          "metadata": {
+            "name": "flowcollectorslice-sample"
+          },
+          "spec": {
+            "sampling": 1
+          }
+        },
+        {
+          "apiVersion": "flows.netobserv.io/v1alpha1",
           "kind": "FlowMetric",
           "metadata": {
-            "labels": {
-              "app.kubernetes.io/created-by": "netobserv-operator",
-              "app.kubernetes.io/instance": "flowmetric-sample",
-              "app.kubernetes.io/managed-by": "kustomize",
-              "app.kubernetes.io/name": "flowmetric",
-              "app.kubernetes.io/part-of": "netobserv-operator"
-            },
             "name": "flowmetric-sample"
           },
           "spec": {
-            "charts": [
-              {
-                "dashboardName": "Main",
-                "queries": [
-                  {
-                    "legend": "",
-                    "promQL": "sum(rate($METRIC[2m]))"
-                  }
-                ],
-                "title": "External ingress traffic",
-                "type": "SingleStat",
-                "unit": "Bps"
-              },
-              {
-                "dashboardName": "Main",
-                "queries": [
-                  {
-                    "legend": "{{DstK8S_Namespace}} / {{DstK8S_OwnerName}}",
-                    "promQL": "sum(rate($METRIC{DstK8S_Namespace!=\"\"}[2m])) by (DstK8S_Namespace, DstK8S_OwnerName)"
-                  }
-                ],
-                "sectionName": "External",
-                "title": "Top external ingress traffic per workload",
-                "type": "StackArea",
-                "unit": "Bps"
-              }
-            ],
             "direction": "Ingress",
-            "filters": [
-              {
-                "field": "SrcSubnetLabel",
-                "matchType": "Absence"
-              }
-            ],
             "labels": [
-              "DstK8S_HostName",
-              "DstK8S_Namespace",
-              "DstK8S_OwnerName",
-              "DstK8S_OwnerType"
+              "SrcK8S_Namespace",
+              "DstK8S_Namespace"
             ],
-            "metricName": "cluster_external_ingress_bytes_total",
             "type": "Counter",
             "valueField": "Bytes"
           }
@@ -237,6 +204,13 @@ metadata:
                   "cpu": "100m",
                   "memory": "100Mi"
                 }
+              },
+              "slicesConfig": {
+                "collectionMode": "AllowList",
+                "enable": false,
+                "namespacesAllowList": [
+                  "/openshift-.*|netobserv.*/"
+                ]
               }
             },
             "prometheus": {
@@ -253,7 +227,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.10.0-community
-    createdAt: "2025-11-26T13:16:01Z"
+    createdAt: "2025-12-11T14:18:07Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -628,6 +602,14 @@ spec:
         path: processor.metrics.includeList
       - displayName: Port
         path: processor.metrics.server.port
+      - displayName: Slices config
+        path: processor.slicesConfig
+      - displayName: Collection mode
+        path: processor.slicesConfig.collectionMode
+      - displayName: Enable
+        path: processor.slicesConfig.enable
+      - displayName: Namespaces allow list
+        path: processor.slicesConfig.namespacesAllowList
       - displayName: Subnet labels
         path: processor.subnetLabels
       - displayName: Custom labels
@@ -663,6 +645,12 @@ spec:
         x-descriptors:
         - urn:alm:descriptor:io.kubernetes.conditions
       version: v1beta2
+    - description: '`FlowCollectorSlice` is the schema allowing delegated configuration
+        per namespace.'
+      displayName: Flow Collector Slice
+      kind: FlowCollectorSlice
+      name: flowcollectorslices.flows.netobserv.io
+      version: v1alpha1
     - description: '`FlowMetric` is the schema for the custom metrics API, which allows
         to generate more metrics out of flow logs. You can find examples here: https://github.com/netobserv/network-observability-operator/tree/main/config/samples/flowmetrics'
       displayName: Flow Metric
@@ -913,6 +901,7 @@ spec:
           - flows.netobserv.io
           resources:
           - flowcollectors
+          - flowcollectorslices
           - flowmetrics
           verbs:
           - create
@@ -932,6 +921,7 @@ spec:
           - flows.netobserv.io
           resources:
           - flowcollectors/status
+          - flowcollectorslices/status
           - flowmetrics/status
           verbs:
           - get

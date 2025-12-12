@@ -3,11 +3,15 @@ package flp
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	sliceslatest "github.com/netobserv/network-observability-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/flp/fmstatus"
+	"github.com/netobserv/network-observability-operator/internal/controller/flp/slicesstatus"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager"
@@ -59,6 +63,11 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 				return []reconcile.Request{}
 			}),
 			reconcilers.IgnoreStatusChange,
+		).
+		Watches(
+			&sliceslatest.FlowCollectorSlice{},
+			&handler.EnqueueRequestForObject{},
+			reconcilers.IgnoreStatusChange,
 		)
 
 	ctrl, err := builder.Build(&r)
@@ -72,7 +81,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 
 type subReconciler interface {
 	context(context.Context) context.Context
-	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList, []flowslatest.SubnetLabel) error
+	reconcile(context.Context, *flowslatest.FlowCollector, *metricslatest.FlowMetricList, []sliceslatest.FlowCollectorSlice, []flowslatest.SubnetLabel) error
 	getStatus() *status.Instance
 }
 
@@ -137,6 +146,20 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	fmstatus.Reset()
 	defer fmstatus.Sync(ctx, r.Client, &fm)
 
+	// List flowcollector slices
+	fcSlices := sliceslatest.FlowCollectorSliceList{}
+	if fc.Spec.IsSliceEnabled() {
+		if err := r.Client.List(ctx, &fcSlices); err != nil {
+			return r.status.Error("CantListFlowCollectorSlices", err)
+		}
+		// Sort alphabetically
+		slices.SortFunc(fcSlices.Items, func(a, b sliceslatest.FlowCollectorSlice) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		slicesstatus.Reset(&fcSlices)
+		defer slicesstatus.Sync(ctx, r.Client, &fcSlices)
+	}
+
 	// Create sub-reconcilers
 	// TODO: refactor to move these subReconciler allocations in `Start`. It will involve some decoupling work, as currently
 	// `reconcilers.Common` is dependent on the FlowCollector object, which isn't known at start time.
@@ -155,7 +178,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	}
 
 	for _, sr := range reconcilers {
-		if err := sr.reconcile(sr.context(ctx), fc, &fm, subnetLabels); err != nil {
+		if err := sr.reconcile(sr.context(ctx), fc, &fm, fcSlices.Items, subnetLabels); err != nil {
 			return sr.getStatus().Error("FLPReconcileError", err)
 		}
 	}

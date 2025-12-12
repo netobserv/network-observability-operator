@@ -1,0 +1,10 @@
+apiVersion: flows.netobserv.io/v1alpha1
+kind: FlowCollectorSlice
+metadata:
+  name: flowcollectorslice-sample
+spec:
+  sampling: 1
+  # subnetLabels:
+  # - name: my-database
+  #   cidrs:
+  #   - 1.2.3.4/24

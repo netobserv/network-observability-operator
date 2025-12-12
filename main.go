@@ -50,6 +50,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	flowsv1beta2 "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	slicesv1alpha1 "github.com/netobserv/network-observability-operator/api/flowcollectorslice/v1alpha1"
 	metricsv1alpha1 "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	controllers "github.com/netobserv/network-observability-operator/internal/controller"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
@@ -74,6 +75,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(flowsv1beta2.AddToScheme(scheme))
 	utilruntime.Must(metricsv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(slicesv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(ascv2.AddToScheme(scheme))
 	utilruntime.Must(osv1.AddToScheme(scheme))

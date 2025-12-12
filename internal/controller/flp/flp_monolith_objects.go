@@ -2,6 +2,7 @@ package flp
 
 import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	sliceslatest "github.com/netobserv/network-observability-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/network-observability-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -27,13 +28,14 @@ type monolithBuilder struct {
 	info            *reconcilers.Instance
 	desired         *flowslatest.FlowCollectorSpec
 	flowMetrics     *metricslatest.FlowMetricList
+	fcSlices        []sliceslatest.FlowCollectorSlice
 	detectedSubnets []flowslatest.SubnetLabel
 	version         string
 	promTLS         *flowslatest.CertificateReference
 	volumes         volumes.Builder
 }
 
-func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, detectedSubnets []flowslatest.SubnetLabel) (monolithBuilder, error) {
+func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, fcSlices []sliceslatest.FlowCollectorSlice, detectedSubnets []flowslatest.SubnetLabel) (monolithBuilder, error) {
 	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
 	promTLS, err := getPromTLS(desired, constants.FLPMetricsSvcName)
 	if err != nil {
@@ -43,6 +45,7 @@ func newMonolithBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCol
 		info:            info,
 		desired:         desired,
 		flowMetrics:     flowMetrics,
+		fcSlices:        fcSlices,
 		detectedSubnets: detectedSubnets,
 		version:         helper.MaxLabelLength(version),
 		promTLS:         promTLS,
@@ -116,15 +119,16 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 }
 
 func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
-	kafkaStage := newGRPCPipeline(b.desired)
+	grpcStage := newGRPCPipeline(b.desired)
 	pipeline := newPipelineBuilder(
 		b.desired,
 		b.flowMetrics,
+		b.fcSlices,
 		b.detectedSubnets,
 		b.info.Loki,
 		b.info.ClusterInfo.GetID(),
 		&b.volumes,
-		&kafkaStage,
+		&grpcStage,
 	)
 	err := pipeline.AddProcessorStages()
 	if err != nil {
