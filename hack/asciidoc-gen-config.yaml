@@ -10,3 +10,6 @@ apiMap:
   - kind: FlowMetric
     group: flows.netobserv.io
     version: v1alpha1
+  - kind: FlowCollectorSlice
+    group: flows.netobserv.io
+    version: v1alpha1

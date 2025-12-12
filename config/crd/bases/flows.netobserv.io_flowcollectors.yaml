@@ -5646,6 +5646,34 @@ spec:
                             More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                           type: object
                       type: object
+                    slicesConfig:
+                      description: Global configuration managing FlowCollectorSlices custom resources.
+                      properties:
+                        collectionMode:
+                          default: AlwaysCollect
+                          description: |-
+                            `collectionMode` determines how the FlowCollectorSlice custom resources impacts the flow collection process:<br>
+                            - When set to `AlwaysCollect`, all flows are collected regardless of the presence of FlowCollectorSlice.<br>
+                            - When set to `AllowList`, only the flows related to namespaces where a FlowCollectorSlice resource is present, or configured via the global `namespacesAllowList`, are collected.<br>
+                          enum:
+                            - AlwaysCollect
+                            - AllowList
+                          type: string
+                        enable:
+                          default: false
+                          description: '`enable` determines if the FlowCollectorSlice feature is enabled. If not, all resources of kind FlowCollectorSlice are simply ignored.'
+                          type: boolean
+                        namespacesAllowList:
+                          description: |-
+                            `namespacesAllowList` is a list of namespaces for which flows are always collected, regardless of the presence of FlowCollectorSlice in those namespaces.
+                            An entry enclosed by slashes, such as `/openshift-.*/`, is matched as a regular expression.
+                            This setting is ignored if `collectionMode` is different from `AllowList`.
+                          items:
+                            type: string
+                          type: array
+                      required:
+                        - enable
+                      type: object
                     subnetLabels:
                       description: |-
                         `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
