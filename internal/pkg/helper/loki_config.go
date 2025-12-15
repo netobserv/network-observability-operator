@@ -53,12 +53,21 @@ func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiCo
 			},
 		}
 	case flowslatest.LokiModeMonolithic:
-		loki.LokiManualParams = flowslatest.LokiManualParams{
-			QuerierURL:  spec.Monolithic.URL,
-			IngesterURL: spec.Monolithic.URL,
-			StatusURL:   spec.Monolithic.URL,
-			TenantID:    spec.Monolithic.TenantID,
-			TLS:         spec.Monolithic.TLS,
+		if *spec.Monolithic.InstallDemoLoki {
+			loki.LokiManualParams = flowslatest.LokiManualParams{
+				QuerierURL:  "http://loki:3100/",
+				IngesterURL: "http://loki:3100/",
+				TenantID:    "netobserv",
+				AuthToken:   flowslatest.LokiAuthDisabled,
+			}
+		} else {
+			loki.LokiManualParams = flowslatest.LokiManualParams{
+				QuerierURL:  spec.Monolithic.URL,
+				IngesterURL: spec.Monolithic.URL,
+				StatusURL:   spec.Monolithic.URL,
+				TenantID:    spec.Monolithic.TenantID,
+				TLS:         spec.Monolithic.TLS,
+			}
 		}
 	case flowslatest.LokiModeMicroservices:
 		loki.LokiManualParams = flowslatest.LokiManualParams{

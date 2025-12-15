@@ -54,6 +54,12 @@ func (m *NamespacedObjectManager) NewConfigMap(name string) *corev1.ConfigMap {
 	return &cm
 }
 
+func (m *NamespacedObjectManager) NewPersistentVolumeClaim(name string) *corev1.PersistentVolumeClaim {
+	pvc := corev1.PersistentVolumeClaim{}
+	m.AddManagedObject(name, &pvc)
+	return &pvc
+}
+
 func (m *NamespacedObjectManager) NewDeployment(name string) *appsv1.Deployment {
 	d := appsv1.Deployment{}
 	m.AddManagedObject(name, &d)

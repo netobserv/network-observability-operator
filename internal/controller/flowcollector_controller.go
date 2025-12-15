@@ -17,6 +17,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/consoleplugin"
 	"github.com/netobserv/network-observability-operator/internal/controller/ebpf"
+	"github.com/netobserv/network-observability-operator/internal/controller/loki"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/cleanup"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
@@ -115,8 +116,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
 	ns := desired.Spec.GetNamespace()
 	previousNamespace := r.status.GetDeployedNamespace(desired)
-	loki := helper.NewLokiConfig(&desired.Spec.Loki, ns)
-	reconcilersInfo := r.newCommonInfo(clh, ns, &loki)
+	lokiConfig := helper.NewLokiConfig(&desired.Spec.Loki, ns)
+	reconcilersInfo := r.newCommonInfo(clh, ns, &lokiConfig)
 
 	if err := r.checkFinalizer(ctx, desired); err != nil {
 		return err
@@ -157,9 +158,18 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	}
 
 	// Console plugin
-	err := cpReconciler.Reconcile(ctx, desired)
-	if err != nil {
+	if err := cpReconciler.Reconcile(ctx, desired); err != nil {
 		return r.status.Error("ReconcileConsolePluginFailed", err)
+	}
+
+	lokiReconciler := loki.NewReconciler(reconcilersInfo.NewInstance(
+		map[reconcilers.ImageRef]string{
+			reconcilers.MainImage: r.mgr.Config.DemoLokiImage,
+		},
+		r.status,
+	))
+	if err := lokiReconciler.Reconcile(ctx, desired); err != nil {
+		return r.status.Error("ReconcileLokiFailed", err)
 	}
 
 	return nil
