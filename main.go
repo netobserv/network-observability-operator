@@ -116,7 +116,7 @@ func main() {
 	flag.StringVar(&config.ConsolePluginCompatImage, "console-plugin-compat-image", "quay.io/netobserv/network-observability-console-plugin-pf4:main", "A backward compatible image of the Console Plugin (e.g. Patterfly 4 variant)")
 	flag.StringVar(&config.EBPFByteCodeImage, "ebpf-bytecode-image", "quay.io/netobserv/ebpf-bytecode:main", "The EBPF bytecode for the eBPF agent")
 	flag.StringVar(&config.Namespace, "namespace", "netobserv", "Current controller namespace")
-	flag.StringVar(&config.DemoLokiImage, "demo-loki-image", "grafana/loki:3.5.0", "The image of the zero click loki deployment")
+	flag.StringVar(&config.DemoLokiImage, "demo-loki-image", "quay.io/netobserv/loki:3.5.0", "The image of the zero click loki deployment")
 	flag.BoolVar(&config.DownstreamDeployment, "downstream-deployment", false, "Either this deployment is a downstream deployment ot not")
 	flag.BoolVar(&enableHTTP2, "enable-http2", enableHTTP2, "If HTTP/2 should be enabled for the metrics and webhook servers.")
 	flag.BoolVar(&versionFlag, "v", false, "print version")

@@ -1109,7 +1109,7 @@ spec:
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT
                   value: quay.io/netobserv/network-observability-console-plugin:v1.10.1-community-pf4
                 - name: RELATED_IMAGE_DEMO_LOKI
-                  value: grafana/loki:3.5.0
+                  value: quay.io/netobserv/loki:3.5.0
                 - name: DOWNSTREAM_DEPLOYMENT
                   value: "false"
                 - name: PROFILING_BIND_ADDRESS
@@ -1257,7 +1257,7 @@ spec:
     name: console-plugin
   - image: quay.io/netobserv/network-observability-console-plugin:v1.10.1-community-pf4
     name: console-plugin-compat
-  - image: grafana/loki:3.5.0
+  - image: quay.io/netobserv/loki:3.5.0
     name: demo-loki
   version: 1.10.1-community
   webhookdefinitions:
