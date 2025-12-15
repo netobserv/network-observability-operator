@@ -11508,8 +11508,7 @@ available.<br/>
         <td><b><a href="#flowcollectorspecprocessormetricsalertsindex">alerts</a></b></td>
         <td>[]object</td>
         <td>
-          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants [Unsupported (*)].
-This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
+          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>

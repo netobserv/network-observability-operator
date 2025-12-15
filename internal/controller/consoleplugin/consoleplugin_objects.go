@@ -490,9 +490,6 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 	if b.desired.Processor.IsSubnetLabelsEnabled() {
 		fconf.Features = append(fconf.Features, "subnetLabels")
 	}
-	if b.desired.HasExperimentalAlertsHealth() {
-		fconf.Features = append(fconf.Features, "experimentalAlertsHealth")
-	}
 	return nil
 }
 

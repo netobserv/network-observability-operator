@@ -58,7 +58,7 @@ func (rb *ruleBuilder) kernelDrops() (*monitoringv1.Rule, error) {
 	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
 
-	return rb.createRule(promql, "Too many packet drops by the kernel", description)
+	return rb.createRule(promql, "Too many packets dropped by the kernel", description)
 }
 
 func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {

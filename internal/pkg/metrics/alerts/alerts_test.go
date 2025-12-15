@@ -40,11 +40,6 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByDevice},
 			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
-			},
 		},
 	}
 	rules := BuildRules(context.Background(), &fc)
@@ -71,11 +66,6 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
-			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
 			},
 		},
 	}
@@ -115,24 +105,6 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
 }
 
-func TestBuildRules_DefaultWithFeaturesAndDisabled_MissingFeatureGate(t *testing.T) {
-	fc := flowslatest.FlowCollectorSpec{
-		Agent: flowslatest.FlowCollectorAgent{
-			EBPF: flowslatest.FlowCollectorEBPF{
-				Privileged: true,
-				Features:   []flowslatest.AgentFeature{flowslatest.FlowRTT, flowslatest.DNSTracking, flowslatest.IPSec, flowslatest.NetworkEvents, flowslatest.PacketDrop},
-			},
-		},
-		Processor: flowslatest.FlowCollectorFLP{
-			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
-			},
-		},
-	}
-	rules := BuildRules(context.Background(), &fc)
-	assert.Equal(t, []string{"NetObservNoFlows"}, allNames(rules))
-}
-
 func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
 	fc := flowslatest.FlowCollectorSpec{
 		Agent: flowslatest.FlowCollectorAgent{
@@ -144,11 +116,6 @@ func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplates(),
-			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
 			},
 		},
 	}
@@ -179,11 +146,6 @@ func TestBuildRules_Overidden(t *testing.T) {
 							},
 						},
 					},
-				},
-			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
 				},
 			},
 		},
@@ -218,11 +180,6 @@ func TestBuildRules_Global(t *testing.T) {
 					},
 				},
 			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
-			},
 		},
 	}
 	rules := BuildRules(context.Background(), &fc)
@@ -254,11 +211,6 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 							},
 						},
 					},
-				},
-			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
 				},
 			},
 		},
