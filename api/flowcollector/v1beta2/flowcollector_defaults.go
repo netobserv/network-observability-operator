@@ -153,16 +153,22 @@ var (
 			Variants: []AlertVariant{
 				{
 					Thresholds: AlertThresholds{
-						Warning: "5",
+						Warning: "200",
 					},
 					GroupBy: GroupByNode,
+					// TODO: set longer-term defaults
+					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
+					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
 				},
 				{
 					Thresholds: AlertThresholds{
-						Info:    "5",
-						Warning: "10",
+						Info:    "100",
+						Warning: "500",
 					},
 					GroupBy: GroupByNamespace,
+					// TODO: set longer-term defaults
+					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
+					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
 				},
 			},
 		},
@@ -171,16 +177,22 @@ var (
 			Variants: []AlertVariant{
 				{
 					Thresholds: AlertThresholds{
-						Warning: "5",
+						Warning: "200",
 					},
 					GroupBy: GroupByNode,
+					// TODO: set longer-term defaults
+					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
+					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
 				},
 				{
 					Thresholds: AlertThresholds{
-						Info:    "5",
-						Warning: "10",
+						Info:    "100",
+						Warning: "500",
 					},
 					GroupBy: GroupByNamespace,
+					// TODO: set longer-term defaults
+					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
+					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
 				},
 			},
 		},

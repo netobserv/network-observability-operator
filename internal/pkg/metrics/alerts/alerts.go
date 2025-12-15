@@ -237,3 +237,54 @@ func (rb *ruleBuilder) latencyTrend() (*monitoringv1.Rule, error) {
 
 	return rb.createRule(promql, "TCP latency increase", description)
 }
+
+func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
+	// Don't create ingress for asSource, or egress for asDestination
+	if rb.side == asSource && ingress {
+		return nil, nil
+	} else if rb.side == asDest && !ingress {
+		return nil, nil
+	}
+
+	direction := "egress"
+	filterForExternal := `DstSubnetLabel=~"|EXT:.*",DstK8S_Namespace="",DstK8S_OwnerName=""`
+	trafficLinkFilter := `dst_subnet_label="",EXT:`
+	if ingress {
+		direction = "ingress"
+		filterForExternal = `SrcSubnetLabel=~"|EXT:.*",SrcK8S_Namespace="",SrcK8S_OwnerName=""`
+		trafficLinkFilter = `src_subnet_label="",EXT:`
+	}
+	offset, duration := rb.alert.GetTrendParams()
+	description := fmt.Sprintf(
+		"NetObserv is detecting external %s traffic increased by more than %s%%%s, compared to baseline (offset: %s). %s",
+		direction,
+		rb.threshold,
+		rb.getAlertLegend(),
+		offset,
+		rb.additionalDescription(),
+	)
+
+	metric, baseline := rb.getMetricsForAlert()
+	filter := rb.buildLabelFilter(filterForExternal)
+	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
+	baselineRate := promQLRateFromMetric(baseline, "", filter, duration, " offset "+offset)
+	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
+	baselineSumBy := sumBy(baselineRate, rb.alert.GroupBy, rb.side, "")
+	promql := baselineIncreasePromQL(metricsSumBy, baselineSumBy, rb.threshold, rb.upperThreshold)
+
+	// trending comparison are on an open scale; but in the health page, we need a closed scale to compute the score
+	// let's set an upper bound to max(5*threshold, 100) so score can be computed after clamping
+	val, err := strconv.ParseFloat(rb.threshold, 64)
+	if err != nil {
+		return nil, err
+	}
+	rb.upperValueRange = strconv.Itoa(int(math.Max(val*5, 100)))
+
+	rb.trafficLink = &trafficLink{
+		BackAndForth:      true,
+		ExtraFilter:       trafficLinkFilter,
+		FilterDestination: rb.side == asDest,
+	}
+
+	return rb.createRule(promql, fmt.Sprintf("External %s traffic increase", direction), description)
+}

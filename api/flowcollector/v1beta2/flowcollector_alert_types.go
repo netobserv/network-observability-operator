@@ -25,7 +25,6 @@ const (
 	AlertDNSNxDomain              AlertTemplate = "DNSNxDomain"
 	AlertExternalEgressHighTrend  AlertTemplate = "ExternalEgressHighTrend"
 	AlertExternalIngressHighTrend AlertTemplate = "ExternalIngressHighTrend"
-	AlertCrossAZ                  AlertTemplate = "CrossAZ"
 	GroupByNode                   AlertGroupBy  = "Node"
 	GroupByNamespace              AlertGroupBy  = "Namespace"
 	GroupByWorkload               AlertGroupBy  = "Workload"
@@ -34,9 +33,9 @@ const (
 type FLPAlert struct {
 	// Alert template name.
 	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"DNSNxDomain";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"CrossAZ"
+	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"DNSNxDomain";"ExternalEgressHighTrend";"ExternalIngressHighTrend"
 	// +required
 	Template AlertTemplate `json:"template,omitempty"`
 
@@ -179,7 +178,7 @@ func (g *FLPAlert) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 		if !spec.Agent.EBPF.IsNetworkEventsEnabled() {
 			return false, fmt.Sprintf("Alert %s requires the %s agent feature to be enabled", g.Template, NetworkEvents)
 		}
-	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend, AlertCrossAZ:
+	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend:
 		return true, ""
 	}
 	return true, ""

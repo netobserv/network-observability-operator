@@ -21,6 +21,8 @@ func allTemplates() []flowslatest.AlertTemplate {
 		flowslatest.AlertIPsecErrors,
 		flowslatest.AlertLatencyHighTrend,
 		flowslatest.AlertNetpolDenied,
+		flowslatest.AlertExternalEgressHighTrend,
+		flowslatest.AlertExternalIngressHighTrend,
 	}
 }
 
@@ -38,7 +40,12 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 	fc := flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByDevice},
+				DisableAlerts: []flowslatest.AlertTemplate{
+					flowslatest.AlertLokiError,
+					flowslatest.AlertPacketDropsByDevice,
+					flowslatest.AlertExternalEgressHighTrend,
+					flowslatest.AlertExternalIngressHighTrend,
+				},
 			},
 		},
 	}
@@ -60,12 +67,22 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		Agent: flowslatest.FlowCollectorAgent{
 			EBPF: flowslatest.FlowCollectorEBPF{
 				Privileged: true,
-				Features:   []flowslatest.AgentFeature{flowslatest.FlowRTT, flowslatest.DNSTracking, flowslatest.IPSec, flowslatest.NetworkEvents, flowslatest.PacketDrop},
+				Features: []flowslatest.AgentFeature{
+					flowslatest.FlowRTT,
+					flowslatest.DNSTracking,
+					flowslatest.IPSec,
+					flowslatest.NetworkEvents,
+					flowslatest.PacketDrop,
+				},
 			},
 		},
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
+				DisableAlerts: []flowslatest.AlertTemplate{
+					flowslatest.AlertLokiError,
+					flowslatest.AlertExternalEgressHighTrend,
+					flowslatest.AlertExternalIngressHighTrend,
+				},
 			},
 		},
 	}
