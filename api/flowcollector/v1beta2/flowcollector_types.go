@@ -1097,7 +1097,7 @@ type FlowCollectorConsolePlugin struct {
 	// `portNaming` defines the configuration of the port-to-service name translation
 	PortNaming ConsolePluginPortConfig `json:"portNaming,omitempty"`
 
-	//+kubebuilder:default:={{name:"Applications",filter:{"flow_layer":"\"app\""},default:true},{name:"Infrastructure",filter:{"flow_layer":"\"infra\""}},{name:"Pods network",filter:{"src_kind":"\"Pod\"","dst_kind":"\"Pod\""},default:true},{name:"Services network",filter:{"dst_kind":"\"Service\""}}}
+	//+kubebuilder:default:={{name:"Applications",filter:{"flow_layer":"\"app\""},default:true},{name:"Infrastructure",filter:{"flow_layer":"\"infra\""}},{name:"Pods network",filter:{"src_kind":"\"Pod\"","dst_kind":"\"Pod\""},default:true},{name:"Services network",filter:{"dst_kind":"\"Service\""}},{name:"External ingress",filter:{"src_subnet_label":"\"\",EXT:"}},{name:"External egress",filter:{"dst_subnet_label":"\"\",EXT:"}}}
 	// +optional
 	// `quickFilters` configures quick filter presets for the Console plugin
 	QuickFilters []QuickFilter `json:"quickFilters"`

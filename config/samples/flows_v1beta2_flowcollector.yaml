@@ -219,6 +219,12 @@ spec:
     - name: Services network
       filter:
         dst_kind: '"Service"'
+    - name: External ingress
+      filter:
+        src_subnet_label: '"",EXT:'
+    - name: External egress
+      filter:
+        dst_subnet_label: '"",EXT:'
     # Custom optionnal resources configuration
     resources:
       requests:
