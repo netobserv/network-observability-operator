@@ -121,6 +121,18 @@ metadata:
                     "dst_kind": "\"Service\""
                   },
                   "name": "Services network"
+                },
+                {
+                  "filter": {
+                    "src_subnet_label": "\"\",EXT:"
+                  },
+                  "name": "External ingress"
+                },
+                {
+                  "filter": {
+                    "dst_subnet_label": "\"\",EXT:"
+                  },
+                  "name": "External egress"
                 }
               ],
               "replicas": 1,
