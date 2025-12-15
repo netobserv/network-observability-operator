@@ -110,7 +110,7 @@ Prompt template:
 ```
 I want to add a new field spec.agent.ebpf.newFeature (type: bool, default: false).
 Please:
-1. Add the field to api/v1beta2/flowcollector_types.go
+1. Add the field to api/flowcollector/v1beta2/flowcollector_types.go
 2. Update the CRD markers with appropriate validation
 3. Update internal/controller/ to use this field
 4. Add unit tests
@@ -371,7 +371,7 @@ make undeploy
 ### Key Files to Reference
 
 - **CRD Schema**:
-  [api/v1beta2/flowcollector_types.go](api/v1beta2/flowcollector_types.go)
+  [api/flowcollector/v1beta2/flowcollector_types.go](api/flowcollector/v1beta2/flowcollector_types.go)
 - **Main Controller**:
   [internal/controller/flowcollector_controller.go](internal/controller/flowcollector_controller.go)
 - **FLP Reconciler**:
