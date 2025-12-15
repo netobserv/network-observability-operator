@@ -65,6 +65,7 @@ func (r *FlowCollector) Validate(_ context.Context, fc *FlowCollector) (admissio
 	v.validateAgent()
 	v.validateFLP()
 	v.warnLogLevels()
+	v.warnLokiDemo()
 	return v.warnings, errors.Join(v.errors...)
 }
 
@@ -80,6 +81,12 @@ func (v *validator) warnLogLevels() {
 	}
 	if v.fc.Processor.LogLevel == "debug" || v.fc.Processor.LogLevel == "trace" {
 		v.warnings = append(v.warnings, fmt.Sprintf("The log level for the processor (flowlogs-pipeline) is %s, which impacts performance and resource footprint.", v.fc.Processor.LogLevel))
+	}
+}
+
+func (v *validator) warnLokiDemo() {
+	if v.fc.Loki.Mode == LokiModeMonolithic && v.fc.Loki.Monolithic.InstallDemoLoki != nil && *v.fc.Loki.Monolithic.InstallDemoLoki {
+		v.warnings = append(v.warnings, "InstallDemoLoki option is enabled. This is useful for development and demo purposes but should not be used in production.")
 	}
 }
 
