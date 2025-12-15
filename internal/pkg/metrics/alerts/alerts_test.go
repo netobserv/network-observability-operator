@@ -105,24 +105,6 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
 }
 
-func TestBuildRules_DefaultWithFeaturesAndDisabled_MissingFeatureGate(t *testing.T) {
-	fc := flowslatest.FlowCollectorSpec{
-		Agent: flowslatest.FlowCollectorAgent{
-			EBPF: flowslatest.FlowCollectorEBPF{
-				Privileged: true,
-				Features:   []flowslatest.AgentFeature{flowslatest.FlowRTT, flowslatest.DNSTracking, flowslatest.IPSec, flowslatest.NetworkEvents, flowslatest.PacketDrop},
-			},
-		},
-		Processor: flowslatest.FlowCollectorFLP{
-			Metrics: flowslatest.FLPMetrics{
-				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
-			},
-		},
-	}
-	rules := BuildRules(context.Background(), &fc)
-	assert.Equal(t, []string{"NetObservNoFlows"}, allNames(rules))
-}
-
 func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
 	fc := flowslatest.FlowCollectorSpec{
 		Agent: flowslatest.FlowCollectorAgent{

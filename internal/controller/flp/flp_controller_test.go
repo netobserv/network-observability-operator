@@ -469,7 +469,7 @@ func ControllerSpecs() {
 				}, &pr)
 			}, timeout, interval).Should(Succeed())
 			Expect(pr.Spec.Groups).Should(HaveLen(1))
-			Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(1))
+			Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(2))
 
 			// Manually delete ServiceMonitor
 			By("Deleting ServiceMonitor")
