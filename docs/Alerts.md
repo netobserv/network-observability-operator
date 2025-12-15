@@ -5,8 +5,6 @@ The configured alerts generate a `PrometheusRule` resource that is used to feed 
 
 These alerts are provided as a convenience, to take the most of NetObserv built-in metrics without requiring you to write complexe PromQL or to do fine-tuning. They give a health indication of your cluster network.
 
-This is currently an experimental feature behind a feature gate. To enable, edit `spec.processor.advanced.env` by adding `EXPERIMENTAL_ALERTS_HEALTH` set to `true`.
-
 ## Default alerts
 
 By default, NetObserv creates some alerts, contextual to the enabled features. For example, packet drops related alerts are only created if the `PacketDrop` feature is enabled. Because alerts are built upon metrics, you may also see configuration warnings if some enabled alerts are missing their required metrics, which can be configured in `spec.processor.metrics.includeList` (see [Metrics.md](./Metrics.md)).

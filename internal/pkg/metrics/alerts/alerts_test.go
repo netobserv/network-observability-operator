@@ -40,11 +40,6 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError, flowslatest.AlertPacketDropsByDevice},
 			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
-			},
 		},
 	}
 	rules := BuildRules(context.Background(), &fc)
@@ -71,11 +66,6 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: []flowslatest.AlertTemplate{flowslatest.AlertLokiError},
-			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
 			},
 		},
 	}
@@ -145,11 +135,6 @@ func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplates(),
 			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
-			},
 		},
 	}
 	rules := BuildRules(context.Background(), &fc)
@@ -179,11 +164,6 @@ func TestBuildRules_Overidden(t *testing.T) {
 							},
 						},
 					},
-				},
-			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
 				},
 			},
 		},
@@ -218,11 +198,6 @@ func TestBuildRules_Global(t *testing.T) {
 					},
 				},
 			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
-				},
-			},
 		},
 	}
 	rules := BuildRules(context.Background(), &fc)
@@ -254,11 +229,6 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 							},
 						},
 					},
-				},
-			},
-			Advanced: &flowslatest.AdvancedProcessorConfig{
-				Env: map[string]string{
-					"EXPERIMENTAL_ALERTS_HEALTH": "true",
 				},
 			},
 		},
