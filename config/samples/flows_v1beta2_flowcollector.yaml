@@ -165,6 +165,8 @@ spec:
           type: configmap
           name: loki-gateway-ca-bundle
           certFile: service-ca.crt
+      # Enable automatic install for dev / demo purposes
+      # installDemoLoki: true
     lokiStack:
       name: loki
       # Change loki operator instance namespace
