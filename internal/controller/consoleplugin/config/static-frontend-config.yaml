@@ -699,7 +699,7 @@ filters:
     name: Namespace
     component: autocomplete
     autoCompleteAddsQuotes: true
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: netobserv, kube-system'
     hint: Add kubernetes namespace filter.
     examples: |-
@@ -746,7 +746,7 @@ filters:
   - id: name
     name: Name
     component: text
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: my-pod, my-service'
     hint: Add kubernetes name filter.
     examples: |-
@@ -792,7 +792,7 @@ filters:
     name: Kind
     component: autocomplete
     autoCompleteAddsQuotes: true
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: Pod, Service, Deployment'
   - id: src_kind
     name: Kind
@@ -809,7 +809,7 @@ filters:
   - id: owner_name
     name: Owner Name
     component: text
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: my-deployment, my-daemonset'
     hint: Add kubernetes owner name filter.
     examples: |-
@@ -854,7 +854,7 @@ filters:
   - id: zone
     name: Zone
     component: autocomplete
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: zone-1, zone-2'
     hint: Add zone filter.
   - id: src_zone
@@ -872,7 +872,7 @@ filters:
   - id: subnet_label
     name: Subnet Label
     component: autocomplete
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: Pods, Services, ExternalIP'
     hint: Add subnet label filter, or an empty string to get unmatched sources.
   - id: src_subnet_label
@@ -890,7 +890,7 @@ filters:
   - id: resource
     name: Resource
     component: autocomplete
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: Deployment.example.my-dep or Pod.default.my-pod'
     hint: Add kubernetes resource filter from its kind, namespace and name.
     examples: |-
@@ -923,7 +923,7 @@ filters:
   - id: address
     name: IP
     component: text
-    category: targeteable
+    category: endpoint
     hint: Add IP or range filter.
     placeholder: 'E.g: 192.0.2.0'
     examples: |-
@@ -956,7 +956,7 @@ filters:
   - id: port
     name: Port
     component: autocomplete
-    category: targeteable
+    category: endpoint
     hint: Add port number or name filter.
     placeholder: 'E.g: 80, 21, HTTP, FTP'
     examples: |-
@@ -989,7 +989,7 @@ filters:
   - id: mac
     name: MAC
     component: text
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: 42:01:0A:00:00:01'
     hint: Add MAC address filter.
   - id: src_mac
@@ -1007,7 +1007,7 @@ filters:
   - id: host_address
     name: Node IP
     component: text
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: 10.0.0.1, 10.0.0.2'
     hint: Add node IP or range filter.
     examples: |-
@@ -1040,7 +1040,7 @@ filters:
   - id: host_name
     name: Node Name
     component: text
-    category: targeteable
+    category: endpoint
     placeholder: 'E.g: my-node, my-node-2'
     hint: Add kubernetes node name filter.
     examples: |-
@@ -1085,7 +1085,7 @@ filters:
   - id: network
     name: Network Name
     component: text
-    category: targeteable
+    category: endpoint
     hint: Add network name filter.
   - id: src_network
     name: Network Name
