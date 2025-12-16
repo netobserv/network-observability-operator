@@ -106,6 +106,21 @@ Context: spec.deploymentModel=Kafka
 Update internal/controller/ for Kafka-enabled agent configuration.
 ```
 
+### Console Plugin Static Configuration
+```
+Update console plugin UI columns, filters, or scopes.
+Files to modify:
+1. internal/controller/consoleplugin/config/static-frontend-config.yaml
+   - columns: Define table columns (id, name, field, filters, features)
+   - filters: Define filter components and UI behavior
+   - scopes: Define aggregation scopes (namespace, node, owner, etc.)
+   - fields: Field definitions for documentation
+2. internal/controller/consoleplugin/config/config.go
+   - Update Go structs if adding new config properties
+3. Rebuild: Changes are embedded at compile time via go:embed
+Note: Static config changes require operator rebuild/redeploy.
+```
+
 ## Code Review Checklist
 
 ```
@@ -159,6 +174,15 @@ Three deployment modes (check `spec.loki.mode`):
 - **Community**: `netobserv`
 - Use `flowCollector.Spec.Namespace` for deployed resources
 
+### Console Plugin Configuration
+Two types of configuration:
+- **Dynamic (FlowCollector CR)**: `spec.consolePlugin.*` - reconciled at runtime
+  - `portNaming`, `quickFilters`, `logLevel`, `replicas`, etc.
+- **Static (Embedded YAML)**: [static-frontend-config.yaml](internal/controller/consoleplugin/config/static-frontend-config.yaml)
+  - Table columns, filters, scopes, field definitions
+  - Embedded via `go:embed` directive - requires rebuild
+  - Merged with dynamic config in [consoleplugin_objects.go](internal/controller/consoleplugin/consoleplugin_objects.go)
+
 ### CI/CD
 Before modifying workflows:
 1. Run `hack/test-workflow.sh`
@@ -182,6 +206,8 @@ make undeploy                      # Clean up
   [internal/controller/flowcollector_controller.go](internal/controller/flowcollector_controller.go)
 - FLP:
   [internal/controller/flp/flp_transfo_reconciler.go](internal/controller/flp/flp_transfo_reconciler.go)
+- Console Plugin Static Config:
+  [internal/controller/consoleplugin/config/static-frontend-config.yaml](internal/controller/consoleplugin/config/static-frontend-config.yaml)
 - Docs: [docs/FlowCollector.md](docs/FlowCollector.md)
 - Sample:
   [config/samples/flows_v1beta2_flowcollector.yaml](config/samples/flows_v1beta2_flowcollector.yaml)
