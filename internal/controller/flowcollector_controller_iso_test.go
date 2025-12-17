@@ -89,7 +89,7 @@ func flowCollectorIsoSpecs() {
 							Provided: nil,
 						},
 					},
-					DisableHealthRules: []flowslatest.HealthRuleTemplate{},
+					DisableAlerts: []flowslatest.HealthRuleTemplate{},
 				},
 			},
 			Agent: flowslatest.FlowCollectorAgent{
