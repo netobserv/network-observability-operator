@@ -151,12 +151,12 @@ func TestBuildRules_Overidden(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplatesBut(flowslatest.AlertPacketDropsByKernel),
-				Alerts: &[]flowslatest.FLPAlert{
+				HealthRules: &[]flowslatest.FLPHealthRule{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Variants: []flowslatest.HealthRuleVariant{
 							{
-								Thresholds: flowslatest.AlertThresholds{
+								Thresholds: flowslatest.HealthRuleThresholds{
 									Critical: "50",
 								},
 								GroupBy: flowslatest.GroupByWorkload,
@@ -184,12 +184,12 @@ func TestBuildRules_Global(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplatesBut(flowslatest.AlertPacketDropsByKernel),
-				Alerts: &[]flowslatest.FLPAlert{
+				HealthRules: &[]flowslatest.FLPHealthRule{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Variants: []flowslatest.HealthRuleVariant{
 							{
-								Thresholds: flowslatest.AlertThresholds{
+								Thresholds: flowslatest.HealthRuleThresholds{
 									Critical: "50",
 								},
 							},
@@ -216,12 +216,12 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 		Processor: flowslatest.FlowCollectorFLP{
 			Metrics: flowslatest.FLPMetrics{
 				DisableAlerts: allTemplates(),
-				Alerts: &[]flowslatest.FLPAlert{
+				HealthRules: &[]flowslatest.FLPHealthRule{
 					{
 						Template: flowslatest.AlertPacketDropsByKernel,
-						Variants: []flowslatest.AlertVariant{
+						Variants: []flowslatest.HealthRuleVariant{
 							{
-								Thresholds: flowslatest.AlertThresholds{
+								Thresholds: flowslatest.HealthRuleThresholds{
 									Critical: "50",
 								},
 								GroupBy: flowslatest.GroupByWorkload,
@@ -237,13 +237,13 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 }
 
 func TestLatencyPromql(t *testing.T) {
-	variant := flowslatest.AlertVariant{
+	variant := flowslatest.HealthRuleVariant{
 		GroupBy: flowslatest.GroupByNamespace,
-		Thresholds: flowslatest.AlertThresholds{
+		Thresholds: flowslatest.HealthRuleThresholds{
 			Info: "100",
 		},
 	}
-	rules, err := convertToRules(flowslatest.AlertLatencyHighTrend, &variant, []string{"namespace_rtt_seconds"})
+	rules, err := convertToRules(flowslatest.AlertLatencyHighTrend, flowslatest.ModeAlert, &variant, []string{"namespace_rtt_seconds"})
 	assert.NoError(t, err)
 	assert.Len(t, rules, 2)
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting TCP latency increased by more than 100% [source namespace={{ $labels.namespace }}], compared to baseline (offset: 24h).")

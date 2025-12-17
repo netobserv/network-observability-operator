@@ -11505,14 +11505,6 @@ available.<br/>
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertsindex">alerts</a></b></td>
-        <td>[]object</td>
-        <td>
-          `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
-More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>disableAlerts</b></td>
         <td>[]string</td>
         <td>
@@ -11520,6 +11512,15 @@ More information on alerts: https://github.com/netobserv/network-observability-o
 Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
 `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessormetricshealthrulesindex">healthRules</a></b></td>
+        <td>[]object</td>
+        <td>
+          `healthRules` is a list of health rules to be created for Prometheus, organized by templates and variants.
+Each health rule can be configured to generate either alerts or recording rules based on the mode field.
+More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -11549,7 +11550,7 @@ More information, with full list of available metrics: https://github.com/netobs
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alerts[index]
+### FlowCollector.spec.processor.metrics.healthRules[index]
 <sup><sup>[↩ Parent](#flowcollectorspecprocessormetrics)</sup></sup>
 
 
@@ -11579,7 +11580,7 @@ More information on health rules: https://github.com/netobserv/network-observabi
         </td>
         <td>true</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindex">variants</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricshealthrulesindexvariantsindex">variants</a></b></td>
         <td>[]object</td>
         <td>
           A list of variants for this template<br/>
@@ -11603,8 +11604,8 @@ many new alerts burdensome.<br/>
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alerts[index].variants[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindex)</sup></sup>
+### FlowCollector.spec.processor.metrics.healthRules[index].variants[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricshealthrulesindex)</sup></sup>
 
 
 
@@ -11638,7 +11639,7 @@ When provided, it must be parsable as a float.<br/>
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessormetricsalertsindexvariantsindexthresholds">thresholds</a></b></td>
+        <td><b><a href="#flowcollectorspecprocessormetricshealthrulesindexvariantsindexthresholds">thresholds</a></b></td>
         <td>object</td>
         <td>
           Thresholds of the health rule per severity.
@@ -11664,8 +11665,8 @@ Required for alert mode, optional for recording mode.<br/>
 </table>
 
 
-### FlowCollector.spec.processor.metrics.alerts[index].variants[index].thresholds
-<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricsalertsindexvariantsindex)</sup></sup>
+### FlowCollector.spec.processor.metrics.healthRules[index].variants[index].thresholds
+<sup><sup>[↩ Parent](#flowcollectorspecprocessormetricshealthrulesindexvariantsindex)</sup></sup>
 
 
 

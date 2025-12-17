@@ -5362,10 +5362,20 @@ spec:
                     metrics:
                       description: '`Metrics` define the processor configuration regarding metrics'
                       properties:
-                        alerts:
+                        disableAlerts:
                           description: |-
-                            `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
+                            `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
+                            Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
+                            `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
                             More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+                          items:
+                            type: string
+                          type: array
+                        healthRules:
+                          description: |-
+                            `healthRules` is a list of health rules to be created for Prometheus, organized by templates and variants.
+                            Each health rule can be configured to generate either alerts or recording rules based on the mode field.
+                            More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                           items:
                             properties:
                               mode:

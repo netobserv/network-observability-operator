@@ -194,9 +194,9 @@ func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
 	totalFilter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "_count", metricsFilter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "2m", "")
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
-	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, rb.mode == flowslatest.ModeRecording)
 
 	rb.trafficLink = &trafficLink{
 		BackAndForth:      false,

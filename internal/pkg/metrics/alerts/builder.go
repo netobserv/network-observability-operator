@@ -150,6 +150,86 @@ func (rb *ruleBuilder) additionalDescription() string {
 	return fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alerts.", rb.template)
 }
 
+var acronyms = map[string]string{
+	"DNS":    "dns",
+	"IPsec":  "ipsec",
+	"IP":     "ip",
+	"AZ":     "az",
+	"TCP":    "tcp",
+	"UDP":    "udp",
+	"HTTP":   "http",
+	"HTTPS":  "https",
+}
+
+// toSnakeCase converts a camelCase or PascalCase string to snake_case
+// Handles known acronyms specially (e.g., "DNSErrors" -> "dns_errors", "CrossAZ" -> "cross_az")
+func toSnakeCase(s string) string {
+	var result strings.Builder
+	i := 0
+
+	for i < len(s) {
+		// Check if current position matches any acronym
+		matched := false
+		for acronym, replacement := range acronyms {
+			if strings.HasPrefix(s[i:], acronym) {
+				// Add underscore before acronym if not at start and previous char was lowercase
+				if i > 0 && s[i-1] >= 'a' && s[i-1] <= 'z' {
+					result.WriteRune('_')
+				}
+				result.WriteString(replacement)
+				i += len(acronym)
+				matched = true
+				break
+			}
+		}
+
+		if !matched {
+			// Regular camelCase handling
+			r := rune(s[i])
+			if i > 0 && r >= 'A' && r <= 'Z' {
+				result.WriteRune('_')
+			}
+			result.WriteRune(r)
+			i++
+		}
+	}
+
+	return strings.ToLower(result.String())
+}
+
+// buildRecordingRuleName builds recording rule name following the convention:
+// netobserv:health:<template>:<groupby>:<side>:rate2m
+func (rb *ruleBuilder) buildRecordingRuleName() string {
+	parts := []string{"netobserv", "health"}
+
+	// Add template in snake_case
+	parts = append(parts, toSnakeCase(string(rb.template)))
+
+	// Add groupBy if present
+	if rb.healthRule.GroupBy != "" {
+		parts = append(parts, strings.ToLower(string(rb.healthRule.GroupBy)))
+	}
+
+	// Add side if groupBy is present (side is only relevant with groupBy)
+	 if rb.healthRule.GroupBy != "" && rb.side != "" {
+		parts = append(parts, strings.ToLower(string(rb.side)))
+	}
+
+	// Add rate interval (rate2m for 2m window)
+	parts = append(parts, "rate2m")
+
+	return strings.Join(parts, ":")
+}
+
+func buildRecordingRuleLabels(template string) map[string]string {
+	return map[string]string{
+		"app":       "netobserv",
+		"netobserv": "true", // means that the rule should be fetched by netobserv console plugin for health
+		"template":  template, // template name for UI display
+	}
+}
+
+
 func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitoringv1.Rule, error) {
 	bAnnot, err := rb.buildHealthAnnotation(nil)
 	if err != nil {

@@ -453,8 +453,8 @@ func (in *FLPMetrics) DeepCopyInto(out *FLPMetrics) {
 		*out = make([]HealthRuleTemplate, len(*in))
 		copy(*out, *in)
 	}
-	if in.Alerts != nil {
-		in, out := &in.Alerts, &out.Alerts
+	if in.HealthRules != nil {
+		in, out := &in.HealthRules, &out.HealthRules
 		*out = new([]FLPHealthRule)
 		if **in != nil {
 			in, out := *in, *out
