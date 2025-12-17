@@ -5732,6 +5732,80 @@ spec:
                         manual:
                           description: Prometheus configuration for `Manual` mode.
                           properties:
+                            alertManager:
+                              description: |-
+                                AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+                                When used in OpenShift it can be left empty to use the Console API instead.
+                              properties:
+                                tls:
+                                  description: TLS client configuration for Prometheus AlertManager URL.
+                                  properties:
+                                    caCert:
+                                      description: '`caCert` defines the reference of the certificate for the Certificate Authority.'
+                                      properties:
+                                        certFile:
+                                          description: '`certFile` defines the path to the certificate file name within the config map or secret.'
+                                          type: string
+                                        certKey:
+                                          description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
+                                          type: string
+                                        name:
+                                          description: Name of the config map or secret containing certificates.
+                                          type: string
+                                        namespace:
+                                          default: ""
+                                          description: |-
+                                            Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                            If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                          type: string
+                                        type:
+                                          description: 'Type for the certificate reference: `configmap` or `secret`.'
+                                          enum:
+                                            - configmap
+                                            - secret
+                                          type: string
+                                      type: object
+                                    enable:
+                                      default: false
+                                      description: Enable TLS
+                                      type: boolean
+                                    insecureSkipVerify:
+                                      default: false
+                                      description: |-
+                                        `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+                                        If set to `true`, the `caCert` field is ignored.
+                                      type: boolean
+                                    userCert:
+                                      description: '`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.'
+                                      properties:
+                                        certFile:
+                                          description: '`certFile` defines the path to the certificate file name within the config map or secret.'
+                                          type: string
+                                        certKey:
+                                          description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
+                                          type: string
+                                        name:
+                                          description: Name of the config map or secret containing certificates.
+                                          type: string
+                                        namespace:
+                                          default: ""
+                                          description: |-
+                                            Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                            If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                          type: string
+                                        type:
+                                          description: 'Type for the certificate reference: `configmap` or `secret`.'
+                                          enum:
+                                            - configmap
+                                            - secret
+                                          type: string
+                                      type: object
+                                  type: object
+                                url:
+                                  default: http://prometheus:9090
+                                  description: '`url` is the address of an existing Prometheus AlertManager service to use for querying alerts.'
+                                  type: string
+                              type: object
                             forwardUserToken:
                               description: Set `true` to forward logged in user token in queries to Prometheus
                               type: boolean

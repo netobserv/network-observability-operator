@@ -1010,6 +1010,22 @@ type PrometheusQuerierManual struct {
 	// Set `true` to forward logged in user token in queries to Prometheus
 	// +optional
 	ForwardUserToken bool `json:"forwardUserToken"`
+
+	// AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+	// When used in OpenShift it can be left empty to use the Console API instead.
+	// +optional
+	AlertManager AlertManagerQuerierManual `json:"alertManager"`
+}
+
+// `AlertManagerQuerierManual` defines the full connection parameters to Prometheus AlertManager.
+type AlertManagerQuerierManual struct {
+	//+kubebuilder:default:="http://prometheus:9090"
+	// `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.
+	URL string `json:"url,omitempty"`
+
+	// TLS client configuration for Prometheus AlertManager URL.
+	// +optional
+	TLS ClientTLS `json:"tls"`
 }
 
 type PrometheusMode string

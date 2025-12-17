@@ -624,6 +624,10 @@ spec:
         path: prometheus.querier.enable
       - displayName: Manual
         path: prometheus.querier.manual
+      - displayName: Alert manager
+        path: prometheus.querier.manual.alertManager
+      - displayName: Url
+        path: prometheus.querier.manual.alertManager.url
       - displayName: Forward user token
         path: prometheus.querier.manual.forwardUserToken
       - displayName: Url

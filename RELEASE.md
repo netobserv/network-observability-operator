@@ -45,7 +45,7 @@ When all component drafts are ready, you can test the helm chart on your cluster
 helm repo add cert-manager https://charts.jetstack.io
 helm install my-cert-manager cert-manager/cert-manager --set crds.enabled=true
 
-helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true --set install.loki=true --set install.prom=true ./helm
+helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true --set install.loki=true --set install.prom-stack=true ./helm
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flows.netobserv.io/v1beta2
@@ -66,8 +66,11 @@ spec:
       url: 'http://my-netobserv-loki.netobserv.svc.cluster.local.:3100/'
   prometheus:
     querier:
+      mode: Manual
       manual:
-        url: http://my-netobserv-prometheus-server.netobserv.svc.cluster.local./
+        url: http://my-netobserv-kube-promethe-prometheus.netobserv.svc.cluster.local.:9090/
+        alertManager:
+          url: http://my-netobserv-kube-promethe-alertmanager.netobserv.svc.cluster.local.:9093/
 EOF
 
 # Check components image:

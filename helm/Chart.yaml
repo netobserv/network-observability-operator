@@ -74,6 +74,10 @@ dependencies:
   version: "~27.23.0"
   repository: https://prometheus-community.github.io/helm-charts
   condition: install.prom
+- name: kube-prometheus-stack
+  version: "~80.4.1"
+  repository: https://prometheus-community.github.io/helm-charts
+  condition: install.prom-stack
 - name: loki-stack
   version: "~2.10.2"
   repository: https://grafana.github.io/helm-charts
