@@ -151,14 +151,14 @@ func (rb *ruleBuilder) additionalDescription() string {
 }
 
 var acronyms = map[string]string{
-	"DNS":    "dns",
-	"IPsec":  "ipsec",
-	"IP":     "ip",
-	"AZ":     "az",
-	"TCP":    "tcp",
-	"UDP":    "udp",
-	"HTTP":   "http",
-	"HTTPS":  "https",
+	"DNS":   "dns",
+	"IPsec": "ipsec",
+	"IP":    "ip",
+	"AZ":    "az",
+	"TCP":   "tcp",
+	"UDP":   "udp",
+	"HTTP":  "http",
+	"HTTPS": "https",
 }
 
 // toSnakeCase converts a camelCase or PascalCase string to snake_case
@@ -211,7 +211,7 @@ func (rb *ruleBuilder) buildRecordingRuleName() string {
 	}
 
 	// Add side if groupBy is present (side is only relevant with groupBy)
-	 if rb.healthRule.GroupBy != "" && rb.side != "" {
+	if rb.healthRule.GroupBy != "" && rb.side != "" {
 		parts = append(parts, strings.ToLower(string(rb.side)))
 	}
 
@@ -224,11 +224,10 @@ func (rb *ruleBuilder) buildRecordingRuleName() string {
 func buildRecordingRuleLabels(template string) map[string]string {
 	return map[string]string{
 		"app":       "netobserv",
-		"netobserv": "true", // means that the rule should be fetched by netobserv console plugin for health
+		"netobserv": "true",   // means that the rule should be fetched by netobserv console plugin for health
 		"template":  template, // template name for UI display
 	}
 }
-
 
 func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitoringv1.Rule, error) {
 	bAnnot, err := rb.buildHealthAnnotation(nil)
@@ -236,6 +235,18 @@ func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitor
 		return nil, err
 	}
 
+	// Generate recording rule
+	if rb.mode == flowslatest.ModeRecording {
+		recordName := rb.buildRecordingRuleName()
+		return &monitoringv1.Rule{
+			Record: recordName,
+			// Note: Recording rules cannot have annotations in Prometheus
+			Expr:   intstr.FromString(promQL),
+			Labels: buildRecordingRuleLabels(string(rb.template)),
+		}, nil
+	}
+
+	// Generate alert rule
 	var gr string
 	if rb.healthRule.GroupBy != "" {
 		gr = "Per" + string(rb.side) + string(rb.healthRule.GroupBy)

@@ -456,4 +456,3 @@ func GetElligibleMetricsForAlert(template HealthRuleTemplate, alertDef *HealthRu
 
 // Alias for backward compatibility
 var GetElligibleMetricsForHealthRule = GetElligibleMetricsForAlert
-

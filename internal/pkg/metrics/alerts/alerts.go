@@ -108,7 +108,7 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 			Record: recordName,
 			// Note: Recording rules cannot have annotations in Prometheus
 			Expr:   intstr.FromString(promql),
-			Labels: buildLabels("", true),
+			Labels: buildRecordingRuleLabels(string(rb.template)),
 		}, nil
 	}
 
