@@ -141,10 +141,9 @@ var (
 					Thresholds: AlertThresholds{
 						Info: "100",
 					},
-					GroupBy: GroupByNamespace,
-					// TODO: set longer-term defaults
-					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
-					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
+					GroupBy:       GroupByNamespace,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
@@ -155,20 +154,18 @@ var (
 					Thresholds: AlertThresholds{
 						Warning: "200",
 					},
-					GroupBy: GroupByNode,
-					// TODO: set longer-term defaults
-					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
-					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
+					GroupBy:       GroupByNode,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: AlertThresholds{
 						Info:    "100",
 						Warning: "500",
 					},
-					GroupBy: GroupByNamespace,
-					// TODO: set longer-term defaults
-					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
-					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
+					GroupBy:       GroupByNamespace,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
@@ -179,20 +176,18 @@ var (
 					Thresholds: AlertThresholds{
 						Warning: "200",
 					},
-					GroupBy: GroupByNode,
-					// TODO: set longer-term defaults
-					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
-					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
+					GroupBy:       GroupByNode,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: AlertThresholds{
 						Info:    "100",
 						Warning: "500",
 					},
-					GroupBy: GroupByNamespace,
-					// TODO: set longer-term defaults
-					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
-					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
+					GroupBy:       GroupByNamespace,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
