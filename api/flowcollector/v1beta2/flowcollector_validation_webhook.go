@@ -302,7 +302,7 @@ func (v *validator) validateFLPAlerts() {
 					v.errors = append(
 						v.errors,
 						fmt.Errorf(
-							`%s alert template does not support grouping by %s, in spec.processor.metrics.alerts[%d].variants[%d]`,
+							`%s alert template does not support grouping by %s, in spec.processor.metrics.healthRules[%d].variants[%d]`,
 							alert.Template, variant.GroupBy, i, j,
 						),
 					)
@@ -322,17 +322,17 @@ func (v *validator) validateFLPAlerts() {
 						if err != nil {
 							v.errors = append(
 								v.errors,
-								fmt.Errorf(`cannot parse %s threshold as float in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
+								fmt.Errorf(`cannot parse %s threshold as float in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
 							)
 						} else if val < 0 {
 							v.errors = append(
 								v.errors,
-								fmt.Errorf(`%s threshold must be positive in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
+								fmt.Errorf(`%s threshold must be positive in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, st.s, i, j, st.t),
 							)
 						} else if lastThreshold > 0 && val > lastThreshold {
 							v.errors = append(
 								v.errors,
-								fmt.Errorf(`%s threshold must be lower than %.0f, which is defined for a higher severity, in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, st.s, lastThreshold, i, j, st.t),
+								fmt.Errorf(`%s threshold must be lower than %.0f, which is defined for a higher severity, in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, st.s, lastThreshold, i, j, st.t),
 							)
 						}
 						lastThreshold = val
@@ -343,7 +343,7 @@ func (v *validator) validateFLPAlerts() {
 					if err != nil {
 						v.errors = append(
 							v.errors,
-							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.alerts[%d].variants[%d]: "%s"`, i, j, variant.LowVolumeThreshold),
+							fmt.Errorf(`cannot parse lowVolumeThreshold as float in spec.processor.metrics.healthRules[%d].variants[%d]: "%s"`, i, j, variant.LowVolumeThreshold),
 						)
 					}
 				}
@@ -377,7 +377,7 @@ func (v *validator) validateFLPMetricsForAlerts() {
 				if GetFirstRequiredMetrics(reqMetrics1, metrics) == "" {
 					v.warnings = append(
 						v.warnings,
-						fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", g.Template, a.GroupBy, strings.Join(reqMetrics1, ", ")),
+						fmt.Sprintf("HealthRule %s/%s requires enabling at least one metric from this list: %s", g.Template, a.GroupBy, strings.Join(reqMetrics1, ", ")),
 					)
 				}
 			}
@@ -385,7 +385,7 @@ func (v *validator) validateFLPMetricsForAlerts() {
 				if GetFirstRequiredMetrics(reqMetrics2, metrics) == "" {
 					v.warnings = append(
 						v.warnings,
-						fmt.Sprintf("Alert %s/%s requires enabling at least one metric from this list: %s", g.Template, a.GroupBy, strings.Join(reqMetrics2, ", ")),
+						fmt.Sprintf("HealthRule %s/%s requires enabling at least one metric from this list: %s", g.Template, a.GroupBy, strings.Join(reqMetrics2, ", ")),
 					)
 				}
 			}
