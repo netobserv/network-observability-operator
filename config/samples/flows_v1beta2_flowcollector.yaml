@@ -92,7 +92,7 @@ spec:
     metrics:
       server:
         port: 9401
-      disableHealthRules: []
+      disableAlerts: []
       # includeList:
       # - "node_ingress_bytes_total"
       # - "node_ingress_packets_total"

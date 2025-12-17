@@ -732,6 +732,67 @@ func TestValidateFLP(t *testing.T) {
 			},
 			expectedError: `warning threshold must be lower than 10, which is defined for a higher severity`,
 		},
+		{
+			name:       "Missing thresholds in recording mode",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{DNSTracking},
+						Privileged: false,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							HealthRules: &[]FLPHealthRule{
+								{
+									Template: HealthRuleDNSErrors,
+									Mode:     ModeRecording,
+									Variants: []HealthRuleVariant{
+										{
+											Thresholds: HealthRuleThresholds{},
+										},
+									},
+								},
+							},
+							IncludeList: &[]FLPMetric{"namespace_dns_latency_seconds"},
+						},
+					},
+				},
+			},
+			expectedError: `at least one threshold (critical, warning, or info) must be provided in spec.processor.metrics.healthRules[0].variants[0]`,
+		},
+		{
+			name:       "Valid recording mode with thresholds",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{DNSTracking},
+						Privileged: false,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							HealthRules: &[]FLPHealthRule{
+								{
+									Template: HealthRuleDNSErrors,
+									Mode:     ModeRecording,
+									Variants: []HealthRuleVariant{
+										{
+											Thresholds: HealthRuleThresholds{
+												Critical: "15",
+												Warning:  "10",
+												Info:     "5",
+											},
+										},
+									},
+								},
+							},
+							IncludeList: &[]FLPMetric{"namespace_dns_latency_seconds"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	CurrentClusterInfo = &cluster.Info{}

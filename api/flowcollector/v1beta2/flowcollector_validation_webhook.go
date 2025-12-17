@@ -307,6 +307,16 @@ func (v *validator) validateFLPAlerts() {
 						),
 					)
 				}
+				// Check that at least one threshold is provided (required for both alert and recording modes)
+				if variant.Thresholds.Critical == "" && variant.Thresholds.Warning == "" && variant.Thresholds.Info == "" {
+					v.errors = append(
+						v.errors,
+						fmt.Errorf(
+							`at least one threshold (critical, warning, or info) must be provided in spec.processor.metrics.healthRules[%d].variants[%d]`,
+							i, j,
+						),
+					)
+				}
 				lastThreshold := float64(-1)
 				thresholds := []struct {
 					s string
