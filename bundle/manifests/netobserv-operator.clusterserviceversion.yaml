@@ -134,7 +134,7 @@ metadata:
                 }
               }
             },
-            "deploymentModel": "Direct",
+            "deploymentModel": "Service",
             "exporters": [],
             "kafka": {
               "address": "kafka-cluster-kafka-bootstrap.netobserv",

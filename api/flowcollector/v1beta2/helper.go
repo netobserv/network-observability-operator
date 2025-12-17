@@ -55,10 +55,7 @@ func (spec *FlowCollectorSpec) UseConsolePlugin() bool {
 
 func (spec *FlowCollectorSpec) UseTestConsolePlugin() bool {
 	if spec.ConsolePlugin.Advanced != nil {
-		env := spec.ConsolePlugin.Advanced.Env[constants.EnvTestConsole]
-		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
-		b, err := strconv.ParseBool(env)
-		return err == nil && b
+		return IsEnvEnabled(spec.ConsolePlugin.Advanced.Env, constants.EnvTestConsole)
 	}
 	return false
 }
@@ -220,4 +217,11 @@ func (spec *FlowCollectorConsolePlugin) IsUnmanagedConsolePluginReplicas() bool 
 
 func (spec *FlowCollectorSpec) IsSliceEnabled() bool {
 	return spec.Processor.SlicesConfig != nil && spec.Processor.SlicesConfig.Enable
+}
+
+func IsEnvEnabled(vars map[string]string, key string) bool {
+	env := vars[key]
+	// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
+	b, err := strconv.ParseBool(env)
+	return err == nil && b
 }
