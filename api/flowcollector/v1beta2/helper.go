@@ -42,6 +42,10 @@ func (spec *FlowCollectorSpec) UseLoki() bool {
 	return spec.Loki.Enable == nil || *spec.Loki.Enable
 }
 
+func (spec *FlowCollectorSpec) UseLokiDev() bool {
+	return spec.UseLoki() && spec.Loki.Mode == LokiModeMonolithic && *spec.Loki.Monolithic.InstallDemoLoki
+}
+
 func (spec *FlowCollectorSpec) UsePrometheus() bool {
 	// nil should fallback to default value, which is "true"
 	return spec.Prometheus.Querier.Enable == nil || *spec.Prometheus.Querier.Enable
