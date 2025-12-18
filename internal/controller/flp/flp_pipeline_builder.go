@@ -215,6 +215,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		SubnetLabels: flpLabels,
 		KubeConfig: api.NetworkTransformKubeConfig{
 			SecondaryNetworks: secondaryNetworks,
+			TrackedKinds:      []string{"ReplicaSet", "Deployment", "Gateway"},
 		},
 	})
 
