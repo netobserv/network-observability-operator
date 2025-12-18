@@ -98,7 +98,7 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 				{
 					Port:      "metrics",
 					Interval:  "30s",
-					Scheme:    scheme,
+					Scheme:    &scheme,
 					TLSConfig: smTLS,
 				},
 			},

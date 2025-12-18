@@ -15,6 +15,7 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/manager/status"
 	"github.com/netobserv/network-observability-operator/internal/pkg/metrics/alerts"
+	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -555,7 +556,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	// Check scheme changed
 	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil, nil)
 	fourth := b.serviceMonitor()
-	fourth.Spec.Endpoints[0].Scheme = "https"
+	fourth.Spec.Endpoints[0].Scheme = ptr.To(v1.SchemeHTTPS)
 
 	report = helper.NewChangeReport("")
 	assert.True(helper.ServiceMonitorChanged(third, fourth, &report))

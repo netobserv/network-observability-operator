@@ -356,7 +356,7 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 				{
 					Port:        prometheusPortName,
 					Interval:    "15s",
-					Scheme:      scheme,
+					Scheme:      &scheme,
 					TLSConfig:   smTLS,
 					HonorLabels: true,
 					// Relabel for Thanos multi-tenant endpoint, which requires having the namespace label
