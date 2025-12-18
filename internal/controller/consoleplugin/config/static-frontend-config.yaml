@@ -322,46 +322,55 @@ columns:
   - id: K8S_Name
     name: Names
     calculated: '[SrcK8S_Name,DstK8S_Name]'
+    filter: name
     default: false
     width: 15
   - id: K8S_Type
     name: Kinds
     calculated: '[SrcK8S_Type,DstK8S_Type]'
+    filter: kind
     default: false
     width: 10
   - id: K8S_OwnerName
     name: Owners
     calculated: '[SrcK8S_OwnerName,DstK8S_OwnerName]'
+    filter: owner_name
     default: false
     width: 15
   - id: K8S_OwnerType
     name: Owner Kinds
     calculated: '[SrcK8S_OwnerType,DstK8S_OwnerType]'
+    filter: kind
     default: false
     width: 10
   - id: K8S_Namespace
     name: Namespaces
     calculated: '[SrcK8S_Namespace,DstK8S_Namespace]'
+    filter: namespace
     default: false
     width: 15
   - id: Addr
     name: IP
     calculated: '[SrcAddr,DstAddr]'
+    filter: address
     default: false
     width: 10
   - id: Port
     name: Ports
     calculated: '[SrcPort,DstPort]'
+    filter: port
     default: false
     width: 10
   - id: Mac
     name: MAC
     calculated: '[SrcMac,DstMac]'
+    filter: mac
     default: false
     width: 10
   - id: K8S_HostIP
     name: Node IP
     calculated: '[SrcK8S_HostIP,DstK8S_HostIP]'
+    filter: host_address
     default: false
     width: 10
   - id: Sampling
@@ -372,16 +381,19 @@ columns:
   - id: K8S_HostName
     name: Node Name
     calculated: '[SrcK8S_HostName,DstK8S_HostName]'
+    filter: host_name
     default: false
     width: 15
   - id: K8S_Object
     name: Kubernetes Objects
     calculated: '[column.SrcK8S_Object,column.DstK8S_Object]'
+    filter: resource
     default: false
     width: 15
   - id: K8S_OwnerObject
     name: Owner Kubernetes Objects
     calculated: '[column.SrcK8S_OwnerObject,column.DstK8S_OwnerObject]'
+    filter: resource
     default: false
     width: 15
   - id: K8S_FlowLayer
@@ -681,14 +693,31 @@ filters:
   - id: cluster_name
     name: Cluster
     component: autocomplete
-    hint: Specify a cluster ID or name.
+    placeholder: 'E.g: cluster-1, cluster-2'
+    hint: Add cluster ID or name filter.
+  - id: namespace
+    name: Namespace
+    component: autocomplete
+    autoCompleteAddsQuotes: true
+    category: endpoint
+    placeholder: 'E.g: netobserv, kube-system'
+    hint: Add kubernetes namespace filter.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
   - id: src_namespace
     name: Namespace
     component: autocomplete
     autoCompleteAddsQuotes: true
     category: source
-    placeholder: 'E.g: netobserv'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: netobserv, kube-system'
+    hint: Add kubernetes source namespace filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -703,8 +732,23 @@ filters:
     component: autocomplete
     autoCompleteAddsQuotes: true
     category: destination
-    placeholder: 'E.g: netobserv'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: netobserv, kube-system'
+    hint: Add kubernetes destination namespace filter.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: name
+    name: Name
+    component: text
+    category: endpoint
+    placeholder: 'E.g: my-pod, my-service'
+    hint: Add kubernetes name filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -718,8 +762,8 @@ filters:
     name: Name
     component: text
     category: source
-    placeholder: 'E.g: my-pod'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: my-pod, my-service'
+    hint: Add kubernetes source name filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -733,8 +777,8 @@ filters:
     name: Name
     component: text
     category: destination
-    placeholder: 'E.g: my-pod'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: my-pod, my-service'
+    hint: Add kubernetes destination name filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -744,24 +788,45 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: kind
+    name: Kind
+    component: autocomplete
+    autoCompleteAddsQuotes: true
+    category: endpoint
+    placeholder: 'E.g: Pod, Service, Deployment'
   - id: src_kind
     name: Kind
     component: autocomplete
     autoCompleteAddsQuotes: true
     category: source
-    placeholder: 'E.g: Pod, Service'
+    placeholder: 'E.g: Pod, Service, Deployment'
   - id: dst_kind
     name: Kind
     component: autocomplete
     autoCompleteAddsQuotes: true
     category: destination
-    placeholder: 'E.g: Pod, Service'
+    placeholder: 'E.g: Pod, Service, Deployment'
+  - id: owner_name
+    name: Owner Name
+    component: text
+    category: endpoint
+    placeholder: 'E.g: my-deployment, my-daemonset'
+    hint: Add kubernetes owner name filter.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
   - id: src_owner_name
     name: Owner Name
     component: text
     category: source
-    placeholder: 'E.g: my-deployment'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: my-deployment, my-daemonset'
+    hint: Add kubernetes source owner name filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -775,8 +840,8 @@ filters:
     name: Owner Name
     component: text
     category: destination
-    placeholder: 'E.g: my-deployment'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: my-deployment, my-daemonset'
+    hint: Add kubernetes destination owner name filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -786,32 +851,59 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: zone
+    name: Zone
+    component: autocomplete
+    category: endpoint
+    placeholder: 'E.g: zone-1, zone-2'
+    hint: Add zone filter.
   - id: src_zone
     name: Zone
     component: autocomplete
     category: source
-    hint: Specify a single zone.
+    placeholder: 'E.g: zone-1, zone-2'
+    hint: Add source zone filter.
   - id: dst_zone
     name: Zone
     component: autocomplete
     category: destination
-    hint: Specify a single zone.
+    placeholder: 'E.g: zone-1, zone-2'
+    hint: Add destination zone filter.
+  - id: subnet_label
+    name: Subnet Label
+    component: autocomplete
+    category: endpoint
+    placeholder: 'E.g: Pods, Services, ExternalIP'
+    hint: Add subnet label filter, or an empty string to get unmatched sources.
   - id: src_subnet_label
     name: Subnet Label
     component: autocomplete
     category: source
-    hint: Specify a subnet label, or an empty string to get unmatched sources.
+    placeholder: 'E.g: Pods, Services, ExternalIP'
+    hint: Add source subnet label filter, or an empty string to get unmatched sources.
   - id: dst_subnet_label
     name: Subnet Label
     component: autocomplete
     category: destination
-    hint: Specify a subnet label, or an empty string to get unmatched destinations.
+    placeholder: 'E.g: Pods, Services, ExternalIP'
+    hint: Add destination subnet label filter, or an empty string to get unmatched destinations.
+  - id: resource
+    name: Resource
+    component: autocomplete
+    category: endpoint
+    placeholder: 'E.g: Deployment.example.my-dep or Pod.default.my-pod'
+    hint: Add kubernetes resource filter from its kind, namespace and name.
+    examples: |-
+      Specify a kind, namespace and name from existing:
+              - Select kind first from suggestions
+              - Then select namespace from suggestions
+              - Finally select name from suggestions
   - id: src_resource
     name: Resource
     component: autocomplete
     category: source
     placeholder: 'E.g: Deployment.example.my-dep or Pod.default.my-pod'
-    hint: Specify an existing resource from its kind, namespace and name.
+    hint: Add kubernetes source resource filter from its kind, namespace and name.
     examples: |-
       Specify a kind, namespace and name from existing:
               - Select kind first from suggestions
@@ -822,17 +914,28 @@ filters:
     component: autocomplete
     category: destination
     placeholder: 'E.g: Deployment.example.my-dep or Pod.default.my-pod'
-    hint: Specify an existing resource from its kind, namespace and name.
+    hint: Add kubernetes destination resource filter from its kind, namespace and name.
     examples: |-
       Specify a kind, namespace and name from existing:
               - Select kind first from suggestions
               - Then select namespace from suggestions
               - Finally select name from suggestions
+  - id: address
+    name: IP
+    component: text
+    category: endpoint
+    hint: Add IP or range filter.
+    placeholder: 'E.g: 192.0.2.0'
+    examples: |-
+      Specify IP following one of these rules:
+          - A single IPv4 or IPv6 address like 192.0.2.0, ::1
+          - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
+          - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
   - id: src_address
     name: IP
     component: text
     category: source
-    hint: Specify a single IP or range.
+    hint: Add source IP or range filter.
     placeholder: 'E.g: 192.0.2.0'
     examples: |-
       Specify IP following one of these rules:
@@ -843,19 +946,30 @@ filters:
     name: IP
     component: text
     category: destination
-    hint: Specify a single IP or range.
+    hint: Add destination IP or range filter.
     placeholder: 'E.g: 192.0.2.0'
     examples: |-
       Specify IP following one of these rules:
           - A single IPv4 or IPv6 address like 192.0.2.0, ::1
           - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
           - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
+  - id: port
+    name: Port
+    component: autocomplete
+    category: endpoint
+    hint: Add port number or name filter.
+    placeholder: 'E.g: 80, 21, HTTP, FTP'
+    examples: |-
+      Specify a single port following one of these rules:
+              - A port number like 80, 21
+              - A IANA name like HTTP, FTP
+    docUrl: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
   - id: src_port
     name: Port
     component: autocomplete
     category: source
-    hint: Specify a single port number or name.
-    placeholder: 'E.g: 80'
+    hint: Add source port number or name filter.
+    placeholder: 'E.g: 80, 21, HTTP, FTP'
     examples: |-
       Specify a single port following one of these rules:
               - A port number like 80, 21
@@ -865,31 +979,48 @@ filters:
     name: Port
     component: autocomplete
     category: destination
-    hint: Specify a single port number or name.
-    placeholder: 'E.g: 80'
+    hint: Add destination port number or name filter.
+    placeholder: 'E.g: 80, 21, HTTP, FTP'
     examples: |-
       Specify a single port following one of these rules:
               - A port number like 80, 21
               - A IANA name like HTTP, FTP
     docUrl: https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
+  - id: mac
+    name: MAC
+    component: text
+    category: endpoint
+    placeholder: 'E.g: 42:01:0A:00:00:01'
+    hint: Add MAC address filter.
   - id: src_mac
     name: MAC
     component: text
     category: source
-    placeholder: 'E.g: 42:01:0A:00:00:01'
-    hint: Specify a single MAC address.
+    placeholder: 'E.g: 42:01:0A:00:00:01, 42:01:0A:00:00:02'
+    hint: Add source MAC address filter.
   - id: dst_mac
     name: MAC
     component: text
     category: destination
-    placeholder: 'E.g: 42:01:0A:00:00:01'
-    hint: Specify a single MAC address.
+    placeholder: 'E.g: 42:01:0A:00:00:01, 42:01:0A:00:00:02'
+    hint: Add destination MAC address filter.
+  - id: host_address
+    name: Node IP
+    component: text
+    category: endpoint
+    placeholder: 'E.g: 10.0.0.1, 10.0.0.2'
+    hint: Add node IP or range filter.
+    examples: |-
+      Specify IP following one of these rules:
+          - A single IPv4 or IPv6 address like 192.0.2.0, ::1
+          - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
+          - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
   - id: src_host_address
     name: Node IP
     component: text
     category: source
-    placeholder: 'E.g: 10.0.0.1'
-    hint: Specify a single IP or range.
+    placeholder: 'E.g: 10.0.0.1, 10.0.0.2'
+    hint: Add source node IP or range filter.
     examples: |-
       Specify IP following one of these rules:
           - A single IPv4 or IPv6 address like 192.0.2.0, ::1
@@ -899,19 +1030,34 @@ filters:
     name: Node IP
     component: text
     category: destination
-    placeholder: 'E.g: 10.0.0.1'
-    hint: Specify a single IP or range.
+    placeholder: 'E.g: 10.0.0.1, 10.0.0.2'
+    hint: Add destination node IP or range filter.
     examples: |-
       Specify IP following one of these rules:
           - A single IPv4 or IPv6 address like 192.0.2.0, ::1
           - An IP address range like 192.168.0.1-192.189.10.12, 2001:db8::1-2001:db8::8
           - A CIDR specification like 192.51.100.0/24, 2001:db8::/32
+  - id: host_name
+    name: Node Name
+    component: text
+    category: endpoint
+    placeholder: 'E.g: my-node, my-node-2'
+    hint: Add kubernetes node name filter.
+    examples: |-
+      Specify a single kubernetes name following these rules:
+          - Containing any alphanumeric, hyphen, underscrore or dot character
+          - Partial text like cluster, cluster-image, image-registry
+          - Exact match using quotes like "cluster-image-registry"
+          - Case sensitive match using quotes like "Deployment"
+          - Starting text like cluster, "cluster-*"
+          - Ending text like "*-registry"
+          - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
   - id: src_host_name
     name: Node Name
     component: text
     category: source
-    placeholder: 'E.g: my-node'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: my-node, my-node-2'
+    hint: Add kubernetes source node name filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -925,8 +1071,8 @@ filters:
     name: Node Name
     component: text
     category: destination
-    placeholder: 'E.g: my-node'
-    hint: Specify a single kubernetes name.
+    placeholder: 'E.g: my-node, my-node-2'
+    hint: Add kubernetes destination node name filter.
     examples: |-
       Specify a single kubernetes name following these rules:
           - Containing any alphanumeric, hyphen, underscrore or dot character
@@ -936,19 +1082,26 @@ filters:
           - Starting text like cluster, "cluster-*"
           - Ending text like "*-registry"
           - Pattern like "cluster-*-registry", "c*-*-r*y", -i*e-
+  - id: network
+    name: Network Name
+    component: text
+    category: endpoint
+    hint: Add network name filter.
   - id: src_network
     name: Network Name
     component: text
     category: source
+    hint: Add source network name filter.
   - id: dst_network
     name: Network Name
     component: text
     category: destination
+    hint: Add destination network name filter.
   - id: protocol
     name: Protocol
     component: autocomplete
-    placeholder: 'E.g: TCP, UDP'
-    hint: Specify a single protocol number or name.
+    placeholder: 'E.g: TCP, UDP, ICMP'
+    hint: Add protocol number or name filter.
     examples: |-
       Specify a single protocol following one of these rules:
               - A protocol number like 6, 17
@@ -957,7 +1110,8 @@ filters:
   - id: dscp
     name: DSCP
     component: autocomplete
-    hint: Specify a Differentiated Services Code Point number or name.
+    placeholder: 'E.g: 8, 10, Low-Priority Data, High-Throughput Data'
+    hint: Add Differentiated Services Code Point number or name filter.
     examples: |-
       Specify a Differentiated Services Code Point following one of these rules:
               - A DSCP number like 8, 10
@@ -965,50 +1119,53 @@ filters:
   - id: icmp_type
     name: ICMP type
     component: number
-    hint: Specify an ICMP type value as integer number.
+    placeholder: 'E.g: 8, 10'
+    hint: Add ICMP type value as integer number filter.
   - id: icmp_code
     name: ICMP code
     component: number
-    hint: Specify an ICMP code value as integer number.
+    placeholder: 'E.g: 8, 10'
+    hint: Add ICMP code value as integer number filter.
   - id: tcp_flags
     name: TCP flags
     component: autocomplete
-    hint: Specify a TCP flags value.
+    placeholder: 'E.g: SYN_ACK, FIN_ACK, RST_ACK'
+    hint: Add TCP flags value filter.
     examples: |-
       Logical OR combination of unique TCP flags comprised in the flow, according to RFC-9293, with additional custom flags (SYN_ACK, FIN_ACK and RST_ACK).
   - id: node_direction
     name: Node Direction
     component: autocomplete
     placeholder: 'E.g: Ingress, Egress, Inner'
-    hint: Specify the interpreted direction of the Flow observed at the Node observation point.
+    hint: Add the interpreted direction of the Flow observed at the Node observation point filter.
   - id: flow_layer
     name: Flow layer
     component: text
     placeholder: 'Either infra or app'
-    hint: Specify the layer of Flow.
+    hint: Add the layer of Flow filter.
   - id: interfaces
     name: Network interfaces
     component: text
     placeholder: 'E.g: br-ex, ovn-k8s-mp0'
-    hint: Specify a network interface.
+    hint: Add network interface filter.
   - id: ifdirections
     name: Interface Directions
     component: autocomplete
     placeholder: 'E.g: Ingress, Egress'
-    hint: Specify the direction of the Flow observed at the network interface observation point.
+    hint: Add direction of the Flow observed at the network interface observation point filter.
   - id: udns
     name: User Defined Network
     component: autocomplete
-    hint: Specify a user defined network name.
+    hint: Add user defined network name filter.
   - id: id
     name: Conversation Id
     component: text
-    hint: Specify a single conversation hash Id.
+    hint: Add conversation hash Id filter.
   - id: pkt_drop_state
     name: Packet drop TCP state
     component: autocomplete
     placeholder: 'E.g: ESTABLISHED, SYN_SENT, SYN_RECV'
-    hint: Specify a single TCP state.
+    hint: Add TCP state filter.
     examples: |-
       Specify a single TCP state name like:
               - A _LINUX_TCP_STATES_H number like 1, 2, 3
@@ -1018,7 +1175,7 @@ filters:
     name: Packet drop latest cause
     component: autocomplete
     placeholder: 'E.g: NO_SOCKET, PKT_TOO_SMALL'
-    hint: Specify a single packet drop cause.
+    hint: Add packet drop cause filter.
     examples: |-
       Specify a single packet drop cause like:
               - A _LINUX_DROPREASON_CORE_H number like 2, 3, 4
@@ -1027,19 +1184,22 @@ filters:
   - id: dns_id
     name: DNS Id
     component: number
-    hint: Specify a single DNS Id.
+    hint: Add DNS Id filter.
   - id: dns_name
     name: DNS Name
     component: text
-    hint: Specify a single DNS name.
+    placeholder: 'E.g: www.example.com, www.example.org'
+    hint: Add DNS name filter.
   - id: dns_latency
     name: DNS Latency
     component: number
-    hint: Specify a DNS Latency in miliseconds.
+    placeholder: 'E.g: 100, 200'
+    hint: Add DNS Latency in milliseconds filter.
   - id: dns_flag_response_code
     name: DNS Response Code
     component: autocomplete
-    hint: Specify a single DNS RCODE name.
+    placeholder: 'E.g: NoError, NXDomain, NotAuth'
+    hint: Add DNS RCODE name filter.
     placeholder: 'E.g: NoError, NXDomain, NotAuth'
     examples: |-
       Specify a single DNS RCODE name like:
@@ -1049,43 +1209,44 @@ filters:
   - id: dns_errno
     name: DNS Error
     component: autocomplete
-    hint: Specify a single DNS error number.
+    hint: Add DNS error number filter.
   - id: time_flow_rtt
     name: Flow RTT
     component: number
-    hint: Specify a TCP smoothed Round Trip Time in nanoseconds.
+    hint: Add TCP smoothed Round Trip Time in nanoseconds filter.
   - id: network_events
     name: Network Events
     component: text
-    hint: Specify a single network event.
+    hint: Add network event filter.
   - id: xlat_zone_id
     name: Xlat Zone Id
     component: number
+    hint: Add Xlat zone ID filter.
   - id: xlat_src_address
     name: Xlat source address
     component: text
     category: source
-    hint: Specify a single IP or range.
+    hint: Add IP or range filter.
   - id: xlat_dst_address
     name: Xlat destination address
     component: text
     category: destination
-    hint: Specify a single IP or range.
+    hint: Add destination IP or range filter.
   - id: xlat_src_port
     name: Xlat source port
     component: autocomplete
     category: source
-    hint: Specify a single port number or name.
+    hint: Add source port number or name filter.
   - id: xlat_dst_port
     name: Xlat destination port
     component: autocomplete
     category: destination
-    hint: Specify a single port number or name.
+    hint: Add destination port number or name filter.
   - id: ipsec_status
     name: IPsec Status
     component: text
     placeholder: 'E.g: success, error'
-    hint: Status of the IPsec encryption (on egress, provided by the kernel function xfrm_output) or decryption (on ingress, via xfrm_input).
+    hint: Add IPsec status filter.
 scopes:
   - id: cluster
     name: Cluster
