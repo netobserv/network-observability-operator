@@ -21,7 +21,7 @@ The release script should be triggered (check github actions). It will automatic
 We can then proceed with the operator. Edit the [Makefile](./Makefile) to update `BUNDLE_VERSION`.
 
 ```bash
-make update-bundle
+BUNDLE_SET_DATE=true make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
 version="1.10.0-community"
