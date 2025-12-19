@@ -18,8 +18,8 @@ Here is the list of alerts installed by default:
 - `LatencyHighTrend`: triggered when NetObserv detects an increase of TCP latency; it requires the `FlowRTT` agent feature.
 - `DNSErrors`: triggered when NetObserv detects DNS errors, other than NX_DOMAIN; it requires the `DNSTracking` agent feature.
 - `DNSNxDomain`: triggered when NetObserv detects DNS NX_DOMAIN errors; it requires the `DNSTracking` agent feature.
-- `ExternalEgressHighTrend`: TODO.
-- `ExternalIngressHighTrend`: TODO.
+- `ExternalEgressHighTrend`: triggered when NetObserv detects an important increase of external egress traffic.
+- `ExternalIngressHighTrend`: triggered when NetObserv detects an important increase of external ingress traffic.
 
 On top of that, there are also some operational alerts that relate to NetObserv's self health:
 
@@ -28,9 +28,7 @@ On top of that, there are also some operational alerts that relate to NetObserv'
 
 ## Other alert templates
 
-Templates that are not enabled by default, but available for configuration:
-
-- `CrossAZ`: TODO.
+Templates that are not enabled by default, but available for configuration: (none at this time).
 
 ## Configure predefined alerts
 

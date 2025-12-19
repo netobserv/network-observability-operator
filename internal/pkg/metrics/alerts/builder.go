@@ -134,8 +134,10 @@ func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
 		return rb.netpolDenied()
 	case flowslatest.AlertLatencyHighTrend:
 		return rb.latencyTrend()
-	case flowslatest.AlertCrossAZ, flowslatest.AlertExternalEgressHighTrend, flowslatest.AlertExternalIngressHighTrend:
-		return nil, nil // TODO
+	case flowslatest.AlertExternalEgressHighTrend:
+		return rb.externalTrend(false)
+	case flowslatest.AlertExternalIngressHighTrend:
+		return rb.externalTrend(true)
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error
 	}

@@ -141,10 +141,9 @@ var (
 					Thresholds: AlertThresholds{
 						Info: "100",
 					},
-					GroupBy: GroupByNamespace,
-					// TODO: set longer-term defaults
-					TrendOffset:   &v1.Duration{Duration: 20 * time.Minute},
-					TrendDuration: &v1.Duration{Duration: 20 * time.Minute},
+					GroupBy:       GroupByNamespace,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
@@ -153,16 +152,20 @@ var (
 			Variants: []AlertVariant{
 				{
 					Thresholds: AlertThresholds{
-						Warning: "5",
+						Warning: "200",
 					},
-					GroupBy: GroupByNode,
+					GroupBy:       GroupByNode,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: AlertThresholds{
-						Info:    "5",
-						Warning: "10",
+						Info:    "100",
+						Warning: "500",
 					},
-					GroupBy: GroupByNamespace,
+					GroupBy:       GroupByNamespace,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
@@ -171,16 +174,20 @@ var (
 			Variants: []AlertVariant{
 				{
 					Thresholds: AlertThresholds{
-						Warning: "5",
+						Warning: "200",
 					},
-					GroupBy: GroupByNode,
+					GroupBy:       GroupByNode,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: AlertThresholds{
-						Info:    "5",
-						Warning: "10",
+						Info:    "100",
+						Warning: "500",
 					},
-					GroupBy: GroupByNamespace,
+					GroupBy:       GroupByNamespace,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
