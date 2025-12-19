@@ -217,7 +217,7 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 		})
 	}
 
-	if !b.desired.UseTestConsolePlugin() {
+	if !b.desired.ConsolePlugin.Standalone {
 		volumes = append(volumes, corev1.Volume{
 			Name: fmt.Sprintf("%s-cert", name),
 			VolumeSource: corev1.VolumeSource{
@@ -509,7 +509,7 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 			Port: int(*b.advanced.Port),
 		},
 	}
-	if b.desired.UseTestConsolePlugin() {
+	if b.desired.ConsolePlugin.Standalone {
 		config.Server.AuthCheck = "none"
 	} else {
 		config.Server.CertPath = "/var/serving-cert/tls.crt"

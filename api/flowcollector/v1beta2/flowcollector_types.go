@@ -181,8 +181,8 @@ type FlowCollectorIPFIX struct {
 // - `NetworkEvents`, to track network events [Technology Preview].<br>
 // - `PacketTranslation`, to enrich flows with packets translation information, such as Service NAT.<br>
 // - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs. [Unsupported (*)].<br>
-// - `UDNMapping`, to enable interfaces mapping to UDN. <br>
-// - `IPSec`, to track flows between nodes with IPsec encryption. <br>
+// - `UDNMapping`, to enable interfaces mapping to UDN.<br>
+// - `IPSec`, to track flows between nodes with IPsec encryption.<br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping";"IPSec"
 type AgentFeature string
 
@@ -1013,14 +1013,15 @@ type PrometheusQuerierManual struct {
 
 	// AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
 	// When used in OpenShift it can be left empty to use the Console API instead.
+	// [Unsupported (*)].
 	// +optional
-	AlertManager AlertManagerQuerierManual `json:"alertManager"`
+	AlertManager *AlertManagerQuerierManual `json:"alertManager"`
 }
 
 // `AlertManagerQuerierManual` defines the full connection parameters to Prometheus AlertManager.
 type AlertManagerQuerierManual struct {
-	//+kubebuilder:default:="http://prometheus:9090"
 	// `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.
+	// +required
 	URL string `json:"url,omitempty"`
 
 	// TLS client configuration for Prometheus AlertManager URL.
@@ -1078,6 +1079,11 @@ type FlowCollectorConsolePlugin struct {
 	//+kubebuilder:default:=true
 	// Enables the console plugin deployment.
 	Enable *bool `json:"enable,omitempty"`
+
+	// Deploy as a standalone console, instead of a plugin of the OpenShift Console.
+	// This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
+	// [Unsupported (*)].
+	Standalone bool `json:"standalone,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=1

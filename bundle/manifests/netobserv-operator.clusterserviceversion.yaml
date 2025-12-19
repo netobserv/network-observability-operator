@@ -542,6 +542,8 @@ spec:
         path: consolePlugin.portNaming.enable
       - displayName: Port names
         path: consolePlugin.portNaming.portNames
+      - displayName: Standalone
+        path: consolePlugin.standalone
       - displayName: Unmanaged replicas
         path: consolePlugin.unmanagedReplicas
       - displayName: Address

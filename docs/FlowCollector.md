@@ -3079,6 +3079,15 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>standalone</b></td>
+        <td>boolean</td>
+        <td>
+          Deploy as a standalone console, instead of a plugin of the OpenShift Console.
+This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
+[Unsupported (*)].<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>unmanagedReplicas</b></td>
         <td>boolean</td>
         <td>
@@ -12220,7 +12229,8 @@ Prometheus configuration for `Manual` mode.
         <td>object</td>
         <td>
           AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
-When used in OpenShift it can be left empty to use the Console API instead.<br/>
+When used in OpenShift it can be left empty to use the Console API instead.
+[Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12257,6 +12267,7 @@ When used in OpenShift it can be left empty to use the Console API instead.<br/>
 
 AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
 When used in OpenShift it can be left empty to use the Console API instead.
+[Unsupported (*)].
 
 <table>
     <thead>
@@ -12268,19 +12279,17 @@ When used in OpenShift it can be left empty to use the Console API instead.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertls">tls</a></b></td>
-        <td>object</td>
-        <td>
-          TLS client configuration for Prometheus AlertManager URL.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>url</b></td>
         <td>string</td>
         <td>
           `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.<br/>
-          <br/>
-            <i>Default</i>: http://prometheus:9090<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for Prometheus AlertManager URL.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
