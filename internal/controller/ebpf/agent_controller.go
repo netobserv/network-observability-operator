@@ -38,6 +38,8 @@ const (
 	envFlowsTargetHost            = "TARGET_HOST"
 	envFlowsTargetPort            = "TARGET_PORT"
 	envTargetTLSCACertPath        = "TARGET_TLS_CA_CERT_PATH"
+	envGRPCReconnect              = "GRPC_RECONNECT_TIMER"
+	envGRPCReconnectRnd           = "GRPC_RECONNECT_TIMER_RANDOMIZATION"
 	envSampling                   = "SAMPLING"
 	envExport                     = "EXPORT"
 	envKafkaBrokers               = "KAFKA_BROKERS"
@@ -496,14 +498,19 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 				caPath := c.volumes.AddCACertificate(&tlsCfg, "svc-certs")
 				config = append(config, corev1.EnvVar{Name: envTargetTLSCACertPath, Value: caPath})
 			}
-			config = append(config, corev1.EnvVar{
-				Name: envFlowsTargetHost,
-				// NB: trailing dot (...local.) is a DNS optimization for exact name match without extra search
-				Value: fmt.Sprintf("%s.%s.svc.cluster.local.", constants.FLPName, c.Namespace),
-			}, corev1.EnvVar{
-				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(*advancedConfig.Port)),
-			})
+			config = append(config,
+				corev1.EnvVar{
+					Name: envFlowsTargetHost,
+					// NB: trailing dot (...local.) is a DNS optimization for exact name match without extra search
+					Value: fmt.Sprintf("%s.%s.svc.cluster.local.", constants.FLPName, c.Namespace),
+				},
+				corev1.EnvVar{
+					Name:  envFlowsTargetPort,
+					Value: strconv.Itoa(int(*advancedConfig.Port)),
+				},
+				corev1.EnvVar{Name: envGRPCReconnect, Value: "5m"},
+				corev1.EnvVar{Name: envGRPCReconnectRnd, Value: "30s"},
+			)
 		}
 	}
 
