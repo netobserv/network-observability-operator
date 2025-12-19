@@ -151,22 +151,6 @@ func TestRecordingRuleNames(t *testing.T) {
 			expected: "netobserv:health:netpol_denied:workload:dst:rate2m",
 		},
 
-		// Cross AZ
-		{
-			name:     "CrossAZ no grouping",
-			template: flowslatest.HealthRuleCrossAZ,
-			groupBy:  "",
-			side:     asSource,
-			expected: "netobserv:health:cross_az:rate2m",
-		},
-		{
-			name:     "CrossAZ by Namespace",
-			template: flowslatest.HealthRuleCrossAZ,
-			groupBy:  flowslatest.GroupByNamespace,
-			side:     asSource,
-			expected: "netobserv:health:cross_az:namespace:src:rate2m",
-		},
-
 		// Latency High Trend
 		{
 			name:     "LatencyHighTrend no grouping",
@@ -214,7 +198,6 @@ func TestToSnakeCase(t *testing.T) {
 		{"LatencyHighTrend", "latency_high_trend"},
 		{"ExternalEgressHighTrend", "external_egress_high_trend"},
 		{"ExternalIngressHighTrend", "external_ingress_high_trend"},
-		{"CrossAZ", "cross_az"},
 		{"LokiError", "loki_error"},
 		{"NoFlows", "no_flows"},
 	}

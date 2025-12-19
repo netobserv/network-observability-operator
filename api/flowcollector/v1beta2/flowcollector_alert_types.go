@@ -35,7 +35,6 @@ const (
 	HealthRuleDNSNxDomain              HealthRuleTemplate = "DNSNxDomain"
 	HealthRuleExternalEgressHighTrend  HealthRuleTemplate = "ExternalEgressHighTrend"
 	HealthRuleExternalIngressHighTrend HealthRuleTemplate = "ExternalIngressHighTrend"
-	HealthRuleCrossAZ                  HealthRuleTemplate = "CrossAZ"
 
 	// Backward compatibility aliases for Alert* constants
 	AlertPacketDropsByKernel      = HealthRulePacketDropsByKernel
@@ -47,7 +46,6 @@ const (
 	AlertDNSNxDomain              = HealthRuleDNSNxDomain
 	AlertExternalEgressHighTrend  = HealthRuleExternalEgressHighTrend
 	AlertExternalIngressHighTrend = HealthRuleExternalIngressHighTrend
-	AlertCrossAZ                  = HealthRuleCrossAZ
 
 	GroupByNode      HealthRuleGroupBy = "Node"
 	GroupByNamespace HealthRuleGroupBy = "Namespace"
@@ -60,10 +58,10 @@ const (
 type FLPHealthRule struct {
 	// Health rule template name.
 	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
 	// Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
 	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"DNSNxDomain";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"CrossAZ"
+	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"DNSNxDomain";"ExternalEgressHighTrend";"ExternalIngressHighTrend"
 	// +required
 	Template HealthRuleTemplate `json:"template,omitempty"`
 

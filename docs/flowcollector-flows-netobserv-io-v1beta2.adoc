@@ -3079,7 +3079,7 @@ More information on alerts: https://github.com/netobserv/network-observability-o
 | `array (string)`
 | `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
 Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 
 | `includeList`
@@ -3139,7 +3139,7 @@ Required::
 | `string`
 | Alert template name.
 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `CrossAZ`.
+`LatencyHighTrend`, `DNSErrors`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
 More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 
 | `variants`
