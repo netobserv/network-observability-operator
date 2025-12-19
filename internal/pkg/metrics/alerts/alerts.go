@@ -274,7 +274,7 @@ func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
 		filterForExternal = `SrcSubnetLabel=~"|EXT:.*",SrcK8S_Namespace="",SrcK8S_OwnerName=""`
 		trafficLinkFilter = `src_subnet_label="",EXT:`
 	}
-	offset, duration := rb.alert.GetTrendParams()
+	offset, duration := rb.healthRule.GetTrendParams()
 	description := fmt.Sprintf(
 		"NetObserv is detecting external %s traffic increased by more than %s%%%s, compared to baseline (offset: %s). %s",
 		direction,
@@ -288,9 +288,10 @@ func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
 	filter := rb.buildLabelFilter(filterForExternal)
 	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
 	baselineRate := promQLRateFromMetric(baseline, "", filter, duration, " offset "+offset)
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	baselineSumBy := sumBy(baselineRate, rb.alert.GroupBy, rb.side, "")
-	promql := baselineIncreasePromQL(metricsSumBy, baselineSumBy, rb.threshold, rb.upperThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	baselineSumBy := sumBy(baselineRate, rb.healthRule.GroupBy, rb.side, "")
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := baselineIncreasePromQL(metricsSumBy, baselineSumBy, rb.threshold, rb.upperThreshold, isRecording)
 
 	// trending comparison are on an open scale; but in the health page, we need a closed scale to compute the score
 	// let's set an upper bound to max(5*threshold, 100) so score can be computed after clamping
