@@ -364,11 +364,11 @@ func (v *validator) validateFLPAlerts() {
 
 func (v *validator) isFLPHealthRuleGroupBySupported(template HealthRuleTemplate, variant *HealthRuleVariant) bool {
 	switch template {
-	case AlertPacketDropsByDevice:
+	case HealthRulePacketDropsByDevice:
 		return variant.GroupBy != GroupByWorkload
-	case AlertIPsecErrors:
+	case HealthRuleIPsecErrors:
 		return variant.GroupBy != GroupByWorkload && variant.GroupBy != GroupByNamespace
-	case AlertPacketDropsByKernel, AlertDNSErrors, AlertDNSNxDomain, AlertExternalEgressHighTrend, AlertExternalIngressHighTrend, AlertLatencyHighTrend, AlertNetpolDenied:
+	case HealthRulePacketDropsByKernel, HealthRuleDNSErrors, HealthRuleDNSNxDomain, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend, HealthRuleLatencyHighTrend, HealthRuleNetpolDenied:
 		return true
 	case AlertLokiError, AlertNoFlows: // not applicable
 		return false
@@ -415,27 +415,27 @@ func GetFirstRequiredMetrics(anyRequired, actual []string) string {
 func GetElligibleMetricsForAlert(template HealthRuleTemplate, alertDef *HealthRuleVariant) ([]string, []string) {
 	var metricPatterns, totalMetricPatterns []string
 	switch template {
-	case AlertPacketDropsByKernel:
+	case HealthRulePacketDropsByKernel:
 		metricPatterns = []string{"%s_drop_packets_total"}
 		totalMetricPatterns = []string{"%s_ingress_packets_total", "%s_egress_packets_total"}
-	case AlertIPsecErrors:
+	case HealthRuleIPsecErrors:
 		return []string{"node_ipsec_flows_total"}, []string{"node_to_node_ingress_flows_total"}
-	case AlertDNSErrors, AlertDNSNxDomain:
+	case HealthRuleDNSErrors, HealthRuleDNSNxDomain:
 		metricPatterns = []string{`%s_dns_latency_seconds`}
 		totalMetricPatterns = []string{"%s_dns_latency_seconds"}
-	case AlertExternalEgressHighTrend:
+	case HealthRuleExternalEgressHighTrend:
 		metricPatterns = []string{`%s_egress_bytes_total`}
 		totalMetricPatterns = []string{`%s_egress_bytes_total`}
-	case AlertExternalIngressHighTrend:
+	case HealthRuleExternalIngressHighTrend:
 		metricPatterns = []string{`%s_ingress_bytes_total`}
 		totalMetricPatterns = []string{`%s_ingress_bytes_total`}
-	case AlertLatencyHighTrend:
+	case HealthRuleLatencyHighTrend:
 		metricPatterns = []string{`%s_rtt_seconds`}
 		totalMetricPatterns = []string{`%s_rtt_seconds`}
-	case AlertNetpolDenied:
+	case HealthRuleNetpolDenied:
 		metricPatterns = []string{`%s_network_policy_events_total`}
 		totalMetricPatterns = []string{"%s_flows_total"}
-	case AlertNoFlows, AlertLokiError, AlertPacketDropsByDevice:
+	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice:
 		// nothing
 		return nil, nil
 	}

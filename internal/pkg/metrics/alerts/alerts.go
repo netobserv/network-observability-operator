@@ -16,7 +16,7 @@ func alertNoFlows() *monitoringv1.Rule {
 
 	// Not receiving flows
 	return &monitoringv1.Rule{
-		Alert: string(flowslatest.HealthRuleNoFlows),
+		Alert: string(flowslatest.AlertNoFlows),
 		Annotations: map[string]string{
 			"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
 			"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
@@ -31,7 +31,7 @@ func alertLokiError() *monitoringv1.Rule {
 	d := monitoringv1.Duration("10m")
 
 	return &monitoringv1.Rule{
-		Alert: string(flowslatest.HealthRuleLokiError),
+		Alert: string(flowslatest.AlertLokiError),
 		Annotations: map[string]string{
 			"description": "NetObserv flowlogs-pipeline is dropping flows because of Loki errors, Loki may be down or having issues ingesting every flows. Please check Loki and flowlogs-pipeline logs.",
 			"summary":     "NetObserv flowlogs-pipeline is dropping flows because of Loki errors",

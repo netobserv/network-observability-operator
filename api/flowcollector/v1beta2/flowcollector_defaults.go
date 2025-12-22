@@ -47,7 +47,7 @@ var (
 	}
 	DefaultHealthRules = []FLPHealthRule{
 		{
-			Template: AlertPacketDropsByKernel,
+			Template: HealthRulePacketDropsByKernel,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -67,7 +67,7 @@ var (
 			},
 		},
 		{
-			Template: AlertPacketDropsByDevice,
+			Template: HealthRulePacketDropsByDevice,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -78,7 +78,7 @@ var (
 			},
 		},
 		{
-			Template: AlertIPsecErrors,
+			Template: HealthRuleIPsecErrors,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -94,7 +94,7 @@ var (
 			},
 		},
 		{
-			Template: AlertDNSErrors,
+			Template: HealthRuleDNSErrors,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -111,7 +111,7 @@ var (
 			},
 		},
 		{
-			Template: AlertDNSNxDomain,
+			Template: HealthRuleDNSNxDomain,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -123,7 +123,7 @@ var (
 			},
 		},
 		{
-			Template: AlertNetpolDenied,
+			Template: HealthRuleNetpolDenied,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -135,7 +135,7 @@ var (
 			},
 		},
 		{
-			Template: AlertLatencyHighTrend,
+			Template: HealthRuleLatencyHighTrend,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -148,7 +148,7 @@ var (
 			},
 		},
 		{
-			Template: AlertExternalEgressHighTrend,
+			Template: HealthRuleExternalEgressHighTrend,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -170,7 +170,7 @@ var (
 			},
 		},
 		{
-			Template: AlertExternalIngressHighTrend,
+			Template: HealthRuleExternalIngressHighTrend,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{

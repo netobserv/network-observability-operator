@@ -20,10 +20,8 @@ type AlertGroupBy = HealthRuleGroupBy
 
 const (
 	// Alert-only templates (cannot be used as recording rules)
-	AlertNoFlows        AlertTemplate      = "NetObservNoFlows"
-	AlertLokiError      AlertTemplate      = "NetObservLokiError"
-	HealthRuleNoFlows   HealthRuleTemplate = AlertNoFlows   // Alias for backward compatibility
-	HealthRuleLokiError HealthRuleTemplate = AlertLokiError // Alias for backward compatibility
+	AlertNoFlows   AlertTemplate = "NetObservNoFlows"
+	AlertLokiError AlertTemplate = "NetObservLokiError"
 
 	// Health rule templates (can be either alerts or recording rules depending on mode)
 	HealthRulePacketDropsByKernel      HealthRuleTemplate = "PacketDropsByKernel"
@@ -35,17 +33,6 @@ const (
 	HealthRuleDNSNxDomain              HealthRuleTemplate = "DNSNxDomain"
 	HealthRuleExternalEgressHighTrend  HealthRuleTemplate = "ExternalEgressHighTrend"
 	HealthRuleExternalIngressHighTrend HealthRuleTemplate = "ExternalIngressHighTrend"
-
-	// Backward compatibility aliases for Alert* constants
-	AlertPacketDropsByKernel      = HealthRulePacketDropsByKernel
-	AlertPacketDropsByDevice      = HealthRulePacketDropsByDevice
-	AlertIPsecErrors              = HealthRuleIPsecErrors
-	AlertNetpolDenied             = HealthRuleNetpolDenied
-	AlertLatencyHighTrend         = HealthRuleLatencyHighTrend
-	AlertDNSErrors                = HealthRuleDNSErrors
-	AlertDNSNxDomain              = HealthRuleDNSNxDomain
-	AlertExternalEgressHighTrend  = HealthRuleExternalEgressHighTrend
-	AlertExternalIngressHighTrend = HealthRuleExternalIngressHighTrend
 
 	GroupByNode      HealthRuleGroupBy = "Node"
 	GroupByNamespace HealthRuleGroupBy = "Namespace"
@@ -215,7 +202,7 @@ func (g *FLPHealthRule) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 		if !spec.Agent.EBPF.IsNetworkEventsEnabled() {
 			return false, fmt.Sprintf("HealthRule %s requires the %s agent feature to be enabled", g.Template, NetworkEvents)
 		}
-	case HealthRuleNoFlows, HealthRuleLokiError, HealthRulePacketDropsByDevice, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend:
+	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend:
 		return true, ""
 	}
 	return true, ""

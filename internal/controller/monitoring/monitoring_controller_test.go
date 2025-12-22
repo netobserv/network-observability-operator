@@ -112,7 +112,7 @@ func ControllerSpecs() {
 				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
 					Metrics: flowslatest.FLPMetrics{
 						IncludeList:   &[]flowslatest.FLPMetric{},
-						DisableAlerts: []flowslatest.HealthRuleTemplate{flowslatest.HealthRuleLokiError},
+						DisableAlerts: []flowslatest.HealthRuleTemplate{flowslatest.AlertLokiError},
 					},
 				}
 			})

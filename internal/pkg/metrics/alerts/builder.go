@@ -65,11 +65,11 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 		}
 	}
 
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.HealthRuleNoFlows) {
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertNoFlows) {
 		r := alertNoFlows()
 		rules = append(rules, *r)
 	}
-	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.HealthRuleLokiError) {
+	if !slices.Contains(fc.Processor.Metrics.DisableAlerts, flowslatest.AlertLokiError) {
 		r := alertLokiError()
 		rules = append(rules, *r)
 	}
@@ -140,10 +140,10 @@ func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
 		return rb.externalTrend(false)
 	case flowslatest.HealthRuleExternalIngressHighTrend:
 		return rb.externalTrend(true)
-	case flowslatest.HealthRuleLokiError, flowslatest.HealthRuleNoFlows:
+	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error
 	}
-	return nil, fmt.Errorf("unknown alert template: %s", rb.template)
+	return nil, fmt.Errorf("unknown health rule template: %s", rb.template)
 }
 
 func (rb *ruleBuilder) additionalDescription() string {
