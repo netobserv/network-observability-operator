@@ -13,7 +13,7 @@ func promQLRateFromMetric(metric, suffix, filters, interval, offset string) prom
 	return promQLRate(fmt.Sprintf("rate(netobserv_%s%s%s[%s]%s)", metric, suffix, filters, interval, offset))
 }
 
-func sumBy(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, extraLabel string) string {
+func sumBy(promQL promQLRate, groupBy flowslatest.HealthRuleGroupBy, side srcOrDst, extraLabel string) string {
 	var nooLabels []string
 	var labelsOut []string
 	switch groupBy {
@@ -49,12 +49,12 @@ func sumBy(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, e
 	return fmt.Sprintf("sum(%s)", promQL)
 }
 
-func histogramQuantile(promQL promQLRate, groupBy flowslatest.AlertGroupBy, side srcOrDst, quantile string) string {
+func histogramQuantile(promQL promQLRate, groupBy flowslatest.HealthRuleGroupBy, side srcOrDst, quantile string) string {
 	sumQL := sumBy(promQL, groupBy, side, "le")
 	return fmt.Sprintf("histogram_quantile(%s, %s)", quantile, sumQL)
 }
 
-func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperThreshold, lowVolumeThreshold string) string {
+func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperThreshold, lowVolumeThreshold string, isRecording bool) string {
 	var lowVolumeThresholdPart, upperThresholdPart string
 	if lowVolumeThreshold != "" {
 		lowVolumeThresholdPart = " > " + lowVolumeThreshold
@@ -63,6 +63,17 @@ func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperTh
 		upperThresholdPart = " < " + upperThreshold
 	}
 
+	// For recording rules, return only the calculation without comparison
+	if isRecording {
+		return fmt.Sprintf(
+			"100 * (%s) / (%s%s)",
+			promQLMetricSum,
+			promQLTotalSum,
+			lowVolumeThresholdPart,
+		)
+	}
+
+	// For alert rules, include the threshold comparison
 	return fmt.Sprintf(
 		"100 * (%s) / (%s%s) > %s%s",
 		promQLMetricSum,
@@ -73,12 +84,23 @@ func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperTh
 	)
 }
 
-func baselineIncreasePromQL(promQLMetric, promQLBaseline string, threshold, upperThreshold string) string {
+func baselineIncreasePromQL(promQLMetric, promQLBaseline string, threshold, upperThreshold string, isRecording bool) string {
 	var upperThresholdPart string
 	if upperThreshold != "" {
 		upperThresholdPart = " < " + upperThreshold
 	}
 
+	// For recording rules, return only the calculation without comparison
+	if isRecording {
+		return fmt.Sprintf(
+			"100 * ((%s) - (%s)) / (%s)",
+			promQLMetric,
+			promQLBaseline,
+			promQLBaseline,
+		)
+	}
+
+	// For alert rules, include the threshold comparison
 	return fmt.Sprintf(
 		"100 * ((%s) - (%s)) / (%s) > %s%s",
 		promQLMetric,

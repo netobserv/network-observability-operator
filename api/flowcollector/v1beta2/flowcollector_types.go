@@ -585,12 +585,13 @@ type FLPMetrics struct {
 	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
 	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
-	DisableAlerts []AlertTemplate `json:"disableAlerts"`
+	DisableAlerts []HealthRuleTemplate `json:"disableAlerts"`
 
-	// `alerts` is a list of alerts to be created for Prometheus AlertManager, organized by templates and variants.
-	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+	// `healthRules` is a list of health rules to be created for Prometheus, organized by templates and variants.
+	// Each health rule can be configured to generate either alerts or recording rules based on the mode field.
+	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
 	// +optional
-	Alerts *[]FLPAlert `json:"alerts"`
+	HealthRules *[]FLPHealthRule `json:"healthRules"`
 }
 
 type FLPLogTypes string
