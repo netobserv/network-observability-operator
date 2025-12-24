@@ -110,7 +110,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 func getBuilder(spec *flowslatest.FlowCollectorSpec, lk *helper.LokiConfig) builder {
 	info := reconcilers.Common{Namespace: testNamespace, Loki: lk, ClusterInfo: &cluster.Info{}}
 	b := newBuilder(info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: testImage}, status.Instance{}), spec, constants.PluginName)
-	_, _, _ = b.configMap(context.Background()) // build configmap to update builder's volumes
+	_, _, _ = b.configMap(context.Background(), nil) // build configmap to update builder's volumes
 	return b
 }
 
@@ -223,8 +223,8 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 	}
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin}
 	builder := getBuilder(&spec, &loki)
-	old, _, _ := builder.configMap(context.Background())
-	nEw, _, _ := builder.configMap(context.Background())
+	old, _, _ := builder.configMap(context.Background(), nil)
+	nEw, _, _ := builder.configMap(context.Background(), nil)
 	assert.Equal(old.Data, nEw.Data)
 
 	// update loki
@@ -239,7 +239,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 		}},
 	}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -247,7 +247,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 	loki.LokiManualParams.StatusURL = "http://loki.status:3100/"
 	loki.LokiManualParams.StatusTLS.Enable = true
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -258,7 +258,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 		CertFile: "status-ca.crt",
 	}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -270,7 +270,7 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 		CertKey:  "tls.key",
 	}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 }
 
@@ -286,8 +286,8 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 	loki := helper.NewLokiConfig(&lokiSpec, "any")
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder := getBuilder(&spec, &loki)
-	old, _, _ := builder.configMap(context.Background())
-	nEw, _, _ := builder.configMap(context.Background())
+	old, _, _ := builder.configMap(context.Background(), nil)
+	nEw, _, _ := builder.configMap(context.Background(), nil)
 	assert.Equal(old.Data, nEw.Data)
 
 	// update lokistack name
@@ -296,7 +296,7 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 	old = nEw
 
@@ -306,7 +306,7 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = getBuilder(&spec, &loki)
-	nEw, _, _ = builder.configMap(context.Background())
+	nEw, _, _ = builder.configMap(context.Background(), nil)
 	assert.NotEqual(old.Data, nEw.Data)
 }
 
@@ -331,7 +331,7 @@ func TestConfigMapContent(t *testing.T) {
 		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
 	}
 	builder := getBuilder(&spec, &loki)
-	cm, _, err := builder.configMap(context.Background())
+	cm, _, err := builder.configMap(context.Background(), nil)
 	assert.NotNil(cm)
 	assert.Nil(err)
 
