@@ -15,7 +15,9 @@ import (
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
+	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -29,17 +31,18 @@ const (
 )
 
 type Info struct {
-	apisMap          map[string]bool
-	apisMapLock      sync.RWMutex
-	id               string
-	openShiftVersion *semver.Version
-	cni              NetworkType
-	nbNodes          uint16
-	ready            bool
-	readinessLock    sync.RWMutex
-	dcl              *discovery.DiscoveryClient
-	cl               client.Client
-	onRefresh        func()
+	apisMap                     map[string]bool
+	apisMapLock                 sync.RWMutex
+	id                          string
+	openShiftVersion            *semver.Version
+	cni                         NetworkType
+	nbNodes                     uint16
+	hasPromServiceDiscoveryRole bool
+	ready                       bool
+	readinessLock               sync.RWMutex
+	dcl                         *discovery.DiscoveryClient
+	cl                          client.Client
+	onRefresh                   func()
 }
 
 var (
@@ -92,6 +95,7 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 	defer c.apisMapLock.Unlock()
 	c.apisMap = apisMap
 
+	log.Info("API detection finished", "apis", apisMap)
 	return nil
 }
 
@@ -120,6 +124,7 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 	var openShiftVersion *semver.Version
 	var cni NetworkType
 	var nbNodes uint16
+	var hasPromServiceDiscoveryRole bool
 	if c.IsOpenShift() {
 		// Fetch cluster ID, version and CNI
 		key := client.ObjectKey{Name: "version"}
@@ -143,24 +148,40 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 		}
 		cni = NetworkType(network.Spec.NetworkType)
 	}
+	if c.HasSvcMonitor() && c.HasEndpointSlices() {
+		// Check whether servicemonitor spec.serviceDiscoveryRole exists
+		crd := apix.CustomResourceDefinition{}
+		if err := c.cl.Get(ctx, types.NamespacedName{Name: "servicemonitors.monitoring.coreos.com"}, &crd); err != nil {
+			return fmt.Errorf("could not check for ServiceMonitor serviceDiscoveryRole presence: %w", err)
+		}
+		hasPromServiceDiscoveryRole = hasCRDProperty(ctx, &crd, "v1", "spec.serviceDiscoveryRole")
+	}
 
 	l := v1.NodeList{}
 	if err := c.cl.List(ctx, &l); err != nil {
 		return fmt.Errorf("could not retrieve number of nodes: %w", err)
 	}
 	nbNodes = uint16(len(l.Items))
-	c.setInfo(id, openShiftVersion, cni, nbNodes)
+	c.setInfo(id, openShiftVersion, cni, nbNodes, hasPromServiceDiscoveryRole)
+	log.FromContext(ctx).Info("Cluster info fetched",
+		"id", id,
+		"openShiftVersion", openShiftVersion,
+		"cni", cni,
+		"nbNodes", nbNodes,
+		"hasPromServiceDiscoveryRole", hasPromServiceDiscoveryRole,
+	)
 
 	return nil
 }
 
-func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni NetworkType, nbNodes uint16) {
+func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni NetworkType, nbNodes uint16, hasPromServiceDiscoveryRole bool) {
 	c.readinessLock.Lock()
 	defer c.readinessLock.Unlock()
 	c.id = id
 	c.openShiftVersion = openShiftVersion
 	c.cni = cni
 	c.nbNodes = nbNodes
+	c.hasPromServiceDiscoveryRole = hasPromServiceDiscoveryRole
 	c.ready = true
 }
 
@@ -215,6 +236,10 @@ func (c *Info) GetNbNodes() (uint16, error) {
 		return 0, errors.New("cluster info not collected")
 	}
 	return c.nbNodes, nil
+}
+
+func (c *Info) HasPromServiceDiscoveryRole() bool {
+	return c.hasPromServiceDiscoveryRole
 }
 
 func (c *Info) IsOpenShiftVersionLessThan(v string) (bool, string, error) {
@@ -286,4 +311,39 @@ func (c *Info) HasEndpointSlices() bool {
 	c.apisMapLock.RLock()
 	defer c.apisMapLock.RUnlock()
 	return c.apisMap[endpointSlices]
+}
+
+// hasCRDProperty returns property presence for any CRD, given a dot-separated path such as "spec.foo.bar"
+// version is the CRD version; leave empty to check all versions
+func hasCRDProperty(ctx context.Context, crd *apix.CustomResourceDefinition, version, path string) bool {
+	log := log.FromContext(ctx)
+	parts := strings.Split(path, ".")
+	for i := range crd.Spec.Versions {
+		v := &crd.Spec.Versions[i]
+		if version != "" && version != v.Name {
+			continue
+		}
+		if found := getCRDPropertyInVersion(v, parts); found != nil {
+			log.Info("CRD property found", "path", path)
+			return true
+		}
+	}
+	log.Info("CRD property not found", "path", path)
+	return false
+}
+
+func getCRDPropertyInVersion(v *apix.CustomResourceDefinitionVersion, parts []string) *apix.JSONSchemaProps {
+	if v.Schema != nil && v.Schema.OpenAPIV3Schema != nil {
+		props := v.Schema.OpenAPIV3Schema.Properties
+		var next apix.JSONSchemaProps
+		for _, search := range parts {
+			next, ok := props[search]
+			if !ok {
+				return nil
+			}
+			props = next.Properties
+		}
+		return &next
+	}
+	return nil
 }

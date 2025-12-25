@@ -338,9 +338,13 @@ func promService(desired *flowslatest.FlowCollectorSpec, svcName, namespace, app
 	return &svc
 }
 
-func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, namespace, appLabel, version string, isDownstream bool) *monitoringv1.ServiceMonitor {
+func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, namespace, appLabel, version string, isDownstream, useEndpointSlices bool) *monitoringv1.ServiceMonitor {
 	serverName := fmt.Sprintf("%s.%s.svc", svcName, namespace)
 	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&desired.Processor.Metrics.Server.TLS, serverName, isDownstream)
+	var sdRole *monitoringv1.ServiceDiscoveryRole
+	if useEndpointSlices {
+		sdRole = ptr.To(monitoringv1.EndpointSliceRole)
+	}
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      smName,
@@ -352,6 +356,7 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 			},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
+			ServiceDiscoveryRole: sdRole,
 			Endpoints: []monitoringv1.Endpoint{
 				{
 					Port:        prometheusPortName,

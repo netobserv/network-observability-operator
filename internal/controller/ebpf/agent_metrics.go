@@ -13,6 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 )
 
 func (c *AgentController) reconcileMetricsService(ctx context.Context, target *flowslatest.FlowCollectorEBPF) error {
@@ -34,7 +35,7 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 		return err
 	}
 	if c.ClusterInfo.HasSvcMonitor() {
-		serviceMonitor := c.promServiceMonitoring(target)
+		serviceMonitor := c.promServiceMonitoring(target, c.ClusterInfo.HasPromServiceDiscoveryRole())
 		if err := reconcilers.GenericReconcile(ctx, c.Managed, &c.Client, c.serviceMonitor,
 			serviceMonitor, &report, helper.ServiceMonitorChanged); err != nil {
 			return err
@@ -81,9 +82,13 @@ func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *co
 	return &svc
 }
 
-func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollectorEBPF) *monitoringv1.ServiceMonitor {
+func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollectorEBPF, useEndpointSlices bool) *monitoringv1.ServiceMonitor {
 	serverName := fmt.Sprintf("%s.%s.svc", constants.EBPFAgentMetricsSvcName, c.PrivilegedNamespace())
 	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&target.Metrics.Server.TLS, serverName, c.IsDownstream)
+	var sdRole *monitoringv1.ServiceDiscoveryRole
+	if useEndpointSlices {
+		sdRole = ptr.To(monitoringv1.EndpointSliceRole)
+	}
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentMetricsSvcMonitoringName,
@@ -94,6 +99,7 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 			},
 		},
 		Spec: monitoringv1.ServiceMonitorSpec{
+			ServiceDiscoveryRole: sdRole,
 			Endpoints: []monitoringv1.Endpoint{
 				{
 					Port:      "metrics",

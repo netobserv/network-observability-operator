@@ -61,11 +61,6 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	}
 	if mgr.ClusterInfo.HasConsolePlugin() {
 		builder.Owns(&osv1.ConsolePlugin{}, reconcilers.UpdateOrDeleteOnlyPred)
-	} else {
-		log.Info("Console not detected: the console plugin is not available")
-	}
-	if !mgr.ClusterInfo.HasCNO() {
-		log.Info("CNO not detected: using ovnKubernetes config and reconciler")
 	}
 
 	ctrl, err := builder.Build(&r)
