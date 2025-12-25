@@ -42,9 +42,39 @@ operator:
   #       - "true"
 # Dependency toggle condition value
 install:
+  prom-stack: false
   prom: false
   loki: false
 # Subcharts config
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      ruleSelector:
+        matchLabels:
+          part-of: netobserv-operator
+      serviceMonitorSelector:
+        matchLabels:
+          part-of: netobserv-operator
+  defaultRules:
+    create: false
+  grafana:
+    enabled: false
+  kubeApiServer:
+    enabled: false
+  kubelet:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  coreDns:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
+  kubeStateMetrics:
+    enabled: false
 prometheus:
   server:
     global:

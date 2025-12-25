@@ -212,7 +212,7 @@ endif
 	@echo -e "\n==> Waiting for operator redeployed..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
 	kubectl wait -n $(OPERATOR_NS) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
-	oc patch flowcollector cluster --type='json' -p '[{"op": "add", "path": "/spec/consolePlugin/advanced/env", "value": {"TEST_CONSOLE": "true"}}]'
+	oc patch flowcollector cluster --type='json' -p '[{"op": "add", "path": "/spec/consolePlugin/standalone", "value": true}]'
 	@echo -e "\n==> Waiting for console-plugin pod..."
 	kubectl delete -n $(NAMESPACE) deployment netobserv-plugin
 	while ! kubectl get deployment netobserv-plugin; do sleep 1; done

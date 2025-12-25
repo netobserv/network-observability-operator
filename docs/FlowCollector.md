@@ -3079,6 +3079,15 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>standalone</b></td>
+        <td>boolean</td>
+        <td>
+          Deploy as a standalone console, instead of a plugin of the OpenShift Console.
+This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
+[Unsupported (*)].<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>unmanagedReplicas</b></td>
         <td>boolean</td>
         <td>
@@ -12216,6 +12225,15 @@ Prometheus configuration for `Manual` mode.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanager">alertManager</a></b></td>
+        <td>object</td>
+        <td>
+          AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+When used in OpenShift it can be left empty to use the Console API instead.
+[Unsupported (*)].<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>forwardUserToken</b></td>
         <td>boolean</td>
         <td>
@@ -12236,6 +12254,215 @@ Prometheus configuration for `Manual` mode.
           `url` is the address of an existing Prometheus service to use for querying metrics.<br/>
           <br/>
             <i>Default</i>: http://prometheus:9090<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanual)</sup></sup>
+
+
+
+AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+When used in OpenShift it can be left empty to use the Console API instead.
+[Unsupported (*)].
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for Prometheus AlertManager URL.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager.tls
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualalertmanager)</sup></sup>
+
+
+
+TLS client configuration for Prometheus AlertManager URL.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualalertmanagertls)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualalertmanagertls)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

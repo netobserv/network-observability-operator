@@ -68,8 +68,6 @@ const (
 	HostNetworkRole        ClusterRoleName = "netobserv-hostnetwork"
 	ConsoleTokenReviewRole ClusterRoleName = "netobserv-token-review"
 	ConfigWatcherRole      RoleName        = "netobserv-config-watcher"
-
-	EnvTestConsole = "TEST_CONSOLE"
 )
 
 var FlowCollectorName = types.NamespacedName{Name: "cluster"}
