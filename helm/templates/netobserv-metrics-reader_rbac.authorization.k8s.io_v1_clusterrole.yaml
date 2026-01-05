@@ -10,3 +10,20 @@ rules:
   - pods
   verbs:
   - create
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - prometheuses
+  resourceNames:
+  - k8s
+  verbs:
+  - get
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - prometheuses/api
+  resourceNames:
+  - k8s
+  verbs:
+  - get
+  - create

@@ -38,6 +38,23 @@ rules:
   - pods
   verbs:
   - create  # for POST queries on Thanos (actually for reading)
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - prometheuses
+  resourceNames:
+  - k8s
+  verbs:
+  - get
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - prometheuses/api
+  resourceNames:
+  - k8s
+  verbs:
+  - get
+  - create  # for POST queries
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

@@ -142,14 +142,27 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 		return r.CreateOwned(ctx, builder.serviceAccount(name))
 	} // update not needed for now
 
-	binding := resources.GetClusterRoleBinding(
+	// Token review permission for console auth
+	tokenReviewBinding := resources.GetClusterRoleBinding(
 		r.Namespace,
 		constants.PluginShortName,
 		name,
 		name,
 		constants.ConsoleTokenReviewRole,
 	)
-	return r.ReconcileClusterRoleBinding(ctx, binding)
+	if err := r.ReconcileClusterRoleBinding(ctx, tokenReviewBinding); err != nil {
+		return err
+	}
+
+	// Metrics reader permission for Prometheus queries (multi-tenancy support)
+	metricsReaderBinding := resources.GetClusterRoleBinding(
+		r.Namespace,
+		constants.PluginShortName,
+		name,
+		name,
+		constants.PromReaderRole,
+	)
+	return r.ReconcileClusterRoleBinding(ctx, metricsReaderBinding)
 }
 
 func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec, name, displayName string) error {
