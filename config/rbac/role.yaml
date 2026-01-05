@@ -198,6 +198,23 @@ rules:
   - create
 - apiGroups:
   - monitoring.coreos.com
+  resourceNames:
+  - k8s
+  resources:
+  - prometheuses
+  verbs:
+  - get
+- apiGroups:
+  - monitoring.coreos.com
+  resourceNames:
+  - k8s
+  resources:
+  - prometheuses/api
+  verbs:
+  - create
+  - get
+- apiGroups:
+  - monitoring.coreos.com
   resources:
   - prometheusrules
   - servicemonitors

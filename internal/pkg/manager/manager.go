@@ -32,6 +32,8 @@ import (
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=list;create;update;watch
 //+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
+//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses,resourceNames=k8s,verbs=get
+//+kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheuses/api,resourceNames=k8s,verbs=get;create
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions;networks,verbs=get;list;watch
 //+kubebuilder:rbac:groups=loki.grafana.com,resources=network,resourceNames=logs,verbs=create
 //+kubebuilder:rbac:groups=loki.grafana.com,resources=lokistacks,verbs=get;list;watch

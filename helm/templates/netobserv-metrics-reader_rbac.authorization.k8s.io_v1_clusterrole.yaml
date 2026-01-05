@@ -12,18 +12,18 @@ rules:
   - create
 - apiGroups:
   - monitoring.coreos.com
-  resources:
-  - prometheuses
   resourceNames:
   - k8s
+  resources:
+  - prometheuses
   verbs:
   - get
 - apiGroups:
   - monitoring.coreos.com
-  resources:
-  - prometheuses/api
   resourceNames:
   - k8s
+  resources:
+  - prometheuses/api
   verbs:
   - get
   - create
