@@ -10,12 +10,15 @@ Best practices for AI coding agents on NetObserv Operator.
 (operator-sdk)
 
 **Components:**
-- **[eBPF Agent](https://github.com/netobserv/netobserv-ebpf-agent)**: Network flow generation from packets (DaemonSet)
-- **[flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)**: Flow collection, enrichment, export (Deployment/StatefulSet)
-- **[Console Plugin](https://github.com/netobserv/network-observability-console-plugin)**: OpenShift visualization (optional)
+- **[eBPF Agent](https://github.com/netobserv/netobserv-ebpf-agent)**: Network
+  flow generation from packets (DaemonSet)
+- **[flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)**: Flow
+  collection, enrichment, export (Deployment/StatefulSet) -
+  **[Console Plugin](https://github.com/netobserv/network-observability-console-plugin)**:
+  OpenShift visualization (optional)
 - **CRD**: `FlowCollector` v1beta2 - **single cluster-wide resource named
   `cluster`**
-- **Integrations**: Loki, Prometheus, Kafka (optional)
+- **Integrations**: Loki (optional), Prometheus, Kafka (optional)
 
 **Key Directories:**
 - `api/flowcollector/v1beta2/`: CRD definitions
@@ -78,8 +81,7 @@ Add spec.agent.ebpf.newFeature (bool, default: false):
 1. Update api/flowcollector/v1beta2/flowcollector_types.go (+kubebuilder markers)
 2. Modify internal/controller/ to use field
 3. Add unit tests
-4. Update docs/FlowCollector.md
-5. Run make update-bundle
+4. Run make update-bundle
 ```
 
 ### Update Container Image
@@ -194,7 +196,7 @@ Before modifying workflows:
 
 **Essential Commands:**
 ```bash
-make build test                    # Build and test
+make build lint test                    # Build and test
 make update-bundle                 # After CRD changes
 make deploy-sample-cr              # Deploy FlowCollector
 make undeploy                      # Clean up
@@ -225,7 +227,7 @@ make undeploy                      # Clean up
 2. Plan: "Add field for drop reasons filtering - suggest changes"
 3. Implement: "Implement with validation and tests"
 4. Review: "Review for edge cases and errors"
-5. Document: "Update FlowCollector.md"
+5. Bundle: "Run make update-bundle to regenerate docs"
 6. Test: "Provide test scenarios"
 ```
 
