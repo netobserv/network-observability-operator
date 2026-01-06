@@ -10,10 +10,9 @@ Best practices for AI coding agents on NetObserv Operator.
 (operator-sdk)
 
 **Components:**
-- **eBPF Agent**: Network flow generation from packets (DaemonSet)
-- **flowlogs-pipeline**: Flow collection, enrichment, export
-  (Deployment/StatefulSet)
-- **Console Plugin**: OpenShift visualization (optional)
+- **[eBPF Agent](https://github.com/netobserv/netobserv-ebpf-agent)**: Network flow generation from packets (DaemonSet)
+- **[flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)**: Flow collection, enrichment, export (Deployment/StatefulSet)
+- **[Console Plugin](https://github.com/netobserv/network-observability-console-plugin)**: OpenShift visualization (optional)
 - **CRD**: `FlowCollector` v1beta2 - **single cluster-wide resource named
   `cluster`**
 - **Integrations**: Loki, Prometheus, Kafka (optional)
@@ -129,10 +128,10 @@ Review for:
 2. Error handling (wrap with context)
 3. Unit test coverage (Ginkgo/Gomega)
 4. CRD validation markers
-5. Bundle update needed?
-6. Documentation updates
-7. Backward compatibility
-8. Security (RBAC, TLS, input validation)
+5. Documentation updates
+6. Backward compatibility
+7. Security (RBAC, TLS, input validation)
+8. Performance and Resource utilization, including watching for memory usage impact for large scale clusters.
 ```
 
 ## Testing
@@ -178,10 +177,12 @@ Three deployment modes (check `spec.loki.mode`):
 Two types of configuration:
 - **Dynamic (FlowCollector CR)**: `spec.consolePlugin.*` - reconciled at runtime
   - `portNaming`, `quickFilters`, `logLevel`, `replicas`, etc.
-- **Static (Embedded YAML)**: [static-frontend-config.yaml](internal/controller/consoleplugin/config/static-frontend-config.yaml)
+- **Static (Embedded YAML)**:
+  [static-frontend-config.yaml](internal/controller/consoleplugin/config/static-frontend-config.yaml)
   - Table columns, filters, scopes, field definitions
   - Embedded via `go:embed` directive - requires rebuild
-  - Merged with dynamic config in [consoleplugin_objects.go](internal/controller/consoleplugin/consoleplugin_objects.go)
+  - Merged with dynamic config in
+    [consoleplugin_objects.go](internal/controller/consoleplugin/consoleplugin_objects.go)
 
 ### CI/CD
 Before modifying workflows:
@@ -212,11 +213,10 @@ make undeploy                      # Clean up
 - Sample:
   [config/samples/flows_v1beta2_flowcollector.yaml](config/samples/flows_v1beta2_flowcollector.yaml)
 
-**Version Info (v1.10.x):**
-- FlowCollector: v1beta2
+**API Stability:**
+- FlowCollector: v1beta2 (stable - backward compatible changes only)
 - Min OpenShift: 4.10+
 - Min Kubernetes: 1.23+
-- Operator-sdk: 1.28+
 
 ## AI Workflow Example
 
@@ -233,7 +233,7 @@ make undeploy                      # Clean up
 
 Before commit:
 1. AI code review
-2. `make build test`
+2. `make build lint test`
 3. `make update-bundle` (if CRD/CSV changed)
 4. Update docs
 5. Conventional commit messages
