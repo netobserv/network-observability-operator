@@ -81,6 +81,8 @@ func NewManager(
 		narrowcache.Secrets,
 		narrowcache.Services,
 		narrowcache.ServiceAccounts,
+		narrowcache.Endpoints,
+		narrowcache.EndpointSlices,
 	)
 	opts.Client = client.Options{Cache: narrowCache.ControllerRuntimeClientCacheOptions()}
 
