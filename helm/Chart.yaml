@@ -71,7 +71,7 @@ annotations:
 
 dependencies:
 - name: prometheus
-  version: "~27.23.0"
+  version: "~27.52.0"
   repository: https://prometheus-community.github.io/helm-charts
   condition: install.prom
 - name: loki-stack
