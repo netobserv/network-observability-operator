@@ -4,6 +4,10 @@ package maps
 var Maps = []string{
 	"direct_flows",
 	"aggregated_flows",
+	"aggregated_flows_dns",
+	"aggregated_flows_pkt_drop",
+	"aggregated_flows_network_events",
+	"aggregated_flows_xlat",
 	"additional_flow_metrics",
 	"packet_record",
 	"dns_flows",
