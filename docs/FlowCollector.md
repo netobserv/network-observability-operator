@@ -3023,7 +3023,7 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          `imagePullPolicy` is the Kubernetes pull policy for the image defined above<br/>
+          `imagePullPolicy` is the Kubernetes pull policy for the image defined above.<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -3033,7 +3033,7 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          `logLevel` for the console plugin backend<br/>
+          `logLevel` for the console plugin backend.<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -3043,7 +3043,7 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b><a href="#flowcollectorspecconsolepluginportnaming">portNaming</a></b></td>
         <td>object</td>
         <td>
-          `portNaming` defines the configuration of the port-to-service name translation<br/>
+          `portNaming` defines the configuration of the port-to-service name translation.<br/>
           <br/>
             <i>Default</i>: map[enable:true]<br/>
         </td>
@@ -3052,7 +3052,8 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b><a href="#flowcollectorspecconsolepluginquickfiltersindex">quickFilters</a></b></td>
         <td>[]object</td>
         <td>
-          `quickFilters` configures quick filter presets for the Console plugin<br/>
+          `quickFilters` configures quick filter presets for the Console plugin.
+Filters for external traffic assume the subnet labels are configured to distinguish internal and external traffic (see `spec.processor.subnetLabels`).<br/>
           <br/>
             <i>Default</i>: [map[default:true filter:map[flow_layer:"app"] name:Applications] map[filter:map[flow_layer:"infra"] name:Infrastructure] map[default:true filter:map[dst_kind:"Pod" src_kind:"Pod"] name:Pods network] map[filter:map[dst_kind:"Service"] name:Services network] map[filter:map[src_subnet_label:"",EXT:] name:External ingress] map[filter:map[dst_subnet_label:"",EXT:] name:External egress]]<br/>
         </td>
@@ -3073,7 +3074,7 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td>object</td>
         <td>
           `resources`, in terms of compute resources, required by this container.
-For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
         </td>
@@ -5832,7 +5833,7 @@ available.<br/>
 
 
 
-`portNaming` defines the configuration of the port-to-service name translation
+`portNaming` defines the configuration of the port-to-service name translation.
 
 <table>
     <thead>
@@ -5912,7 +5913,7 @@ for example, `filter: {"src_namespace": "namespace1,namespace2"}`.<br/>
 
 
 `resources`, in terms of compute resources, required by this container.
-For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.
 
 <table>
     <thead>
@@ -8389,7 +8390,7 @@ enriches them, generates metrics, and forwards them to the Loki persistence laye
         <td><b>addZone</b></td>
         <td>boolean</td>
         <td>
-          `addZone` allows availability zone awareness by labelling flows with their source and destination zones.
+          `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
 This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br/>
         </td>
         <td>false</td>
@@ -8549,7 +8550,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         <td><b><a href="#flowcollectorspecprocessorsubnetlabels">subnetLabels</a></b></td>
         <td>object</td>
         <td>
-          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.<br/>
         </td>
         <td>false</td>
@@ -12043,7 +12044,7 @@ This setting is ignored if `collectionMode` is different from `AllowList`.<br/>
 
 
 
-`subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+`subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 
 <table>
@@ -12059,8 +12060,10 @@ When a subnet matches the source or destination IP of a flow, a corresponding fi
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
-If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+          `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
+If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to configure manually labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12158,8 +12161,8 @@ Prometheus querying configuration, such as client settings, used in the Console 
         <td>enum</td>
         <td>
           `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-- Use `Manual` for a manual setup<br><br/>
+- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring.<br>
+- Use `Manual` for a manual setup.<br><br/>
           <br/>
             <i>Enum</i>: Manual, Auto<br/>
             <i>Default</i>: Auto<br/>
