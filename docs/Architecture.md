@@ -30,11 +30,35 @@ The components are:
   - It offers a live visualization via a TUI. For metrics, when used in OpenShift, it provides out-of-the-box dashboards.
   - Check out the blog post: [Network observability on demand](https://developers.redhat.com/articles/2024/09/17/network-observability-demand#what_is_the_network_observability_cli_).
 
+## Service deployment model
+
+When using the operator with `FlowCollector` `spec.deploymentModel` set to `Service`, agents are deployed per node (as `DaemonSets`), and FLP is a standard `Deployment` with a `Service`. FLP can be scaled using `spec.processor.consumerReplicas`.
+
+Note that Loki isn't managed by the operator and must be installed separately, such as with the Loki operator. Same goes with Prometheus and any custom receiver.
+
+<!-- You can use https://mermaid.live/ to test it -->
+
+```mermaid
+flowchart TD
+    subgraph "for each node"
+        A[eBPF Agent]
+    end
+    A -->|flows| F[FLP]
+    F -. exports .-> E[(Kafka/Otlp/IPFIX)]
+    F -->|raw logs| L[(Loki)]
+    F -->|metrics| P[(Prometheus)]
+    C[Console plugin] <-->|fetches| L
+    C <-->|fetches| P
+    O[Operator] -->|manages| A
+    O -->|manages| F
+    O -->|manages| C
+```
+
 ## Direct deployment model
 
 When using the operator with `FlowCollector` `spec.deploymentModel` set to `Direct`, agents and FLP are both deployed per node (as `DaemonSets`). This is perfect for an assessment of the technology, suitable on small clusters, but isn't very memory efficient in large clusters as every instance of FLP ends up caching the same cluster information, which can be huge.
 
-Note that Loki isn't managed by the operator and must be installed separately, such as with the Loki operator. Same goes with Prometheus and any custom receiver.
+Like in other modes, data stores aren't managed by the operator.
 
 <!-- You can use https://mermaid.live/ to test it -->
 
@@ -57,7 +81,7 @@ flowchart TD
 
 When using the operator with `FlowCollector` `spec.deploymentModel` set to `Kafka`, only the agents are deployed per node as a `DaemonSet`. FLP becomes a Kafka consumer that can be scaled independently. This is the recommended mode for large clusters, and is a more robust/resilient solution.
 
-Like in `Direct` mode, data stores aren't managed by the operator. The same applies to the Kafka brokers and stores. You can check the Strimzi operator for that.
+Like in other modes, data stores aren't managed by the operator. The same applies to the Kafka brokers and stores. You can check the Strimzi operator for that.
 
 <!-- You can use https://mermaid.live/ to test it -->
 
