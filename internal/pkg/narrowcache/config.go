@@ -6,6 +6,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	discoveryv1 "k8s.io/api/discovery/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -233,6 +234,42 @@ var (
 			sa := obj.(*corev1.ServiceAccount)
 			sa.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			return sa
+		},
+	}
+	Endpoints = GVKInfo{
+		//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
+		Obj: &corev1.Endpoints{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.CoreV1().Endpoints(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.CoreV1().Endpoints(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
+			e := obj.(*corev1.Endpoints)
+			e.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
+			e.Subsets = []corev1.EndpointSubset{}
+			return e
+		},
+	}
+	EndpointSlices = GVKInfo{
+		Obj: &discoveryv1.EndpointSlice{},
+		Getter: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error) {
+			return cl.DiscoveryV1().EndpointSlices(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
+		},
+		Watcher: func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error) {
+			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
+			return cl.DiscoveryV1().EndpointSlices(key.Namespace).Watch(ctx, opts)
+		},
+		Cleanup: func(obj runtime.Object) runtime.Object {
+			e := obj.(*discoveryv1.EndpointSlice)
+			e.SetManagedFields([]metav1.ManagedFieldsEntry{})
+			e.Endpoints = []discoveryv1.Endpoint{}
+			e.Ports = []discoveryv1.EndpointPort{}
+			return e
 		},
 	}
 	NewLiveClient func(c *rest.Config) (kubernetes.Interface, error) = func(c *rest.Config) (kubernetes.Interface, error) {

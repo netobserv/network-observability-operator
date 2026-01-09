@@ -244,6 +244,8 @@ func flowCollectorIsoSpecs() {
 			Expect(cr.Spec.Loki).Should(Equal(specInput.Loki))
 			Expect(cr.Spec.Kafka).Should(Equal(specInput.Kafka))
 			Expect(cr.Spec.Exporters).Should(Equal(specInput.Exporters))
+			Expect(cr.Spec.NetworkPolicy).Should(Equal(specInput.NetworkPolicy))
+			Expect(cr.Spec.Prometheus).Should(Equal(specInput.Prometheus))
 
 			// Catch-all in case we missed something
 			Expect(cr.Spec).Should(Equal(specInput))
