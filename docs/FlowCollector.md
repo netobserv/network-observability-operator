@@ -12062,7 +12062,7 @@ When a subnet matches the source or destination IP of a flow, a corresponding fi
         <td>
           `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
 External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
-If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to configure manually labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
 If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/><br/>
         </td>
         <td>false</td>
