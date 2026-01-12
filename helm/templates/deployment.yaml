@@ -45,7 +45,7 @@ spec:
             - name: RELATED_IMAGE_CONSOLE_PLUGIN
               value: '{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}'
             - name: RELATED_IMAGE_DEMO_LOKI
-              value: quay.io/netobserv/loki:3.5.0
+              value: grafana/loki:3.5.0
             - name: DOWNSTREAM_DEPLOYMENT
               value: "false"
             - name: PROFILING_BIND_ADDRESS
