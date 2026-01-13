@@ -236,7 +236,7 @@ func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitor
 	}
 
 	// Generate recording rule
-	if rb.mode == flowslatest.ModeMetricOnly {
+	if rb.mode == flowslatest.ModeRecording {
 		recordName := rb.buildRecordingRuleName()
 		return &monitoringv1.Rule{
 			Record: recordName,

@@ -56,7 +56,7 @@ func (rb *ruleBuilder) kernelDrops() (*monitoringv1.Rule, error) {
 	totalRate := promQLRateFromMetric(totalMetric, "", filter, "2m", "")
 	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
-	isRecording := rb.mode == flowslatest.ModeMetricOnly
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	return rb.createRule(promql, "Too many packets dropped by the kernel", description)
@@ -81,7 +81,7 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 		return nil, fmt.Errorf("PacketDropsByDevice health rule does not support grouping per workload")
 	}
 
-	isRecording := rb.mode == flowslatest.ModeMetricOnly
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(
 		fmt.Sprintf("sum(rate(node_network_receive_drop_total[2m]))%s + sum(rate(node_network_transmit_drop_total[2m]))%s", byLabels, byLabels),
 		fmt.Sprintf("sum(rate(node_network_receive_packets_total[2m]))%s + sum(rate(node_network_transmit_packets_total[2m]))%s", byLabels, byLabels),
@@ -102,7 +102,7 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 	}
 
 	// Generate recording rule
-	if rb.mode == flowslatest.ModeMetricOnly {
+	if rb.mode == flowslatest.ModeRecording {
 		recordName := rb.buildRecordingRuleName()
 		return &monitoringv1.Rule{
 			Record: recordName,
@@ -140,7 +140,7 @@ func (rb *ruleBuilder) ipsecErrors() (*monitoringv1.Rule, error) {
 	totalRate := promQLRateFromMetric(totalMetric, "", filter, "2m", "")
 	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
-	isRecording := rb.mode == flowslatest.ModeMetricOnly
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	return rb.createRule(promql, "Too many IPsec errors", description)
@@ -165,7 +165,7 @@ func (rb *ruleBuilder) dnsErrors() (*monitoringv1.Rule, error) {
 	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "2m", "")
 	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
-	isRecording := rb.mode == flowslatest.ModeMetricOnly
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	rb.trafficLink = &trafficLink{
@@ -196,7 +196,7 @@ func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
 	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "2m", "")
 	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
-	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, rb.mode == flowslatest.ModeMetricOnly)
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, rb.mode == flowslatest.ModeRecording)
 
 	rb.trafficLink = &trafficLink{
 		BackAndForth:      false,
@@ -222,7 +222,7 @@ func (rb *ruleBuilder) netpolDenied() (*monitoringv1.Rule, error) {
 	totalRate := promQLRateFromMetric(totalMetric, "", totalFilter, "2m", "")
 	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
 	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
-	isRecording := rb.mode == flowslatest.ModeMetricOnly
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	return rb.createRule(promql, "Traffic denied by Network Policies", description)
@@ -244,7 +244,7 @@ func (rb *ruleBuilder) latencyTrend() (*monitoringv1.Rule, error) {
 	baselineRate := promQLRateFromMetric(baseline, "_bucket", filter, duration, " offset "+offset)
 	metricQuantile := histogramQuantile(metricsRate, rb.healthRule.GroupBy, rb.side, "0.9")
 	baselineQuantile := histogramQuantile(baselineRate, rb.healthRule.GroupBy, rb.side, "0.9")
-	isRecording := rb.mode == flowslatest.ModeMetricOnly
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := baselineIncreasePromQL(metricQuantile, baselineQuantile, rb.threshold, rb.upperThreshold, isRecording)
 
 	// trending comparison are on an open scale; but in the health page, we need a closed scale to compute the score
@@ -290,7 +290,7 @@ func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
 	baselineRate := promQLRateFromMetric(baseline, "", filter, duration, " offset "+offset)
 	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
 	baselineSumBy := sumBy(baselineRate, rb.healthRule.GroupBy, rb.side, "")
-	isRecording := rb.mode == flowslatest.ModeMetricOnly
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := baselineIncreasePromQL(metricsSumBy, baselineSumBy, rb.threshold, rb.upperThreshold, isRecording)
 
 	// trending comparison are on an open scale; but in the health page, we need a closed scale to compute the score

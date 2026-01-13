@@ -11601,12 +11601,12 @@ More information on health rules: https://github.com/netobserv/network-observabi
         <td>enum</td>
         <td>
           Mode defines whether this health rule should be generated as an alert or a recording rule.
-Possible values are: `Alert` (default), `MetricOnly`.
-MetricOnly rules violations are visible in the Network Health dashboard without generating any Prometheus alert.
+Possible values are: `Alert` (default), `Recording`.
+Recording rules violations are visible in the Network Health dashboard without generating any Prometheus alert.
 This provides an alternative way of getting Health information for SRE and cluster admins who may find
 many new alerts burdensome.<br/>
           <br/>
-            <i>Enum</i>: Alert, MetricOnly<br/>
+            <i>Enum</i>: Alert, Recording<br/>
             <i>Default</i>: Alert<br/>
         </td>
         <td>false</td>

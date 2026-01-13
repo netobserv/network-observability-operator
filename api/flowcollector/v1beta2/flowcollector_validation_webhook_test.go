@@ -746,7 +746,7 @@ func TestValidateFLP(t *testing.T) {
 							HealthRules: &[]FLPHealthRule{
 								{
 									Template: HealthRuleDNSErrors,
-									Mode:     ModeMetricOnly,
+									Mode:     ModeRecording,
 									Variants: []HealthRuleVariant{
 										{
 											Thresholds: HealthRuleThresholds{},
@@ -776,7 +776,7 @@ func TestValidateFLP(t *testing.T) {
 							HealthRules: &[]FLPHealthRule{
 								{
 									Template: HealthRuleDNSErrors,
-									Mode:     ModeMetricOnly,
+									Mode:     ModeRecording,
 									Variants: []HealthRuleVariant{
 										{
 											Thresholds: HealthRuleThresholds{

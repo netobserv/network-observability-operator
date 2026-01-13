@@ -175,7 +175,7 @@ func TestRecordingRuleNames(t *testing.T) {
 				healthRule: &flowslatest.HealthRuleVariant{
 					GroupBy: tt.groupBy,
 				},
-				mode: flowslatest.ModeMetricOnly,
+				mode: flowslatest.ModeRecording,
 				side: tt.side,
 			}
 

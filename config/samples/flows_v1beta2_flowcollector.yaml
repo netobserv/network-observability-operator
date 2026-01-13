@@ -104,7 +104,7 @@ spec:
       # - "namespace_rtt_seconds"
       # healthRules:
       # - template: PacketDropsByKernel
-      #   mode: Alert  # or "MetricOnly" to generate recording rules instead of alerts
+      #   mode: Alert  # or "Recording" to generate recording rules instead of alerts
       #   variants:
       #   - thresholds:
       #       critical: "15"
