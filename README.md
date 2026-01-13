@@ -54,9 +54,9 @@ Loki is not mandatory but improves the overall experience with NetObserv.
 helm repo add netobserv https://netobserv.io/static/helm/ --force-update
 
 # Standalone install, including dependencies:
-helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true --set install.loki=true --set install.prom=true netobserv/netobserv-operator
+helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true --set install.loki=true --set install.prom-stack=true netobserv/netobserv-operator
 
-# OR minimal install (Prometheus/Loki are installed separately)
+# OR minimal install (Prometheus/Loki must be installed separately)
 helm install my-netobserv -n netobserv --create-namespace --set standaloneConsole.enable=true netobserv/netobserv-operator
 
 # If you're in OpenShift, you can omit "--set standaloneConsole.enable=true" to use the Console plugin instead.
@@ -84,15 +84,18 @@ spec:
       url: 'http://my-netobserv-loki.netobserv.svc.cluster.local.:3100/'
   prometheus:
     querier:
+      mode: Manual
       manual:
-        url: http://my-netobserv-prometheus-server.netobserv.svc.cluster.local./
+        url: http://my-netobserv-kube-promethe-prometheus.netobserv.svc.cluster.local.:9090/
+        alertManager:
+          url: http://my-netobserv-kube-promethe-alertmanager.netobserv.svc.cluster.local.:9093/
 EOF
 ```
 
 A few remarks:
 - While the [web console](https://github.com/netobserv/network-observability-console-plugin) is primarily designed as a plugin for the OpenShift Console, it is still possible to deploy it as a standalone, which the dev team sometimes use for testing. This is why it is mentioned as "TEST_CONSOLE" here.
 - If you're in OpenShift, you should omit "TEST_CONSOLE: true" to use the Console plugin instead, which offers a better / more integrated experience.
-- You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
+- You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom-stack=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
 - You can enable networkPolicy, which makes the operator lock down the namespaces that it manages; however, this is highly dependent on your cluster topology, and may cause malfunctions, such as preventing NetObserv pods from communicating with the Kube API server.
 
 To view the test console, you can port-forward 9001:

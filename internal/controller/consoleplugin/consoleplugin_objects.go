@@ -217,7 +217,7 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 		})
 	}
 
-	if !b.desired.UseTestConsolePlugin() {
+	if !b.desired.ConsolePlugin.Standalone {
 		volumes = append(volumes, corev1.Volume{
 			Name: fmt.Sprintf("%s-cert", name),
 			VolumeSource: corev1.VolumeSource{
@@ -410,6 +410,14 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 		} else {
 			log.FromContext(ctx).Info("Could not configure Prometheus querier automatically. Using manual configuration.")
 		}
+	} else if b.desired.Prometheus.Querier.Mode == flowslatest.PromModeManual {
+		config.AlertManager = cfg.AlertManagerConfig{
+			URL:     b.desired.Prometheus.Querier.Manual.AlertManager.URL,
+			SkipTLS: b.desired.Prometheus.Querier.Manual.AlertManager.TLS.InsecureSkipVerify,
+		}
+		if b.desired.Prometheus.Querier.Manual.AlertManager.TLS.Enable {
+			config.AlertManager.CAPath = b.volumes.AddCACertificate(&tls, "prom-am-certs")
+		}
 	}
 
 	if tls.Enable {
@@ -501,7 +509,7 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 			Port: int(*b.advanced.Port),
 		},
 	}
-	if b.desired.UseTestConsolePlugin() {
+	if b.desired.ConsolePlugin.Standalone {
 		config.Server.AuthCheck = "none"
 	} else {
 		config.Server.CertPath = "/var/serving-cert/tls.crt"

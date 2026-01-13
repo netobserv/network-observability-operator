@@ -53,13 +53,6 @@ func (spec *FlowCollectorSpec) UseConsolePlugin() bool {
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
 }
 
-func (spec *FlowCollectorSpec) UseTestConsolePlugin() bool {
-	if spec.ConsolePlugin.Advanced != nil {
-		return IsEnvEnabled(spec.ConsolePlugin.Advanced.Env, constants.EnvTestConsole)
-	}
-	return false
-}
-
 func (spec *FlowCollectorSpec) UseHostNetwork() bool {
 	return spec.DeploymentModel == DeploymentModelDirect
 }
