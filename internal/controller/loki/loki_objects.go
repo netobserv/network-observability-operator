@@ -116,8 +116,9 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
-				Name:  name,
-				Image: b.info.Images[reconcilers.MainImage],
+				Name:            name,
+				Image:           b.info.Images[reconcilers.MainImage],
+				ImagePullPolicy: corev1.PullIfNotPresent,
 				Args: []string{
 					fmt.Sprintf("-config.file=%s/%s", configPath, configFile),
 				},

@@ -2,6 +2,7 @@ package loki
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -91,14 +92,26 @@ func (r *LReconciler) reconcileConfigMap(ctx context.Context, builder *builder) 
 }
 
 func (r *LReconciler) reconcilePVC(ctx context.Context, builder *builder) error {
-	pvc := builder.persistentVolumeClaim()
+	l := log.FromContext(ctx)
+	desiredPVC := builder.persistentVolumeClaim()
 	if !r.Managed.Exists(r.pvc) {
-		if err := r.CreateOwned(ctx, pvc); err != nil {
+		if err := r.CreateOwned(ctx, desiredPVC); err != nil {
 			return err
 		}
-	} else if !reflect.DeepEqual(pvc, r.pvc) {
-		if err := r.UpdateIfOwned(ctx, r.pvc, pvc); err != nil {
-			return err
+	} else {
+		// PVC specs are immutable, so we can only check if the critical fields match
+		// and log an error if they don't (we cannot update them)
+		report := helper.NewChangeReport("PVC spec")
+		if helper.PersistentVolumeClaimSpecChanged(r.pvc, desiredPVC, &report) {
+			report.LogIfNeeded(ctx)
+			l.Error(fmt.Errorf("PVC spec mismatch detected"),
+				"PersistentVolumeClaim has immutable fields that differ from desired spec",
+				"pvc", r.pvc.Name,
+				"desiredSpec", desiredPVC.Spec,
+				"currentSpec", r.pvc.Spec,
+			)
+			// Note: We cannot update PVCs as their specs are immutable
+			// The user would need to delete and recreate the PVC manually if changes are needed
 		}
 	}
 	return nil
