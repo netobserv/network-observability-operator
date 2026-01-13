@@ -24,7 +24,6 @@ RELEASE.md
 !README.md
 
 # Examples and samples (not needed for build)
-**/hack/
 **/helm/
 **/releases/
 **/test-assets/

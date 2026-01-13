@@ -7,11 +7,22 @@ metadata:
     build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch
-      == "main" && (".tekton/***".pathChanged() || "api/***".pathChanged() || "internal/***".pathChanged()
-      || "Dockerfile.downstream".pathChanged() || "docs/***".pathChanged() || "hack/update-build.sh".pathChanged()
-      || "LICENSE".pathChanged() || "main.go".pathChanged() || "Makefile".pathChanged()
-      || "manifests/***".pathChanged())
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "pull_request" && target_branch == "main" && (
+        ".tekton/***".pathChanged() ||
+        ".dockerignore".pathChanged() ||
+        "api/***".pathChanged() ||
+        "internal/***".pathChanged() ||
+        "Dockerfile.downstream".pathChanged() ||
+        "docs/***".pathChanged() ||
+        "go.mod".pathChanged() ||
+        "go.sum".pathChanged() ||
+        "hack/update-build.sh".pathChanged() ||
+        "LICENSE".pathChanged() ||
+        "main.go".pathChanged() ||
+        "Makefile".pathChanged() ||
+        "manifests/***".pathChanged()
+      )
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-ystream
