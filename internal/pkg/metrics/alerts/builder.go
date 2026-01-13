@@ -150,15 +150,20 @@ func (rb *ruleBuilder) additionalDescription() string {
 	return fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alerts.", rb.template)
 }
 
-var acronyms = map[string]string{
-	"DNS":   "dns",
-	"IPsec": "ipsec",
-	"IP":    "ip",
-	"AZ":    "az",
-	"TCP":   "tcp",
-	"UDP":   "udp",
-	"HTTP":  "http",
-	"HTTPS": "https",
+// acronyms is ordered with longer/more specific patterns first to ensure correct matching
+// e.g., "IPsec" must be matched before "IP" to avoid incorrect conversion
+var acronyms = []struct {
+	original    string
+	replacement string
+}{
+	{"IPsec", "ipsec"},
+	{"HTTPS", "https"},
+	{"HTTP", "http"},
+	{"DNS", "dns"},
+	{"TCP", "tcp"},
+	{"UDP", "udp"},
+	{"IP", "ip"},
+	{"AZ", "az"},
 }
 
 // toSnakeCase converts a camelCase or PascalCase string to snake_case
@@ -170,14 +175,14 @@ func toSnakeCase(s string) string {
 	for i < len(s) {
 		// Check if current position matches any acronym
 		matched := false
-		for acronym, replacement := range acronyms {
-			if strings.HasPrefix(s[i:], acronym) {
+		for _, acr := range acronyms {
+			if strings.HasPrefix(s[i:], acr.original) {
 				// Add underscore before acronym if not at start and previous char was lowercase
 				if i > 0 && s[i-1] >= 'a' && s[i-1] <= 'z' {
 					result.WriteRune('_')
 				}
-				result.WriteString(replacement)
-				i += len(acronym)
+				result.WriteString(acr.replacement)
+				i += len(acr.original)
 				matched = true
 				break
 			}
