@@ -227,7 +227,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.10.0-community
-    createdAt: "2025-12-15T14:07:54Z"
+    createdAt: "2026-01-13T10:12:01Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -1189,10 +1189,10 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-  - network observability
+  - netobserv
   - ebpf
   - ipfix
-  - flow tracing
+  - netflows
   - flows
   - topology
   - network
