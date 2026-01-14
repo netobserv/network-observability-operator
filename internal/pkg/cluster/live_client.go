@@ -43,7 +43,7 @@ func (lc *liveClient) getNetworkConfig(ctx context.Context) (*configv1.Network, 
 	}
 	var obj configv1.Network
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unst.UnstructuredContent(), &obj); err != nil {
-		return nil, fmt.Errorf("Could not convert Network Config from unstructured: %w", err)
+		return nil, fmt.Errorf("could not convert Network Config from unstructured: %w", err)
 	}
 	return &obj, nil
 }
@@ -55,7 +55,7 @@ func (lc *liveClient) getClusterVersion(ctx context.Context) (*configv1.ClusterV
 	}
 	var obj configv1.ClusterVersion
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unst.UnstructuredContent(), &obj); err != nil {
-		return nil, fmt.Errorf("Could not convert ClusterVersion from unstructured: %w", err)
+		return nil, fmt.Errorf("could not convert ClusterVersion from unstructured: %w", err)
 	}
 	return &obj, nil
 }
@@ -67,7 +67,7 @@ func (lc *liveClient) getCRD(ctx context.Context, name string) (*apix.CustomReso
 	}
 	var obj apix.CustomResourceDefinition
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unst.UnstructuredContent(), &obj); err != nil {
-		return nil, fmt.Errorf("Could not convert CRD from unstructured: %w", err)
+		return nil, fmt.Errorf("could not convert CRD from unstructured: %w", err)
 	}
 	return &obj, nil
 }
