@@ -6299,8 +6299,6 @@ spec:
                                   Prometheus AlertManager service to use for querying
                                   alerts.'
                                 type: string
-                            required:
-                            - url
                             type: object
                           forwardUserToken:
                             description: Set `true` to forward logged in user token
