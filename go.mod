@@ -11,7 +11,7 @@ require (
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
 	github.com/netobserv/flowlogs-pipeline v1.10.0-community.0.20251210194924-86e5b0087faa
 	github.com/netobserv/netobserv-ebpf-agent v1.10.0-community.0.20260105153759-648a4f37b74d
-	github.com/onsi/ginkgo/v2 v2.27.3
+	github.com/onsi/ginkgo/v2 v2.27.4
 	github.com/onsi/gomega v1.39.0
 	github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.86.2
