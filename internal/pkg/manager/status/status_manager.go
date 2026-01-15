@@ -30,6 +30,7 @@ const (
 	NetworkPolicy               ComponentName = "NetworkPolicy"
 	ConditionConfigurationIssue               = "ConfigurationIssue"
 	LokiIssue                                 = "LokiIssue"
+	LokiWarning                               = "LokiWarning"
 )
 
 var allNames = []ComponentName{FlowCollectorLegacy, Monitoring, StaticController}
@@ -139,6 +140,7 @@ func updateStatus(ctx context.Context, c client.Client, conditions ...metav1.Con
 		}
 		conditions = append(conditions, checkValidation(ctx, &fc))
 		conditions = append(conditions, checkLoki(ctx, c, &fc))
+		conditions = append(conditions, checkLokiWarnings(ctx, c, &fc))
 		for _, c := range conditions {
 			meta.SetStatusCondition(&fc.Status.Conditions, c)
 		}

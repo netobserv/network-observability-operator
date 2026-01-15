@@ -203,6 +203,212 @@ func TestCheckLoki_LokiStackWithErrorCondition(t *testing.T) {
 	assert.Contains(t, condition.Message, "Cannot connect to S3 backend")
 }
 
+func TestCheckLoki_LokiStackWithWarningAndDegradedConditions(t *testing.T) {
+	lokiStack := &lokiv1.LokiStack{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "loki",
+			Namespace: "netobserv",
+		},
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:    "Warning",
+					Status:  metav1.ConditionTrue,
+					Reason:  "StorageNeedsSchemaUpdate",
+					Message: "The schema configuration does not contain the most recent schema version and needs an update",
+				},
+				{
+					Type:    "Degraded",
+					Status:  metav1.ConditionTrue,
+					Reason:  "MissingObjectStorageSecret",
+					Message: "Missing object storage secret",
+				},
+				{
+					Type:    "Ready",
+					Status:  metav1.ConditionFalse,
+					Reason:  "ReadyComponents",
+					Message: "All components ready",
+				},
+				{
+					Type:    "Pending",
+					Status:  metav1.ConditionFalse,
+					Reason:  "PendingComponents",
+					Message: "One or more LokiStack components pending on dependencies",
+				},
+				{
+					Type:    "Degraded",
+					Status:  metav1.ConditionFalse,
+					Reason:  "MissingTokenCCOAuthenticationSecret",
+					Message: "Missing OpenShift cloud credentials secret",
+				},
+			},
+		},
+	}
+
+	fc := &flowslatest.FlowCollector{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster",
+		},
+		Spec: flowslatest.FlowCollectorSpec{
+			Namespace: "netobserv",
+			Loki: flowslatest.FlowCollectorLoki{
+				Enable: ptr(true),
+				Mode:   flowslatest.LokiModeLokiStack,
+				LokiStack: flowslatest.LokiStackRef{
+					Name: "loki",
+				},
+			},
+		},
+	}
+
+	client := &mockClient{}
+	nsname := types.NamespacedName{Name: "loki", Namespace: "netobserv"}
+	client.On("Get", mock.Anything, nsname, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		arg := args.Get(2).(*lokiv1.LokiStack)
+		*arg = *lokiStack
+	}).Return(nil)
+
+	// Check that Degraded issue is reported in LokiIssue
+	condition := checkLoki(context.Background(), client, fc)
+	assert.Equal(t, LokiIssue, condition.Type)
+	assert.Equal(t, "LokiStackIssues", condition.Reason)
+	assert.Equal(t, metav1.ConditionTrue, condition.Status)
+	assert.Contains(t, condition.Message, "Degraded")
+	assert.Contains(t, condition.Message, "Missing object storage secret")
+	// Warning should NOT be in LokiIssue
+	assert.NotContains(t, condition.Message, "Warning")
+	assert.NotContains(t, condition.Message, "schema configuration")
+
+	// Check that Warning is reported separately in LokiWarning
+	warningCondition := checkLokiWarnings(context.Background(), client, fc)
+	assert.Equal(t, LokiWarning, warningCondition.Type)
+	assert.Equal(t, "LokiStackWarnings", warningCondition.Reason)
+	assert.Equal(t, metav1.ConditionTrue, warningCondition.Status)
+	assert.Contains(t, warningCondition.Message, "Warning")
+	assert.Contains(t, warningCondition.Message, "The schema configuration does not contain the most recent schema version")
+}
+
+func TestCheckLokiWarnings_Disabled(t *testing.T) {
+	fc := &flowslatest.FlowCollector{
+		Spec: flowslatest.FlowCollectorSpec{
+			Loki: flowslatest.FlowCollectorLoki{
+				Enable: ptr(false),
+			},
+		},
+	}
+
+	client := &mockClient{}
+	condition := checkLokiWarnings(context.Background(), client, fc)
+
+	assert.Equal(t, LokiWarning, condition.Type)
+	assert.Equal(t, "Unused", condition.Reason)
+	assert.Equal(t, metav1.ConditionUnknown, condition.Status)
+}
+
+func TestCheckLokiWarnings_NoWarnings(t *testing.T) {
+	lokiStack := &lokiv1.LokiStack{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "loki",
+			Namespace: "netobserv",
+		},
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:    "Ready",
+					Status:  metav1.ConditionTrue,
+					Reason:  "Ready",
+					Message: "All components ready",
+				},
+			},
+		},
+	}
+
+	fc := &flowslatest.FlowCollector{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster",
+		},
+		Spec: flowslatest.FlowCollectorSpec{
+			Namespace: "netobserv",
+			Loki: flowslatest.FlowCollectorLoki{
+				Enable: ptr(true),
+				Mode:   flowslatest.LokiModeLokiStack,
+				LokiStack: flowslatest.LokiStackRef{
+					Name: "loki",
+				},
+			},
+		},
+	}
+
+	client := &mockClient{}
+	nsname := types.NamespacedName{Name: "loki", Namespace: "netobserv"}
+	client.On("Get", mock.Anything, nsname, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		arg := args.Get(2).(*lokiv1.LokiStack)
+		*arg = *lokiStack
+	}).Return(nil)
+
+	condition := checkLokiWarnings(context.Background(), client, fc)
+
+	assert.Equal(t, LokiWarning, condition.Type)
+	assert.Equal(t, "NoWarning", condition.Reason)
+	assert.Equal(t, metav1.ConditionFalse, condition.Status)
+}
+
+func TestCheckLokiWarnings_WithWarning(t *testing.T) {
+	lokiStack := &lokiv1.LokiStack{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "loki",
+			Namespace: "netobserv",
+		},
+		Status: lokiv1.LokiStackStatus{
+			Conditions: []metav1.Condition{
+				{
+					Type:    "Ready",
+					Status:  metav1.ConditionTrue,
+					Reason:  "Ready",
+					Message: "All components ready",
+				},
+				{
+					Type:    "Warning",
+					Status:  metav1.ConditionTrue,
+					Reason:  "StorageNeedsSchemaUpdate",
+					Message: "The schema configuration does not contain the most recent schema version",
+				},
+			},
+		},
+	}
+
+	fc := &flowslatest.FlowCollector{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster",
+		},
+		Spec: flowslatest.FlowCollectorSpec{
+			Namespace: "netobserv",
+			Loki: flowslatest.FlowCollectorLoki{
+				Enable: ptr(true),
+				Mode:   flowslatest.LokiModeLokiStack,
+				LokiStack: flowslatest.LokiStackRef{
+					Name: "loki",
+				},
+			},
+		},
+	}
+
+	client := &mockClient{}
+	nsname := types.NamespacedName{Name: "loki", Namespace: "netobserv"}
+	client.On("Get", mock.Anything, nsname, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		arg := args.Get(2).(*lokiv1.LokiStack)
+		*arg = *lokiStack
+	}).Return(nil)
+
+	condition := checkLokiWarnings(context.Background(), client, fc)
+
+	assert.Equal(t, LokiWarning, condition.Type)
+	assert.Equal(t, "LokiStackWarnings", condition.Reason)
+	assert.Equal(t, metav1.ConditionTrue, condition.Status)
+	assert.Contains(t, condition.Message, "Warning")
+	assert.Contains(t, condition.Message, "schema configuration")
+}
+
 func TestCheckLoki_LokiStackComponentsWithFailedPods(t *testing.T) {
 	lokiStack := &lokiv1.LokiStack{
 		ObjectMeta: metav1.ObjectMeta{

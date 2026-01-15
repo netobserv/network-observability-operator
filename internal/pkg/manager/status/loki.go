@@ -56,28 +56,20 @@ func checkLoki(ctx context.Context, c client.Client, fc *flowslatest.FlowCollect
 
 	// Check LokiStack status conditions
 	if len(lokiStack.Status.Conditions) > 0 {
-		// Look for the Ready condition (standard Kubernetes pattern)
-		readyCond := meta.FindStatusCondition(lokiStack.Status.Conditions, "Ready")
-		if readyCond != nil {
-			if readyCond.Status != metav1.ConditionTrue {
-				return metav1.Condition{
-					Type:    LokiIssue,
-					Reason:  "LokiStackNotReady",
-					Status:  metav1.ConditionTrue,
-					Message: fmt.Sprintf("LokiStack is not ready [name: %s, namespace: %s]: %s - %s", nsname.Name, nsname.Namespace, readyCond.Reason, readyCond.Message),
-				}
-			}
-		}
-
-		// Check for any other failing conditions
+		// Check for specific problem conditions first (Degraded, Error, Failed)
+		// These provide more actionable information than just "NotReady"
+		// Note: Warnings are handled separately in checkLokiWarnings()
 		var issues []string
 		for _, cond := range lokiStack.Status.Conditions {
-			// Skip the Ready condition as we already checked it
-			if cond.Type == "Ready" {
+			// Skip the Ready, Pending, and Warning conditions
+			if cond.Type == "Ready" || cond.Type == "Pending" || cond.Type == "Warning" {
 				continue
 			}
-			// If any condition has Status=True for an error-type condition, report it
-			if cond.Status == metav1.ConditionTrue && (strings.Contains(strings.ToLower(cond.Type), "error") || strings.Contains(strings.ToLower(cond.Type), "degraded") || strings.Contains(strings.ToLower(cond.Type), "failed")) {
+			// If any condition has Status=True for a problem condition, report it
+			condTypeLower := strings.ToLower(cond.Type)
+			if cond.Status == metav1.ConditionTrue && (strings.Contains(condTypeLower, "error") ||
+				strings.Contains(condTypeLower, "degraded") ||
+				strings.Contains(condTypeLower, "failed")) {
 				issues = append(issues, fmt.Sprintf("%s: %s", cond.Type, cond.Message))
 			}
 		}
@@ -87,6 +79,17 @@ func checkLoki(ctx context.Context, c client.Client, fc *flowslatest.FlowCollect
 				Reason:  "LokiStackIssues",
 				Status:  metav1.ConditionTrue,
 				Message: fmt.Sprintf("LokiStack has issues [name: %s, namespace: %s]: %s", nsname.Name, nsname.Namespace, strings.Join(issues, "; ")),
+			}
+		}
+
+		// If no specific issues found, check the Ready condition
+		readyCond := meta.FindStatusCondition(lokiStack.Status.Conditions, "Ready")
+		if readyCond != nil && readyCond.Status != metav1.ConditionTrue {
+			return metav1.Condition{
+				Type:    LokiIssue,
+				Reason:  "LokiStackNotReady",
+				Status:  metav1.ConditionTrue,
+				Message: fmt.Sprintf("LokiStack is not ready [name: %s, namespace: %s]: %s - %s", nsname.Name, nsname.Namespace, readyCond.Reason, readyCond.Message),
 			}
 		}
 	}
@@ -149,4 +152,60 @@ func checkLokiStackComponents(components *lokiv1.LokiStackComponentStatus) []str
 	checkComponent("Ruler", components.Ruler)
 
 	return issues
+}
+
+func checkLokiWarnings(ctx context.Context, c client.Client, fc *flowslatest.FlowCollector) metav1.Condition {
+	if !fc.Spec.UseLoki() {
+		return metav1.Condition{
+			Type:   LokiWarning,
+			Reason: "Unused",
+			Status: metav1.ConditionUnknown,
+		}
+	}
+	if fc.Spec.Loki.Mode != flowslatest.LokiModeLokiStack {
+		return metav1.Condition{
+			Type:   LokiWarning,
+			Reason: "Unused",
+			Status: metav1.ConditionUnknown,
+		}
+	}
+	lokiStack := &lokiv1.LokiStack{}
+	nsname := types.NamespacedName{Name: fc.Spec.Loki.LokiStack.Name, Namespace: fc.Spec.Namespace}
+	if len(fc.Spec.Loki.LokiStack.Namespace) > 0 {
+		nsname.Namespace = fc.Spec.Loki.LokiStack.Namespace
+	}
+	err := c.Get(ctx, nsname, lokiStack)
+	if err != nil {
+		// If we can't get the LokiStack, don't report warnings
+		// (the main checkLoki will report the error)
+		return metav1.Condition{
+			Type:   LokiWarning,
+			Reason: "NoWarning",
+			Status: metav1.ConditionFalse,
+		}
+	}
+
+	// Check for Warning conditions
+	var warnings []string
+	for _, cond := range lokiStack.Status.Conditions {
+		condTypeLower := strings.ToLower(cond.Type)
+		if cond.Status == metav1.ConditionTrue && strings.Contains(condTypeLower, "warning") {
+			warnings = append(warnings, fmt.Sprintf("%s: %s", cond.Type, cond.Message))
+		}
+	}
+
+	if len(warnings) > 0 {
+		return metav1.Condition{
+			Type:    LokiWarning,
+			Reason:  "LokiStackWarnings",
+			Status:  metav1.ConditionTrue,
+			Message: fmt.Sprintf("LokiStack has warnings [name: %s, namespace: %s]: %s", nsname.Name, nsname.Namespace, strings.Join(warnings, "; ")),
+		}
+	}
+
+	return metav1.Condition{
+		Type:   LokiWarning,
+		Reason: "NoWarning",
+		Status: metav1.ConditionFalse,
+	}
 }
