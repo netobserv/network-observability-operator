@@ -67,8 +67,19 @@ func (r *LReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCo
 			return err
 		}
 	} else {
-		// delete any existing owned object
-		r.Managed.TryDeleteAll(ctx)
+		// delete any existing owned object (only if they were created by netobserv)
+		if err := r.DeleteIfOwned(ctx, r.configMap); err != nil {
+			return err
+		}
+		if err := r.DeleteIfOwned(ctx, r.deployment); err != nil {
+			return err
+		}
+		if err := r.DeleteIfOwned(ctx, r.pvc); err != nil {
+			return err
+		}
+		if err := r.DeleteIfOwned(ctx, r.service); err != nil {
+			return err
+		}
 	}
 
 	return nil
