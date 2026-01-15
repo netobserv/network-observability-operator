@@ -2863,7 +2863,7 @@ spec:
                       type: boolean
                     imagePullPolicy:
                       default: IfNotPresent
-                      description: '`imagePullPolicy` is the Kubernetes pull policy for the image defined above'
+                      description: '`imagePullPolicy` is the Kubernetes pull policy for the image defined above.'
                       enum:
                         - IfNotPresent
                         - Always
@@ -2871,7 +2871,7 @@ spec:
                       type: string
                     logLevel:
                       default: info
-                      description: '`logLevel` for the console plugin backend'
+                      description: '`logLevel` for the console plugin backend.'
                       enum:
                         - trace
                         - debug
@@ -2884,7 +2884,7 @@ spec:
                     portNaming:
                       default:
                         enable: true
-                      description: '`portNaming` defines the configuration of the port-to-service name translation'
+                      description: '`portNaming` defines the configuration of the port-to-service name translation.'
                       properties:
                         enable:
                           default: true
@@ -2915,7 +2915,15 @@ spec:
                         - filter:
                             dst_kind: '"Service"'
                           name: Services network
-                      description: '`quickFilters` configures quick filter presets for the Console plugin'
+                        - filter:
+                            src_subnet_label: '"",EXT:'
+                          name: External ingress
+                        - filter:
+                            dst_subnet_label: '"",EXT:'
+                          name: External egress
+                      description: |-
+                        `quickFilters` configures quick filter presets for the Console plugin.
+                        Filters for external traffic assume the subnet labels are configured to distinguish internal and external traffic (see `spec.processor.subnetLabels`).
                       items:
                         description: '`QuickFilter` defines preset configuration for Console''s quick filters'
                         properties:
@@ -2952,7 +2960,7 @@ spec:
                           memory: 50Mi
                       description: |-
                         `resources`, in terms of compute resources, required by this container.
-                        For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.
                       properties:
                         claims:
                           description: |-
@@ -3936,7 +3944,7 @@ spec:
                   properties:
                     addZone:
                       description: |-
-                        `addZone` allows availability zone awareness by labelling flows with their source and destination zones.
+                        `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
                         This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
                       type: boolean
                     advanced:
@@ -5684,13 +5692,15 @@ spec:
                       type: object
                     subnetLabels:
                       description: |-
-                        `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+                        `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
                         When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
                       properties:
                         customLabels:
                           description: |-
-                            `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
-                            If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.
+                            `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+                            External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
+                            If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+                            If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/>
                           items:
                             description: SubnetLabel allows to label subnets and IPs, such as to identify cluster-external workloads or web services.
                             properties:
@@ -5890,8 +5900,8 @@ spec:
                           default: Auto
                           description: |-
                             `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-                            - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-                            - Use `Manual` for a manual setup<br>
+                            - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring.<br>
+                            - Use `Manual` for a manual setup.<br>
                           enum:
                             - Manual
                             - Auto
