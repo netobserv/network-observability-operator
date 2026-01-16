@@ -209,7 +209,8 @@ func (b *PipelineBuilderStage) GetStageParams() []StageParam {
 }
 
 func isStaticParam(param StageParam) bool {
-	if param.Encode != nil && param.Encode.Type == api.PromType {
+	if (param.Encode != nil && param.Encode.Type == api.PromType) ||
+		(param.Transform != nil && param.Transform.Type == api.FilterType) {
 		return false
 	}
 	return true
