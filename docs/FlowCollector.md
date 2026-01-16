@@ -3023,7 +3023,7 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b>imagePullPolicy</b></td>
         <td>enum</td>
         <td>
-          `imagePullPolicy` is the Kubernetes pull policy for the image defined above<br/>
+          `imagePullPolicy` is the Kubernetes pull policy for the image defined above.<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
@@ -3033,7 +3033,7 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b>logLevel</b></td>
         <td>enum</td>
         <td>
-          `logLevel` for the console plugin backend<br/>
+          `logLevel` for the console plugin backend.<br/>
           <br/>
             <i>Enum</i>: trace, debug, info, warn, error, fatal, panic<br/>
             <i>Default</i>: info<br/>
@@ -3043,7 +3043,7 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b><a href="#flowcollectorspecconsolepluginportnaming">portNaming</a></b></td>
         <td>object</td>
         <td>
-          `portNaming` defines the configuration of the port-to-service name translation<br/>
+          `portNaming` defines the configuration of the port-to-service name translation.<br/>
           <br/>
             <i>Default</i>: map[enable:true]<br/>
         </td>
@@ -3052,9 +3052,10 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td><b><a href="#flowcollectorspecconsolepluginquickfiltersindex">quickFilters</a></b></td>
         <td>[]object</td>
         <td>
-          `quickFilters` configures quick filter presets for the Console plugin<br/>
+          `quickFilters` configures quick filter presets for the Console plugin.
+Filters for external traffic assume the subnet labels are configured to distinguish internal and external traffic (see `spec.processor.subnetLabels`).<br/>
           <br/>
-            <i>Default</i>: [map[default:true filter:map[flow_layer:"app"] name:Applications] map[filter:map[flow_layer:"infra"] name:Infrastructure] map[default:true filter:map[dst_kind:"Pod" src_kind:"Pod"] name:Pods network] map[filter:map[dst_kind:"Service"] name:Services network]]<br/>
+            <i>Default</i>: [map[default:true filter:map[flow_layer:"app"] name:Applications] map[filter:map[flow_layer:"infra"] name:Infrastructure] map[default:true filter:map[dst_kind:"Pod" src_kind:"Pod"] name:Pods network] map[filter:map[dst_kind:"Service"] name:Services network] map[filter:map[src_subnet_label:"",EXT:] name:External ingress] map[filter:map[dst_subnet_label:"",EXT:] name:External egress]]<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3073,9 +3074,18 @@ Deprecation notice: managed autoscaler will be removed in a future version. You 
         <td>object</td>
         <td>
           `resources`, in terms of compute resources, required by this container.
-For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.<br/>
           <br/>
             <i>Default</i>: map[limits:map[memory:100Mi] requests:map[cpu:100m memory:50Mi]]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>standalone</b></td>
+        <td>boolean</td>
+        <td>
+          Deploy as a standalone console, instead of a plugin of the OpenShift Console.
+This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
+[Unsupported (*)].<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -5832,7 +5842,7 @@ available.<br/>
 
 
 
-`portNaming` defines the configuration of the port-to-service name translation
+`portNaming` defines the configuration of the port-to-service name translation.
 
 <table>
     <thead>
@@ -5912,7 +5922,7 @@ for example, `filter: {"src_namespace": "namespace1,namespace2"}`.<br/>
 
 
 `resources`, in terms of compute resources, required by this container.
-For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.
 
 <table>
     <thead>
@@ -8389,7 +8399,7 @@ enriches them, generates metrics, and forwards them to the Loki persistence laye
         <td><b>addZone</b></td>
         <td>boolean</td>
         <td>
-          `addZone` allows availability zone awareness by labelling flows with their source and destination zones.
+          `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
 This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br/>
         </td>
         <td>false</td>
@@ -8549,7 +8559,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         <td><b><a href="#flowcollectorspecprocessorsubnetlabels">subnetLabels</a></b></td>
         <td>object</td>
         <td>
-          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+          `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.<br/>
         </td>
         <td>false</td>
@@ -12043,7 +12053,7 @@ This setting is ignored if `collectionMode` is different from `AllowList`.<br/>
 
 
 
-`subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+`subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 
 <table>
@@ -12059,8 +12069,10 @@ When a subnet matches the source or destination IP of a flow, a corresponding fi
         <td><b><a href="#flowcollectorspecprocessorsubnetlabelscustomlabelsindex">customLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
-If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.<br/>
+          `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
+If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/><br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12158,8 +12170,8 @@ Prometheus querying configuration, such as client settings, used in the Console 
         <td>enum</td>
         <td>
           `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-- Use `Manual` for a manual setup<br><br/>
+- Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring.<br>
+- Use `Manual` for a manual setup.<br><br/>
           <br/>
             <i>Enum</i>: Manual, Auto<br/>
             <i>Default</i>: Auto<br/>
@@ -12216,6 +12228,15 @@ Prometheus configuration for `Manual` mode.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanager">alertManager</a></b></td>
+        <td>object</td>
+        <td>
+          AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+When used in OpenShift it can be left empty to use the Console API instead.
+[Unsupported (*)].<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>forwardUserToken</b></td>
         <td>boolean</td>
         <td>
@@ -12236,6 +12257,215 @@ Prometheus configuration for `Manual` mode.
           `url` is the address of an existing Prometheus service to use for querying metrics.<br/>
           <br/>
             <i>Default</i>: http://prometheus:9090<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanual)</sup></sup>
+
+
+
+AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+When used in OpenShift it can be left empty to use the Console API instead.
+[Unsupported (*)].
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for Prometheus AlertManager URL.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager.tls
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualalertmanager)</sup></sup>
+
+
+
+TLS client configuration for Prometheus AlertManager URL.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualalertmanagertls)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.prometheus.querier.manual.alertManager.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecprometheusqueriermanualalertmanagertls)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

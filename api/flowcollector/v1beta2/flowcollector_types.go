@@ -181,8 +181,8 @@ type FlowCollectorIPFIX struct {
 // - `NetworkEvents`, to track network events [Technology Preview].<br>
 // - `PacketTranslation`, to enrich flows with packets translation information, such as Service NAT.<br>
 // - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs. [Unsupported (*)].<br>
-// - `UDNMapping`, to enable interfaces mapping to UDN. <br>
-// - `IPSec`, to track flows between nodes with IPsec encryption. <br>
+// - `UDNMapping`, to enable interfaces mapping to UDN.<br>
+// - `IPSec`, to track flows between nodes with IPsec encryption.<br>
 // +kubebuilder:validation:Enum:="PacketDrop";"DNSTracking";"FlowRTT";"NetworkEvents";"PacketTranslation";"EbpfManager";"UDNMapping";"IPSec"
 type AgentFeature string
 
@@ -677,12 +677,12 @@ type FlowCollectorFLP struct {
 	MultiClusterDeployment *bool `json:"multiClusterDeployment,omitempty"`
 
 	//+optional
-	// `addZone` allows availability zone awareness by labelling flows with their source and destination zones.
+	// `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
 	// This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
 	AddZone *bool `json:"addZone,omitempty"`
 
 	//+optional
-	// `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+	// `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
 	// When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 	SubnetLabels SubnetLabels `json:"subnetLabels,omitempty"`
 
@@ -1010,6 +1010,23 @@ type PrometheusQuerierManual struct {
 	// Set `true` to forward logged in user token in queries to Prometheus
 	// +optional
 	ForwardUserToken bool `json:"forwardUserToken"`
+
+	// AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+	// When used in OpenShift it can be left empty to use the Console API instead.
+	// [Unsupported (*)].
+	// +optional
+	AlertManager *AlertManagerQuerierManual `json:"alertManager"`
+}
+
+// `AlertManagerQuerierManual` defines the full connection parameters to Prometheus AlertManager.
+type AlertManagerQuerierManual struct {
+	// `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.
+	// +required
+	URL string `json:"url,omitempty"`
+
+	// TLS client configuration for Prometheus AlertManager URL.
+	// +optional
+	TLS ClientTLS `json:"tls"`
 }
 
 type PrometheusMode string
@@ -1037,8 +1054,8 @@ type PrometheusQuerier struct {
 	Enable *bool `json:"enable,omitempty"`
 
 	// `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-	// - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-	// - Use `Manual` for a manual setup<br>
+	// - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring.<br>
+	// - Use `Manual` for a manual setup.<br>
 	//+unionDiscriminator
 	//+kubebuilder:validation:Enum=Manual;Auto
 	//+kubebuilder:default:="Auto"
@@ -1055,13 +1072,16 @@ type PrometheusQuerier struct {
 	Timeout *metav1.Duration `json:"timeout,omitempty"` // Warning: keep as pointer, else default is ignored
 }
 
-// FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector
+// FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector.
 type FlowCollectorConsolePlugin struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	//+kubebuilder:default:=true
 	// Enables the console plugin deployment.
 	Enable *bool `json:"enable,omitempty"`
+
+	// Deploy as a standalone console, instead of a plugin of the OpenShift Console.
+	// This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
+	// [Unsupported (*)].
+	Standalone bool `json:"standalone,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=1
@@ -1074,18 +1094,18 @@ type FlowCollectorConsolePlugin struct {
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
-	// `imagePullPolicy` is the Kubernetes pull policy for the image defined above
+	// `imagePullPolicy` is the Kubernetes pull policy for the image defined above.
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
 	//+kubebuilder:default:={requests:{memory:"50Mi",cpu:"100m"},limits:{memory:"100Mi"}}
 	// `resources`, in terms of compute resources, required by this container.
-	// For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
-	// `logLevel` for the console plugin backend
+	// `logLevel` for the console plugin backend.
 	LogLevel string `json:"logLevel,omitempty"`
 
 	// `autoscaler` [deprecated (*)] spec of a horizontal pod autoscaler to set up for the plugin Deployment.
@@ -1094,12 +1114,13 @@ type FlowCollectorConsolePlugin struct {
 	Autoscaler FlowCollectorHPA `json:"autoscaler,omitempty"`
 
 	//+kubebuilder:default:={enable:true}
-	// `portNaming` defines the configuration of the port-to-service name translation
+	// `portNaming` defines the configuration of the port-to-service name translation.
 	PortNaming ConsolePluginPortConfig `json:"portNaming,omitempty"`
 
-	//+kubebuilder:default:={{name:"Applications",filter:{"flow_layer":"\"app\""},default:true},{name:"Infrastructure",filter:{"flow_layer":"\"infra\""}},{name:"Pods network",filter:{"src_kind":"\"Pod\"","dst_kind":"\"Pod\""},default:true},{name:"Services network",filter:{"dst_kind":"\"Service\""}}}
+	//+kubebuilder:default:={{name:"Applications",filter:{"flow_layer":"\"app\""},default:true},{name:"Infrastructure",filter:{"flow_layer":"\"infra\""}},{name:"Pods network",filter:{"src_kind":"\"Pod\"","dst_kind":"\"Pod\""},default:true},{name:"Services network",filter:{"dst_kind":"\"Service\""}},{name:"External ingress",filter:{"src_subnet_label":"\"\",EXT:"}},{name:"External egress",filter:{"dst_subnet_label":"\"\",EXT:"}}}
 	// +optional
-	// `quickFilters` configures quick filter presets for the Console plugin
+	// `quickFilters` configures quick filter presets for the Console plugin.
+	// Filters for external traffic assume the subnet labels are configured to distinguish internal and external traffic (see `spec.processor.subnetLabels`).
 	QuickFilters []QuickFilter `json:"quickFilters"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the console plugin.
@@ -1447,7 +1468,7 @@ type AdvancedPluginConfig struct {
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
 
-// `SubnetLabels` allows you to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift.
+// `SubnetLabels` allows you to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift.
 type SubnetLabels struct {
 	// `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
 	// OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
@@ -1455,8 +1476,10 @@ type SubnetLabels struct {
 	//+optional
 	OpenShiftAutoDetect *bool `json:"openShiftAutoDetect,omitempty"`
 
-	// `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
-	// If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.
+	// `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+	// External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
+	// If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+	// If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/>
 	//+optional
 	CustomLabels []SubnetLabel `json:"customLabels,omitempty"`
 }

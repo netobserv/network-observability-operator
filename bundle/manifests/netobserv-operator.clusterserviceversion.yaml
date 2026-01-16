@@ -121,6 +121,18 @@ metadata:
                     "dst_kind": "\"Service\""
                   },
                   "name": "Services network"
+                },
+                {
+                  "filter": {
+                    "src_subnet_label": "\"\",EXT:"
+                  },
+                  "name": "External ingress"
+                },
+                {
+                  "filter": {
+                    "dst_subnet_label": "\"\",EXT:"
+                  },
+                  "name": "External egress"
                 }
               ],
               "replicas": 1,
@@ -227,7 +239,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.10.0-community
-    createdAt: "2026-01-13T10:12:01Z"
+    createdAt: "2026-01-08T08:41:48Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -542,6 +554,8 @@ spec:
         path: consolePlugin.portNaming.enable
       - displayName: Port names
         path: consolePlugin.portNaming.portNames
+      - displayName: Standalone
+        path: consolePlugin.standalone
       - displayName: Unmanaged replicas
         path: consolePlugin.unmanagedReplicas
       - displayName: Address
@@ -624,6 +638,10 @@ spec:
         path: prometheus.querier.enable
       - displayName: Manual
         path: prometheus.querier.manual
+      - displayName: Alert manager
+        path: prometheus.querier.manual.alertManager
+      - displayName: Url
+        path: prometheus.querier.manual.alertManager.url
       - displayName: Forward user token
         path: prometheus.querier.manual.forwardUserToken
       - displayName: Url

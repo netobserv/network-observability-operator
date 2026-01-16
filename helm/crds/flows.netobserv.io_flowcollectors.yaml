@@ -1079,8 +1079,8 @@ spec:
                               - `NetworkEvents`, to track network events [Technology Preview].<br>
                               - `PacketTranslation`, to enrich flows with packets translation information, such as Service NAT.<br>
                               - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs. [Unsupported (*)].<br>
-                              - `UDNMapping`, to enable interfaces mapping to UDN. <br>
-                              - `IPSec`, to track flows between nodes with IPsec encryption. <br>
+                              - `UDNMapping`, to enable interfaces mapping to UDN.<br>
+                              - `IPSec`, to track flows between nodes with IPsec encryption.<br>
                             enum:
                               - PacketDrop
                               - DNSTracking
@@ -2863,7 +2863,7 @@ spec:
                       type: boolean
                     imagePullPolicy:
                       default: IfNotPresent
-                      description: '`imagePullPolicy` is the Kubernetes pull policy for the image defined above'
+                      description: '`imagePullPolicy` is the Kubernetes pull policy for the image defined above.'
                       enum:
                         - IfNotPresent
                         - Always
@@ -2871,7 +2871,7 @@ spec:
                       type: string
                     logLevel:
                       default: info
-                      description: '`logLevel` for the console plugin backend'
+                      description: '`logLevel` for the console plugin backend.'
                       enum:
                         - trace
                         - debug
@@ -2884,7 +2884,7 @@ spec:
                     portNaming:
                       default:
                         enable: true
-                      description: '`portNaming` defines the configuration of the port-to-service name translation'
+                      description: '`portNaming` defines the configuration of the port-to-service name translation.'
                       properties:
                         enable:
                           default: true
@@ -2915,7 +2915,15 @@ spec:
                         - filter:
                             dst_kind: '"Service"'
                           name: Services network
-                      description: '`quickFilters` configures quick filter presets for the Console plugin'
+                        - filter:
+                            src_subnet_label: '"",EXT:'
+                          name: External ingress
+                        - filter:
+                            dst_subnet_label: '"",EXT:'
+                          name: External egress
+                      description: |-
+                        `quickFilters` configures quick filter presets for the Console plugin.
+                        Filters for external traffic assume the subnet labels are configured to distinguish internal and external traffic (see `spec.processor.subnetLabels`).
                       items:
                         description: '`QuickFilter` defines preset configuration for Console''s quick filters'
                         properties:
@@ -2952,7 +2960,7 @@ spec:
                           memory: 50Mi
                       description: |-
                         `resources`, in terms of compute resources, required by this container.
-                        For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/.
                       properties:
                         claims:
                           description: |-
@@ -3010,6 +3018,12 @@ spec:
                             More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
                           type: object
                       type: object
+                    standalone:
+                      description: |-
+                        Deploy as a standalone console, instead of a plugin of the OpenShift Console.
+                        This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
+                        [Unsupported (*)].
+                      type: boolean
                     unmanagedReplicas:
                       description: If `unmanagedReplicas` is `true`, the operator will not reconcile `replicas`. This is useful when using a pod autoscaler.
                       type: boolean
@@ -3930,7 +3944,7 @@ spec:
                   properties:
                     addZone:
                       description: |-
-                        `addZone` allows availability zone awareness by labelling flows with their source and destination zones.
+                        `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
                         This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
                       type: boolean
                     advanced:
@@ -5678,13 +5692,15 @@ spec:
                       type: object
                     subnetLabels:
                       description: |-
-                        `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labelling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+                        `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
                         When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
                       properties:
                         customLabels:
                           description: |-
-                            `customLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
-                            If you enable `openShiftAutoDetect`, `customLabels` can override the detected subnets in case they overlap.
+                            `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+                            External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
+                            If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+                            If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/>
                           items:
                             description: SubnetLabel allows to label subnets and IPs, such as to identify cluster-external workloads or web services.
                             properties:
@@ -5732,6 +5748,82 @@ spec:
                         manual:
                           description: Prometheus configuration for `Manual` mode.
                           properties:
+                            alertManager:
+                              description: |-
+                                AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+                                When used in OpenShift it can be left empty to use the Console API instead.
+                                [Unsupported (*)].
+                              properties:
+                                tls:
+                                  description: TLS client configuration for Prometheus AlertManager URL.
+                                  properties:
+                                    caCert:
+                                      description: '`caCert` defines the reference of the certificate for the Certificate Authority.'
+                                      properties:
+                                        certFile:
+                                          description: '`certFile` defines the path to the certificate file name within the config map or secret.'
+                                          type: string
+                                        certKey:
+                                          description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
+                                          type: string
+                                        name:
+                                          description: Name of the config map or secret containing certificates.
+                                          type: string
+                                        namespace:
+                                          default: ""
+                                          description: |-
+                                            Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                            If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                          type: string
+                                        type:
+                                          description: 'Type for the certificate reference: `configmap` or `secret`.'
+                                          enum:
+                                            - configmap
+                                            - secret
+                                          type: string
+                                      type: object
+                                    enable:
+                                      default: false
+                                      description: Enable TLS
+                                      type: boolean
+                                    insecureSkipVerify:
+                                      default: false
+                                      description: |-
+                                        `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+                                        If set to `true`, the `caCert` field is ignored.
+                                      type: boolean
+                                    userCert:
+                                      description: '`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.'
+                                      properties:
+                                        certFile:
+                                          description: '`certFile` defines the path to the certificate file name within the config map or secret.'
+                                          type: string
+                                        certKey:
+                                          description: '`certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.'
+                                          type: string
+                                        name:
+                                          description: Name of the config map or secret containing certificates.
+                                          type: string
+                                        namespace:
+                                          default: ""
+                                          description: |-
+                                            Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                            If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                          type: string
+                                        type:
+                                          description: 'Type for the certificate reference: `configmap` or `secret`.'
+                                          enum:
+                                            - configmap
+                                            - secret
+                                          type: string
+                                      type: object
+                                  type: object
+                                url:
+                                  description: '`url` is the address of an existing Prometheus AlertManager service to use for querying alerts.'
+                                  type: string
+                              required:
+                                - url
+                              type: object
                             forwardUserToken:
                               description: Set `true` to forward logged in user token in queries to Prometheus
                               type: boolean
@@ -5808,8 +5900,8 @@ spec:
                           default: Auto
                           description: |-
                             `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-                            - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring<br>
-                            - Use `Manual` for a manual setup<br>
+                            - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring.<br>
+                            - Use `Manual` for a manual setup.<br>
                           enum:
                             - Manual
                             - Auto

@@ -68,6 +68,11 @@ BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 # BUNDLE_CONFIG is the config sources to use for OLM bundle - "config/openshift-olm" for OpenShift, or "config/k8s-olm" for upstream Kubernetes.
 BUNDLE_CONFIG ?= config/openshift-olm
 
+# If we don't want to set bundle date (upon bundle update call), store current date
+ifneq ("$(BUNDLE_SET_DATE)", "true")
+	BUNDLE_STORED_DATE = $(shell grep "createdAt:" bundle/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r 's/^.*createdAt:[ ]*(.*)/\1/')
+endif
+
 # Image URL to use all building/pushing image targets
 IMAGE ?= $(IMAGE_TAG_BASE):$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
@@ -405,8 +410,8 @@ bundle-prepare: OPSDK generate kustomize set-manager-images ## Generate bundle m
 
 .PHONY: bundle
 bundle: bundle-prepare ## Generate final bundle files.
-	rm -r bundle/manifests
-	rm -r bundle/metadata
+	rm -r bundle/manifests || true
+	rm -r bundle/metadata || true
 	cp ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml tmp-csv
 	hack/crd2csvSpecDesc.sh v1beta2
 	$(SED) -e 's/^/    /' config/descriptions/upstream.md > tmp-desc
@@ -415,6 +420,10 @@ bundle: bundle-prepare ## Generate final bundle files.
 		| $(SED) -e "/':full-description:'/r tmp-desc" \
 		| $(SED) -e "s/':full-description:'/|\-/" \
 		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+# Restore previous date?
+ifneq ("$(BUNDLE_SET_DATE)", "true")
+	$(SED) -i 's/createdAt:.*/createdAt: ${BUNDLE_STORED_DATE}/' bundle/manifests/netobserv-operator.clusterserviceversion.yaml
+endif
 	mv tmp-csv ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 	rm tmp-desc
 	sh -c '\
