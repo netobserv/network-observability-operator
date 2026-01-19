@@ -1207,10 +1207,10 @@ spec:
   - supported: true
     type: AllNamespaces
   keywords:
-  - network observability
+  - netobserv
   - ebpf
   - ipfix
-  - flow tracing
+  - netflows
   - flows
   - topology
   - network
