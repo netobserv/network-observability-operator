@@ -8,18 +8,15 @@ import (
 	"sync"
 
 	"github.com/coreos/go-semver/semver"
-	configv1 "github.com/openshift/api/config/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	v1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -41,7 +38,7 @@ type Info struct {
 	ready                       bool
 	readinessLock               sync.RWMutex
 	dcl                         *discovery.DiscoveryClient
-	cl                          client.Client
+	livecl                      *liveClient
 	onRefresh                   func()
 }
 
@@ -54,8 +51,13 @@ var (
 	endpointSlices = "endpointslices." + discoveryv1.SchemeGroupVersion.String()
 )
 
-func NewInfo(ctx context.Context, cl client.Client, dcl *discovery.DiscoveryClient, onRefresh func()) (*Info, func(ctx context.Context) error, error) {
-	info := Info{cl: cl, dcl: dcl, onRefresh: onRefresh}
+func NewInfo(ctx context.Context, cfg *rest.Config, dcl *discovery.DiscoveryClient, onRefresh func()) (*Info, func(ctx context.Context) error, error) {
+	info := Info{dcl: dcl, onRefresh: onRefresh}
+	liveCl, err := newLiveClient(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	info.livecl = liveCl
 	if err := info.fetchAvailableAPIs(ctx); err != nil {
 		return &info, nil, err
 	}
@@ -127,9 +129,8 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 	var hasPromServiceDiscoveryRole bool
 	if c.IsOpenShift() {
 		// Fetch cluster ID, version and CNI
-		key := client.ObjectKey{Name: "version"}
-		cversion := &configv1.ClusterVersion{}
-		if err := c.cl.Get(ctx, key, cversion); err != nil {
+		cversion, err := c.livecl.getClusterVersion(ctx)
+		if err != nil {
 			return fmt.Errorf("could not fetch ClusterVersion: %w", err)
 		}
 		id = string(cversion.Spec.ClusterID)
@@ -141,8 +142,7 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 				break
 			}
 		}
-		network := &configv1.Network{}
-		err := c.cl.Get(ctx, client.ObjectKey{Name: "cluster"}, network)
+		network, err := c.livecl.getNetworkConfig(ctx)
 		if err != nil {
 			return fmt.Errorf("could not fetch Network resource: %w", err)
 		}
@@ -150,15 +150,15 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 	}
 	if c.HasSvcMonitor() && c.HasEndpointSlices() {
 		// Check whether servicemonitor spec.serviceDiscoveryRole exists
-		crd := apix.CustomResourceDefinition{}
-		if err := c.cl.Get(ctx, types.NamespacedName{Name: "servicemonitors.monitoring.coreos.com"}, &crd); err != nil {
+		crd, err := c.livecl.getCRD(ctx, "servicemonitors.monitoring.coreos.com")
+		if err != nil {
 			return fmt.Errorf("could not check for ServiceMonitor serviceDiscoveryRole presence: %w", err)
 		}
-		hasPromServiceDiscoveryRole = hasCRDProperty(ctx, &crd, "v1", "spec.serviceDiscoveryRole")
+		hasPromServiceDiscoveryRole = hasCRDProperty(ctx, crd, "v1", "spec.serviceDiscoveryRole")
 	}
 
-	l := v1.NodeList{}
-	if err := c.cl.List(ctx, &l); err != nil {
+	l, err := c.livecl.getNodes(ctx)
+	if err != nil {
 		return fmt.Errorf("could not retrieve number of nodes: %w", err)
 	}
 	nbNodes = uint16(len(l.Items))
