@@ -125,6 +125,7 @@ type HealthRuleVariantMetadata struct {
 	GroupBy            string            `yaml:"groupBy,omitempty" json:"groupBy,omitempty"`
 	LowVolumeThreshold string            `yaml:"lowVolumeThreshold,omitempty" json:"lowVolumeThreshold,omitempty"`
 	Thresholds         ThresholdMetadata `yaml:"thresholds" json:"thresholds"`
+	UpperBound         string            `yaml:"upperBound,omitempty" json:"upperBound,omitempty"`
 }
 
 type ThresholdMetadata struct {

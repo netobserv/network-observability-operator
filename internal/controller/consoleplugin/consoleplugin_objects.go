@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
+	"math"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -516,6 +517,29 @@ func (b *builder) getHealthRulesMetadata() []cfg.HealthRuleMetadata {
 
 		var variants []cfg.HealthRuleVariantMetadata
 		for _, variant := range healthRule.Variants {
+			// Calculate upperBound for trending alerts: max(threshold × 5, 100)
+			// For trending rules (LatencyHighTrend, ExternalEgressHighTrend, ExternalIngressHighTrend),
+			// we need an upper bound for score calculation
+			upperBound := ""
+			isTrending := healthRule.Template == flowslatest.HealthRuleLatencyHighTrend ||
+				healthRule.Template == flowslatest.HealthRuleExternalEgressHighTrend ||
+				healthRule.Template == flowslatest.HealthRuleExternalIngressHighTrend
+			if isTrending {
+				// Use the highest defined threshold (critical > warning > info)
+				thresholdStr := variant.Thresholds.Critical
+				if thresholdStr == "" {
+					thresholdStr = variant.Thresholds.Warning
+				}
+				if thresholdStr == "" {
+					thresholdStr = variant.Thresholds.Info
+				}
+				if thresholdStr != "" {
+					if val, err := strconv.ParseFloat(thresholdStr, 64); err == nil {
+						upperBound = strconv.Itoa(int(math.Max(val*5, 100)))
+					}
+				}
+			}
+
 			variants = append(variants, cfg.HealthRuleVariantMetadata{
 				GroupBy:            string(variant.GroupBy),
 				LowVolumeThreshold: variant.LowVolumeThreshold,
@@ -524,6 +548,7 @@ func (b *builder) getHealthRulesMetadata() []cfg.HealthRuleMetadata {
 					Warning:  variant.Thresholds.Warning,
 					Critical: variant.Thresholds.Critical,
 				},
+				UpperBound: upperBound,
 			})
 		}
 
