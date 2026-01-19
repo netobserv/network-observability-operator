@@ -56,6 +56,7 @@ spec:
   namespace: netobserv
   networkPolicy:
     enable: false
+  deploymentModel: Direct
   consolePlugin:
     standalone: true
   loki:
