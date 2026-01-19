@@ -20,6 +20,7 @@ func alertNoFlows() *monitoringv1.Rule {
 		Annotations: map[string]string{
 			"description": "NetObserv flowlogs-pipeline is not receiving any flow, this is either a connection issue with the agent, or an agent issue",
 			"summary":     "NetObserv flowlogs-pipeline is not receiving any flow",
+			"runbook_url": buildRunbookURL(string(flowslatest.AlertNoFlows)),
 		},
 		Expr:   intstr.FromString("sum(rate(netobserv_ingest_flows_processed[1m])) == 0"),
 		For:    &d,
@@ -35,6 +36,7 @@ func alertLokiError() *monitoringv1.Rule {
 		Annotations: map[string]string{
 			"description": "NetObserv flowlogs-pipeline is dropping flows because of Loki errors, Loki may be down or having issues ingesting every flows. Please check Loki and flowlogs-pipeline logs.",
 			"summary":     "NetObserv flowlogs-pipeline is dropping flows because of Loki errors",
+			"runbook_url": buildRunbookURL(string(flowslatest.AlertLokiError)),
 		},
 		Expr:   intstr.FromString("sum(rate(netobserv_loki_dropped_entries_total[1m])) > 0"),
 		For:    &d,
@@ -119,6 +121,7 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 			"description":                 fmt.Sprintf("node-exporter is detecting more than %s%% of dropped packets%s. %s", rb.threshold, legend, rb.additionalDescription()),
 			"summary":                     "Too many drops from device",
 			"netobserv_io_network_health": string(bAnnot),
+			"runbook_url":                 buildRunbookURL(string(rb.template)),
 		},
 		Expr:   intstr.FromString(promql),
 		For:    &rb.duration,

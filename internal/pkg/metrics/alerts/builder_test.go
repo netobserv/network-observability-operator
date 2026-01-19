@@ -208,3 +208,34 @@ func TestToSnakeCase(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildRunbookURL(t *testing.T) {
+	tests := []struct {
+		template string
+		expected string
+	}{
+		{
+			template: "DNSErrors",
+			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/DNSErrors.md",
+		},
+		{
+			template: "PacketDropsByKernel",
+			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/PacketDropsByKernel.md",
+		},
+		{
+			template: "NetObservNoFlows",
+			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/NetObservNoFlows.md",
+		},
+		{
+			template: "NetObservLokiError",
+			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/NetObservLokiError.md",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.template, func(t *testing.T) {
+			url := buildRunbookURL(tt.template)
+			assert.Equal(t, tt.expected, url)
+		})
+	}
+}

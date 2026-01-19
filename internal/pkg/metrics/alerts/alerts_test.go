@@ -262,3 +262,36 @@ func TestLatencyPromql(t *testing.T) {
 	)
 	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"100","unit":"%","upperBound":"500"}`, rules[0].Annotations["netobserv_io_network_health"])
 }
+
+func TestAllAlertsHaveRunbookURL(t *testing.T) {
+	// Create a FlowCollector with all features enabled
+	fc := flowslatest.FlowCollectorSpec{
+		Agent: flowslatest.FlowCollectorAgent{
+			EBPF: flowslatest.FlowCollectorEBPF{
+				Privileged: true,
+				Features: []flowslatest.AgentFeature{
+					flowslatest.FlowRTT,
+					flowslatest.DNSTracking,
+					flowslatest.IPSec,
+					flowslatest.NetworkEvents,
+					flowslatest.PacketDrop,
+				},
+			},
+		},
+		Processor: flowslatest.FlowCollectorFLP{
+			Metrics: flowslatest.FLPMetrics{},
+		},
+	}
+
+	rules := BuildRules(context.Background(), &fc)
+
+	// Verify all rules have a runbook_url annotation
+	for _, rule := range rules {
+		url, exists := rule.Annotations["runbook_url"]
+		assert.True(t, exists, "Alert %s is missing runbook_url annotation", rule.Alert)
+		assert.NotEmpty(t, url, "Alert %s has empty runbook_url", rule.Alert)
+		assert.Contains(t, url, "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/",
+			"Alert %s has invalid runbook_url: %s", rule.Alert, url)
+		assert.Contains(t, url, ".md", "Alert %s runbook_url doesn't end with .md: %s", rule.Alert, url)
+	}
+}

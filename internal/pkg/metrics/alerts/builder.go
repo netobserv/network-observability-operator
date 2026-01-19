@@ -18,6 +18,8 @@ type srcOrDst string
 const (
 	asSource srcOrDst = "Src"
 	asDest   srcOrDst = "Dst"
+
+	runbookURLBase = "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator"
 )
 
 type ruleBuilder struct {
@@ -234,6 +236,13 @@ func buildRecordingRuleLabels(template string) map[string]string {
 	}
 }
 
+// buildRunbookURL constructs the runbook URL for a given template
+func buildRunbookURL(template string) string {
+	// Template names are already in the correct format (e.g., "DNSErrors", "NetObservNoFlows")
+	// They match the runbook filename without extension
+	return fmt.Sprintf("%s/%s.md", runbookURLBase, template)
+}
+
 func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitoringv1.Rule, error) {
 	bAnnot, err := rb.buildHealthAnnotation(nil)
 	if err != nil {
@@ -262,6 +271,7 @@ func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitor
 			"description":                 description,
 			"summary":                     summary,
 			"netobserv_io_network_health": string(bAnnot),
+			"runbook_url":                 buildRunbookURL(string(rb.template)),
 		},
 		Expr:   intstr.FromString(promQL),
 		For:    &rb.duration,
