@@ -44,128 +44,17 @@ metadata:
                 "excludeInterfaces": [
                   "lo"
                 ],
-                "imagePullPolicy": "IfNotPresent",
                 "interfaces": [],
-                "kafkaBatchSize": 1048576,
-                "logLevel": "info",
-                "metrics": {
-                  "server": {
-                    "port": 9400
-                  }
-                },
                 "privileged": false,
-                "resources": {
-                  "limits": {
-                    "memory": "800Mi"
-                  },
-                  "requests": {
-                    "cpu": "100m",
-                    "memory": "50Mi"
-                  }
-                },
                 "sampling": 50
               },
               "type": "eBPF"
             },
             "consolePlugin": {
-              "autoscaler": {
-                "maxReplicas": 3,
-                "metrics": [
-                  {
-                    "resource": {
-                      "name": "cpu",
-                      "target": {
-                        "averageUtilization": 50,
-                        "type": "Utilization"
-                      }
-                    },
-                    "type": "Resource"
-                  }
-                ],
-                "minReplicas": 1,
-                "status": "Disabled"
-              },
-              "enable": true,
-              "imagePullPolicy": "IfNotPresent",
-              "logLevel": "info",
-              "portNaming": {
-                "enable": true,
-                "portNames": {
-                  "3100": "loki"
-                }
-              },
-              "quickFilters": [
-                {
-                  "default": true,
-                  "filter": {
-                    "flow_layer": "\"app\""
-                  },
-                  "name": "Applications"
-                },
-                {
-                  "filter": {
-                    "flow_layer": "\"infra\""
-                  },
-                  "name": "Infrastructure"
-                },
-                {
-                  "default": true,
-                  "filter": {
-                    "dst_kind": "\"Pod\"",
-                    "src_kind": "\"Pod\""
-                  },
-                  "name": "Pods network"
-                },
-                {
-                  "filter": {
-                    "dst_kind": "\"Service\""
-                  },
-                  "name": "Services network"
-                },
-                {
-                  "filter": {
-                    "src_subnet_label": "\"\",EXT:"
-                  },
-                  "name": "External ingress"
-                },
-                {
-                  "filter": {
-                    "dst_subnet_label": "\"\",EXT:"
-                  },
-                  "name": "External egress"
-                }
-              ],
-              "replicas": 1,
-              "resources": {
-                "limits": {
-                  "memory": "100Mi"
-                },
-                "requests": {
-                  "cpu": "100m",
-                  "memory": "50Mi"
-                }
-              }
+              "enable": true
             },
             "deploymentModel": "Service",
             "exporters": [],
-            "kafka": {
-              "address": "kafka-cluster-kafka-bootstrap.netobserv",
-              "tls": {
-                "caCert": {
-                  "certFile": "ca.crt",
-                  "name": "kafka-cluster-cluster-ca-cert",
-                  "type": "secret"
-                },
-                "enable": false,
-                "userCert": {
-                  "certFile": "user.crt",
-                  "certKey": "user.key",
-                  "name": "flp-kafka",
-                  "type": "secret"
-                }
-              },
-              "topic": "network-flows"
-            },
             "loki": {
               "enable": true,
               "lokiStack": {
@@ -173,21 +62,8 @@ metadata:
               },
               "mode": "Monolithic",
               "monolithic": {
-                "tenantID": "netobserv",
-                "tls": {
-                  "caCert": {
-                    "certFile": "service-ca.crt",
-                    "name": "loki-gateway-ca-bundle",
-                    "type": "configmap"
-                  },
-                  "enable": false
-                },
                 "url": "http://loki.netobserv.svc.cluster.local.:3100/"
-              },
-              "readTimeout": "30s",
-              "writeBatchSize": 10485760,
-              "writeBatchWait": "1s",
-              "writeTimeout": "10s"
+              }
             },
             "namespace": "netobserv",
             "networkPolicy": {
@@ -195,41 +71,12 @@ metadata:
               "enable": true
             },
             "processor": {
-              "imagePullPolicy": "IfNotPresent",
-              "kafkaConsumerAutoscaler": null,
-              "kafkaConsumerBatchSize": 10485760,
-              "kafkaConsumerQueueCapacity": 1000,
-              "kafkaConsumerReplicas": 3,
-              "logLevel": "info",
-              "logTypes": "Flows",
+              "consumerReplicas": 3,
               "metrics": {
-                "disableAlerts": [],
-                "server": {
-                  "port": 9401
-                }
-              },
-              "resources": {
-                "limits": {
-                  "memory": "800Mi"
-                },
-                "requests": {
-                  "cpu": "100m",
-                  "memory": "100Mi"
-                }
+                "disableAlerts": []
               },
               "slicesConfig": {
-                "collectionMode": "AllowList",
-                "enable": false,
-                "namespacesAllowList": [
-                  "/openshift-.*|netobserv.*/"
-                ]
-              }
-            },
-            "prometheus": {
-              "querier": {
-                "enable": true,
-                "mode": "Auto",
-                "timeout": "30s"
+                "enable": false
               }
             }
           }
