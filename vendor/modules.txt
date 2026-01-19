@@ -184,7 +184,7 @@ github.com/netsampler/goflow2/decoders/sflow
 github.com/netsampler/goflow2/decoders/utils
 github.com/netsampler/goflow2/pb
 github.com/netsampler/goflow2/producer
-# github.com/onsi/ginkgo/v2 v2.27.4
+# github.com/onsi/ginkgo/v2 v2.27.5
 ## explicit; go 1.23.0
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
