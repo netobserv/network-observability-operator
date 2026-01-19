@@ -38,31 +38,15 @@ Some features depend on the Linux kernel version in use. It should be at least 4
 
 For OpenShift users, a visualization tool is integrated in the OpenShift console. Just open the console in your browser, and you will see new menu items (such as Network Traffic under Observe) once NetObserv is installed and configured.
 
-Without OpenShift, you can still access the data (Loki logs, Prometheus metrics) in different ways:
+Non-OpenShift users can deploy the standalone console, as explained in the Getting Started section from the readme.
+
+Alternatively, you can still access the data (Loki logs, Prometheus metrics) in different ways:
 
 - Querying Loki (or Prometheus) directly
 - Using the Prometheus console
 - Using and configuring Grafana
 
 All these options depend on how you installed these components.
-
-You may also want to try the Test Console, which is used by the development team. It is similar to the OpenShift console plugin and can work without OpenShift.
-After cloning this repo, run:
-
-```bash
-USER=netobserv make use-test-console
-# If you deployed netobserv in non-default namespaces, use NAMESPACE and/or OPERATOR_NS envs. If you want to point to a specific version, use VERSION.
-# Example:
-USER=netobserv NAMESPACE=other-namespace OPERATOR_NS=operator-namespace VERSION=vX.Y.Z make use-test-console
-```
-
-Or without cloning, run the following steps:
-
-- Configure the operator to use a console-plugin standalone build: `kubectl set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="quay.io/netobserv/network-observability-standalone-frontend:main"`
-- Configure the operator to deploy it: in `FlowCollector` yaml, set `spec.consolePlugin.advanced.env.TEST_CONSOLE` to `true`.
-- Then port-forward port 9001: `kubectl port-forward svc/netobserv-plugin 9001:9001` and open http://localhost:9001/ .
-
-Remember that it is only an internal dev tool, not a fully finished one. Do not expect the perfect user experience! By the way, contributions are welcome.
 
 ### How can I make sure everything is correctly deployed?
 

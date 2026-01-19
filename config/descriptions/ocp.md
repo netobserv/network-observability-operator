@@ -38,7 +38,7 @@ In that case, you can still get the Prometheus metrics or export raw flows to a 
 
 ## Configuration
 
-The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.10.0-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.10.0-community/config/samples/flows_v1beta2_flowcollector.yaml).
+The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/network-observability-operator/blob/1.10.1-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/network-observability-operator/blob/1.10.1-community/config/samples/flows_v1beta2_flowcollector.yaml).
 
 To edit configuration in cluster, run:
 
@@ -54,7 +54,7 @@ A couple of settings deserve special attention:
 
 - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you might have to configure differently if you used another installation method. Make sure to disable it (`spec.loki.enable`) if you don't want to use Loki.
 
-- Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.10.0-community/docs/QuickFilters.md).
+- Quick filters (`spec.consolePlugin.quickFilters`): configure preset filters to be displayed in the Console plugin. They offer a way to quickly switch from filters to others, such as showing / hiding pods network, or infrastructure network, or application network, etc. They can be tuned to reflect the different workloads running on your cluster. For a list of available filters, [check this page](https://github.com/netobserv/network-observability-operator/blob/1.10.1-community/docs/QuickFilters.md).
 
 - Kafka (`spec.deploymentModel: Kafka` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
@@ -90,7 +90,7 @@ Please refer to the documentation on GitHub for more information.
 This documentation includes:
 
 - An [overview](https://github.com/netobserv/network-observability-operator#openshift-console) of the features, with screenshots
-- More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/1.10.0-community/docs/Metrics.md).
+- More information on [configuring metrics](https://github.com/netobserv/network-observability-operator/blob/1.10.1-community/docs/Metrics.md).
 - A [performance](https://github.com/netobserv/network-observability-operator#performance-fine-tuning) section, for fine-tuning
 - A [security](https://github.com/netobserv/network-observability-operator#securing-data-and-communications) section
 - An [F.A.Q.](https://github.com/netobserv/network-observability-operator#faq--troubleshooting) section

@@ -75,9 +75,7 @@ spec:
   networkPolicy:
     enable: false
   consolePlugin:
-    advanced:
-      env:
-        TEST_CONSOLE: "true"
+    standalone: true
   loki:
     mode: Monolithic
     monolithic:
@@ -93,8 +91,7 @@ EOF
 ```
 
 A few remarks:
-- While the [web console](https://github.com/netobserv/network-observability-console-plugin) is primarily designed as a plugin for the OpenShift Console, it is still possible to deploy it as a standalone, which the dev team sometimes use for testing. This is why it is mentioned as "TEST_CONSOLE" here.
-- If you're in OpenShift, you should omit "TEST_CONSOLE: true" to use the Console plugin instead, which offers a better / more integrated experience.
+- `spec.consolePlugin.standalone` can be set to true to deploy the [web console](https://github.com/netobserv/network-observability-console-plugin) as a standalone, as opposed to an OpenShift Console plugin. If you're in OpenShift, it's not recommended to set this mode, so you get a more integrated experience with the Console.
 - You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom-stack=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
 - You can enable networkPolicy, which makes the operator lock down the namespaces that it manages; however, this is highly dependent on your cluster topology, and may cause malfunctions, such as preventing NetObserv pods from communicating with the Kube API server.
 
