@@ -12282,17 +12282,17 @@ When used in OpenShift it can be left empty to use the Console API instead.
         </tr>
     </thead>
     <tbody><tr>
-        <td><b>url</b></td>
-        <td>string</td>
-        <td>
-          `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
         <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanagertls">tls</a></b></td>
         <td>object</td>
         <td>
           TLS client configuration for Prometheus AlertManager URL.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>url</b></td>
+        <td>string</td>
+        <td>
+          `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

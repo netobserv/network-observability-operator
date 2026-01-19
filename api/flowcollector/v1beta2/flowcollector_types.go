@@ -1021,7 +1021,7 @@ type PrometheusQuerierManual struct {
 // `AlertManagerQuerierManual` defines the full connection parameters to Prometheus AlertManager.
 type AlertManagerQuerierManual struct {
 	// `url` is the address of an existing Prometheus AlertManager service to use for querying alerts.
-	// +required
+	// +optional
 	URL string `json:"url,omitempty"`
 
 	// TLS client configuration for Prometheus AlertManager URL.
