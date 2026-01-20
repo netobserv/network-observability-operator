@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,7 +13,6 @@ import (
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -32,6 +30,7 @@ const (
 	NetworkPolicy               ComponentName = "NetworkPolicy"
 	ConditionConfigurationIssue               = "ConfigurationIssue"
 	LokiIssue                                 = "LokiIssue"
+	LokiWarning                               = "LokiWarning"
 )
 
 var allNames = []ComponentName{FlowCollectorLegacy, Monitoring, StaticController}
@@ -141,6 +140,7 @@ func updateStatus(ctx context.Context, c client.Client, conditions ...metav1.Con
 		}
 		conditions = append(conditions, checkValidation(ctx, &fc))
 		conditions = append(conditions, checkLoki(ctx, c, &fc))
+		conditions = append(conditions, checkLokiWarnings(ctx, c, &fc))
 		for _, c := range conditions {
 			meta.SetStatusCondition(&fc.Status.Conditions, c)
 		}
@@ -174,52 +174,6 @@ func checkValidation(ctx context.Context, fc *flowslatest.FlowCollector) metav1.
 	return metav1.Condition{
 		Type:   ConditionConfigurationIssue,
 		Reason: "Valid",
-		Status: metav1.ConditionFalse,
-	}
-}
-
-func checkLoki(ctx context.Context, c client.Client, fc *flowslatest.FlowCollector) metav1.Condition {
-	if !fc.Spec.UseLoki() {
-		return metav1.Condition{
-			Type:    LokiIssue,
-			Reason:  "Unused",
-			Status:  metav1.ConditionUnknown,
-			Message: "Loki is disabled",
-		}
-	}
-	if fc.Spec.Loki.Mode != flowslatest.LokiModeLokiStack {
-		return metav1.Condition{
-			Type:    LokiIssue,
-			Reason:  "Unused",
-			Status:  metav1.ConditionUnknown,
-			Message: "Loki is not configured in LokiStack mode",
-		}
-	}
-	lokiStack := &lokiv1.LokiStack{}
-	nsname := types.NamespacedName{Name: fc.Spec.Loki.LokiStack.Name, Namespace: fc.Spec.Namespace}
-	if len(fc.Spec.Loki.LokiStack.Namespace) > 0 {
-		nsname.Namespace = fc.Spec.Loki.LokiStack.Namespace
-	}
-	err := c.Get(ctx, nsname, lokiStack)
-	if err != nil {
-		if kerr.IsNotFound(err) {
-			return metav1.Condition{
-				Type:    LokiIssue,
-				Reason:  "LokiStackNotFound",
-				Status:  metav1.ConditionTrue,
-				Message: fmt.Sprintf("The configured LokiStack reference could not be found [name: %s, namespace: %s]", nsname.Name, nsname.Namespace),
-			}
-		}
-		return metav1.Condition{
-			Type:    LokiIssue,
-			Reason:  "Error",
-			Status:  metav1.ConditionTrue,
-			Message: fmt.Sprintf("Error while fetching configured LokiStack: %s", err.Error()),
-		}
-	}
-	return metav1.Condition{
-		Type:   LokiIssue,
-		Reason: "NoIssue",
 		Status: metav1.ConditionFalse,
 	}
 }
