@@ -251,26 +251,31 @@ Since `FlowCollector v1beta2`, NetObserv is automatically configured with multi-
 To give flow logs access to a `test` user, run:
 
 ```bash
-oc adm policy add-cluster-role-to-user netobserv-reader test
+oc adm policy add-cluster-role-to-user netobserv-loki-reader test
 ```
 
-More information about multi-tenancy can be found on [this page](https://github.com/netobserv/documents/blob/main/loki_operator.md#netobserv-configuration).
-
-Note that multi-tenancy is not possible without using the Loki Operator.
+More information about multi-tenancy can be found on [this page](https://github.com/netobserv/documents/blob/main/multitenancy.md).
 
 #### Network Policy
 
-For a production deployment, it is also highly recommended to lock down the `netobserv` namespace (or wherever NetObserv is installed) using network policies.
-An example of network policy is [provided here](https://github.com/netobserv/documents/blob/main/examples/lockdown-netobserv.yaml).
+For a production deployment, it is highly recommended to lock down the `netobserv` namespace (or wherever NetObserv is installed) using network policies.
+
+You can set `spec.networkPolicy.enable` to `true` to make NetObserv install automatically a network policy. The policy may need to be fined-tuned for your environment (e.g. for access to kube apiserver, or Prometheus). It has been mostly tested on OpenShift.
+
+A simple example of network policy is [provided here](https://github.com/netobserv/documents/blob/main/examples/lockdown-netobserv.yaml).
 
 #### Communications
 
-By default, communications between internal components are not secured. Note that, when using the Loki Operator, securing communication with TLS is necessary. There are several places where TLS can be set up:
+Internal communications may be encrypted, depending on the configuration:
 
-- Connections to Loki (from the processor `flowlogs-pipeline` and from the Console plugin), by setting `spec.loki.tls`.
-- With Kafka (both on producer and consumer sides), by setting `spec.kafka.tls`. Mutual TLS is supported here.
-- The metrics server running in the processor (`flowlogs-pipeline`) can listen using TLS, via `spec.processor.metrics.server.tls`.
-- The Console plugin server always uses TLS.
+- Between eBPF agents and flowlogs-pipeline, depending on `deploymentModel`:
+  - `Service` (default): it uses TLS by default.
+  - `Kafka`: it is unencrypted by default and can be configured via `spec.kafka.tls` (mTLS is also supported here).
+  - `Direct`: it is unencrypted, but limited to localhost.
+- Communications to Loki:
+  - When Loki mode is `LokiStack`, TLS is used.
+  - In other modes, it is unencrypted by default and can be configured via `spec.loki.tls`.
+- The operator webhooks and the console plugin server always use TLS.
 
 ## Architecture
 
