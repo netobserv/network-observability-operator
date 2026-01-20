@@ -45,5 +45,15 @@
         "matchManagers": ["pip_requirements"]
       }
     ]
-  }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/patch_csv\\.py$/"],
+      "matchStrings": [
+        "# renovate: datasource=docker depName=(?<depName>[^\\s]+)\\s*\\n.*?LOKI_IMAGE_PULLSPEC\\s*=\\s*['\"](?<currentValue>[^@'\"]+)@(?<currentDigest>sha256:[a-f0-9]+)['\"]"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
 }

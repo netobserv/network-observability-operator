@@ -1,0 +1,92 @@
+auth_enabled: false
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  grpc_server_max_recv_msg_size: 10485760
+  http_server_read_timeout: 1m
+  http_server_write_timeout: 1m
+  log_level: error
+target: all
+common:
+  path_prefix: /loki-store
+  storage:
+    filesystem:
+      chunks_directory: /loki-store/chunks
+      rules_directory: /loki-store/rules
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+compactor:
+  compaction_interval: 5m
+  delete_request_store: filesystem
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+frontend:
+  compress_responses: true
+ingester:
+  chunk_encoding: snappy
+  chunk_retain_period: 1m
+query_range:
+  align_queries_with_step: true
+  cache_results: true
+  max_retries: 5
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 500
+        ttl: 24h
+    compression: 'snappy'
+  parallelise_shardable_queries: true
+query_scheduler:
+  max_outstanding_requests_per_tenant: 2048
+schema_config:
+  configs:
+    - from: 2020-05-15
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+storage_config:
+  filesystem:
+    directory: /loki-store/storage
+  tsdb_shipper:
+    active_index_directory: /loki-store/index
+    cache_location: /loki-store/boltdb-cache
+    cache_ttl: 24h
+limits_config:    
+  ingestion_rate_strategy: global 
+  ingestion_rate_mb: 10
+  ingestion_burst_size_mb: 10
+  max_label_name_length: 1024
+  max_label_value_length: 2048
+  max_label_names_per_series: 30
+  reject_old_samples: true
+  reject_old_samples_max_age: 15m
+  creation_grace_period: 10m
+  max_line_size: 256000
+  max_line_size_truncate: false
+  max_entries_limit_per_query: 10000
+  max_streams_per_user: 0
+  max_global_streams_per_user: 0
+  unordered_writes: true
+  max_chunks_per_query: 2000000
+  max_query_length: 721h
+  max_query_parallelism: 32
+  max_query_series: 10000
+  cardinality_limit: 100000
+  max_streams_matchers_per_query: 1000
+  max_concurrent_tail_requests: 10
+  retention_period: 24h
+  max_cache_freshness_per_query: 5m
+  max_queriers_per_tenant: 0
+  per_stream_rate_limit: 3MB
+  per_stream_rate_limit_burst: 15MB
+  max_query_lookback: 0
+  min_sharding_lookback: 0s
+  split_queries_by_interval: 1m

@@ -6,6 +6,8 @@ import (
 
 // Config of the operator.
 type Config struct {
+	// DemoLokiImage is the image of the zero click loki deployment that is managed by the operator
+	DemoLokiImage string
 	// EBPFAgentImage is the image of the eBPF agent that is managed by the operator
 	EBPFAgentImage string
 	// FlowlogsPipelineImage is the image of the Flowlogs-Pipeline that is managed by the operator

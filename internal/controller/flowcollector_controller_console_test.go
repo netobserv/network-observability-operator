@@ -256,6 +256,7 @@ func flowCollectorConsolePluginSpecs() {
 		})
 		It("Should update the Loki URL in the Console Plugin if it changes in the Spec", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+				fc.Spec.Loki.Monolithic.InstallDemoLoki = ptr.To(false)
 				fc.Spec.Loki.Monolithic.URL = "http://loki.namespace:8888"
 			})
 			Eventually(getConfigMapData(configKey),

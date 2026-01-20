@@ -119,6 +119,29 @@ func (c *Client) UpdateIfOwned(ctx context.Context, old, obj client.Object) erro
 	return c.UpdateOwned(ctx, old, obj)
 }
 
+// DeleteIfOwned is an helper function that deletes an object only if it's currently owned and managed by the operator
+func (c *Client) DeleteIfOwned(ctx context.Context, obj client.Object) error {
+	log := log.FromContext(ctx)
+	kind := reflect.TypeOf(obj).String()
+
+	if obj == nil {
+		return nil
+	}
+
+	if !IsOwned(obj) {
+		log.Info("SKIP "+kind+" deletion since not owned", "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+		return nil
+	}
+
+	log.Info("DELETING "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+	err := c.Delete(ctx, obj)
+	if err != nil {
+		log.Error(err, "Failed to delete "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+		return err
+	}
+	return nil
+}
+
 func getFlowCollector(ctx context.Context, c client.Client) (*flowslatest.FlowCollector, error) {
 	log := log.FromContext(ctx)
 	desired := &flowslatest.FlowCollector{}

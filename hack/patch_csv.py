@@ -31,6 +31,9 @@ flp_image = os.getenv('FLP_IMAGE_PULLSPEC')
 console_image = os.getenv('CONSOLE_IMAGE_PULLSPEC')
 console_compat_image = os.getenv('CONSOLE_COMPAT_IMAGE_PULLSPEC')
 
+# renovate: datasource=docker depName=registry.redhat.io/openshift-logging/logging-loki-rhel9
+LOKI_IMAGE_PULLSPEC = 'registry.redhat.io/openshift-logging/logging-loki-rhel9@sha256:6efd6e1fbc337c39a37cd52f1963ea61a33f0f9ab1220eeb5ecdd86b0ceb598f'
+
 csv['metadata']['annotations']['operators.openshift.io/valid-subscription'] = '["OpenShift Kubernetes Engine", "OpenShift Container Platform", "OpenShift Platform Plus"]'
 csv['metadata']['annotations']['operatorframework.io/cluster-monitoring'] = 'true'
 csv['metadata']['name'] = 'network-observability-operator.v{}'.format(version)
@@ -68,6 +71,8 @@ for env in csv['spec']['install']['spec']['deployments'][0]['spec']['template'][
       env['value'] = console_image
    if env['name'] == 'RELATED_IMAGE_CONSOLE_PLUGIN_COMPAT':
       env['value'] = console_compat_image
+   if env['name'] == 'RELATED_IMAGE_DEMO_LOKI':
+      env['value'] = LOKI_IMAGE_PULLSPEC
 
 csv['spec']['install']['spec']['deployments'][0]['spec']['template']['spec']['containers'][0]['image'] = operator_image
 
@@ -88,6 +93,8 @@ for relatedImage in csv['spec']['relatedImages']:
       relatedImage["image"] = console_image
    elif relatedImage["name"] == "console-plugin-compat":
       relatedImage["image"] = console_compat_image
+   elif relatedImage["name"] == "demo-loki":
+      relatedImage["image"] = LOKI_IMAGE_PULLSPEC
 
 csv['spec']['version'] = version
 

@@ -3809,6 +3809,12 @@ spec:
                         Use this option when Loki is installed using the monolithic deployment mode (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode).
                         It is ignored for other modes.
                       properties:
+                        installDemoLoki:
+                          default: false
+                          description: |-
+                            Set `installDemoLoki` to `true` to automatically create Loki deployment, service and storage.
+                            This is useful for development and demo purposes. Do not use it in production.
+                          type: boolean
                         tenantID:
                           default: netobserv
                           description: '`tenantID` is the Loki `X-Scope-OrgID` header that identifies the tenant for each request.'

@@ -8138,6 +8138,16 @@ It is ignored for other modes.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>installDemoLoki</b></td>
+        <td>boolean</td>
+        <td>
+          Set `installDemoLoki` to `true` to automatically create Loki deployment, service and storage.
+This is useful for development and demo purposes. Do not use it in production.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>tenantID</b></td>
         <td>string</td>
         <td>
