@@ -27,6 +27,11 @@ const (
 	OVNKubernetes NetworkType = "OVNKubernetes"
 )
 
+// discoveryClient is an interface for API discovery operations
+type discoveryClient interface {
+	ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
+}
+
 type Info struct {
 	apisMap                     map[string]bool
 	apisMapLock                 sync.RWMutex
@@ -37,7 +42,7 @@ type Info struct {
 	hasPromServiceDiscoveryRole bool
 	ready                       bool
 	readinessLock               sync.RWMutex
-	dcl                         *discovery.DiscoveryClient
+	dcl                         discoveryClient
 	livecl                      *liveClient
 	onRefresh                   func()
 }
@@ -69,9 +74,16 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 	_, resources, err := c.dcl.ServerGroupsAndResources()
 	// We may receive partial data along with an error
 	var discErr *discovery.ErrGroupDiscoveryFailed
-	if err != nil && (!errors.As(err, &discErr) || len(resources) == 0) {
-		return err
+	hasDiscoveryError := errors.As(err, &discErr)
+
+	// If we have a total failure (no resources at all), fail fast
+	if err != nil && !hasDiscoveryError {
+		return fmt.Errorf("API discovery failed completely: %w", err)
 	}
+	if len(resources) == 0 {
+		return fmt.Errorf("API discovery returned no resources")
+	}
+
 	apisMap := map[string]bool{
 		consolePlugin:  false,
 		cno:            false,
@@ -80,17 +92,33 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 		ocpSecurity:    false,
 		endpointSlices: false,
 	}
+
+	// Track which critical APIs failed discovery
+	criticalAPIFailed := false
+
 	for apiName := range apisMap {
 		if hasAPI(apiName, resources) {
 			apisMap[apiName] = true
-		} else if discErr != nil {
+		} else if hasDiscoveryError {
 			// Check if the wanted API is in error
-			for gv, err := range discErr.Groups {
+			for gv, gvErr := range discErr.Groups {
 				if strings.Contains(apiName, gv.String()) {
-					log.Error(err, "some API-related features are unavailable; you can check for stale APIs with 'kubectl get apiservice'", "GroupVersion", gv.String())
+					log.Error(gvErr, "some API-related features are unavailable; you can check for stale APIs with 'kubectl get apiservice'", "GroupVersion", gv.String(), "api", apiName)
+
+					// OCP Security API is critical - we MUST know if we're on OpenShift
+					// to avoid wrong security context configurations
+					if apiName == ocpSecurity {
+						criticalAPIFailed = true
+					}
 				}
 			}
 		}
+	}
+
+	// If critical API discovery failed, return error to prevent reconciliation
+	// with wrong cluster type detection. The manager will retry on next restart.
+	if criticalAPIFailed {
+		return fmt.Errorf("critical API discovery failed: cannot determine if running on OpenShift (security.openshift.io API unavailable)")
 	}
 
 	c.apisMapLock.Lock()
