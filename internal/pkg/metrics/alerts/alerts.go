@@ -54,9 +54,10 @@ func (rb *ruleBuilder) kernelDrops() (*monitoringv1.Rule, error) {
 	filter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "", filter, "2m", "")
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
-	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	return rb.createRule(promql, "Too many packets dropped by the kernel", description)
 }
@@ -69,23 +70,25 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 	var byLabels string
 	var healthAnnotOverride map[string]any
 	var legend string
-	switch rb.alert.GroupBy {
+	switch rb.healthRule.GroupBy {
 	case flowslatest.GroupByNode:
 		byLabels = " by (instance)"
 		healthAnnotOverride = map[string]any{"nodeLabels": "instance"}
 		legend = " [node={{ $labels.instance }}]"
 	case flowslatest.GroupByNamespace:
-		return nil, fmt.Errorf("PacketDropsByDevice alert does not support grouping per namespace")
+		return nil, fmt.Errorf("PacketDropsByDevice health rule does not support grouping per namespace")
 	case flowslatest.GroupByWorkload:
-		return nil, fmt.Errorf("PacketDropsByDevice alert does not support grouping per workload")
+		return nil, fmt.Errorf("PacketDropsByDevice health rule does not support grouping per workload")
 	}
 
+	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(
 		fmt.Sprintf("sum(rate(node_network_receive_drop_total[2m]))%s + sum(rate(node_network_transmit_drop_total[2m]))%s", byLabels, byLabels),
 		fmt.Sprintf("sum(rate(node_network_receive_packets_total[2m]))%s + sum(rate(node_network_transmit_packets_total[2m]))%s", byLabels, byLabels),
 		rb.threshold,
 		rb.upperThreshold,
-		rb.alert.LowVolumeThreshold,
+		rb.healthRule.LowVolumeThreshold,
+		isRecording,
 	)
 
 	bAnnot, err := rb.buildHealthAnnotation(healthAnnotOverride)
@@ -94,9 +97,22 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 	}
 
 	var gr string
-	if rb.alert.GroupBy != "" {
-		gr = "Per" + string(rb.alert.GroupBy)
+	if rb.healthRule.GroupBy != "" {
+		gr = "Per" + string(rb.healthRule.GroupBy)
 	}
+
+	// Generate recording rule
+	if rb.mode == flowslatest.ModeRecording {
+		recordName := rb.buildRecordingRuleName()
+		return &monitoringv1.Rule{
+			Record: recordName,
+			// Note: Recording rules cannot have annotations in Prometheus
+			Expr:   intstr.FromString(promql),
+			Labels: buildRecordingRuleLabels(string(rb.template)),
+		}, nil
+	}
+
+	// Generate alert rule
 	return &monitoringv1.Rule{
 		Alert: fmt.Sprintf("%s_%s%s", rb.template, gr, strings.ToUpper(rb.severity[:1])+rb.severity[1:]),
 		Annotations: map[string]string{
@@ -122,9 +138,10 @@ func (rb *ruleBuilder) ipsecErrors() (*monitoringv1.Rule, error) {
 	filter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "", filter, "2m", "")
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
-	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	return rb.createRule(promql, "Too many IPsec errors", description)
 }
@@ -146,9 +163,10 @@ func (rb *ruleBuilder) dnsErrors() (*monitoringv1.Rule, error) {
 	totalFilter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "_count", metricsFilter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "2m", "")
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
-	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	rb.trafficLink = &trafficLink{
 		BackAndForth:      false,
@@ -176,9 +194,9 @@ func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
 	totalFilter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "_count", metricsFilter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "_count", totalFilter, "2m", "")
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
-	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, rb.mode == flowslatest.ModeRecording)
 
 	rb.trafficLink = &trafficLink{
 		BackAndForth:      false,
@@ -202,15 +220,16 @@ func (rb *ruleBuilder) netpolDenied() (*monitoringv1.Rule, error) {
 	totalFilter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "", metricsFilter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "", totalFilter, "2m", "")
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	totalSumBy := sumBy(totalRate, rb.alert.GroupBy, rb.side, "")
-	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.alert.LowVolumeThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	totalSumBy := sumBy(totalRate, rb.healthRule.GroupBy, rb.side, "")
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
 	return rb.createRule(promql, "Traffic denied by Network Policies", description)
 }
 
 func (rb *ruleBuilder) latencyTrend() (*monitoringv1.Rule, error) {
-	offset, duration := rb.alert.GetTrendParams()
+	offset, duration := rb.healthRule.GetTrendParams()
 	description := fmt.Sprintf(
 		"NetObserv is detecting TCP latency increased by more than %s%%%s, compared to baseline (offset: %s). %s",
 		rb.threshold,
@@ -223,9 +242,10 @@ func (rb *ruleBuilder) latencyTrend() (*monitoringv1.Rule, error) {
 	filter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "_bucket", filter, "2m", "")
 	baselineRate := promQLRateFromMetric(baseline, "_bucket", filter, duration, " offset "+offset)
-	metricQuantile := histogramQuantile(metricsRate, rb.alert.GroupBy, rb.side, "0.9")
-	baselineQuantile := histogramQuantile(baselineRate, rb.alert.GroupBy, rb.side, "0.9")
-	promql := baselineIncreasePromQL(metricQuantile, baselineQuantile, rb.threshold, rb.upperThreshold)
+	metricQuantile := histogramQuantile(metricsRate, rb.healthRule.GroupBy, rb.side, "0.9")
+	baselineQuantile := histogramQuantile(baselineRate, rb.healthRule.GroupBy, rb.side, "0.9")
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := baselineIncreasePromQL(metricQuantile, baselineQuantile, rb.threshold, rb.upperThreshold, isRecording)
 
 	// trending comparison are on an open scale; but in the health page, we need a closed scale to compute the score
 	// let's set an upper bound to max(5*threshold, 100) so score can be computed after clamping
@@ -254,7 +274,7 @@ func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
 		filterForExternal = `SrcSubnetLabel=~"|EXT:.*",SrcK8S_Namespace="",SrcK8S_OwnerName=""`
 		trafficLinkFilter = `src_subnet_label="",EXT:`
 	}
-	offset, duration := rb.alert.GetTrendParams()
+	offset, duration := rb.healthRule.GetTrendParams()
 	description := fmt.Sprintf(
 		"NetObserv is detecting external %s traffic increased by more than %s%%%s, compared to baseline (offset: %s). %s",
 		direction,
@@ -268,9 +288,10 @@ func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
 	filter := rb.buildLabelFilter(filterForExternal)
 	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
 	baselineRate := promQLRateFromMetric(baseline, "", filter, duration, " offset "+offset)
-	metricsSumBy := sumBy(metricsRate, rb.alert.GroupBy, rb.side, "")
-	baselineSumBy := sumBy(baselineRate, rb.alert.GroupBy, rb.side, "")
-	promql := baselineIncreasePromQL(metricsSumBy, baselineSumBy, rb.threshold, rb.upperThreshold)
+	metricsSumBy := sumBy(metricsRate, rb.healthRule.GroupBy, rb.side, "")
+	baselineSumBy := sumBy(baselineRate, rb.healthRule.GroupBy, rb.side, "")
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := baselineIncreasePromQL(metricsSumBy, baselineSumBy, rb.threshold, rb.upperThreshold, isRecording)
 
 	// trending comparison are on an open scale; but in the health page, we need a closed scale to compute the score
 	// let's set an upper bound to max(5*threshold, 100) so score can be computed after clamping

@@ -608,10 +608,10 @@ spec:
         path: processor.filters
       - displayName: Log types
         path: processor.logTypes
-      - displayName: Alerts
-        path: processor.metrics.alerts
       - displayName: Disable alerts
         path: processor.metrics.disableAlerts
+      - displayName: Health rules
+        path: processor.metrics.healthRules
       - displayName: Include list
         path: processor.metrics.includeList
       - displayName: Port

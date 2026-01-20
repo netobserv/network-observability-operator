@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
+	"math"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -498,7 +499,67 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig) error {
 	if b.desired.Processor.IsSubnetLabelsEnabled() {
 		fconf.Features = append(fconf.Features, "subnetLabels")
 	}
+
+	// Add health rules metadata for frontend
+	fconf.HealthRules = b.getHealthRulesMetadata()
+
 	return nil
+}
+
+func (b *builder) getHealthRulesMetadata() []cfg.HealthRuleMetadata {
+	var metadata []cfg.HealthRuleMetadata
+
+	healthRules := b.desired.GetFLPHealthRules()
+	for _, healthRule := range healthRules {
+		if ok, _ := healthRule.IsAllowed(b.desired); !ok {
+			continue
+		}
+
+		var variants []cfg.HealthRuleVariantMetadata
+		for _, variant := range healthRule.Variants {
+			// Calculate upperBound for trending alerts: max(threshold × 5, 100)
+			// For trending rules (LatencyHighTrend, ExternalEgressHighTrend, ExternalIngressHighTrend),
+			// we need an upper bound for score calculation
+			upperBound := ""
+			isTrending := healthRule.Template == flowslatest.HealthRuleLatencyHighTrend ||
+				healthRule.Template == flowslatest.HealthRuleExternalEgressHighTrend ||
+				healthRule.Template == flowslatest.HealthRuleExternalIngressHighTrend
+			if isTrending {
+				// Use the highest defined threshold (critical > warning > info)
+				thresholdStr := variant.Thresholds.Critical
+				if thresholdStr == "" {
+					thresholdStr = variant.Thresholds.Warning
+				}
+				if thresholdStr == "" {
+					thresholdStr = variant.Thresholds.Info
+				}
+				if thresholdStr != "" {
+					if val, err := strconv.ParseFloat(thresholdStr, 64); err == nil {
+						upperBound = strconv.Itoa(int(math.Max(val*5, 100)))
+					}
+				}
+			}
+
+			variants = append(variants, cfg.HealthRuleVariantMetadata{
+				GroupBy:            string(variant.GroupBy),
+				LowVolumeThreshold: variant.LowVolumeThreshold,
+				Thresholds: cfg.ThresholdMetadata{
+					Info:     variant.Thresholds.Info,
+					Warning:  variant.Thresholds.Warning,
+					Critical: variant.Thresholds.Critical,
+				},
+				UpperBound: upperBound,
+			})
+		}
+
+		metadata = append(metadata, cfg.HealthRuleMetadata{
+			Template: string(healthRule.Template),
+			Mode:     string(healthRule.Mode),
+			Variants: variants,
+		})
+	}
+
+	return metadata
 }
 
 // returns a configmap with a digest of its configuration contents, which will be used to

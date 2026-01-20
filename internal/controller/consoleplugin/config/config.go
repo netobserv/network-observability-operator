@@ -115,6 +115,25 @@ type FieldConfig struct {
 	LokiLabel   bool   `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
 }
 
+type HealthRuleMetadata struct {
+	Template string                      `yaml:"template" json:"template"`
+	Mode     string                      `yaml:"mode" json:"mode"`
+	Variants []HealthRuleVariantMetadata `yaml:"variants" json:"variants"`
+}
+
+type HealthRuleVariantMetadata struct {
+	GroupBy            string            `yaml:"groupBy,omitempty" json:"groupBy,omitempty"`
+	LowVolumeThreshold string            `yaml:"lowVolumeThreshold,omitempty" json:"lowVolumeThreshold,omitempty"`
+	Thresholds         ThresholdMetadata `yaml:"thresholds" json:"thresholds"`
+	UpperBound         string            `yaml:"upperBound,omitempty" json:"upperBound,omitempty"`
+}
+
+type ThresholdMetadata struct {
+	Info     string `yaml:"info,omitempty" json:"info,omitempty"`
+	Warning  string `yaml:"warning,omitempty" json:"warning,omitempty"`
+	Critical string `yaml:"critical,omitempty" json:"critical,omitempty"`
+}
+
 type FrontendConfig struct {
 	RecordTypes     []api.ConnTrackOutputRecordTypeEnum `yaml:"recordTypes" json:"recordTypes"`
 	PortNaming      flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
@@ -126,6 +145,7 @@ type FrontendConfig struct {
 	Sampling        int                                 `yaml:"sampling" json:"sampling"`
 	Features        []string                            `yaml:"features" json:"features"`
 	Fields          []FieldConfig                       `yaml:"fields" json:"fields"`
+	HealthRules     []HealthRuleMetadata                `yaml:"healthRules,omitempty" json:"healthRules,omitempty"`
 }
 
 type PluginConfig struct {

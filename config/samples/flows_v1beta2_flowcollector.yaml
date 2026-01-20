@@ -102,8 +102,9 @@ spec:
       # - "namespace_drop_packets_total"
       # - "node_drop_packets_total"
       # - "namespace_rtt_seconds"
-      # alerts:
+      # healthRules:
       # - template: PacketDropsByKernel
+      #   mode: Alert  # or "Recording" to generate recording rules instead of alerts
       #   variants:
       #   - thresholds:
       #       critical: "15"
