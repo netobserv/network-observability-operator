@@ -43,7 +43,7 @@ func (spec *FlowCollectorSpec) UseLoki() bool {
 }
 
 func (spec *FlowCollectorSpec) UseLokiDev() bool {
-	return spec.UseLoki() && spec.Loki.Mode == LokiModeMonolithic && *spec.Loki.Monolithic.InstallDemoLoki
+	return spec.UseLoki() && spec.Loki.Mode == LokiModeMonolithic && spec.Loki.Monolithic.InstallDemoLoki != nil && *spec.Loki.Monolithic.InstallDemoLoki
 }
 
 func (spec *FlowCollectorSpec) UsePrometheus() bool {
