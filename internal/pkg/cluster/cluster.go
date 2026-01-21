@@ -70,6 +70,12 @@ func NewInfo(ctx context.Context, cfg *rest.Config, dcl *discovery.DiscoveryClie
 }
 
 func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
+	return c.fetchAvailableAPIsInternal(ctx, false)
+}
+
+// fetchAvailableAPIsInternal discovers available APIs and optionally allows continuing despite critical API failures
+// allowCriticalFailure should be true during refresh loops to allow recovery from transient API server issues
+func (c *Info) fetchAvailableAPIsInternal(ctx context.Context, allowCriticalFailure bool) error {
 	log := log.FromContext(ctx)
 	_, resources, err := c.dcl.ServerGroupsAndResources()
 	// We may receive partial data along with an error
@@ -84,7 +90,7 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 		return fmt.Errorf("API discovery returned no resources")
 	}
 
-	apisMap := map[string]bool{
+	newApisMap := map[string]bool{
 		consolePlugin:  false,
 		cno:            false,
 		svcMonitor:     false,
@@ -96,9 +102,9 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 	// Track which critical APIs failed discovery
 	criticalAPIFailed := false
 
-	for apiName := range apisMap {
+	for apiName := range newApisMap {
 		if hasAPI(apiName, resources) {
-			apisMap[apiName] = true
+			newApisMap[apiName] = true
 		} else if hasDiscoveryError {
 			// Check if the wanted API is in error
 			for gv, gvErr := range discErr.Groups {
@@ -115,17 +121,38 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 		}
 	}
 
-	// If critical API discovery failed, return error to prevent reconciliation
-	// with wrong cluster type detection. The manager will retry on next restart.
-	if criticalAPIFailed {
+	// Check if any APIs transitioned from unavailable to available (recovery scenario)
+	c.apisMapLock.Lock()
+	defer c.apisMapLock.Unlock()
+	oldApisMap := c.apisMap
+	apisRecovered := false
+	if oldApisMap != nil {
+		for apiName, newAvailable := range newApisMap {
+			oldAvailable := oldApisMap[apiName]
+			if !oldAvailable && newAvailable {
+				log.Info("API recovered and is now available", "api", apiName)
+				apisRecovered = true
+			}
+		}
+	}
+	c.apisMap = newApisMap
+
+	log.Info("API detection finished", "apis", newApisMap)
+
+	// If APIs recovered, trigger reconciliation via the onRefresh callback
+	// (called outside the lock to avoid potential deadlocks)
+	if apisRecovered && c.onRefresh != nil {
+		log.Info("Triggering reconciliation due to API recovery")
+		go c.onRefresh()
+	}
+
+	// If critical API discovery failed:
+	// - During startup (allowCriticalFailure=false): fail fast to prevent wrong cluster detection
+	// - During refresh (allowCriticalFailure=true): log error but continue, allowing time to recover
+	if criticalAPIFailed && !allowCriticalFailure {
 		return fmt.Errorf("critical API discovery failed: cannot determine if running on OpenShift (security.openshift.io API unavailable)")
 	}
 
-	c.apisMapLock.Lock()
-	defer c.apisMapLock.Unlock()
-	c.apisMap = apisMap
-
-	log.Info("API detection finished", "apis", apisMap)
 	return nil
 }
 

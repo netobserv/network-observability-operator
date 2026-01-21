@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/coreos/go-semver/semver"
 	"github.com/stretchr/testify/assert"
@@ -309,5 +310,186 @@ func TestAPIDetectionRaceCondition(t *testing.T) {
 	}
 
 	<-done
+	assert.True(t, info.IsOpenShift())
+}
+
+// TestFetchAvailableAPIs_CriticalFailureWithFlag tests that allowCriticalFailure flag works
+func TestFetchAvailableAPIs_CriticalFailureWithFlag(t *testing.T) {
+	info := &Info{}
+
+	// Mock critical API failure (SCC API unavailable)
+	mockDcl := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("console.openshift.io/v1", "consoleplugins"),
+			// security.openshift.io is missing
+		},
+		err: &discovery.ErrGroupDiscoveryFailed{
+			Groups: map[schema.GroupVersion]error{
+				{Group: "security.openshift.io", Version: "v1"}: fmt.Errorf("api service unavailable"),
+			},
+		},
+	}
+	info.dcl = mockDcl
+
+	// During startup (allowCriticalFailure=false), should fail
+	err := info.fetchAvailableAPIsInternal(context.Background(), false)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "critical API discovery failed")
+
+	// During refresh (allowCriticalFailure=true), should NOT fail
+	err = info.fetchAvailableAPIsInternal(context.Background(), true)
+	assert.NoError(t, err, "Should allow critical failure during refresh")
+	assert.False(t, info.IsOpenShift(), "Should mark OpenShift as unavailable")
+}
+
+// TestAPIRecovery tests that API recovery is detected and triggers callback
+func TestAPIRecovery(t *testing.T) {
+	callbackTriggered := false
+	info := &Info{
+		onRefresh: func() {
+			callbackTriggered = true
+		},
+	}
+
+	// Initially, ServiceMonitor API is unavailable
+	mockDcl := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("security.openshift.io/v1", "securitycontextconstraints"),
+			// monitoring.coreos.com is missing
+		},
+		err: nil,
+	}
+	info.dcl = mockDcl
+
+	err := info.fetchAvailableAPIs(context.Background())
+	assert.NoError(t, err)
+	assert.True(t, info.IsOpenShift())
+	assert.False(t, info.HasSvcMonitor(), "ServiceMonitor should be unavailable")
+	assert.False(t, callbackTriggered, "Callback should not trigger on initial detection")
+
+	// Now ServiceMonitor API becomes available
+	mockDcl.resources = []*metav1.APIResourceList{
+		makeAPIResourceList("security.openshift.io/v1", "securitycontextconstraints"),
+		makeAPIResourceList("monitoring.coreos.com/v1", "servicemonitors"),
+	}
+
+	// Simulate refresh
+	err = info.fetchAvailableAPIsInternal(context.Background(), true)
+	assert.NoError(t, err)
+	assert.True(t, info.HasSvcMonitor(), "ServiceMonitor should now be available")
+
+	// Give the goroutine time to trigger the callback
+	time.Sleep(100 * time.Millisecond)
+	assert.True(t, callbackTriggered, "Callback should be triggered when API recovers")
+}
+
+// TestAPIRecovery_MultipleAPIs tests recovery of multiple APIs
+func TestAPIRecovery_MultipleAPIs(t *testing.T) {
+	callbackTriggered := false
+	info := &Info{
+		onRefresh: func() {
+			callbackTriggered = true
+		},
+	}
+
+	// Initially, both ServiceMonitor and PrometheusRule APIs are unavailable
+	mockDcl := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("security.openshift.io/v1", "securitycontextconstraints"),
+		},
+		err: nil,
+	}
+	info.dcl = mockDcl
+
+	err := info.fetchAvailableAPIs(context.Background())
+	assert.NoError(t, err)
+	assert.False(t, info.HasSvcMonitor())
+	assert.False(t, info.HasPromRule())
+
+	// Now both APIs become available
+	mockDcl.resources = []*metav1.APIResourceList{
+		makeAPIResourceList("security.openshift.io/v1", "securitycontextconstraints"),
+		makeAPIResourceList("monitoring.coreos.com/v1", "servicemonitors"),
+		makeAPIResourceList("monitoring.coreos.com/v1", "prometheusrules"),
+	}
+
+	err = info.fetchAvailableAPIsInternal(context.Background(), true)
+	assert.NoError(t, err)
+	assert.True(t, info.HasSvcMonitor())
+	assert.True(t, info.HasPromRule())
+
+	// Give the goroutine time to trigger the callback
+	time.Sleep(100 * time.Millisecond)
+	assert.True(t, callbackTriggered, "Callback should be triggered when APIs recover")
+}
+
+// TestNoRecovery_StillUnavailable tests that callback is not triggered if APIs remain unavailable
+func TestNoRecovery_StillUnavailable(t *testing.T) {
+	callbackTriggered := false
+	info := &Info{
+		onRefresh: func() {
+			callbackTriggered = true
+		},
+	}
+
+	// ServiceMonitor API is unavailable
+	mockDcl := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("security.openshift.io/v1", "securitycontextconstraints"),
+		},
+		err: nil,
+	}
+	info.dcl = mockDcl
+
+	err := info.fetchAvailableAPIs(context.Background())
+	assert.NoError(t, err)
+	assert.False(t, info.HasSvcMonitor())
+
+	// API is still unavailable on refresh
+	err = info.fetchAvailableAPIsInternal(context.Background(), true)
+	assert.NoError(t, err)
+	assert.False(t, info.HasSvcMonitor())
+
+	// Give time for potential callback
+	time.Sleep(100 * time.Millisecond)
+	assert.False(t, callbackTriggered, "Callback should not trigger if API remains unavailable")
+}
+
+// TestRefreshWithError tests that errors during refresh are handled and don't crash
+func TestRefreshWithError(t *testing.T) {
+	info := &Info{
+		onRefresh: func() {},
+	}
+
+	// Mock total API failure during refresh
+	mockDcl := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{},
+		err:       fmt.Errorf("network timeout"),
+	}
+	info.dcl = mockDcl
+
+	// During refresh, even total failures should be handled gracefully
+	err := info.refresh(context.Background())
+	assert.Error(t, err, "Should return error on API failure")
+	assert.Contains(t, err.Error(), "API discovery")
+}
+
+// TestRefreshSuccess tests successful refresh operation
+func TestRefreshSuccess(t *testing.T) {
+	info := &Info{
+		onRefresh: func() {},
+	}
+
+	// Mock successful API discovery
+	mockDcl := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("security.openshift.io/v1", "securitycontextconstraints"),
+		},
+		err: nil,
+	}
+	info.dcl = mockDcl
+
+	err := info.fetchAvailableAPIsInternal(context.Background(), true)
+	assert.NoError(t, err)
 	assert.True(t, info.IsOpenShift())
 }
