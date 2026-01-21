@@ -368,7 +368,7 @@ func (v *validator) isFLPHealthRuleGroupBySupported(template HealthRuleTemplate,
 		return variant.GroupBy != GroupByWorkload
 	case HealthRuleIPsecErrors:
 		return variant.GroupBy != GroupByWorkload && variant.GroupBy != GroupByNamespace
-	case HealthRulePacketDropsByKernel, HealthRuleDNSErrors, HealthRuleDNSNxDomain, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend, HealthRuleLatencyHighTrend, HealthRuleNetpolDenied:
+	case HealthRulePacketDropsByKernel, HealthRuleDNSErrors, HealthRuleDNSNxDomain, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend, HealthRuleLatencyHighTrend, HealthRuleNetpolDenied, HealthRuleIngressErrors:
 		return true
 	case AlertLokiError, AlertNoFlows: // not applicable
 		return false
