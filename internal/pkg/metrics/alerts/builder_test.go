@@ -218,48 +218,48 @@ func TestBuildRunbookURL(t *testing.T) {
 		// Health Rule templates
 		{
 			template: "PacketDropsByKernel",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/PacketDropsByKernel.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/PacketDropsByKernel.md",
 		},
 		{
 			template: "PacketDropsByDevice",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/PacketDropsByDevice.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/PacketDropsByDevice.md",
 		},
 		{
 			template: "IPsecErrors",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/IPsecErrors.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/IPsecErrors.md",
 		},
 		{
 			template: "NetpolDenied",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/NetpolDenied.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/NetpolDenied.md",
 		},
 		{
 			template: "LatencyHighTrend",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/LatencyHighTrend.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/LatencyHighTrend.md",
 		},
 		{
 			template: "DNSErrors",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/DNSErrors.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/DNSErrors.md",
 		},
 		{
 			template: "DNSNxDomain",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/DNSNxDomain.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/DNSNxDomain.md",
 		},
 		{
 			template: "ExternalEgressHighTrend",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/ExternalEgressHighTrend.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/ExternalEgressHighTrend.md",
 		},
 		{
 			template: "ExternalIngressHighTrend",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/ExternalIngressHighTrend.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/ExternalIngressHighTrend.md",
 		},
 		// Operator alert templates
 		{
 			template: "NetObservNoFlows",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/NetObservNoFlows.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/NetObservNoFlows.md",
 		},
 		{
 			template: "NetObservLokiError",
-			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/NetObservLokiError.md",
+			expected: "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/NetObservLokiError.md",
 		},
 	}
 

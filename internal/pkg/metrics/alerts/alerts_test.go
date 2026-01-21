@@ -290,7 +290,7 @@ func TestAllAlertsHaveRunbookURL(t *testing.T) {
 		url, exists := rule.Annotations["runbook_url"]
 		assert.True(t, exists, "Alert %s is missing runbook_url annotation", rule.Alert)
 		assert.NotEmpty(t, url, "Alert %s has empty runbook_url", rule.Alert)
-		assert.Contains(t, url, "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/",
+		assert.Contains(t, url, "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator/",
 			"Alert %s has invalid runbook_url: %s", rule.Alert, url)
 		assert.Contains(t, url, ".md", "Alert %s runbook_url doesn't end with .md: %s", rule.Alert, url)
 	}

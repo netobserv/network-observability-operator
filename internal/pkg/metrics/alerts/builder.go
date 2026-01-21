@@ -19,7 +19,7 @@ const (
 	asSource srcOrDst = "Src"
 	asDest   srcOrDst = "Dst"
 
-	runbookURLBase = "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator"
+	runbookURLBase = "https://github.com/openshift/runbooks/blob/master/alerts/network-observability-operator"
 )
 
 type ruleBuilder struct {
