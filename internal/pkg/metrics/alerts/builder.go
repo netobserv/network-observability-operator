@@ -19,7 +19,7 @@ const (
 	asSource srcOrDst = "Src"
 	asDest   srcOrDst = "Dst"
 
-	runbookURLBase = "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator"
+	runbookURLBase = "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator"
 )
 
 type ruleBuilder struct {
@@ -244,6 +244,13 @@ func buildRunbookURL(template string) string {
 }
 
 func (rb *ruleBuilder) createRule(promQL, summary, description string) (*monitoringv1.Rule, error) {
+	// Add runbook URL to links so it's available in health metadata for both alerts and recording rules
+	runbookURL := buildRunbookURL(string(rb.template))
+	rb.extraLinks = append(rb.extraLinks, link{
+		Name: "View runbook",
+		URL:  runbookURL,
+	})
+
 	bAnnot, err := rb.buildHealthAnnotation(nil)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package alerts
 
 import (
+	"net/http"
 	"testing"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
@@ -214,21 +215,51 @@ func TestBuildRunbookURL(t *testing.T) {
 		template string
 		expected string
 	}{
-		{
-			template: "DNSErrors",
-			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/DNSErrors.md",
-		},
+		// Health Rule templates
 		{
 			template: "PacketDropsByKernel",
-			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/PacketDropsByKernel.md",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/PacketDropsByKernel.md",
 		},
 		{
+			template: "PacketDropsByDevice",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/PacketDropsByDevice.md",
+		},
+		{
+			template: "IPsecErrors",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/IPsecErrors.md",
+		},
+		{
+			template: "NetpolDenied",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/NetpolDenied.md",
+		},
+		{
+			template: "LatencyHighTrend",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/LatencyHighTrend.md",
+		},
+		{
+			template: "DNSErrors",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/DNSErrors.md",
+		},
+		{
+			template: "DNSNxDomain",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/DNSNxDomain.md",
+		},
+		{
+			template: "ExternalEgressHighTrend",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/ExternalEgressHighTrend.md",
+		},
+		{
+			template: "ExternalIngressHighTrend",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/ExternalIngressHighTrend.md",
+		},
+		// Operator alert templates
+		{
 			template: "NetObservNoFlows",
-			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/NetObservNoFlows.md",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/NetObservNoFlows.md",
 		},
 		{
 			template: "NetObservLokiError",
-			expected: "https://github.com/netobserv/runbooks/blob/main/alerts/network-observability-operator/NetObservLokiError.md",
+			expected: "https://github.com/openshift/runbooks/blob/main/alerts/network-observability-operator/NetObservLokiError.md",
 		},
 	}
 
@@ -236,6 +267,38 @@ func TestBuildRunbookURL(t *testing.T) {
 		t.Run(tt.template, func(t *testing.T) {
 			url := buildRunbookURL(tt.template)
 			assert.Equal(t, tt.expected, url)
+		})
+	}
+}
+
+func TestRunbookURLsExist(t *testing.T) {
+	// Test all templates to ensure their runbook URLs exist
+	templates := []string{
+		// Health Rule templates
+		"PacketDropsByKernel",
+		"PacketDropsByDevice",
+		"IPsecErrors",
+		"NetpolDenied",
+		"LatencyHighTrend",
+		"DNSErrors",
+		"DNSNxDomain",
+		"ExternalEgressHighTrend",
+		"ExternalIngressHighTrend",
+		// Operator alert templates
+		"NetObservNoFlows",
+		"NetObservLokiError",
+	}
+
+	for _, template := range templates {
+		t.Run(template, func(t *testing.T) {
+			url := buildRunbookURL(template)
+			resp, err := http.Get(url)
+			assert.NoError(t, err, "Failed to fetch runbook URL: %s", url)
+			if err == nil {
+				defer resp.Body.Close()
+				assert.NotEqual(t, http.StatusNotFound, resp.StatusCode,
+					"Runbook URL returns 404: %s", url)
+			}
 		})
 	}
 }
