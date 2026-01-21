@@ -191,5 +191,17 @@ var (
 				},
 			},
 		},
+		{
+			Template: HealthRuleIngressErrors,
+			Variants: []HealthRuleVariant{
+				{
+					Thresholds: HealthRuleThresholds{
+						Info:    "5",
+						Warning: "10",
+					},
+					GroupBy: GroupByNamespace,
+				},
+			},
+		},
 	}
 )

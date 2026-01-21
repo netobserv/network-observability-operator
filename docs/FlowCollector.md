@@ -11582,11 +11582,11 @@ More information, with full list of available metrics: https://github.com/netobs
         <td>
           Health rule template name.
 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-`LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
+`LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `IngressErrors`.
 Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
 More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md<br/>
           <br/>
-            <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, DNSNxDomain, ExternalEgressHighTrend, ExternalIngressHighTrend<br/>
+            <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, DNSNxDomain, ExternalEgressHighTrend, ExternalIngressHighTrend, IngressErrors<br/>
         </td>
         <td>true</td>
       </tr><tr>

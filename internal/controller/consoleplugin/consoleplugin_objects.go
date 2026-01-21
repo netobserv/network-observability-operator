@@ -29,6 +29,7 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper/loki"
 	"github.com/netobserv/network-observability-operator/internal/pkg/metrics"
+	"github.com/netobserv/network-observability-operator/internal/pkg/metrics/alerts"
 	"github.com/netobserv/network-observability-operator/internal/pkg/volumes"
 )
 
@@ -552,10 +553,21 @@ func (b *builder) getHealthRulesMetadata() []cfg.HealthRuleMetadata {
 			})
 		}
 
+		// Get description and summary from centralized template metadata
+		templateInfo, ok := alerts.TemplateMetadata[healthRule.Template]
+		description := ""
+		summary := ""
+		if ok {
+			description = templateInfo.DescriptionPattern
+			summary = templateInfo.Summary
+		}
+
 		metadata = append(metadata, cfg.HealthRuleMetadata{
-			Template: string(healthRule.Template),
-			Mode:     string(healthRule.Mode),
-			Variants: variants,
+			Template:    string(healthRule.Template),
+			Mode:        string(healthRule.Mode),
+			Variants:    variants,
+			Description: description,
+			Summary:     summary,
 		})
 	}
 

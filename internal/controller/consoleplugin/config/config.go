@@ -116,9 +116,11 @@ type FieldConfig struct {
 }
 
 type HealthRuleMetadata struct {
-	Template string                      `yaml:"template" json:"template"`
-	Mode     string                      `yaml:"mode" json:"mode"`
-	Variants []HealthRuleVariantMetadata `yaml:"variants" json:"variants"`
+	Template    string                      `yaml:"template" json:"template"`
+	Mode        string                      `yaml:"mode" json:"mode"`
+	Variants    []HealthRuleVariantMetadata `yaml:"variants" json:"variants"`
+	Description string                      `yaml:"description,omitempty" json:"description,omitempty"`
+	Summary     string                      `yaml:"summary,omitempty" json:"summary,omitempty"`
 }
 
 type HealthRuleVariantMetadata struct {
