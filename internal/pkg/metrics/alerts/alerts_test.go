@@ -24,6 +24,7 @@ func allTemplates() []flowslatest.HealthRuleTemplate {
 		flowslatest.HealthRuleExternalEgressHighTrend,
 		flowslatest.HealthRuleExternalIngressHighTrend,
 		flowslatest.HealthRuleIngressErrors,
+		flowslatest.HealthRuleIngressLatencyTrend,
 	}
 }
 
@@ -47,6 +48,7 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 					flowslatest.HealthRuleExternalEgressHighTrend,
 					flowslatest.HealthRuleExternalIngressHighTrend,
 					flowslatest.HealthRuleIngressErrors,
+					flowslatest.HealthRuleIngressLatencyTrend,
 				},
 			},
 		},
@@ -115,6 +117,8 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"LatencyHighTrend_PerDstNamespaceInfo",
 		"IngressErrors_PerSrcNamespaceWarning",
 		"IngressErrors_PerSrcNamespaceInfo",
+		"IngressLatencyTrend_PerSrcNamespaceWarning",
+		"IngressLatencyTrend_PerSrcNamespaceInfo",
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")

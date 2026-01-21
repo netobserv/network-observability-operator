@@ -53,4 +53,8 @@ var TemplateMetadata = map[flowslatest.HealthRuleTemplate]TemplateInfo{
 		Summary:            "Too many ingress 5xx errors",
 		DescriptionPattern: "HAProxy is reporting more than %s%% of 5xx HTTP response codes from ingress traffic%s",
 	},
+	flowslatest.HealthRuleIngressLatencyTrend: {
+		Summary:            "Ingress latency increased",
+		DescriptionPattern: "HAProxy ingress average response latency increased by more than %s%%%s, compared to baseline (offset: %s)",
+	},
 }

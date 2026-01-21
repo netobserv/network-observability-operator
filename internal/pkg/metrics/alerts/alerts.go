@@ -325,3 +325,41 @@ func (rb *ruleBuilder) ingressErrors() (*monitoringv1.Rule, error) {
 	summary := rb.getSummaryFromTemplate()
 	return rb.createRule(promql, summary, description)
 }
+
+func (rb *ruleBuilder) ingressLatencyTrend() (*monitoringv1.Rule, error) {
+	if rb.side == asDest {
+		return nil, nil
+	}
+
+	offset, _ := rb.healthRule.GetTrendParams()
+
+	var currentMetric, baselineMetric string
+	var legend string
+
+	switch rb.healthRule.GroupBy {
+	case flowslatest.GroupByNode:
+		return nil, fmt.Errorf("IngressLatencyTrend health rule does not support grouping per node")
+	case flowslatest.GroupByNamespace:
+		legend = " [namespace={{ $labels.namespace }}]"
+		currentMetric = `avg(label_replace(haproxy_server_http_average_response_latency_milliseconds, "namespace", "$1", "exported_namespace", "(.*)")) by (namespace)`
+		baselineMetric = fmt.Sprintf(`avg(label_replace(haproxy_server_http_average_response_latency_milliseconds offset %s, "namespace", "$1", "exported_namespace", "(.*)")) by (namespace)`, offset)
+	case flowslatest.GroupByWorkload:
+		return nil, fmt.Errorf("IngressLatencyTrend health rule does not support grouping per workload")
+	default:
+		currentMetric = `avg(haproxy_server_http_average_response_latency_milliseconds)`
+		baselineMetric = fmt.Sprintf(`avg(haproxy_server_http_average_response_latency_milliseconds offset %s)`, offset)
+	}
+
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := baselineIncreasePromQL(currentMetric, baselineMetric, rb.threshold, rb.upperThreshold, isRecording)
+
+	val, err := strconv.ParseFloat(rb.threshold, 64)
+	if err != nil {
+		return nil, err
+	}
+	rb.upperValueRange = strconv.Itoa(int(math.Max(val*5, 100)))
+
+	description := rb.buildDescriptionFromTemplate(rb.threshold, legend, offset)
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
+}

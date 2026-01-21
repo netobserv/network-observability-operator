@@ -203,5 +203,19 @@ var (
 				},
 			},
 		},
+		{
+			Template: HealthRuleIngressLatencyTrend,
+			Variants: []HealthRuleVariant{
+				{
+					Thresholds: HealthRuleThresholds{
+						Info:    "100",
+						Warning: "200",
+					},
+					GroupBy:       GroupByNamespace,
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
+				},
+			},
+		},
 	}
 )

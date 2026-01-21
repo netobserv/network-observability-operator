@@ -115,12 +115,18 @@ type FieldConfig struct {
 	LokiLabel   bool   `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
 }
 
+type HealthRuleLink struct {
+	Name string `yaml:"name" json:"name"`
+	URL  string `yaml:"url" json:"url"`
+}
+
 type HealthRuleMetadata struct {
 	Template    string                      `yaml:"template" json:"template"`
 	Mode        string                      `yaml:"mode" json:"mode"`
 	Variants    []HealthRuleVariantMetadata `yaml:"variants" json:"variants"`
 	Description string                      `yaml:"description,omitempty" json:"description,omitempty"`
 	Summary     string                      `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Links       []HealthRuleLink            `yaml:"links,omitempty" json:"links,omitempty"`
 }
 
 type HealthRuleVariantMetadata struct {
