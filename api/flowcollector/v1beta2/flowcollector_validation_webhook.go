@@ -435,8 +435,8 @@ func GetElligibleMetricsForAlert(template HealthRuleTemplate, alertDef *HealthRu
 	case HealthRuleNetpolDenied:
 		metricPatterns = []string{`%s_network_policy_events_total`}
 		totalMetricPatterns = []string{"%s_flows_total"}
-	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice:
-		// nothing
+	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice, HealthRuleIngressErrors:
+		// nothing - these rules don't use NetObserv metrics
 		return nil, nil
 	}
 	var gr []string
