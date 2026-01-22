@@ -487,11 +487,15 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			skipTLS := flowslatest.IsEnvEnabled(advancedConfig.Env, "SERVER_NOTLS")
 			if !skipTLS {
 				// Send to FLP service using TLS
+				caConfigMapName := "flowlogs-pipeline-ca"
+				if c.ClusterInfo.IsOpenShift() {
+					caConfigMapName = "openshift-service-ca.crt"
+				}
 				tlsCfg := flowslatest.ClientTLS{
 					Enable: true,
 					CACert: flowslatest.CertificateReference{
 						Type:     flowslatest.RefTypeConfigMap,
-						Name:     "openshift-service-ca.crt",
+						Name:     caConfigMapName,
 						CertFile: "service-ca.crt",
 					},
 				}
