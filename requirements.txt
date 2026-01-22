@@ -8,4 +8,4 @@ ruamel.yaml==0.18.16
 ruamel.yaml.clib==0.2.14
 setuptools==80.9.0
 setuptools-scm==9.2.2
-wheel==0.45.1
+wheel==0.46.2
