@@ -75,6 +75,11 @@ func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
 
 // fetchAvailableAPIsInternal discovers available APIs and optionally allows continuing despite critical API failures
 // allowCriticalFailure should be true during refresh loops to allow recovery from transient API server issues
+//
+// API Discovery Policy:
+// - APIs are marked as available when first discovered
+// - Once discovered, APIs are never marked unavailable (to avoid transient discovery issues)
+// - Operator restart is required to detect removed APIs (rare in practice)
 func (c *Info) fetchAvailableAPIsInternal(ctx context.Context, allowCriticalFailure bool) error {
 	log := log.FromContext(ctx)
 	_, resources, err := c.dcl.ServerGroupsAndResources()
@@ -90,57 +95,53 @@ func (c *Info) fetchAvailableAPIsInternal(ctx context.Context, allowCriticalFail
 		return fmt.Errorf("API discovery returned no resources")
 	}
 
-	newApisMap := map[string]bool{
-		consolePlugin:  false,
-		cno:            false,
-		svcMonitor:     false,
-		promRule:       false,
-		ocpSecurity:    false,
-		endpointSlices: false,
-	}
-
 	// Track which critical APIs failed discovery
 	criticalAPIFailed := false
-
-	for apiName := range newApisMap {
-		if hasAPI(apiName, resources) {
-			newApisMap[apiName] = true
-		} else if hasDiscoveryError {
-			// Check if the wanted API is in error
-			for gv, gvErr := range discErr.Groups {
-				if strings.Contains(apiName, gv.String()) {
-					log.Error(gvErr, "some API-related features are unavailable; you can check for stale APIs with 'kubectl get apiservice'", "GroupVersion", gv.String(), "api", apiName)
-
-					// OCP Security API is critical - we MUST know if we're on OpenShift
-					// to avoid wrong security context configurations
-					if apiName == ocpSecurity {
-						criticalAPIFailed = true
+	apisRecovered := false
+	firstRun := false
+	c.apisMapLock.Lock()
+	defer c.apisMapLock.Unlock()
+	if c.apisMap == nil {
+		c.apisMap = map[string]bool{
+			consolePlugin:  false,
+			cno:            false,
+			svcMonitor:     false,
+			promRule:       false,
+			ocpSecurity:    false,
+			endpointSlices: false,
+		}
+		firstRun = true
+	}
+	for apiName, discovered := range c.apisMap {
+		// Never remove a discovered API, to avoid transient staleness issues triggering changes continuously
+		if !discovered {
+			if hasAPI(apiName, resources) {
+				c.apisMap[apiName] = true
+				if !firstRun {
+					apisRecovered = true
+					log.Info("API recovered and is now available", "api", apiName)
+				}
+			} else if hasDiscoveryError {
+				// Check if the wanted API is in error
+				for gv, gvErr := range discErr.Groups {
+					if strings.Contains(apiName, gv.String()) {
+						log.Error(gvErr, "some API-related features are unavailable; you can check for stale APIs with 'kubectl get apiservice'", "GroupVersion", gv.String(), "api", apiName)
+						// OCP Security API is critical - we MUST know if we're on OpenShift
+						// to avoid wrong security context configurations
+						if apiName == ocpSecurity {
+							criticalAPIFailed = true
+						}
 					}
 				}
 			}
 		}
 	}
-
-	// Check if any APIs transitioned from unavailable to available (recovery scenario)
-	c.apisMapLock.Lock()
-	defer c.apisMapLock.Unlock()
-	oldApisMap := c.apisMap
-	apisRecovered := false
-	if oldApisMap != nil {
-		for apiName, newAvailable := range newApisMap {
-			oldAvailable := oldApisMap[apiName]
-			if !oldAvailable && newAvailable {
-				log.Info("API recovered and is now available", "api", apiName)
-				apisRecovered = true
-			}
-		}
+	if firstRun {
+		log.Info("API detection finished", "apis", c.apisMap)
 	}
-	c.apisMap = newApisMap
-
-	log.Info("API detection finished", "apis", newApisMap)
 
 	// If APIs recovered, trigger reconciliation via the onRefresh callback
-	// (called outside the lock to avoid potential deadlocks)
+	// The callback runs in a goroutine to avoid blocking while holding the lock
 	if apisRecovered && c.onRefresh != nil {
 		log.Info("Triggering reconciliation due to API recovery")
 		go c.onRefresh()
