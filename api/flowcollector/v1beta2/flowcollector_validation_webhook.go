@@ -368,7 +368,7 @@ func (v *validator) isFLPHealthRuleGroupBySupported(template HealthRuleTemplate,
 		return variant.GroupBy != GroupByWorkload
 	case HealthRuleIPsecErrors:
 		return variant.GroupBy != GroupByWorkload && variant.GroupBy != GroupByNamespace
-	case HealthRuleIngressErrors, HealthRuleIngressLatencyTrend:
+	case HealthRuleIngress5xxErrors, HealthRuleIngressLatencyTrend:
 		return variant.GroupBy != GroupByNode && variant.GroupBy != GroupByWorkload
 	case HealthRulePacketDropsByKernel, HealthRuleDNSErrors, HealthRuleDNSNxDomain, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend, HealthRuleLatencyHighTrend, HealthRuleNetpolDenied:
 		return true
@@ -437,7 +437,7 @@ func GetElligibleMetricsForAlert(template HealthRuleTemplate, alertDef *HealthRu
 	case HealthRuleNetpolDenied:
 		metricPatterns = []string{`%s_network_policy_events_total`}
 		totalMetricPatterns = []string{"%s_flows_total"}
-	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice, HealthRuleIngressErrors, HealthRuleIngressLatencyTrend:
+	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice, HealthRuleIngress5xxErrors, HealthRuleIngressLatencyTrend:
 		// nothing - these rules don't use NetObserv metrics
 		return nil, nil
 	}

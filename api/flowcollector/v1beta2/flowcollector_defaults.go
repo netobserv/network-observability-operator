@@ -192,7 +192,7 @@ var (
 			},
 		},
 		{
-			Template: HealthRuleIngressErrors,
+			Template: HealthRuleIngress5xxErrors,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{

@@ -23,7 +23,7 @@ func allTemplates() []flowslatest.HealthRuleTemplate {
 		flowslatest.HealthRuleNetpolDenied,
 		flowslatest.HealthRuleExternalEgressHighTrend,
 		flowslatest.HealthRuleExternalIngressHighTrend,
-		flowslatest.HealthRuleIngressErrors,
+		flowslatest.HealthRuleIngress5xxErrors,
 		flowslatest.HealthRuleIngressLatencyTrend,
 	}
 }
@@ -47,7 +47,7 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 					flowslatest.HealthRulePacketDropsByDevice,
 					flowslatest.HealthRuleExternalEgressHighTrend,
 					flowslatest.HealthRuleExternalIngressHighTrend,
-					flowslatest.HealthRuleIngressErrors,
+					flowslatest.HealthRuleIngress5xxErrors,
 					flowslatest.HealthRuleIngressLatencyTrend,
 				},
 			},
@@ -115,8 +115,8 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"NetpolDenied_PerDstNamespaceInfo",
 		"LatencyHighTrend_PerSrcNamespaceInfo",
 		"LatencyHighTrend_PerDstNamespaceInfo",
-		"IngressErrors_PerSrcNamespaceWarning",
-		"IngressErrors_PerSrcNamespaceInfo",
+		"Ingress5xxErrors_PerSrcNamespaceWarning",
+		"Ingress5xxErrors_PerSrcNamespaceInfo",
 		"IngressLatencyTrend_PerSrcNamespaceWarning",
 		"IngressLatencyTrend_PerSrcNamespaceInfo",
 		"NetObservNoFlows",

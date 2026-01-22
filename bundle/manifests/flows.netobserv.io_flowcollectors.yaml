@@ -5846,7 +5846,7 @@ spec:
                               description: |-
                                 Health rule template name.
                                 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-                                `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `IngressErrors`, `IngressLatencyTrend`.
+                                `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressLatencyTrend`.
                                 Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
                                 More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
                               enum:
@@ -5859,7 +5859,7 @@ spec:
                               - DNSNxDomain
                               - ExternalEgressHighTrend
                               - ExternalIngressHighTrend
-                              - IngressErrors
+                              - Ingress5xxErrors
                               - IngressLatencyTrend
                               type: string
                             variants:

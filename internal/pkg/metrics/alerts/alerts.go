@@ -285,12 +285,12 @@ func (rb *ruleBuilder) ingressErrors() (*monitoringv1.Rule, error) {
 	var legend string
 	switch rb.healthRule.GroupBy {
 	case flowslatest.GroupByNode:
-		return nil, fmt.Errorf("IngressErrors health rule does not support grouping per node")
+		return nil, fmt.Errorf("Ingress5xxErrors health rule does not support grouping per node")
 	case flowslatest.GroupByNamespace:
 		// Note: we'll rename exported_namespace to namespace in the PromQL using label_replace
 		legend = " [namespace={{ $labels.namespace }}]"
 	case flowslatest.GroupByWorkload:
-		return nil, fmt.Errorf("IngressErrors health rule does not support grouping per workload")
+		return nil, fmt.Errorf("Ingress5xxErrors health rule does not support grouping per workload")
 	}
 
 	isRecording := rb.mode == flowslatest.ModeRecording

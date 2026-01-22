@@ -49,7 +49,7 @@ var TemplateMetadata = map[flowslatest.HealthRuleTemplate]TemplateInfo{
 		Summary:            "External ingress traffic increase",
 		DescriptionPattern: "NetObserv is detecting external ingress traffic increased by more than %s%%%s, compared to baseline (offset: %s)",
 	},
-	flowslatest.HealthRuleIngressErrors: {
+	flowslatest.HealthRuleIngress5xxErrors: {
 		Summary:            "Too many ingress 5xx errors",
 		DescriptionPattern: "HAProxy is reporting more than %s%% of 5xx HTTP response codes from ingress traffic%s",
 	},
