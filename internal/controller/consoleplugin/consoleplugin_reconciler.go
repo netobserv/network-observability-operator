@@ -181,8 +181,9 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 }
 
 func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) (string, error) {
-	lokiStack := &lokiv1.LokiStack{}
+	var lokiStack *lokiv1.LokiStack
 	if desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		lokiStack = &lokiv1.LokiStack{}
 		ns := desired.Loki.LokiStack.Namespace
 		if ns == "" {
 			ns = desired.Namespace
