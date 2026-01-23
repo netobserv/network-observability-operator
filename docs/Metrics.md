@@ -55,6 +55,9 @@ When the `DNSTracking` feature is enabled in `spec.agent.ebpf.features`, additio
 - `namespace_dns_latency_seconds` *
 - `node_dns_latency_seconds`
 - `workload_dns_latency_seconds` **
+- `namespace_dns_packets_total` *
+- `node_dns_packets_total`
+- `workload_dns_packets_total` **
 
 When the `NetworkEvents` feature is enabled in `spec.agent.ebpf.features`,
 - `namespace_network_policy_events_total` *
