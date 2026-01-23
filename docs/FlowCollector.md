@@ -11679,6 +11679,17 @@ When provided, it must be parsable as a float.<br/>
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          Mode overrides the health rule mode for this specific variant.
+If not specified, inherits from the parent health rule's mode.
+Possible values are: `Alert`, `Recording`.<br/>
+          <br/>
+            <i>Enum</i>: Alert, Recording<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>trendDuration</b></td>
         <td>string</td>
         <td>

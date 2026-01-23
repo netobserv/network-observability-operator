@@ -89,6 +89,13 @@ type HealthRuleVariant struct {
 
 	// For trending health rules, the duration interval for baseline comparison. For example, "2h" means comparing against a 2-hours average. Defaults to 2h.
 	TrendDuration *metav1.Duration `json:"trendDuration,omitempty"`
+
+	// Mode overrides the health rule mode for this specific variant.
+	// If not specified, inherits from the parent health rule's mode.
+	// Possible values are: `Alert`, `Recording`.
+	// +kubebuilder:validation:Enum:="Alert";"Recording"
+	// +optional
+	Mode *HealthRuleMode `json:"mode,omitempty"`
 }
 
 type HealthRuleThresholds struct {
@@ -218,6 +225,16 @@ func (v *HealthRuleVariant) GetTrendParams() (string, string) {
 		duration = *v.TrendDuration
 	}
 	return durationToStringTrimmed(&offset), durationToStringTrimmed(&duration)
+}
+
+// GetMode returns the effective mode for this variant.
+// If the variant has a mode specified, it returns that mode.
+// Otherwise, it returns the parent health rule's mode.
+func (v *HealthRuleVariant) GetMode(parentMode HealthRuleMode) HealthRuleMode {
+	if v.Mode != nil {
+		return *v.Mode
+	}
+	return parentMode
 }
 
 var regTrim = regexp.MustCompile("([a-zA-Z])(0[a-zA-Z])+")

@@ -795,6 +795,71 @@ func TestValidateFLP(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:       "Valid variant mode override - Alert health rule with Recording variant",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{PacketDrop},
+						Privileged: true,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							HealthRules: &[]FLPHealthRule{
+								{
+									Template: HealthRulePacketDropsByKernel,
+									Mode:     ModeAlert, // Parent mode is Alert
+									Variants: []HealthRuleVariant{
+										{
+											GroupBy: GroupByNode,
+											Mode:    ptr.To(ModeRecording), // Variant overrides to Recording
+											Thresholds: HealthRuleThresholds{
+												Critical: "10",
+												Warning:  "5",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:       "Valid variant mode override - Recording health rule with Alert variant",
+			ocpVersion: "4.18.0",
+			fc: &FlowCollector{
+				Spec: FlowCollectorSpec{
+					Agent: FlowCollectorAgent{EBPF: FlowCollectorEBPF{
+						Features:   []AgentFeature{DNSTracking},
+						Privileged: false,
+					}},
+					Processor: FlowCollectorFLP{
+						Metrics: FLPMetrics{
+							HealthRules: &[]FLPHealthRule{
+								{
+									Template: HealthRuleDNSErrors,
+									Mode:     ModeRecording, // Parent mode is Recording
+									Variants: []HealthRuleVariant{
+										{
+											Mode: ptr.To(ModeAlert), // Variant overrides to Alert
+											Thresholds: HealthRuleThresholds{
+												Warning: "10",
+												Info:    "5",
+											},
+										},
+									},
+								},
+							},
+							DisableAlerts: []AlertTemplate{HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend},
+							IncludeList:   &[]FLPMetric{"namespace_dns_latency_seconds"},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	CurrentClusterInfo = &cluster.Info{}
@@ -1084,5 +1149,54 @@ func TestValidateNetPol(t *testing.T) {
 			assert.ErrorContains(t, v.errors[0], test.expectedError, test.name)
 		}
 		assert.Equal(t, test.expectedWarnings, v.warnings, test.name)
+	}
+}
+
+func TestHealthRuleVariant_GetMode(t *testing.T) {
+	tests := []struct {
+		name         string
+		variant      HealthRuleVariant
+		parentMode   HealthRuleMode
+		expectedMode HealthRuleMode
+	}{
+		{
+			name: "Variant mode is nil - inherits parent Alert",
+			variant: HealthRuleVariant{
+				Mode: nil,
+			},
+			parentMode:   ModeAlert,
+			expectedMode: ModeAlert,
+		},
+		{
+			name: "Variant mode is nil - inherits parent Recording",
+			variant: HealthRuleVariant{
+				Mode: nil,
+			},
+			parentMode:   ModeRecording,
+			expectedMode: ModeRecording,
+		},
+		{
+			name: "Variant overrides to Recording",
+			variant: HealthRuleVariant{
+				Mode: ptr.To(ModeRecording),
+			},
+			parentMode:   ModeAlert,
+			expectedMode: ModeRecording,
+		},
+		{
+			name: "Variant overrides to Alert",
+			variant: HealthRuleVariant{
+				Mode: ptr.To(ModeAlert),
+			},
+			parentMode:   ModeRecording,
+			expectedMode: ModeAlert,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.variant.GetMode(tt.parentMode)
+			assert.Equal(t, tt.expectedMode, result)
+		})
 	}
 }

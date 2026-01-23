@@ -59,7 +59,9 @@ func BuildRules(ctx context.Context, fc *flowslatest.FlowCollectorSpec) []monito
 			continue
 		}
 		for _, variant := range healthRule.Variants {
-			if r, err := convertToRules(healthRule.Template, healthRule.Mode, &variant, metrics); err != nil {
+			// Get effective mode: variant.Mode if specified, otherwise healthRule.Mode
+			effectiveMode := variant.GetMode(healthRule.Mode)
+			if r, err := convertToRules(healthRule.Template, effectiveMode, &variant, metrics); err != nil {
 				log.Error(err, "unable to configure an alert")
 			} else if len(r) > 0 {
 				rules = append(rules, r...)

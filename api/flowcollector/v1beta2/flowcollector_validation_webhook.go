@@ -364,7 +364,26 @@ func (v *validator) validateFLPAlerts() {
 						)
 					}
 				}
+				// Validate variant mode
+				v.validateVariantMode(alert.Template, &variant, i, j)
 			}
+		}
+	}
+}
+
+func (v *validator) validateVariantMode(template HealthRuleTemplate, variant *HealthRuleVariant, ruleIndex, variantIndex int) {
+	// Validate that variant mode (if specified) is not Recording for alert-only templates
+	// Note: AlertNoFlows and AlertLokiError are handled separately and not part of healthRules,
+	// but we keep this check for defensive programming in case that changes
+	if variant.Mode != nil && *variant.Mode == ModeRecording {
+		if template == AlertNoFlows || template == AlertLokiError {
+			v.errors = append(
+				v.errors,
+				fmt.Errorf(
+					`alert-only template %s cannot have variant with mode Recording in spec.processor.metrics.healthRules[%d].variants[%d]`,
+					template, ruleIndex, variantIndex,
+				),
+			)
 		}
 	}
 }
