@@ -1,6 +1,7 @@
 package alerts
 
 import (
+	"net/http"
 	"testing"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
@@ -178,7 +179,6 @@ func TestRecordingRuleNames(t *testing.T) {
 				mode: flowslatest.ModeRecording,
 				side: tt.side,
 			}
-
 			name := rb.buildRecordingRuleName()
 			assert.Equal(t, tt.expected, name)
 		})
@@ -206,6 +206,99 @@ func TestToSnakeCase(t *testing.T) {
 		t.Run(tt.input, func(t *testing.T) {
 			result := toSnakeCase(tt.input)
 			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestBuildRunbookURL(t *testing.T) {
+	tests := []struct {
+		template string
+		expected string
+	}{
+		// Health Rule templates
+		{
+			template: "PacketDropsByKernel",
+			expected: runbookURLBase+"/PacketDropsByKernel.md",
+		},
+		{
+			template: "PacketDropsByDevice",
+			expected: runbookURLBase+"/PacketDropsByDevice.md",
+		},
+		{
+			template: "IPsecErrors",
+			expected: runbookURLBase+"/IPsecErrors.md",
+		},
+		{
+			template: "NetpolDenied",
+			expected: runbookURLBase+"/NetpolDenied.md",
+		},
+		{
+			template: "LatencyHighTrend",
+			expected: runbookURLBase+"/LatencyHighTrend.md",
+		},
+		{
+			template: "DNSErrors",
+			expected: runbookURLBase+"/DNSErrors.md",
+		},
+		{
+			template: "DNSNxDomain",
+			expected: runbookURLBase+"/DNSNxDomain.md",
+		},
+		{
+			template: "ExternalEgressHighTrend",
+			expected: runbookURLBase+"/ExternalEgressHighTrend.md",
+		},
+		{
+			template: "ExternalIngressHighTrend",
+			expected: runbookURLBase+"/ExternalIngressHighTrend.md",
+		},
+		// Operator alert templates
+		{
+			template: "NetObservNoFlows",
+			expected: runbookURLBase+"/NetObservNoFlows.md",
+		},
+		{
+			template: "NetObservLokiError",
+			expected: runbookURLBase+"/NetObservLokiError.md",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.template, func(t *testing.T) {
+			url := buildRunbookURL(tt.template)
+			assert.Equal(t, tt.expected, url)
+		})
+	}
+}
+
+func TestRunbookURLsExist(t *testing.T) {
+	// Test all templates to ensure their runbook URLs exist
+	templates := []string{
+		// Health Rule templates
+		"PacketDropsByKernel",
+		"PacketDropsByDevice",
+		"IPsecErrors",
+		"NetpolDenied",
+		"LatencyHighTrend",
+		"DNSErrors",
+		"DNSNxDomain",
+		"ExternalEgressHighTrend",
+		"ExternalIngressHighTrend",
+		// Operator alert templates
+		"NetObservNoFlows",
+		"NetObservLokiError",
+	}
+
+	for _, template := range templates {
+		t.Run(template, func(t *testing.T) {
+			url := buildRunbookURL(template)
+			resp, err := http.Get(url)
+			assert.NoError(t, err, "Failed to fetch runbook URL: %s", url)
+			if err == nil {
+				defer resp.Body.Close()
+				assert.NotEqual(t, http.StatusNotFound, resp.StatusCode,
+					"Runbook URL returns 404: %s", url)
+			}
 		})
 	}
 }

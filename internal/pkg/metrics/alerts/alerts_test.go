@@ -114,9 +114,9 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"20","unit":"%"}`, rules[0].Annotations["netobserv_io_network_health"])
+	assert.Equal(t, `{"links":[{"name":"View runbook","url":"`+runbookURLBase+`/PacketDropsByKernel.md"}],"namespaceLabels":["namespace"],"threshold":"20","unit":"%"}`, rules[0].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[3].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [dest. namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"10","unit":"%"}`, rules[3].Annotations["netobserv_io_network_health"])
+	assert.Equal(t, `{"links":[{"name":"View runbook","url":"`+runbookURLBase+`/PacketDropsByKernel.md"}],"namespaceLabels":["namespace"],"threshold":"10","unit":"%"}`, rules[3].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[4].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [source node={{ $labels.node }}]")
 	assert.Contains(t, rules[8].Annotations["description"], "node-exporter is detecting more than 5% of dropped packets [node={{ $labels.instance }}]")
 	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
@@ -260,5 +260,38 @@ func TestLatencyPromql(t *testing.T) {
 			` > 100`,
 		rules[0].Expr.StrVal,
 	)
-	assert.Equal(t, `{"namespaceLabels":["namespace"],"threshold":"100","unit":"%","upperBound":"500"}`, rules[0].Annotations["netobserv_io_network_health"])
+	assert.Equal(t, `{"links":[{"name":"View runbook","url":"`+runbookURLBase+`/LatencyHighTrend.md"}],"namespaceLabels":["namespace"],"threshold":"100","unit":"%","upperBound":"500"}`, rules[0].Annotations["netobserv_io_network_health"])
+}
+
+func TestAllAlertsHaveRunbookURL(t *testing.T) {
+	// Create a FlowCollector with all features enabled
+	fc := flowslatest.FlowCollectorSpec{
+		Agent: flowslatest.FlowCollectorAgent{
+			EBPF: flowslatest.FlowCollectorEBPF{
+				Privileged: true,
+				Features: []flowslatest.AgentFeature{
+					flowslatest.FlowRTT,
+					flowslatest.DNSTracking,
+					flowslatest.IPSec,
+					flowslatest.NetworkEvents,
+					flowslatest.PacketDrop,
+				},
+			},
+		},
+		Processor: flowslatest.FlowCollectorFLP{
+			Metrics: flowslatest.FLPMetrics{},
+		},
+	}
+
+	rules := BuildRules(context.Background(), &fc)
+
+	// Verify all rules have a runbook_url annotation
+	for _, rule := range rules {
+		url, exists := rule.Annotations["runbook_url"]
+		assert.True(t, exists, "Alert %s is missing runbook_url annotation", rule.Alert)
+		assert.NotEmpty(t, url, "Alert %s has empty runbook_url", rule.Alert)
+		assert.Contains(t, url, runbookURLBase+"/",
+			"Alert %s has invalid runbook_url: %s", rule.Alert, url)
+		assert.Contains(t, url, ".md", "Alert %s runbook_url doesn't end with .md: %s", rule.Alert, url)
+	}
 }
