@@ -345,6 +345,10 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 	if useEndpointSlices {
 		sdRole = ptr.To(monitoringv1.EndpointSliceRole)
 	}
+	interval := "15s"
+	if desired.Processor.Metrics.Server.ScrapeInterval != nil {
+		interval = desired.Processor.Metrics.Server.ScrapeInterval.String()
+	}
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      smName,
@@ -360,7 +364,7 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 			Endpoints: []monitoringv1.Endpoint{
 				{
 					Port:        prometheusPortName,
-					Interval:    "15s",
+					Interval:    monitoringv1.Duration(interval),
 					Scheme:      scheme,
 					TLSConfig:   smTLS,
 					HonorLabels: true,
