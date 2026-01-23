@@ -18,49 +18,51 @@ The names correspond to the names in Prometheus without their prefix. For exampl
 
 Note that the more metrics you add, the bigger is the impact on Prometheus workload resources. Some metrics in particular have a bigger cardinality, such as all metrics starting with `workload_`, which may result in stressing Prometheus if too many of them are enabled. It is recommended to monitor the impact on Prometheus when adding more metrics.
 
-Available names are: (names followed by `*` are enabled by default; names followed by `**` are also enabled by default when Loki is disabled)
+Available names are: (names followed by "*" are enabled by default; names followed by "**" are also enabled by default when Loki is disabled, with workload-based metrics replacing their namespace-based counterpart, e.g. `workload_flows_total` replaces `namespace_flows_total`)
+
 - `namespace_egress_bytes_total`
 - `namespace_egress_packets_total`
 - `namespace_ingress_bytes_total`
-- `namespace_ingress_packets_total`
-- `namespace_flows_total` `*`
-- `node_egress_bytes_total`
+- `namespace_ingress_packets_total` *
+- `namespace_flows_total` *
+- `node_egress_bytes_total` *
 - `node_egress_packets_total`
-- `node_ingress_bytes_total` `*`
-- `node_ingress_packets_total`
+- `node_ingress_bytes_total` *
+- `node_ingress_packets_total` *
 - `node_flows_total`
-- `workload_egress_bytes_total`
-- `workload_egress_packets_total`
-- `workload_ingress_bytes_total` `*`
-- `workload_ingress_packets_total`
-- `workload_flows_total`
-- `node_to_node_ingress_flows_total` `*`
+- `workload_egress_bytes_total` *
+- `workload_egress_packets_total` **
+- `workload_ingress_bytes_total` *
+- `workload_ingress_packets_total` **
+- `workload_flows_total` **
+- `workload_sampling`
+- `node_to_node_ingress_flows_total` *
 
 When the `PacketDrop` feature is enabled in `spec.agent.ebpf.features` (with privileged mode), additional metrics are available:
 - `namespace_drop_bytes_total`
-- `namespace_drop_packets_total` `*`
+- `namespace_drop_packets_total` *
 - `node_drop_bytes_total`
-- `node_drop_packets_total`
-- `workload_drop_bytes_total` `**`
-- `workload_drop_packets_total` `**`
+- `node_drop_packets_total` *
+- `workload_drop_bytes_total` **
+- `workload_drop_packets_total` **
 
 When the `FlowRTT` feature is enabled in `spec.agent.ebpf.features`, additional metrics are available:
-- `namespace_rtt_seconds` `*`
+- `namespace_rtt_seconds` *
 - `node_rtt_seconds`
-- `workload_rtt_seconds` `**`
+- `workload_rtt_seconds` **
 
 When the `DNSTracking` feature is enabled in `spec.agent.ebpf.features`, additional metrics are available:
-- `namespace_dns_latency_seconds` `*`
+- `namespace_dns_latency_seconds` *
 - `node_dns_latency_seconds`
-- `workload_dns_latency_seconds` `**`
+- `workload_dns_latency_seconds` **
 
 When the `NetworkEvents` feature is enabled in `spec.agent.ebpf.features`,
-- `namespace_network_policy_events_total` `*`
+- `namespace_network_policy_events_total` *
 - `node_network_policy_events_total`
 - `workload_network_policy_events_total`
 
 When the `IPSec` feature is enabled in `spec.agent.ebpf.features`,
-- `node_ipsec_flows_total` `*`
+- `node_ipsec_flows_total` *
 
 ## Custom metrics using the FlowMetrics API
 
