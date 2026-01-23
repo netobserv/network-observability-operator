@@ -3050,6 +3050,13 @@ spec:
                       ipfix:
                         description: IPFIX configuration, such as the IP address and port to send enriched IPFIX flows to.
                         properties:
+                          enterpriseID:
+                            default: 2
+                            description: |-
+                              EnterpriseID, or Private Enterprise Number (PEN). To date, NetObserv does not own an assigned number,
+                              so it is left open for configuration. The PEN is needed to collect non standard data, such as Kubernetes names,
+                              RTT, etc.
+                            type: integer
                           targetHost:
                             default: ""
                             description: Address of the IPFIX external receiver.
@@ -3065,6 +3072,7 @@ spec:
                               - UDP
                             type: string
                         required:
+                          - enterpriseID
                           - targetHost
                           - targetPort
                         type: object

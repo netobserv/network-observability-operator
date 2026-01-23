@@ -446,6 +446,12 @@ type FlowCollectorIPFIXReceiver struct {
 	// +kubebuilder:validation:Enum:="TCP";"UDP"
 	// +optional
 	Transport string `json:"transport,omitempty"`
+
+	// EnterpriseID, or Private Enterprise Number (PEN). To date, NetObserv does not own an assigned number,
+	// so it is left open for configuration. The PEN is needed to collect non standard data, such as Kubernetes names,
+	// RTT, etc.
+	// +kubebuilder:default:=2
+	EnterpriseID int `json:"enterpriseID"`
 }
 
 type FlowCollectorOpenTelemetryLogs struct {

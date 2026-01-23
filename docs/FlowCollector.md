@@ -6073,6 +6073,17 @@ IPFIX configuration, such as the IP address and port to send enriched IPFIX flow
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>enterpriseID</b></td>
+        <td>integer</td>
+        <td>
+          EnterpriseID, or Private Enterprise Number (PEN). To date, NetObserv does not own an assigned number,
+so it is left open for configuration. The PEN is needed to collect non standard data, such as Kubernetes names,
+RTT, etc.<br/>
+          <br/>
+            <i>Default</i>: 2<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b>targetHost</b></td>
         <td>string</td>
         <td>

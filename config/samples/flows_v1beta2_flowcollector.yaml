@@ -247,6 +247,7 @@ spec:
     #     targetHost: "flp-ipfix-stdout.netobserv.svc.cluster.local"
     #     targetPort: 2055
     #     transport: UDP
+    #     enterpriseID: 2021
     # or
     # - type: OpenTelemetry
     #   openTelemetry:

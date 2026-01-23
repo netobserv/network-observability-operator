@@ -116,20 +116,27 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 				AddZone:         addZone,
 			},
 		},
-		{
-			Type: api.NetworkAddKubernetes,
-			Kubernetes: &api.K8sRule{
-				IPField: "XlatSrcAddr",
-				Output:  "XlatSrcK8S",
+	}
+	if b.desired.Agent.EBPF.IsPacketTranslationEnabled() {
+		rules = append(rules, api.NetworkTransformRules{
+			{
+				Type: api.NetworkAddKubernetes,
+				Kubernetes: &api.K8sRule{
+					IPField: "XlatSrcAddr",
+					Output:  "XlatSrcK8S",
+				},
 			},
-		},
-		{
-			Type: api.NetworkAddKubernetes,
-			Kubernetes: &api.K8sRule{
-				IPField: "XlatDstAddr",
-				Output:  "XlatDstK8S",
+			{
+				Type: api.NetworkAddKubernetes,
+				Kubernetes: &api.K8sRule{
+					IPField: "XlatDstAddr",
+					Output:  "XlatDstK8S",
+				},
 			},
-		},
+		}...)
+	}
+
+	rules = append(rules, api.NetworkTransformRules{
 		{
 			Type: api.NetworkReinterpretDirection,
 		},
@@ -161,7 +168,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 				},
 			},
 		},
-	}
+	}...)
 
 	if len(flpLabels) > 0 {
 		rules = append(rules, []api.NetworkTransformRule{
@@ -684,7 +691,7 @@ func createIPFIXWriteStage(name string, spec *flowslatest.FlowCollectorIPFIXRece
 		TargetHost:   spec.TargetHost,
 		TargetPort:   spec.TargetPort,
 		Transport:    getIPFIXTransport(spec.Transport),
-		EnterpriseID: 2,
+		EnterpriseID: spec.EnterpriseID,
 	})
 }
 
