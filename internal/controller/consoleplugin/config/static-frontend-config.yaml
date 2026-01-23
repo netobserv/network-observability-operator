@@ -1170,7 +1170,7 @@ filters:
       Specify a single TCP state name like:
               - A _LINUX_TCP_STATES_H number like 1, 2, 3
               - A _LINUX_TCP_STATES_H TCP name like ESTABLISHED, SYN_SENT, SYN_RECV
-    docUrl: https://github.com/torvalds/linux/blob/main/include/net/tcp_states.h
+    docUrl: https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
   - id: pkt_drop_cause
     name: Packet drop latest cause
     component: autocomplete
