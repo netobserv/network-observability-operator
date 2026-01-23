@@ -1,4 +1,4 @@
-FROM quay.io/operator-framework/opm:v1.61.0
+FROM quay.io/operator-framework/opm:v1.62.0
 ARG CATALOG_PATH=catalog
 
 # Configure the entrypoint and command
