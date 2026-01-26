@@ -87,7 +87,40 @@ func convertToRules(template flowslatest.HealthRuleTemplate, mode flowslatest.He
 		// No side for global group
 		sides = []srcOrDst{""}
 	}
-	// Create up to 3 rules, one per severity, with non-overlapping thresholds
+
+	// For recording rules, we only generate one rule (not per severity)
+	// because the recording rule just calculates the percentage value
+	if mode == flowslatest.ModeRecording {
+		// Use the first non-empty threshold for the calculation
+		firstThreshold := healthRule.Thresholds.Critical
+		if firstThreshold == "" {
+			firstThreshold = healthRule.Thresholds.Warning
+		}
+		if firstThreshold == "" {
+			firstThreshold = healthRule.Thresholds.Info
+		}
+		for _, side := range sides {
+			rb := ruleBuilder{
+				template:       template,
+				healthRule:     healthRule,
+				mode:           mode,
+				enabledMetrics: enabledMetrics,
+				side:           side,
+				severity:       "info", // Not used for recording rules
+				threshold:      firstThreshold,
+				upperThreshold: "",
+				duration:       monitoringv1.Duration("5m"),
+			}
+			if r, err := rb.convertToRule(); err != nil {
+				return nil, err
+			} else if r != nil {
+				rules = append(rules, *r)
+			}
+		}
+		return rules, nil
+	}
+
+	// For alert rules, create up to 3 rules, one per severity, with non-overlapping thresholds
 	thresholds := []struct {
 		s string
 		t string
@@ -142,6 +175,10 @@ func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
 		return rb.externalTrend(false)
 	case flowslatest.HealthRuleExternalIngressHighTrend:
 		return rb.externalTrend(true)
+	case flowslatest.HealthRuleIngress5xxErrors:
+		return rb.ingressErrors()
+	case flowslatest.HealthRuleIngressLatencyTrend:
+		return rb.ingressLatencyTrend()
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error
 	}
@@ -150,6 +187,25 @@ func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
 
 func (rb *ruleBuilder) additionalDescription() string {
 	return fmt.Sprintf("You can turn off this alert by adding '%s' to spec.processor.metrics.disableAlerts in FlowCollector, or reconfigure it via spec.processor.metrics.alerts.", rb.template)
+}
+
+// buildDescriptionFromTemplate builds a description using the centralized template metadata
+func (rb *ruleBuilder) buildDescriptionFromTemplate(args ...interface{}) string {
+	templateInfo, ok := TemplateMetadata[rb.template]
+	if !ok {
+		return ""
+	}
+	baseDescription := fmt.Sprintf(templateInfo.DescriptionPattern, args...)
+	return baseDescription + ". " + rb.additionalDescription()
+}
+
+// getSummaryFromTemplate gets the summary from centralized template metadata
+func (rb *ruleBuilder) getSummaryFromTemplate() string {
+	templateInfo, ok := TemplateMetadata[rb.template]
+	if !ok {
+		return ""
+	}
+	return templateInfo.Summary
 }
 
 // acronyms is ordered with longer/more specific patterns first to ensure correct matching

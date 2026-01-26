@@ -45,13 +45,6 @@ func alertLokiError() *monitoringv1.Rule {
 }
 
 func (rb *ruleBuilder) kernelDrops() (*monitoringv1.Rule, error) {
-	description := fmt.Sprintf(
-		"NetObserv is detecting more than %s%% of packets dropped by the kernel%s. %s",
-		rb.threshold,
-		rb.getAlertLegend(),
-		rb.additionalDescription(),
-	)
-
 	metric, totalMetric := rb.getMetricsForAlert()
 	filter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
@@ -61,7 +54,9 @@ func (rb *ruleBuilder) kernelDrops() (*monitoringv1.Rule, error) {
 	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
-	return rb.createRule(promql, "Too many packets dropped by the kernel", description)
+	description := rb.buildDescriptionFromTemplate(rb.threshold, rb.getAlertLegend())
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
 }
 
 func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
@@ -115,11 +110,13 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 	}
 
 	// Generate alert rule
+	description := rb.buildDescriptionFromTemplate(rb.threshold, legend)
+	summary := rb.getSummaryFromTemplate()
 	return &monitoringv1.Rule{
 		Alert: fmt.Sprintf("%s_%s%s", rb.template, gr, strings.ToUpper(rb.severity[:1])+rb.severity[1:]),
 		Annotations: map[string]string{
-			"description":                 fmt.Sprintf("node-exporter is detecting more than %s%% of dropped packets%s. %s", rb.threshold, legend, rb.additionalDescription()),
-			"summary":                     "Too many drops from device",
+			"description":                 description,
+			"summary":                     summary,
 			"netobserv_io_network_health": string(bAnnot),
 			"runbook_url":                 buildRunbookURL(string(rb.template)),
 		},
@@ -130,13 +127,6 @@ func (rb *ruleBuilder) deviceDrops() (*monitoringv1.Rule, error) {
 }
 
 func (rb *ruleBuilder) ipsecErrors() (*monitoringv1.Rule, error) {
-	description := fmt.Sprintf(
-		"NetObserv is detecting more than %s%% of IPsec errors%s. %s",
-		rb.threshold,
-		rb.getAlertLegend(),
-		rb.additionalDescription(),
-	)
-
 	metric, totalMetric := rb.getMetricsForAlert()
 	filter := rb.buildLabelFilter("")
 	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
@@ -146,7 +136,9 @@ func (rb *ruleBuilder) ipsecErrors() (*monitoringv1.Rule, error) {
 	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
-	return rb.createRule(promql, "Too many IPsec errors", description)
+	description := rb.buildDescriptionFromTemplate(rb.threshold, rb.getAlertLegend())
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
 }
 
 func (rb *ruleBuilder) dnsErrors() (*monitoringv1.Rule, error) {
@@ -154,12 +146,6 @@ func (rb *ruleBuilder) dnsErrors() (*monitoringv1.Rule, error) {
 	if rb.side == asSource {
 		return nil, nil
 	}
-	description := fmt.Sprintf(
-		"NetObserv is detecting more than %s%% of DNS errors%s (other than NX_DOMAIN). %s",
-		rb.threshold,
-		rb.getAlertLegend(),
-		rb.additionalDescription(),
-	)
 
 	metric, totalMetric := rb.getMetricsForAlert()
 	metricsFilter := rb.buildLabelFilter(`DnsFlagsResponseCode!~"NoError|NXDomain"`)
@@ -177,7 +163,9 @@ func (rb *ruleBuilder) dnsErrors() (*monitoringv1.Rule, error) {
 		FilterDestination: true,
 	}
 
-	return rb.createRule(promql, "Too many DNS errors", description)
+	description := rb.buildDescriptionFromTemplate(rb.threshold, rb.getAlertLegend())
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
 }
 
 func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
@@ -185,12 +173,6 @@ func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
 	if rb.side == asSource {
 		return nil, nil
 	}
-	description := fmt.Sprintf(
-		"NetObserv is detecting more than %s%% of DNS NX_DOMAIN errors%s. In Kubernetes, this is a common error due to the resolution using several search suffixes. It can be optimized by using trailing dots in domain names. %s",
-		rb.threshold,
-		rb.getAlertLegend(),
-		rb.additionalDescription(),
-	)
 
 	metric, totalMetric := rb.getMetricsForAlert()
 	metricsFilter := rb.buildLabelFilter(`DnsFlagsResponseCode="NXDomain"`)
@@ -207,17 +189,12 @@ func (rb *ruleBuilder) dnsNxDomainErrors() (*monitoringv1.Rule, error) {
 		FilterDestination: true,
 	}
 
-	return rb.createRule(promql, "Too many DNS NX_DOMAIN errors", description)
+	description := rb.buildDescriptionFromTemplate(rb.threshold, rb.getAlertLegend())
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
 }
 
 func (rb *ruleBuilder) netpolDenied() (*monitoringv1.Rule, error) {
-	description := fmt.Sprintf(
-		"NetObserv is detecting more than %s%% of denied traffic due to Network Policies%s. %s",
-		rb.threshold,
-		rb.getAlertLegend(),
-		rb.additionalDescription(),
-	)
-
 	metric, totalMetric := rb.getMetricsForAlert()
 	metricsFilter := rb.buildLabelFilter(`action="drop"`)
 	totalFilter := rb.buildLabelFilter("")
@@ -228,18 +205,13 @@ func (rb *ruleBuilder) netpolDenied() (*monitoringv1.Rule, error) {
 	isRecording := rb.mode == flowslatest.ModeRecording
 	promql := percentagePromQL(metricsSumBy, totalSumBy, rb.threshold, rb.upperThreshold, rb.healthRule.LowVolumeThreshold, isRecording)
 
-	return rb.createRule(promql, "Traffic denied by Network Policies", description)
+	description := rb.buildDescriptionFromTemplate(rb.threshold, rb.getAlertLegend())
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
 }
 
 func (rb *ruleBuilder) latencyTrend() (*monitoringv1.Rule, error) {
 	offset, duration := rb.healthRule.GetTrendParams()
-	description := fmt.Sprintf(
-		"NetObserv is detecting TCP latency increased by more than %s%%%s, compared to baseline (offset: %s). %s",
-		rb.threshold,
-		rb.getAlertLegend(),
-		offset,
-		rb.additionalDescription(),
-	)
 
 	metric, baseline := rb.getMetricsForAlert()
 	filter := rb.buildLabelFilter("")
@@ -258,7 +230,9 @@ func (rb *ruleBuilder) latencyTrend() (*monitoringv1.Rule, error) {
 	}
 	rb.upperValueRange = strconv.Itoa(int(math.Max(val*5, 100)))
 
-	return rb.createRule(promql, "TCP latency increase", description)
+	description := rb.buildDescriptionFromTemplate(rb.threshold, rb.getAlertLegend(), offset)
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
 }
 
 func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
@@ -269,23 +243,13 @@ func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
 		return nil, nil
 	}
 
-	direction := "egress"
 	filterForExternal := `DstSubnetLabel=~"|EXT:.*",DstK8S_Namespace="",DstK8S_OwnerName=""`
 	trafficLinkFilter := `dst_subnet_label="",EXT:`
 	if ingress {
-		direction = "ingress"
 		filterForExternal = `SrcSubnetLabel=~"|EXT:.*",SrcK8S_Namespace="",SrcK8S_OwnerName=""`
 		trafficLinkFilter = `src_subnet_label="",EXT:`
 	}
 	offset, duration := rb.healthRule.GetTrendParams()
-	description := fmt.Sprintf(
-		"NetObserv is detecting external %s traffic increased by more than %s%%%s, compared to baseline (offset: %s). %s",
-		direction,
-		rb.threshold,
-		rb.getAlertLegend(),
-		offset,
-		rb.additionalDescription(),
-	)
 
 	metric, baseline := rb.getMetricsForAlert()
 	filter := rb.buildLabelFilter(filterForExternal)
@@ -310,5 +274,95 @@ func (rb *ruleBuilder) externalTrend(ingress bool) (*monitoringv1.Rule, error) {
 		FilterDestination: rb.side == asDest,
 	}
 
-	return rb.createRule(promql, fmt.Sprintf("External %s traffic increase", direction), description)
+	description := rb.buildDescriptionFromTemplate(rb.threshold, rb.getAlertLegend(), offset)
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
+}
+
+func (rb *ruleBuilder) ingressErrors() (*monitoringv1.Rule, error) {
+	// No "side" consideration for ingress metrics, so keep only 1 call from the two of them
+	if rb.side == asDest {
+		return nil, nil
+	}
+
+	var legend string
+	switch rb.healthRule.GroupBy {
+	case flowslatest.GroupByNode:
+		return nil, fmt.Errorf("Ingress5xxErrors health rule does not support grouping per node")
+	case flowslatest.GroupByNamespace:
+		// Note: we'll rename exported_namespace to namespace in the PromQL using label_replace
+		legend = " [namespace={{ $labels.namespace }}]"
+	case flowslatest.GroupByWorkload:
+		return nil, fmt.Errorf("Ingress5xxErrors health rule does not support grouping per workload")
+	}
+
+	isRecording := rb.mode == flowslatest.ModeRecording
+	// 5xx errors
+	errorCode := "5xx"
+
+	// Build PromQL with label_replace to rename exported_namespace to namespace
+	var errorsQuery, totalQuery string
+	if rb.healthRule.GroupBy == flowslatest.GroupByNamespace {
+		// Rename exported_namespace to namespace for console plugin compatibility
+		errorsQuery = fmt.Sprintf("sum(label_replace(rate(haproxy_server_http_responses_total{code=\"%s\"}[2m]), \"namespace\", \"$1\", \"exported_namespace\", \"(.*)\")) by (namespace)", errorCode)
+		totalQuery = "sum(label_replace(rate(haproxy_server_http_responses_total[2m]), \"namespace\", \"$1\", \"exported_namespace\", \"(.*)\")) by (namespace)"
+	} else {
+		// Global (no groupBy)
+		errorsQuery = fmt.Sprintf("sum(rate(haproxy_server_http_responses_total{code=\"%s\"}[2m]))", errorCode)
+		totalQuery = "sum(rate(haproxy_server_http_responses_total[2m]))"
+	}
+
+	promql := percentagePromQL(
+		errorsQuery,
+		totalQuery,
+		rb.threshold,
+		rb.upperThreshold,
+		"",
+		isRecording,
+	)
+
+	// Set upperBound to 100 (percentage scale)
+	rb.upperValueRange = "100"
+
+	description := rb.buildDescriptionFromTemplate(rb.threshold, legend)
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
+}
+
+func (rb *ruleBuilder) ingressLatencyTrend() (*monitoringv1.Rule, error) {
+	if rb.side == asDest {
+		return nil, nil
+	}
+
+	offset, _ := rb.healthRule.GetTrendParams()
+
+	var currentMetric, baselineMetric string
+	var legend string
+
+	switch rb.healthRule.GroupBy {
+	case flowslatest.GroupByNode:
+		return nil, fmt.Errorf("IngressLatencyTrend health rule does not support grouping per node")
+	case flowslatest.GroupByNamespace:
+		legend = " [namespace={{ $labels.namespace }}]"
+		currentMetric = `avg(label_replace(haproxy_server_http_average_response_latency_milliseconds, "namespace", "$1", "exported_namespace", "(.*)")) by (namespace)`
+		baselineMetric = fmt.Sprintf(`avg(label_replace(haproxy_server_http_average_response_latency_milliseconds offset %s, "namespace", "$1", "exported_namespace", "(.*)")) by (namespace)`, offset)
+	case flowslatest.GroupByWorkload:
+		return nil, fmt.Errorf("IngressLatencyTrend health rule does not support grouping per workload")
+	default:
+		currentMetric = `avg(haproxy_server_http_average_response_latency_milliseconds)`
+		baselineMetric = fmt.Sprintf(`avg(haproxy_server_http_average_response_latency_milliseconds offset %s)`, offset)
+	}
+
+	isRecording := rb.mode == flowslatest.ModeRecording
+	promql := baselineIncreasePromQL(currentMetric, baselineMetric, rb.threshold, rb.upperThreshold, isRecording)
+
+	val, err := strconv.ParseFloat(rb.threshold, 64)
+	if err != nil {
+		return nil, err
+	}
+	rb.upperValueRange = strconv.Itoa(int(math.Max(val*5, 100)))
+
+	description := rb.buildDescriptionFromTemplate(rb.threshold, legend, offset)
+	summary := rb.getSummaryFromTemplate()
+	return rb.createRule(promql, summary, description)
 }
