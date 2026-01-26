@@ -121,8 +121,7 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 }
 
 func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
-	grpcStage := newGRPCPipeline(b.desired, &b.volumes)
-	pipeline := newPipelineBuilder(
+	pipeline, err := createPipeline(
 		b.desired,
 		b.flowMetrics,
 		b.fcSlices,
@@ -130,29 +129,22 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 		b.info.Loki,
 		b.info.ClusterInfo.GetID(),
 		&b.volumes,
-		&grpcStage,
+		newGRPCPipeline(b.desired, &b.volumes),
 	)
-	err := pipeline.AddProcessorStages()
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	// Get static CM
-	data, err := getStaticJSONConfig(b.desired, &b.volumes, b.promTLS, &pipeline, monoDynConfigMap)
+	// Get static and dynamic CM
+	static, dynamic, err := getJSONConfigs(b.desired, &b.volumes, b.promTLS, pipeline, monoDynConfigMap)
 	if err != nil {
 		return nil, "", nil, err
 	}
-	staticCM, digest, err := configMap(monoConfigMap, b.info.Namespace, data, monoName)
+	staticCM, digest, err := configMap(monoConfigMap, b.info.Namespace, static, monoName)
 	if err != nil {
 		return nil, "", nil, err
 	}
-
-	// Get dynamic CM (hot reload)
-	data, err = getDynamicJSONConfig(&pipeline)
-	if err != nil {
-		return nil, "", nil, err
-	}
-	dynamicCM, _, err := configMap(monoDynConfigMap, b.info.Namespace, data, monoName)
+	dynamicCM, _, err := configMap(monoDynConfigMap, b.info.Namespace, dynamic, monoName)
 	if err != nil {
 		return nil, "", nil, err
 	}

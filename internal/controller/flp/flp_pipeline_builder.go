@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	ovnkSecondary = "ovn-kubernetes"
+	ovnkSecondary               = "ovn-kubernetes"
+	openshiftNamespacesPrefixes = "openshift"
 )
 
 type PipelineBuilder struct {
@@ -40,7 +41,7 @@ type PipelineBuilder struct {
 	clusterID       string
 }
 
-func newPipelineBuilder(
+func createPipeline(
 	desired *flowslatest.FlowCollectorSpec,
 	flowMetrics *metricslatest.FlowMetricList,
 	fcSlices []sliceslatest.FlowCollectorSlice,
@@ -48,10 +49,10 @@ func newPipelineBuilder(
 	loki *helper.LokiConfig,
 	clusterID string,
 	volumes *volumes.Builder,
-	pipeline *config.PipelineBuilderStage,
-) PipelineBuilder {
-	return PipelineBuilder{
-		PipelineBuilderStage: pipeline,
+	ingestStage config.PipelineBuilderStage,
+) (*PipelineBuilder, error) {
+	b := &PipelineBuilder{
+		PipelineBuilderStage: &ingestStage,
 		desired:              desired,
 		flowMetrics:          flowMetrics,
 		fcSlices:             fcSlices,
@@ -60,39 +61,43 @@ func newPipelineBuilder(
 		clusterID:            clusterID,
 		volumes:              volumes,
 	}
-}
+	stage := ingestStage
+	stage = b.addConnectionTracking(stage)
 
-const openshiftNamespacesPrefixes = "openshift"
+	stage = b.addEnrichStage(stage)
+	var err error
+	stage, err = b.addSubnetLabelsStage(stage)
+	if err != nil {
+		return nil, err
+	}
+	stage = b.addTruncFiltersDedupStage(stage)
 
-// nolint:cyclop
-func (b *PipelineBuilder) AddProcessorStages() error {
-	lastStage := *b.PipelineBuilderStage
-	lastStage = b.addTransformFilter(lastStage)
-	lastStage = b.addConnectionTracking(lastStage)
-
-	addZone := b.desired.Processor.IsZoneEnabled()
-
-	// Get all subnet labels
-	// Highest priority: admin-defined labels
-	allLabels := b.desired.Processor.SubnetLabels.CustomLabels
-	var cidrs []*net.IPNet
-	for _, label := range allLabels {
-		for _, strCIDR := range label.CIDRs {
-			_, cidr, err := net.ParseCIDR(strCIDR)
-			if err != nil {
-				return fmt.Errorf("wrong CIDR for subnet label '%s': %w", label.Name, err)
-			}
-			cidrs = append(cidrs, cidr)
+	if b.desired.UseLoki() {
+		if err := b.addLokiStage(stage); err != nil {
+			return nil, err
 		}
 	}
-	// Then: slice labels
-	if b.desired.IsSliceEnabled() {
-		allLabels = append(allLabels, slicesToFCSubnetLabels(b.fcSlices, cidrs)...)
-	}
-	// Finally: detected/fallback labels
-	allLabels = append(allLabels, b.detectedSubnets...)
-	flpLabels := subnetLabelsToFLP(allLabels)
 
+	// write on Stdout if logging trace enabled
+	if b.desired.Processor.LogLevel == "trace" {
+		stage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
+	}
+
+	var flpMetrics []api.MetricsItem
+	flpMetrics, err = b.addPrometheusStage(stage)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := b.addCustomExportStages(stage, flpMetrics); err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (b *PipelineBuilder) addEnrichStage(previous config.PipelineBuilderStage) config.PipelineBuilderStage {
+	addZone := b.desired.Processor.IsZoneEnabled()
 	rules := api.NetworkTransformRules{
 		{
 			Type: api.NetworkAddKubernetes,
@@ -170,25 +175,6 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 		},
 	}...)
 
-	if len(flpLabels) > 0 {
-		rules = append(rules, []api.NetworkTransformRule{
-			{
-				Type: api.NetworkAddSubnetLabel,
-				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
-					Input:  "SrcAddr",
-					Output: "SrcSubnetLabel",
-				},
-			},
-			{
-				Type: api.NetworkAddSubnetLabel,
-				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
-					Input:  "DstAddr",
-					Output: "DstSubnetLabel",
-				},
-			},
-		}...)
-	}
-
 	// Propagate 2dary networks config
 	var secondaryNetworks []api.SecondaryNetwork
 	if b.desired.Processor.Advanced != nil && len(b.desired.Processor.Advanced.SecondaryNetworks) > 0 {
@@ -211,7 +197,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	}
 
 	// enrich stage (transform) configuration
-	nextStage := lastStage.TransformNetwork("enrich", api.TransformNetwork{
+	return previous.TransformNetwork("enrich", api.TransformNetwork{
 		Rules: rules,
 		DirectionInfo: api.NetworkTransformDirectionInfo{
 			ReporterIPField:    "AgentIP",
@@ -219,21 +205,24 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			DstHostField:       "DstK8S_HostIP",
 			FlowDirectionField: "FlowDirection",
 		},
-		SubnetLabels: flpLabels,
 		KubeConfig: api.NetworkTransformKubeConfig{
 			SecondaryNetworks: secondaryNetworks,
 			TrackedKinds:      []string{"ReplicaSet", "Deployment", "Gateway"},
 		},
 	})
+}
 
+func (b *PipelineBuilder) addTruncFiltersDedupStage(previous config.PipelineBuilderStage) config.PipelineBuilderStage {
 	// Custom filters
+	stage := previous
 	filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetAll)
 	sliceFilters := slicesToFilters(b.desired, b.fcSlices)
 	if len(sliceFilters) > 0 {
 		filters = append(filters, sliceFilters...)
 	}
+	filters = b.addOtherTransforms(filters)
 	if len(filters) > 0 {
-		nextStage = nextStage.TransformFilter("filters", newTransformFilter(filters))
+		stage = stage.TransformFilter("filters", api.TransformFilter{Rules: filters, SamplingField: "Sampling"}, config.Dynamic)
 	}
 
 	// Dedup stage
@@ -279,138 +268,9 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 				},
 			}
 		}
-		nextStage = nextStage.TransformFilter("dedup", transformFilter)
+		stage = stage.TransformFilter("dedup", transformFilter)
 	}
-
-	// loki stage (write) configuration
-	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
-	if b.desired.UseLoki() {
-		lokiLabels, err := loki.GetLabels(b.desired)
-		if err != nil {
-			return err
-		}
-		lokiStage := nextStage
-		// Custom filters: Loki only
-		filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetLoki)
-		if len(filters) > 0 {
-			lokiStage = lokiStage.TransformFilter("filters-loki", newTransformFilter(filters))
-		}
-
-		lokiWrite := api.WriteLoki{
-			Labels:         lokiLabels,
-			BatchSize:      int(b.desired.Loki.WriteBatchSize),
-			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(advancedConfig.WriteMaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMinBackoff),
-			StaticLabels:   model.LabelSet{},
-			Timeout:        helper.UnstructuredDuration(b.desired.Loki.WriteTimeout),
-			URL:            b.loki.IngesterURL,
-			TimestampLabel: "TimeFlowEndMs",
-			TimestampScale: "1ms",
-			TenantID:       b.loki.TenantID,
-		}
-
-		for k, v := range advancedConfig.StaticLabels {
-			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
-		}
-
-		var authorization *promConfig.Authorization
-		if b.loki.UseHostToken() || b.loki.UseForwardToken() {
-			b.volumes.AddToken(constants.FLPName)
-			authorization = &promConfig.Authorization{
-				Type:            "Bearer",
-				CredentialsFile: constants.TokensPath + constants.FLPName,
-			}
-		}
-
-		if b.loki.TLS.Enable {
-			if b.loki.TLS.InsecureSkipVerify {
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						InsecureSkipVerify: true,
-					},
-				}
-			} else {
-				caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
-				lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-					Authorization: authorization,
-					TLSConfig: promConfig.TLSConfig{
-						CAFile: caPath,
-					},
-				}
-			}
-		} else {
-			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
-				Authorization: authorization,
-			}
-		}
-		lokiStage.WriteLoki("loki", lokiWrite)
-	}
-
-	// write on Stdout if logging trace enabled
-	if b.desired.Processor.LogLevel == "trace" {
-		nextStage.WriteStdout("stdout", api.WriteStdout{Format: "json"})
-	}
-
-	// Configure metrics
-	var flpMetrics []api.MetricsItem
-
-	// First, add predefined metrics
-	predefined := metrics.GetDefinitions(b.desired, false)
-	for i := range predefined {
-		fm := predefined[i]
-		m, err := flowMetricToFLP(&fm)
-		if err != nil {
-			// Predefined metric failure => bug
-			return fmt.Errorf("error reading predefined FlowMetric '%s': %w", fm.Name, err)
-		}
-		flpMetrics = append(flpMetrics, *m)
-	}
-
-	// Then add user-defined FlowMetrics
-	for i := range b.flowMetrics.Items {
-		fm := &b.flowMetrics.Items[i]
-		m, err := flowMetricToFLP(fm)
-		if err != nil {
-			fmstatus.SetFailure(fm, err.Error())
-			continue
-		}
-		// Update with actual name
-		fm.Status.PrometheusName = "netobserv_" + m.Name
-		fmstatus.CheckCardinality(fm)
-		flpMetrics = append(flpMetrics, *m)
-	}
-
-	if len(flpMetrics) > 0 {
-		promStage := nextStage
-		// Custom filters: Loki only
-		filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetMetrics)
-		if len(filters) > 0 {
-			promStage = promStage.TransformFilter("filters-prom", newTransformFilter(filters))
-		}
-
-		// prometheus stage (encode) configuration
-		promEncode := api.PromEncode{
-			Prefix:  "netobserv_",
-			Metrics: flpMetrics,
-		}
-		promStage.EncodePrometheus("prometheus", promEncode)
-	}
-
-	expStage := nextStage
-	// Custom filters: Exporters only
-	filters = filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetExporters)
-	if len(filters) > 0 {
-		expStage = expStage.TransformFilter("filters-exp", newTransformFilter(filters))
-	}
-	err := b.addCustomExportStages(&expStage, flpMetrics)
-	return err
-}
-
-func newTransformFilter(rules []api.TransformFilterRule) api.TransformFilter {
-	return api.TransformFilter{Rules: rules, SamplingField: "Sampling"}
+	return stage
 }
 
 func filtersToFLP(in []flowslatest.FLPFilterSet, target flowslatest.FLPFilterTarget) []api.TransformFilterRule {
@@ -623,11 +483,9 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 	return lastStage
 }
 
-func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderStage) config.PipelineBuilderStage {
-	var clusterName string
-	transformFilterRules := []api.TransformFilterRule{}
-
+func (b *PipelineBuilder) addOtherTransforms(rules []api.TransformFilterRule) []api.TransformFilterRule {
 	if b.desired.Processor.IsMultiClusterEnabled() {
+		var clusterName string
 		if b.desired.Processor.ClusterName != "" {
 			clusterName = b.desired.Processor.ClusterName
 		} else {
@@ -635,36 +493,193 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 			clusterName = b.clusterID
 		}
 		if clusterName != "" {
-			transformFilterRules = []api.TransformFilterRule{
-				{
-					Type: api.AddFieldIfDoesntExist,
-					AddFieldIfDoesntExist: &api.TransformFilterGenericRule{
-						Input: constants.ClusterNameLabelName,
-						Value: clusterName,
-					},
+			rules = append(rules, api.TransformFilterRule{
+				Type: api.AddFieldIfDoesntExist,
+				AddFieldIfDoesntExist: &api.TransformFilterGenericRule{
+					Input: constants.ClusterNameLabelName,
+					Value: clusterName,
+				},
+			})
+		}
+	}
+	return rules
+}
+
+// Add transform stage for subnet labels as a dynamic stage
+func (b *PipelineBuilder) addSubnetLabelsStage(previous config.PipelineBuilderStage) (config.PipelineBuilderStage, error) {
+	// Get all subnet labels
+	// Highest priority: admin-defined labels
+	allLabels := b.desired.Processor.SubnetLabels.CustomLabels
+	var cidrs []*net.IPNet
+	for _, label := range allLabels {
+		for _, strCIDR := range label.CIDRs {
+			_, cidr, err := net.ParseCIDR(strCIDR)
+			if err != nil {
+				return previous, fmt.Errorf("wrong CIDR for subnet label '%s': %w", label.Name, err)
+			}
+			cidrs = append(cidrs, cidr)
+		}
+	}
+	// Then: slice labels
+	if b.desired.IsSliceEnabled() {
+		allLabels = append(allLabels, slicesToFCSubnetLabels(b.fcSlices, cidrs)...)
+	}
+	// Finally: detected/fallback labels
+	allLabels = append(allLabels, b.detectedSubnets...)
+	flpLabels := subnetLabelsToFLP(allLabels)
+
+	if len(flpLabels) > 0 {
+		rules := api.NetworkTransformRules{
+			{
+				Type: api.NetworkAddSubnetLabel,
+				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
+					Input:  "SrcAddr",
+					Output: "SrcSubnetLabel",
+				},
+			},
+			{
+				Type: api.NetworkAddSubnetLabel,
+				AddSubnetLabel: &api.NetworkAddSubnetLabelRule{
+					Input:  "DstAddr",
+					Output: "DstSubnetLabel",
+				},
+			},
+		}
+		return previous.TransformNetwork("subnets", api.TransformNetwork{
+			Rules:        rules,
+			SubnetLabels: flpLabels,
+		}, config.Dynamic), nil
+	}
+
+	return previous, nil
+}
+
+func (b *PipelineBuilder) addLokiStage(previous config.PipelineBuilderStage) error {
+	advancedConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
+	lokiLabels, err := loki.GetLabels(b.desired)
+	if err != nil {
+		return err
+	}
+	lokiStage := previous
+	// Custom filters: Loki only
+	filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetLoki)
+	if len(filters) > 0 {
+		lokiStage = lokiStage.TransformFilter("filters-loki", api.TransformFilter{Rules: filters, SamplingField: "Sampling"})
+	}
+
+	lokiWrite := api.WriteLoki{
+		Labels:         lokiLabels,
+		BatchSize:      int(b.desired.Loki.WriteBatchSize),
+		BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
+		MaxBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMaxBackoff),
+		MaxRetries:     int(helper.PtrInt32(advancedConfig.WriteMaxRetries)),
+		MinBackoff:     helper.UnstructuredDuration(advancedConfig.WriteMinBackoff),
+		StaticLabels:   model.LabelSet{},
+		Timeout:        helper.UnstructuredDuration(b.desired.Loki.WriteTimeout),
+		URL:            b.loki.IngesterURL,
+		TimestampLabel: "TimeFlowEndMs",
+		TimestampScale: "1ms",
+		TenantID:       b.loki.TenantID,
+	}
+
+	for k, v := range advancedConfig.StaticLabels {
+		lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
+	}
+
+	var authorization *promConfig.Authorization
+	if b.loki.UseHostToken() || b.loki.UseForwardToken() {
+		b.volumes.AddToken(constants.FLPName)
+		authorization = &promConfig.Authorization{
+			Type:            "Bearer",
+			CredentialsFile: constants.TokensPath + constants.FLPName,
+		}
+	}
+
+	if b.loki.TLS.Enable {
+		if b.loki.TLS.InsecureSkipVerify {
+			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+				Authorization: authorization,
+				TLSConfig: promConfig.TLSConfig{
+					InsecureSkipVerify: true,
+				},
+			}
+		} else {
+			caPath := b.volumes.AddCACertificate(&b.loki.TLS, "loki-certs")
+			lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+				Authorization: authorization,
+				TLSConfig: promConfig.TLSConfig{
+					CAFile: caPath,
 				},
 			}
 		}
+	} else {
+		lokiWrite.ClientConfig = &promConfig.HTTPClientConfig{
+			Authorization: authorization,
+		}
 	}
-
-	if len(transformFilterRules) > 0 {
-		lastStage = lastStage.TransformFilter("filter", api.TransformFilter{
-			Rules: transformFilterRules,
-		})
-	}
-	return lastStage
+	lokiStage.WriteLoki("loki", lokiWrite)
+	return nil
 }
 
-func (b *PipelineBuilder) addCustomExportStages(enrichedStage *config.PipelineBuilderStage, flpMetrics []api.MetricsItem) error {
+func (b *PipelineBuilder) addPrometheusStage(previous config.PipelineBuilderStage) ([]api.MetricsItem, error) {
+	// Configure metrics
+	var flpMetrics []api.MetricsItem
+
+	// First, add predefined metrics
+	predefined := metrics.GetDefinitions(b.desired, false)
+	for i := range predefined {
+		fm := predefined[i]
+		m, err := flowMetricToFLP(&fm)
+		if err != nil {
+			// Predefined metric failure => bug
+			return nil, fmt.Errorf("error reading predefined FlowMetric '%s': %w", fm.Name, err)
+		}
+		flpMetrics = append(flpMetrics, *m)
+	}
+
+	// Then add user-defined FlowMetrics
+	for i := range b.flowMetrics.Items {
+		fm := &b.flowMetrics.Items[i]
+		m, err := flowMetricToFLP(fm)
+		if err != nil {
+			fmstatus.SetFailure(fm, err.Error())
+			continue
+		}
+		// Update with actual name
+		fm.Status.PrometheusName = "netobserv_" + m.Name
+		fmstatus.CheckCardinality(fm)
+		flpMetrics = append(flpMetrics, *m)
+	}
+
+	if len(flpMetrics) > 0 {
+		promStage := previous
+		// Custom filters: Metrics only
+		filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetMetrics)
+		if len(filters) > 0 {
+			promStage = promStage.TransformFilter("filters-prom", api.TransformFilter{Rules: filters, SamplingField: "Sampling"})
+		}
+		promStage.EncodePrometheus("prometheus", api.PromEncode{Prefix: "netobserv_", Metrics: flpMetrics}, config.Dynamic)
+	}
+	return flpMetrics, nil
+}
+
+func (b *PipelineBuilder) addCustomExportStages(previous config.PipelineBuilderStage, flpMetrics []api.MetricsItem) error {
+	// Custom filters: Exporters only
+	stage := previous
+	filters := filtersToFLP(b.desired.Processor.Filters, flowslatest.FLPFilterTargetExporters)
+	if len(filters) > 0 {
+		stage = stage.TransformFilter("filters-exp", api.TransformFilter{Rules: filters, SamplingField: "Sampling"})
+	}
+
 	for i, exporter := range b.desired.Exporters {
 		if exporter.Type == flowslatest.KafkaExporter {
-			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, enrichedStage)
+			b.createKafkaWriteStage(fmt.Sprintf("kafka-export-%d", i), &exporter.Kafka, &stage)
 		}
 		if exporter.Type == flowslatest.IpfixExporter {
-			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, enrichedStage)
+			createIPFIXWriteStage(fmt.Sprintf("IPFIX-export-%d", i), &exporter.IPFIX, &stage)
 		}
 		if exporter.Type == flowslatest.OpenTelemetryExporter {
-			err := b.createOpenTelemetryStage(fmt.Sprintf("Otel-export-%d", i), &exporter.OpenTelemetry, enrichedStage, flpMetrics)
+			err := b.createOpenTelemetryStage(fmt.Sprintf("Otel-export-%d", i), &exporter.OpenTelemetry, &stage, flpMetrics)
 			if err != nil {
 				return err
 			}
@@ -746,8 +761,6 @@ func (b *PipelineBuilder) createOpenTelemetryStage(name string, spec *flowslates
 				ExpiryTime:         api.Duration{Duration: 2 * time.Minute},
 			})
 		}
-
-		// TODO: implement api.EncodeOtlpTraces
 	}
 	return nil
 }
