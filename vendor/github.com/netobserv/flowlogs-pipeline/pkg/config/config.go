@@ -94,6 +94,7 @@ type StageParam struct {
 	Extract   *Extract   `yaml:"extract,omitempty" json:"extract,omitempty"`
 	Encode    *Encode    `yaml:"encode,omitempty" json:"encode,omitempty"`
 	Write     *Write     `yaml:"write,omitempty" json:"write,omitempty"`
+	isDynamic bool       `yaml:"-" json:"-"`
 }
 
 type Ingest struct {
