@@ -27,6 +27,11 @@ const (
 	OVNKubernetes NetworkType = "OVNKubernetes"
 )
 
+// discoveryClient is an interface for API discovery operations
+type discoveryClient interface {
+	ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
+}
+
 type Info struct {
 	apisMap                     map[string]bool
 	apisMapLock                 sync.RWMutex
@@ -37,7 +42,7 @@ type Info struct {
 	hasPromServiceDiscoveryRole bool
 	ready                       bool
 	readinessLock               sync.RWMutex
-	dcl                         *discovery.DiscoveryClient
+	dcl                         discoveryClient
 	livecl                      *liveClient
 	onRefresh                   func()
 }
@@ -65,39 +70,90 @@ func NewInfo(ctx context.Context, cfg *rest.Config, dcl *discovery.DiscoveryClie
 }
 
 func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
+	return c.fetchAvailableAPIsInternal(ctx, false)
+}
+
+// fetchAvailableAPIsInternal discovers available APIs and optionally allows continuing despite critical API failures
+// allowCriticalFailure should be true during refresh loops to allow recovery from transient API server issues
+//
+// API Discovery Policy:
+// - APIs are marked as available when first discovered
+// - Once discovered, APIs are never marked unavailable (to avoid transient discovery issues)
+// - Operator restart is required to detect removed APIs (rare in practice)
+func (c *Info) fetchAvailableAPIsInternal(ctx context.Context, allowCriticalFailure bool) error {
 	log := log.FromContext(ctx)
 	_, resources, err := c.dcl.ServerGroupsAndResources()
 	// We may receive partial data along with an error
 	var discErr *discovery.ErrGroupDiscoveryFailed
-	if err != nil && (!errors.As(err, &discErr) || len(resources) == 0) {
-		return err
+	hasDiscoveryError := errors.As(err, &discErr)
+
+	// If we have a total failure (no resources at all), fail fast
+	if err != nil && !hasDiscoveryError {
+		return fmt.Errorf("API discovery failed completely: %w", err)
 	}
-	apisMap := map[string]bool{
-		consolePlugin:  false,
-		cno:            false,
-		svcMonitor:     false,
-		promRule:       false,
-		ocpSecurity:    false,
-		endpointSlices: false,
+	if len(resources) == 0 {
+		return fmt.Errorf("API discovery returned no resources")
 	}
-	for apiName := range apisMap {
-		if hasAPI(apiName, resources) {
-			apisMap[apiName] = true
-		} else if discErr != nil {
-			// Check if the wanted API is in error
-			for gv, err := range discErr.Groups {
-				if strings.Contains(apiName, gv.String()) {
-					log.Error(err, "some API-related features are unavailable; you can check for stale APIs with 'kubectl get apiservice'", "GroupVersion", gv.String())
+
+	// Track which critical APIs failed discovery
+	criticalAPIFailed := false
+	apisRecovered := false
+	firstRun := false
+	c.apisMapLock.Lock()
+	defer c.apisMapLock.Unlock()
+	if c.apisMap == nil {
+		c.apisMap = map[string]bool{
+			consolePlugin:  false,
+			cno:            false,
+			svcMonitor:     false,
+			promRule:       false,
+			ocpSecurity:    false,
+			endpointSlices: false,
+		}
+		firstRun = true
+	}
+	for apiName, discovered := range c.apisMap {
+		// Never remove a discovered API, to avoid transient staleness issues triggering changes continuously
+		if !discovered {
+			if hasAPI(apiName, resources) {
+				c.apisMap[apiName] = true
+				if !firstRun {
+					apisRecovered = true
+					log.Info("API recovered and is now available", "api", apiName)
+				}
+			} else if hasDiscoveryError {
+				// Check if the wanted API is in error
+				for gv, gvErr := range discErr.Groups {
+					if strings.Contains(apiName, gv.String()) {
+						log.Error(gvErr, "some API-related features are unavailable; you can check for stale APIs with 'kubectl get apiservice'", "GroupVersion", gv.String(), "api", apiName)
+						// OCP Security API is critical - we MUST know if we're on OpenShift
+						// to avoid wrong security context configurations
+						if apiName == ocpSecurity {
+							criticalAPIFailed = true
+						}
+					}
 				}
 			}
 		}
 	}
+	if firstRun {
+		log.Info("API detection finished", "apis", c.apisMap)
+	}
 
-	c.apisMapLock.Lock()
-	defer c.apisMapLock.Unlock()
-	c.apisMap = apisMap
+	// If APIs recovered, trigger reconciliation via the onRefresh callback
+	// The callback runs in a goroutine to avoid blocking while holding the lock
+	if apisRecovered && c.onRefresh != nil {
+		log.Info("Triggering reconciliation due to API recovery")
+		go c.onRefresh()
+	}
 
-	log.Info("API detection finished", "apis", apisMap)
+	// If critical API discovery failed:
+	// - During startup (allowCriticalFailure=false): fail fast to prevent wrong cluster detection
+	// - During refresh (allowCriticalFailure=true): log error but continue, allowing time to recover
+	if criticalAPIFailed && !allowCriticalFailure {
+		return fmt.Errorf("critical API discovery failed: cannot determine if running on OpenShift (security.openshift.io API unavailable)")
+	}
+
 	return nil
 }
 
