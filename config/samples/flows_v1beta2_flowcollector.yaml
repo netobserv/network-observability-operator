@@ -11,8 +11,8 @@ spec:
   agent:
     type: eBPF
     ebpf:
-      imagePullPolicy: IfNotPresent
-      logLevel: info
+      # imagePullPolicy: IfNotPresent
+      # logLevel: info
       sampling: 50
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
@@ -29,7 +29,7 @@ spec:
       # - "IPSec"
       interfaces: []
       excludeInterfaces: ["lo"]
-      kafkaBatchSize: 1048576
+      # kafkaBatchSize: 1048576
       #flowFilter:
       #  enable: true
       #  rules:
@@ -52,35 +52,35 @@ spec:
       #    cidr: 2.2.2.2/24
       #    protocol: TCP
       #    sourcePorts: 53
-      metrics:
-        server:
-          port: 9400
+      # metrics:
+      #   server:
+      #     port: 9400
       # Custom optionnal resources configuration
-      resources:
-        requests:
-          memory: 50Mi
-          cpu: 100m
-        limits:
-          memory: 800Mi
-  kafka:
-    address: "kafka-cluster-kafka-bootstrap.netobserv"
-    topic: network-flows
-    tls:
-      enable: false
-      caCert:
-        type: secret
-        name: kafka-cluster-cluster-ca-cert
-        certFile: ca.crt
-      userCert:
-        type: secret
-        name: flp-kafka
-        certFile: user.crt
-        certKey: user.key
+      # resources:
+      #   requests:
+      #     memory: 50Mi
+      #     cpu: 100m
+      #   limits:
+      #     memory: 800Mi
+  # kafka:
+  #   address: "kafka-cluster-kafka-bootstrap.netobserv"
+  #   topic: network-flows
+  #   tls:
+  #     enable: false
+  #     caCert:
+  #       type: secret
+  #       name: kafka-cluster-cluster-ca-cert
+  #       certFile: ca.crt
+  #     userCert:
+  #       type: secret
+  #       name: flp-kafka
+  #       certFile: user.crt
+  #       certKey: user.key
   processor:
-    imagePullPolicy: IfNotPresent
-    logLevel: info
+    # imagePullPolicy: IfNotPresent
+    # logLevel: info
     # Change logTypes to "Conversations", "EndedConversations" or "All" to enable conversation tracking
-    logTypes: Flows
+    # logTypes: Flows
     # Append a unique cluster name to each record
     # clusterName: <CLUSTER NAME>
     # addZone: true
@@ -90,8 +90,8 @@ spec:
     #   - cidrs: []
     #     name: ""
     metrics:
-      server:
-        port: 9401
+      # server:
+      #   port: 9401
       disableAlerts: []
       # includeList:
       # - "node_ingress_bytes_total"
@@ -124,21 +124,18 @@ spec:
       #     lowVolumeThreshold: "5"
     slicesConfig:
       enable: false
-      collectionMode: AllowList
-      namespacesAllowList:
-      - /openshift-.*|netobserv.*/
-    # Kafka consumer stage configuration
-    kafkaConsumerReplicas: 3
-    kafkaConsumerAutoscaler: null
-    kafkaConsumerQueueCapacity: 1000
-    kafkaConsumerBatchSize: 10485760
+      # collectionMode: AllowList
+      # namespacesAllowList:
+      # - /openshift-.*|netobserv.*/
+    # FLP replicas
+    consumerReplicas: 3
     # Custom optionnal resources configuration
-    resources:
-      requests:
-        memory: 100Mi
-        cpu: 100m
-      limits:
-        memory: 800Mi
+    # resources:
+    #   requests:
+    #     memory: 100Mi
+    #     cpu: 100m
+    #   limits:
+    #     memory: 800Mi
     # deduper:
     #   mode: Sample
     #   sampling: 100
@@ -159,13 +156,13 @@ spec:
     monolithic:
       # NB: trailing dot (...local.:3100) is a DNS optimization for exact name match without extra search
       url: 'http://loki.netobserv.svc.cluster.local.:3100/'
-      tenantID: netobserv
-      tls:
-        enable: false
-        caCert:
-          type: configmap
-          name: loki-gateway-ca-bundle
-          certFile: service-ca.crt
+      # tenantID: netobserv
+      # tls:
+      #   enable: false
+      #   caCert:
+      #     type: configmap
+      #     name: loki-gateway-ca-bundle
+      #     certFile: service-ca.crt
       # Enable automatic install for dev / demo purposes
       # installDemoLoki: true
     lokiStack:
@@ -173,68 +170,68 @@ spec:
       # Change loki operator instance namespace
       # namespace: loki-operator
     # Console plugin read timeout
-    readTimeout: 30s
-    # Write stage configuration
-    writeTimeout: 10s
-    writeBatchWait: 1s
-    writeBatchSize: 10485760
-  prometheus:
-    querier:
-      enable: true
-      mode: Auto
-      timeout: 30s
+    # readTimeout: 30s
+    # # Write stage configuration
+    # writeTimeout: 10s
+    # writeBatchWait: 1s
+    # writeBatchSize: 10485760
+  # prometheus:
+  #   querier:
+  #     enable: true
+  #     mode: Auto
+  #     timeout: 30s
   consolePlugin:
     enable: true
-    imagePullPolicy: IfNotPresent
-    logLevel: info
+    # imagePullPolicy: IfNotPresent
+    # logLevel: info
     # Scaling configuration
-    replicas: 1
-    autoscaler:
-      status: Disabled
-      minReplicas: 1
-      maxReplicas: 3
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 50
+    # replicas: 1
+    # autoscaler:
+    #   status: Disabled
+    #   minReplicas: 1
+    #   maxReplicas: 3
+    #   metrics:
+    #   - type: Resource
+    #     resource:
+    #       name: cpu
+    #       target:
+    #         type: Utilization
+    #         averageUtilization: 50
     # Custom optionnal port-to-service name translation
-    portNaming:
-      enable: true
-      portNames:
-        "3100": loki
+    # portNaming:
+    #   enable: true
+    #   portNames:
+    #     "3100": loki
     # Custom optionnal filter presets
-    quickFilters:
-    - name: Applications
-      filter:
-        flow_layer: '"app"'
-      default: true
-    - name: Infrastructure
-      filter:
-        flow_layer: '"infra"'
-    - name: Pods network
-      filter:
-        src_kind: '"Pod"'
-        dst_kind: '"Pod"'
-      default: true
-    - name: Services network
-      filter:
-        dst_kind: '"Service"'
-    - name: External ingress
-      filter:
-        src_subnet_label: '"",EXT:'
-    - name: External egress
-      filter:
-        dst_subnet_label: '"",EXT:'
+    # quickFilters:
+    # - name: Applications
+    #   filter:
+    #     flow_layer: '"app"'
+    #   default: true
+    # - name: Infrastructure
+    #   filter:
+    #     flow_layer: '"infra"'
+    # - name: Pods network
+    #   filter:
+    #     src_kind: '"Pod"'
+    #     dst_kind: '"Pod"'
+    #   default: true
+    # - name: Services network
+    #   filter:
+    #     dst_kind: '"Service"'
+    # - name: External ingress
+    #   filter:
+    #     src_subnet_label: '"",EXT:'
+    # - name: External egress
+    #   filter:
+    #     dst_subnet_label: '"",EXT:'
     # Custom optionnal resources configuration
-    resources:
-      requests:
-        memory: 50Mi
-        cpu: 100m
-      limits:
-        memory: 100Mi
+    # resources:
+    #   requests:
+    #     memory: 50Mi
+    #     cpu: 100m
+    #   limits:
+    #     memory: 100Mi
   exporters: []
     # - type: Kafka
     #   kafka:
