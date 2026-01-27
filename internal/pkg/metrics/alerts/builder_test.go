@@ -210,6 +210,93 @@ func TestToSnakeCase(t *testing.T) {
 	}
 }
 
+func TestHealthAnnotationMetadata(t *testing.T) {
+	tests := []struct {
+		name                    string
+		groupBy                 flowslatest.HealthRuleGroupBy
+		expectedNodeLabels      []string
+		expectedNamespaceLabels []string
+		expectedOwnerLabels     []string
+	}{
+		{
+			name:                    "Global (no grouping)",
+			groupBy:                 "",
+			expectedNodeLabels:      nil,
+			expectedNamespaceLabels: nil,
+			expectedOwnerLabels:     nil,
+		},
+		{
+			name:                    "GroupBy Node",
+			groupBy:                 flowslatest.GroupByNode,
+			expectedNodeLabels:      []string{"node"},
+			expectedNamespaceLabels: nil,
+			expectedOwnerLabels:     nil,
+		},
+		{
+			name:                    "GroupBy Namespace",
+			groupBy:                 flowslatest.GroupByNamespace,
+			expectedNodeLabels:      nil,
+			expectedNamespaceLabels: []string{"namespace"},
+			expectedOwnerLabels:     nil,
+		},
+		{
+			name:                    "GroupBy Workload",
+			groupBy:                 flowslatest.GroupByWorkload,
+			expectedNodeLabels:      nil,
+			expectedNamespaceLabels: nil,
+			expectedOwnerLabels:     []string{"workload"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rb := &ruleBuilder{
+				template: flowslatest.HealthRulePacketDropsByKernel,
+				healthRule: &flowslatest.HealthRuleVariant{
+					GroupBy: tt.groupBy,
+					Thresholds: flowslatest.HealthRuleThresholds{
+						Critical: "10",
+					},
+				},
+				threshold: "10",
+				side:      asSource,
+			}
+
+			// Build the health annotation
+			annotBytes, err := rb.buildHealthAnnotation(nil)
+			assert.NoError(t, err)
+			annotStr := string(annotBytes)
+
+			// Check for nodeLabels
+			if tt.expectedNodeLabels != nil {
+				assert.Contains(t, annotStr, `"nodeLabels":["node"]`,
+					"Expected nodeLabels in annotation for %s", tt.name)
+			} else {
+				assert.NotContains(t, annotStr, `"nodeLabels"`,
+					"Did not expect nodeLabels in annotation for %s", tt.name)
+			}
+
+			// Check for namespaceLabels
+			if tt.expectedNamespaceLabels != nil {
+				assert.Contains(t, annotStr, `"namespaceLabels":["namespace"]`,
+					"Expected namespaceLabels in annotation for %s", tt.name)
+			} else {
+				assert.NotContains(t, annotStr, `"namespaceLabels"`,
+					"Did not expect namespaceLabels in annotation for %s", tt.name)
+			}
+
+			// Check for ownerLabels
+			if tt.expectedOwnerLabels != nil {
+				assert.Contains(t, annotStr, `"ownerLabels":["workload"]`,
+					"Expected ownerLabels in annotation for %s", tt.name)
+			} else {
+				assert.NotContains(t, annotStr, `"ownerLabels"`,
+					"Did not expect ownerLabels in annotation for %s", tt.name)
+			}
+		})
+	}
+}
+
 func TestBuildRunbookURL(t *testing.T) {
 	tests := []struct {
 		template string
