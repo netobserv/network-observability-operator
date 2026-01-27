@@ -54,23 +54,25 @@ func histogramQuantile(promQL promQLRate, groupBy flowslatest.HealthRuleGroupBy,
 	return fmt.Sprintf("histogram_quantile(%s, %s)", quantile, sumQL)
 }
 
-func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperThreshold, lowVolumeThreshold string, isRecording bool) string {
-	var lowVolumeThresholdPart, upperThresholdPart string
+func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperThreshold, lowVolumeThreshold string) string {
+	var lowVolumeThresholdPart string
 	if lowVolumeThreshold != "" {
 		lowVolumeThresholdPart = " > " + lowVolumeThreshold
 	}
-	if upperThreshold != "" {
-		upperThresholdPart = " < " + upperThreshold
-	}
 
 	// For recording rules, return only the calculation without comparison
-	if isRecording {
+	if threshold == "" {
 		return fmt.Sprintf(
 			"100 * (%s) / (%s%s)",
 			promQLMetricSum,
 			promQLTotalSum,
 			lowVolumeThresholdPart,
 		)
+	}
+
+	var upperThresholdPart string
+	if upperThreshold != "" {
+		upperThresholdPart = " < " + upperThreshold
 	}
 
 	// For alert rules, include the threshold comparison
@@ -84,20 +86,20 @@ func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperTh
 	)
 }
 
-func baselineIncreasePromQL(promQLMetric, promQLBaseline string, threshold, upperThreshold string, isRecording bool) string {
-	var upperThresholdPart string
-	if upperThreshold != "" {
-		upperThresholdPart = " < " + upperThreshold
-	}
-
+func baselineIncreasePromQL(promQLMetric, promQLBaseline string, threshold, upperThreshold string) string {
 	// For recording rules, return only the calculation without comparison
-	if isRecording {
+	if threshold == "" {
 		return fmt.Sprintf(
 			"100 * ((%s) - (%s)) / (%s)",
 			promQLMetric,
 			promQLBaseline,
 			promQLBaseline,
 		)
+	}
+
+	var upperThresholdPart string
+	if upperThreshold != "" {
+		upperThresholdPart = " < " + upperThreshold
 	}
 
 	// For alert rules, include the threshold comparison

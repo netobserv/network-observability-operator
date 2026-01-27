@@ -201,7 +201,7 @@ func (r *transformerReconciler) reconcilePrometheusService(ctx context.Context, 
 		}
 	}
 	if r.ClusterInfo.HasPromRule() {
-		rules := alerts.BuildRules(ctx, builder.desired)
+		rules := alerts.BuildMonitoringRules(ctx, builder.desired)
 		promRules := builder.prometheusRule(rules)
 		if err := reconcilers.GenericReconcile(ctx, r.Managed, &r.Client, r.prometheusRule, promRules, &report, helper.PrometheusRuleChanged); err != nil {
 			return err
