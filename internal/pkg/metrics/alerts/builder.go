@@ -381,8 +381,10 @@ func (rb *ruleBuilder) buildHealthAnnotation(override map[string]any) ([]byte, e
 	switch rb.healthRule.GroupBy {
 	case flowslatest.GroupByNode:
 		annotation["nodeLabels"] = []string{"node"}
-	case flowslatest.GroupByNamespace, flowslatest.GroupByWorkload:
+	case flowslatest.GroupByNamespace:
 		annotation["namespaceLabels"] = []string{"namespace"}
+	case flowslatest.GroupByWorkload:
+		annotation["ownerLabels"] = []string{"workload"}
 	}
 	for k, v := range override {
 		annotation[k] = v
