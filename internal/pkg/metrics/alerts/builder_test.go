@@ -10,52 +10,52 @@ import (
 
 func TestBuildLabelFilter(t *testing.T) {
 	// Test GroupByNode with source side
-	rb := &ruleBuilder{
+	ctx := &ruleContext{
 		healthRule: &flowslatest.HealthRuleVariant{
 			GroupBy: flowslatest.GroupByNode,
 		},
 		side: asSource,
 	}
-	filter := rb.buildLabelFilter("")
+	filter := getPromQLFilters(ctx, "")
 	assert.Equal(t, `{SrcK8S_HostName!=""}`, filter)
 
 	// Test GroupByNode with destination side
-	rb.side = asDest
-	filter = rb.buildLabelFilter("")
+	ctx.side = asDest
+	filter = getPromQLFilters(ctx, "")
 	assert.Equal(t, `{DstK8S_HostName!=""}`, filter)
 
 	// Test GroupByNamespace
-	rb.healthRule.GroupBy = flowslatest.GroupByNamespace
-	rb.side = asSource
-	filter = rb.buildLabelFilter("")
+	ctx.healthRule.GroupBy = flowslatest.GroupByNamespace
+	ctx.side = asSource
+	filter = getPromQLFilters(ctx, "")
 	assert.Equal(t, `{SrcK8S_Namespace!=""}`, filter)
 
 	// Test GroupByWorkload
-	rb.healthRule.GroupBy = flowslatest.GroupByWorkload
-	rb.side = asDest
-	filter = rb.buildLabelFilter("")
+	ctx.healthRule.GroupBy = flowslatest.GroupByWorkload
+	ctx.side = asDest
+	filter = getPromQLFilters(ctx, "")
 	assert.Equal(t, `{DstK8S_Namespace!="",DstK8S_OwnerName!="",DstK8S_OwnerType!=""}`, filter)
 
 	// Test with additional filter
-	rb.healthRule.GroupBy = flowslatest.GroupByNamespace
-	rb.side = asSource
-	filter = rb.buildLabelFilter(`DnsFlagsResponseCode!="NoError"`)
+	ctx.healthRule.GroupBy = flowslatest.GroupByNamespace
+	ctx.side = asSource
+	filter = getPromQLFilters(ctx, `DnsFlagsResponseCode!="NoError"`)
 	assert.Equal(t, `{SrcK8S_Namespace!="",DnsFlagsResponseCode!="NoError"}`, filter)
 
 	// Test with action filter (netpol)
-	rb.healthRule.GroupBy = flowslatest.GroupByWorkload
-	rb.side = asDest
-	filter = rb.buildLabelFilter(`action="drop"`)
+	ctx.healthRule.GroupBy = flowslatest.GroupByWorkload
+	ctx.side = asDest
+	filter = getPromQLFilters(ctx, `action="drop"`)
 	assert.Equal(t, `{DstK8S_Namespace!="",DstK8S_OwnerName!="",DstK8S_OwnerType!="",action="drop"}`, filter)
 
 	// Test no grouping (global)
-	rb.healthRule.GroupBy = ""
-	rb.side = ""
-	filter = rb.buildLabelFilter("")
+	ctx.healthRule.GroupBy = ""
+	ctx.side = ""
+	filter = getPromQLFilters(ctx, "")
 	assert.Equal(t, "", filter)
 
 	// Test no grouping with additional filter
-	filter = rb.buildLabelFilter(`DnsFlagsResponseCode!="NoError"`)
+	filter = getPromQLFilters(ctx, `DnsFlagsResponseCode!="NoError"`)
 	assert.Equal(t, `{DnsFlagsResponseCode!="NoError"}`, filter)
 }
 
@@ -103,21 +103,21 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRulePacketDropsByKernel,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:packet_drops_by_kernel:rate2m",
+			expected: "netobserv:health:packet_drops_kernel:rate2m",
 		},
 		{
 			name:     "PacketDropsByKernel by Namespace src",
 			template: flowslatest.HealthRulePacketDropsByKernel,
 			groupBy:  flowslatest.GroupByNamespace,
 			side:     asSource,
-			expected: "netobserv:health:packet_drops_by_kernel:namespace:src:rate2m",
+			expected: "netobserv:health:packet_drops_kernel:namespace:src:rate2m",
 		},
 		{
 			name:     "PacketDropsByKernel by Namespace dst",
 			template: flowslatest.HealthRulePacketDropsByKernel,
 			groupBy:  flowslatest.GroupByNamespace,
 			side:     asDest,
-			expected: "netobserv:health:packet_drops_by_kernel:namespace:dst:rate2m",
+			expected: "netobserv:health:packet_drops_kernel:namespace:dst:rate2m",
 		},
 
 		// IPsec Errors
@@ -158,20 +158,20 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRuleLatencyHighTrend,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:latency_high_trend:rate2m",
+			expected: "netobserv:health:tcp_latency_p90:rate2m",
 		},
 		{
 			name:     "LatencyHighTrend by Node",
 			template: flowslatest.HealthRuleLatencyHighTrend,
 			groupBy:  flowslatest.GroupByNode,
 			side:     asDest,
-			expected: "netobserv:health:latency_high_trend:node:dst:rate2m",
+			expected: "netobserv:health:tcp_latency_p90:node:dst:rate2m",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rb := &ruleBuilder{
+			ctx := &ruleContext{
 				template: tt.template,
 				healthRule: &flowslatest.HealthRuleVariant{
 					GroupBy: tt.groupBy,
@@ -179,33 +179,12 @@ func TestRecordingRuleNames(t *testing.T) {
 				mode: flowslatest.ModeRecording,
 				side: tt.side,
 			}
-			name := rb.buildRecordingRuleName()
-			assert.Equal(t, tt.expected, name)
-		})
-	}
-}
 
-func TestToSnakeCase(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{"DNSErrors", "dns_errors"},
-		{"PacketDropsByKernel", "packet_drops_by_kernel"},
-		{"PacketDropsByDevice", "packet_drops_by_device"},
-		{"IPsecErrors", "ipsec_errors"},
-		{"NetpolDenied", "netpol_denied"},
-		{"LatencyHighTrend", "latency_high_trend"},
-		{"ExternalEgressHighTrend", "external_egress_high_trend"},
-		{"ExternalIngressHighTrend", "external_ingress_high_trend"},
-		{"LokiError", "loki_error"},
-		{"NoFlows", "no_flows"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			result := toSnakeCase(tt.input)
-			assert.Equal(t, tt.expected, result)
+			rule := ctx.toRule()
+			assert.NotNil(t, rule)
+			mr, err := rule.Build()
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, mr.Record)
 		})
 	}
 }
@@ -243,14 +222,14 @@ func TestHealthAnnotationMetadata(t *testing.T) {
 			name:                    "GroupBy Workload",
 			groupBy:                 flowslatest.GroupByWorkload,
 			expectedNodeLabels:      nil,
-			expectedNamespaceLabels: nil,
+			expectedNamespaceLabels: []string{"namespace"},
 			expectedOwnerLabels:     []string{"workload"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rb := &ruleBuilder{
+			hCtx := &ruleContext{
 				template: flowslatest.HealthRulePacketDropsByKernel,
 				healthRule: &flowslatest.HealthRuleVariant{
 					GroupBy: tt.groupBy,
@@ -258,48 +237,24 @@ func TestHealthAnnotationMetadata(t *testing.T) {
 						Critical: "10",
 					},
 				},
-				threshold: "10",
-				side:      asSource,
+				alertThreshold: "10",
+				side:           asSource,
 			}
 
 			// Build the health annotation
-			annotBytes, err := rb.buildHealthAnnotation(nil)
-			assert.NoError(t, err)
-			annotStr := string(annotBytes)
+			ha := newHealthAnnotation(hCtx)
+			assert.NotNil(t, ha)
 
-			// Check for nodeLabels
-			if tt.expectedNodeLabels != nil {
-				assert.Contains(t, annotStr, `"nodeLabels":["node"]`,
-					"Expected nodeLabels in annotation for %s", tt.name)
-			} else {
-				assert.NotContains(t, annotStr, `"nodeLabels"`,
-					"Did not expect nodeLabels in annotation for %s", tt.name)
-			}
-
-			// Check for namespaceLabels
-			if tt.expectedNamespaceLabels != nil {
-				assert.Contains(t, annotStr, `"namespaceLabels":["namespace"]`,
-					"Expected namespaceLabels in annotation for %s", tt.name)
-			} else {
-				assert.NotContains(t, annotStr, `"namespaceLabels"`,
-					"Did not expect namespaceLabels in annotation for %s", tt.name)
-			}
-
-			// Check for ownerLabels
-			if tt.expectedOwnerLabels != nil {
-				assert.Contains(t, annotStr, `"ownerLabels":["workload"]`,
-					"Expected ownerLabels in annotation for %s", tt.name)
-			} else {
-				assert.NotContains(t, annotStr, `"ownerLabels"`,
-					"Did not expect ownerLabels in annotation for %s", tt.name)
-			}
+			assert.Equal(t, tt.expectedNodeLabels, ha.NodeLabels, "Expected nodeLabels=%s in annotation for %s", tt.expectedNodeLabels, tt.name)
+			assert.Equal(t, tt.expectedNamespaceLabels, ha.NamespaceLabels, "Expected namespaceLabels=%s in annotation for %s", tt.expectedNamespaceLabels, tt.name)
+			assert.Equal(t, tt.expectedOwnerLabels, ha.OwnerLabels, "Expected ownerLabels=%s in annotation for %s", tt.expectedOwnerLabels, tt.name)
 		})
 	}
 }
 
 func TestBuildRunbookURL(t *testing.T) {
 	tests := []struct {
-		template string
+		template flowslatest.AlertTemplate
 		expected string
 	}{
 		// Health Rule templates
@@ -351,7 +306,7 @@ func TestBuildRunbookURL(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.template, func(t *testing.T) {
+		t.Run(string(tt.template), func(t *testing.T) {
 			url := buildRunbookURL(tt.template)
 			assert.Equal(t, tt.expected, url)
 		})
@@ -360,7 +315,7 @@ func TestBuildRunbookURL(t *testing.T) {
 
 func TestRunbookURLsExist(t *testing.T) {
 	// Test all templates to ensure their runbook URLs exist
-	templates := []string{
+	templates := []flowslatest.AlertTemplate{
 		// Health Rule templates
 		"PacketDropsByKernel",
 		"PacketDropsByDevice",
@@ -377,7 +332,7 @@ func TestRunbookURLsExist(t *testing.T) {
 	}
 
 	for _, template := range templates {
-		t.Run(template, func(t *testing.T) {
+		t.Run(string(template), func(t *testing.T) {
 			url := buildRunbookURL(template)
 			resp, err := http.Get(url)
 			assert.NoError(t, err, "Failed to fetch runbook URL: %s", url)
