@@ -4,6 +4,7 @@ import (
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 var (
@@ -50,16 +51,29 @@ var (
 			Template: HealthRulePacketDropsByKernel,
 			Variants: []HealthRuleVariant{
 				{
+					Mode: ptr.To(ModeRecording),
 					Thresholds: HealthRuleThresholds{
-						Info:    "10",
-						Warning: "20",
+						Info: "10",
 					},
 					LowVolumeThreshold: "5",
 					GroupBy:            GroupByNamespace,
 				},
 				{
 					Thresholds: HealthRuleThresholds{
-						Info:    "5",
+						Warning: "20",
+					},
+					LowVolumeThreshold: "5",
+					GroupBy:            GroupByNamespace,
+				},
+				{
+					Mode: ptr.To(ModeRecording),
+					Thresholds: HealthRuleThresholds{
+						Info: "5",
+					},
+					GroupBy: GroupByNode,
+				},
+				{
+					Thresholds: HealthRuleThresholds{
 						Warning: "10",
 					},
 					GroupBy: GroupByNode,
@@ -112,6 +126,7 @@ var (
 		},
 		{
 			Template: HealthRuleDNSNxDomain,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -126,8 +141,14 @@ var (
 			Template: HealthRuleNetpolDenied,
 			Variants: []HealthRuleVariant{
 				{
+					Mode: ptr.To(ModeRecording),
 					Thresholds: HealthRuleThresholds{
-						Info:    "5",
+						Info: "5",
+					},
+					GroupBy: GroupByNamespace,
+				},
+				{
+					Thresholds: HealthRuleThresholds{
 						Warning: "10",
 					},
 					GroupBy: GroupByNamespace,
@@ -136,27 +157,33 @@ var (
 		},
 		{
 			Template: HealthRuleLatencyHighTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
 						Info: "100",
 					},
 					GroupBy:       GroupByNamespace,
-					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
+					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
+					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					// TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
 		{
 			Template: HealthRuleExternalEgressHighTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
 						Warning: "200",
 					},
 					GroupBy:       GroupByNode,
-					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
+					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
+					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					// TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: HealthRuleThresholds{
@@ -164,21 +191,26 @@ var (
 						Warning: "500",
 					},
 					GroupBy:       GroupByNamespace,
-					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
+					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
+					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					// TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
 		{
 			Template: HealthRuleExternalIngressHighTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
 						Warning: "200",
 					},
 					GroupBy:       GroupByNode,
-					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
+					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
+					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					// TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: HealthRuleThresholds{
@@ -186,8 +218,10 @@ var (
 						Warning: "500",
 					},
 					GroupBy:       GroupByNamespace,
-					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
+					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
+					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					// TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
