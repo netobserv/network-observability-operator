@@ -218,48 +218,48 @@ func TestBuildRunbookURL(t *testing.T) {
 		// Health Rule templates
 		{
 			template: "PacketDropsByKernel",
-			expected: runbookURLBase+"/PacketDropsByKernel.md",
+			expected: runbookURLBase + "/PacketDropsByKernel.md",
 		},
 		{
 			template: "PacketDropsByDevice",
-			expected: runbookURLBase+"/PacketDropsByDevice.md",
+			expected: runbookURLBase + "/PacketDropsByDevice.md",
 		},
 		{
 			template: "IPsecErrors",
-			expected: runbookURLBase+"/IPsecErrors.md",
+			expected: runbookURLBase + "/IPsecErrors.md",
 		},
 		{
 			template: "NetpolDenied",
-			expected: runbookURLBase+"/NetpolDenied.md",
+			expected: runbookURLBase + "/NetpolDenied.md",
 		},
 		{
 			template: "LatencyHighTrend",
-			expected: runbookURLBase+"/LatencyHighTrend.md",
+			expected: runbookURLBase + "/LatencyHighTrend.md",
 		},
 		{
 			template: "DNSErrors",
-			expected: runbookURLBase+"/DNSErrors.md",
+			expected: runbookURLBase + "/DNSErrors.md",
 		},
 		{
 			template: "DNSNxDomain",
-			expected: runbookURLBase+"/DNSNxDomain.md",
+			expected: runbookURLBase + "/DNSNxDomain.md",
 		},
 		{
 			template: "ExternalEgressHighTrend",
-			expected: runbookURLBase+"/ExternalEgressHighTrend.md",
+			expected: runbookURLBase + "/ExternalEgressHighTrend.md",
 		},
 		{
 			template: "ExternalIngressHighTrend",
-			expected: runbookURLBase+"/ExternalIngressHighTrend.md",
+			expected: runbookURLBase + "/ExternalIngressHighTrend.md",
 		},
 		// Operator alert templates
 		{
 			template: "NetObservNoFlows",
-			expected: runbookURLBase+"/NetObservNoFlows.md",
+			expected: runbookURLBase + "/NetObservNoFlows.md",
 		},
 		{
 			template: "NetObservLokiError",
-			expected: runbookURLBase+"/NetObservLokiError.md",
+			expected: runbookURLBase + "/NetObservLokiError.md",
 		},
 	}
 

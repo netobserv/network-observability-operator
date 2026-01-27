@@ -5456,6 +5456,15 @@ spec:
                                         It is provided as an absolute rate (bytes per second or packets per second, depending on the context).
                                         When provided, it must be parsable as a float.
                                       type: string
+                                    mode:
+                                      description: |-
+                                        Mode overrides the health rule mode for this specific variant.
+                                        If not specified, inherits from the parent health rule's mode.
+                                        Possible values are: `Alert`, `Recording`.
+                                      enum:
+                                        - Alert
+                                        - Recording
+                                      type: string
                                     thresholds:
                                       description: |-
                                         Thresholds of the health rule per severity.
