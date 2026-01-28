@@ -556,7 +556,7 @@ func TestServiceMonitorChanged(t *testing.T) {
 	// Check scheme changed
 	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil, nil)
 	fourth := b.serviceMonitor()
-	fourth.Spec.Endpoints[0].Scheme = ptr.To(v1.SchemeHTTPS)
+	fourth.Spec.Endpoints[0].Scheme = ptr.To(v1.Scheme("https"))
 
 	report = helper.NewChangeReport("")
 	assert.True(helper.ServiceMonitorChanged(third, fourth, &report))

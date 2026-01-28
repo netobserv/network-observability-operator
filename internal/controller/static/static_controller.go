@@ -76,10 +76,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	defer r.status.Commit(ctx, r.Client)
 
 	if r.mgr.ClusterInfo.HasConsolePlugin() {
-		if supported, _, err := r.mgr.ClusterInfo.IsOpenShiftVersionAtLeast("4.15.0"); err != nil {
+		// Only deploy static plugin on OpenShift 4.15+
+		if !r.mgr.ClusterInfo.IsOpenShift() {
+			clog.Info("Skipping static plugin reconciler (not OpenShift)")
+		} else if supported, _, err := r.mgr.ClusterInfo.IsOpenShiftVersionAtLeast("4.15.0"); err != nil {
 			return ctrl.Result{}, err
 		} else if !supported {
-			clog.Info("Skipping static plugin reconciler (no console detected)")
+			clog.Info("Skipping static plugin reconciler (OpenShift version < 4.15)")
 		} else {
 			scp, err := helper.NewControllerClientHelper(ctx, r.mgr.Config.Namespace, r.Client)
 			if err != nil {
