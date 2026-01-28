@@ -216,7 +216,7 @@ func TestBpfmanConfig(t *testing.T) {
 	assert.Equal(t, corev1.EnvVar{Name: "EBPF_PROGRAM_MANAGER_MODE", Value: "true"}, ds.Spec.Template.Spec.Containers[0].Env[0])
 	assert.Equal(t, "bpfman-maps", ds.Spec.Template.Spec.Volumes[1].Name)
 	assert.Equal(t, map[string]string{
-		"csi.bpfman.io/maps":    "direct_flows,aggregated_flows,aggregated_flows_dns,aggregated_flows_pkt_drop,aggregated_flows_network_events,aggregated_flows_xlat,additional_flow_metrics,packet_record,dns_flows,global_counters,filter_map,peer_filter_map,ipsec_ingress_map,ipsec_egress_map",
+		"csi.bpfman.io/maps":    "direct_flows,aggregated_flows,aggregated_flows_dns,aggregated_flows_pkt_drop,aggregated_flows_network_events,aggregated_flows_xlat,additional_flow_metrics,packet_record,dns_flows,global_counters,filter_map,peer_filter_map,ipsec_ingress_map,ipsec_egress_map,ssl_data_event_map,dns_name_map",
 		"csi.bpfman.io/program": "netobserv",
 	}, ds.Spec.Template.Spec.Volumes[1].CSI.VolumeAttributes)
 }

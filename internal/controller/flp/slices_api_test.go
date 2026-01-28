@@ -80,7 +80,7 @@ func getConfiguredFiltersAndSubnets(cm *corev1.ConfigMap) ([]api.TransformFilter
 	var filters []api.TransformFilterRule
 	var subnetLabels []api.NetworkTransformSubnetLabel
 	for _, stage := range cfs.Parameters {
-		if stage.Transform != nil && stage.Name == "enrich" {
+		if stage.Transform != nil && stage.Name == "subnets" {
 			subnetLabels = stage.Transform.Network.SubnetLabels
 		}
 		if stage.Transform != nil && stage.Name == "filters" {
@@ -103,7 +103,7 @@ func TestSlicesDisabled(t *testing.T) {
 	slicesstatus.Reset(&sliceslatest.FlowCollectorSliceList{})
 	b, err := defaultBuilderWithSlices(&flowslatest.SlicesConfig{Enable: false})
 	assert.NoError(t, err)
-	cm, _, _, err := b.configMaps()
+	_, _, cm, err := b.configMaps()
 	assert.NoError(t, err)
 	filters, subnets := getConfiguredFiltersAndSubnets(cm)
 	assert.Nil(t, filters)
@@ -134,7 +134,7 @@ func TestSlicesEnablesCollectAll(t *testing.T) {
 		NamespacesAllowList: []string{"should-be-ignored"},
 	})
 	assert.NoError(t, err)
-	cm, _, _, err := b.configMaps()
+	_, _, cm, err := b.configMaps()
 	assert.NoError(t, err)
 	filters, subnets := getConfiguredFiltersAndSubnets(cm)
 	assert.Nil(t, filters)
@@ -194,7 +194,7 @@ func TestSlicesEnablesWhitelist(t *testing.T) {
 		NamespacesAllowList: []string{"should-be-filtered", "/should-.*/"},
 	})
 	assert.NoError(t, err)
-	cm, _, _, err := b.configMaps()
+	_, _, cm, err := b.configMaps()
 	assert.NoError(t, err)
 	filters, subnets := getConfiguredFiltersAndSubnets(cm)
 	assert.Equal(t, []api.TransformFilterRule{

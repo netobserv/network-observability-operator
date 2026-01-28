@@ -27,19 +27,32 @@ func validatePipelineConfig(t *testing.T, staticCm *corev1.ConfigMap, dynamicCm 
 	err = json.Unmarshal([]byte(dynamicCm.Data[configFile]), &dynCfs)
 	assert.NoError(t, err)
 
+	// Rearrange static+dynamic parameters with their correct index
+	rebuilt := make([]config.StageParam, len(cfs.Parameters)+len(dynCfs.Parameters))
 	cfs.Parameters = append(cfs.Parameters, dynCfs.Parameters...)
 
-	for _, stage := range cfs.Pipeline {
+	for i, stage := range cfs.Pipeline {
 		assert.NotEmpty(t, stage.Name)
 		exist := false
 		for _, parameter := range cfs.Parameters {
 			if stage.Name == parameter.Name {
+				rebuilt[i] = parameter
 				exist = true
 				break
 			}
 		}
+		if !exist {
+			for _, parameter := range dynCfs.Parameters {
+				if stage.Name == parameter.Name {
+					rebuilt[i] = parameter
+					exist = true
+					break
+				}
+			}
+		}
 		assert.True(t, exist, "stage params not found", stage.Name)
 	}
+	cfs.Parameters = rebuilt
 	b, err := json.Marshal(cfs.Pipeline)
 	assert.NoError(t, err)
 	return &cfs, string(b)
@@ -231,12 +244,12 @@ func TestPipelineWithExporter(t *testing.T) {
 		pipeline,
 	)
 
-	assert.Equal("kafka-test", cfs.Parameters[5].Encode.Kafka.Address)
-	assert.Equal("topic-test", cfs.Parameters[5].Encode.Kafka.Topic)
+	assert.Equal("kafka-test", cfs.Parameters[6].Encode.Kafka.Address)
+	assert.Equal("topic-test", cfs.Parameters[6].Encode.Kafka.Topic)
 
-	assert.Equal("ipfix-receiver-test", cfs.Parameters[6].Write.Ipfix.TargetHost)
-	assert.Equal(9999, cfs.Parameters[6].Write.Ipfix.TargetPort)
-	assert.Equal("tcp", cfs.Parameters[6].Write.Ipfix.Transport)
+	assert.Equal("ipfix-receiver-test", cfs.Parameters[7].Write.Ipfix.TargetHost)
+	assert.Equal(9999, cfs.Parameters[7].Write.Ipfix.TargetPort)
+	assert.Equal("tcp", cfs.Parameters[7].Write.Ipfix.Transport)
 }
 
 func TestPipelineWithoutLoki(t *testing.T) {
@@ -328,7 +341,7 @@ func TestPipelineWithSubnetLabels(t *testing.T) {
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"subnets","follows":"enrich"},{"name":"prometheus","follows":"subnets"}]`,
 		pipeline,
 	)
 	assert.Equal(
@@ -342,7 +355,7 @@ func TestPipelineWithSubnetLabels(t *testing.T) {
 				CIDRs: []string{"10.128.0.0/14"},
 			},
 		},
-		cfs.Parameters[1].Transform.Network.SubnetLabels,
+		cfs.Parameters[2].Transform.Network.SubnetLabels,
 	)
 }
 

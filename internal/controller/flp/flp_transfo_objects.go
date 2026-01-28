@@ -86,8 +86,7 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 }
 
 func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
-	kafkaStage := newKafkaPipeline(b.desired, &b.volumes)
-	pipeline := newPipelineBuilder(
+	pipeline, err := createPipeline(
 		b.desired,
 		b.flowMetrics,
 		b.fcSlices,
@@ -95,29 +94,22 @@ func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Config
 		b.info.Loki,
 		b.info.ClusterInfo.GetID(),
 		&b.volumes,
-		&kafkaStage,
+		newKafkaPipeline(b.desired, &b.volumes),
 	)
-	err := pipeline.AddProcessorStages()
 	if err != nil {
 		return nil, "", nil, err
 	}
 
-	// Get static CM
-	data, err := getStaticJSONConfig(b.desired, &b.volumes, b.promTLS, &pipeline, transfoDynConfigMap)
+	// Get static and dynamic CM
+	static, dynamic, err := getJSONConfigs(b.desired, &b.volumes, b.promTLS, pipeline, transfoDynConfigMap)
 	if err != nil {
 		return nil, "", nil, err
 	}
-	staticCM, digest, err := configMap(transfoConfigMap, b.info.Namespace, data, transfoName)
+	staticCM, digest, err := configMap(transfoConfigMap, b.info.Namespace, static, transfoName)
 	if err != nil {
 		return nil, "", nil, err
 	}
-
-	// Get dynamic CM (hot reload)
-	data, err = getDynamicJSONConfig(&pipeline)
-	if err != nil {
-		return nil, "", nil, err
-	}
-	dynamicCM, _, err := configMap(transfoDynConfigMap, b.info.Namespace, data, transfoName)
+	dynamicCM, _, err := configMap(transfoDynConfigMap, b.info.Namespace, dynamic, transfoName)
 	if err != nil {
 		return nil, "", nil, err
 	}

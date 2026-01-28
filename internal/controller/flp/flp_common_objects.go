@@ -266,16 +266,17 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 	return metricsSettings
 }
 
-func getStaticJSONConfig(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder, promTLS *flowslatest.CertificateReference, pipeline *PipelineBuilder, dynCMName string) (string, error) {
+func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder, promTLS *flowslatest.CertificateReference, pipeline *PipelineBuilder, dynCMName string) (string, string, error) {
 	metricsSettings := metricsSettings(desired, vol, promTLS)
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
+	static, dynamic := pipeline.GetSplitStageParams()
 	config := map[string]interface{}{
 		"log-level": desired.Processor.LogLevel,
 		"health": map[string]interface{}{
 			"port": *advancedConfig.HealthPort,
 		},
 		"pipeline":        pipeline.GetStages(),
-		"parameters":      pipeline.GetStaticStageParams(),
+		"parameters":      static,
 		"metricsSettings": metricsSettings,
 		"dynamicParameters": config.DynamicParameters{
 			Namespace: desired.Namespace,
@@ -288,22 +289,19 @@ func getStaticJSONConfig(desired *flowslatest.FlowCollectorSpec, vol *volumes.Bu
 			"port": *advancedConfig.ProfilePort,
 		}
 	}
-	bs, err := json.Marshal(config)
+	jsonStatic, err := json.Marshal(config)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return string(bs), nil
-}
 
-func getDynamicJSONConfig(pipeline *PipelineBuilder) (string, error) {
-	config := map[string]interface{}{
-		"parameters": pipeline.GetDynamicStageParams(),
+	config = map[string]interface{}{
+		"parameters": dynamic,
 	}
-	bs, err := json.Marshal(config)
+	jsonDynamic, err := json.Marshal(config)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	return string(bs), nil
+	return string(jsonStatic), string(jsonDynamic), nil
 }
 
 func promService(desired *flowslatest.FlowCollectorSpec, svcName, namespace, appLabel string) *corev1.Service {
