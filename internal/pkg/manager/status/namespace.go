@@ -20,6 +20,7 @@ func GetDeployedNamespace(cpnt ComponentName, fc *flowslatest.FlowCollector) str
 	if ns, found := fc.Annotations[annotation(cpnt)]; found {
 		return ns
 	}
+	//nolint:staticcheck // SA1019: Namespace is deprecated but must still be used until removed
 	return fc.Status.Namespace
 }
 

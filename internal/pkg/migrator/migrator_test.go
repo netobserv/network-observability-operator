@@ -75,6 +75,7 @@ func TestMigrate(t *testing.T) {
 	// setup
 	resources := []runtime.Object{fake("first"), fake("second")}
 	dclient := dynamicFake.NewSimpleDynamicClient(runtime.NewScheme(), resources...)
+	//nolint:staticcheck // SA1019: see https://github.com/kubernetes/kubernetes/issues/126850
 	cclient := apixFake.NewSimpleClientset(fakeCRD)
 	m := newForClients(dclient, cclient)
 
@@ -98,6 +99,7 @@ func TestMigrateWithRetry(t *testing.T) {
 	// setup
 	resources := []runtime.Object{fake("first"), fake("second")}
 	dclient := dynamicFake.NewSimpleDynamicClient(runtime.NewScheme(), resources...)
+	//nolint:staticcheck // SA1019: see https://github.com/kubernetes/kubernetes/issues/126850
 	cclient := apixFake.NewSimpleClientset(fakeCRD)
 	m := newForClients(dclient, cclient)
 
@@ -193,6 +195,7 @@ func TestMigrate_Errors(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			resources := []runtime.Object{fake("first"), fake("second")}
 			dclient := dynamicFake.NewSimpleDynamicClient(runtime.NewScheme(), resources...)
+			//nolint:staticcheck // SA1019: see https://github.com/kubernetes/kubernetes/issues/126850
 			cclient := apixFake.NewSimpleClientset(fakeCRD)
 
 			if test.crd != nil {

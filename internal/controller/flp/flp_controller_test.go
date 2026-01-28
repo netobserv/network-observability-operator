@@ -224,17 +224,14 @@ func ControllerSpecs() {
 				fc.Spec.Loki = flowslatest.FlowCollectorLoki{}
 			})
 
-			By("CR updated", func() {
-				Eventually(func() error {
-					err := k8sClient.Get(ctx, flpKey1, &ds)
-					if err != nil {
-						return err
-					}
-					return checkDigestUpdate(&digest, ds.Spec.Template.Annotations)
-				}, timeout, interval).Should(Succeed())
-			})
+			Eventually(func(g Gomega) {
+				By("CR updated")
+				err := k8sClient.Get(ctx, flpKey1, &ds)
+				g.Expect(err).NotTo(HaveOccurred())
+				err = checkDigestUpdate(&digest, ds.Spec.Template.Annotations)
+				g.Expect(err).NotTo(HaveOccurred())
 
-			By("Creating the required HostPort to access flowlogs-pipeline through the NodeIP", func() {
+				By("Creating the required HostPort to access flowlogs-pipeline through the NodeIP")
 				var cnt *v1.Container
 				for i := range ds.Spec.Template.Spec.Containers {
 					if ds.Spec.Template.Spec.Containers[i].Name == constants.FLPName {
@@ -242,7 +239,7 @@ func ControllerSpecs() {
 						break
 					}
 				}
-				Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.FLPName)
+				g.Expect(cnt).ToNot(BeNil(), "can't find a container named", constants.FLPName)
 				var cp *v1.ContainerPort
 				for i := range cnt.Ports {
 					if cnt.Ports[i].Name == constants.FLPPortName {
@@ -250,22 +247,21 @@ func ControllerSpecs() {
 						break
 					}
 				}
-				Expect(cp).ToNot(BeNil(), "can't find a container port named", constants.FLPPortName)
-				Expect(*cp).To(Equal(v1.ContainerPort{
+				g.Expect(cp).ToNot(BeNil(), "can't find a container port named", constants.FLPPortName)
+				g.Expect(*cp).To(Equal(v1.ContainerPort{
 					Name:          constants.FLPPortName,
 					HostPort:      7891,
 					ContainerPort: 7891,
 					Protocol:      "TCP",
 				}))
-				Expect(cnt.Env).To(Equal([]v1.EnvVar{
+				g.Expect(cnt.Env).To(Equal([]v1.EnvVar{
 					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"}, {Name: "GODEBUG", Value: "http2server=0"},
 				}))
-			})
 
-			By("Allocating the proper toleration to allow its placement in the master nodes", func() {
-				Expect(ds.Spec.Template.Spec.Tolerations).
+				By("Allocating the proper toleration to allow its placement in the master nodes")
+				g.Expect(ds.Spec.Template.Spec.Tolerations).
 					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
-			})
+			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
