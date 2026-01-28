@@ -242,7 +242,7 @@ ifeq (,$(shell which $(OPSDK) 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(OPSDK)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.40.0/operator-sdk_$${OS}_$${ARCH} ;\
+	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.42.0/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPSDK) ;\
 	}
 endif
