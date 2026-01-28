@@ -1360,6 +1360,9 @@ spec:
                                   maximum: 65535
                                   minimum: 1
                                   type: integer
+                                scrapeInterval:
+                                  description: Prometheus scraping interval, how often metrics are pulled.
+                                  type: string
                                 tls:
                                   description: TLS configuration.
                                   properties:
@@ -5508,7 +5511,7 @@ spec:
                             Metrics enabled by default are:
                             `namespace_flows_total`, `node_ingress_bytes_total`, `node_egress_bytes_total`, `workload_ingress_bytes_total`,
                             `workload_egress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled),
-                            `namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` (when `DNSTracking` feature is enabled),
+                            `namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` and `namespace_dns_packets_total` (when `DNSTracking` feature is enabled),
                             `namespace_network_policy_events_total` (when `NetworkEvents` feature is enabled).
                             More information, with full list of available metrics: https://github.com/netobserv/network-observability-operator/blob/main/docs/Metrics.md
                           items:
@@ -5541,6 +5544,9 @@ spec:
                               - namespace_dns_latency_seconds
                               - node_dns_latency_seconds
                               - workload_dns_latency_seconds
+                              - namespace_dns_packets_total
+                              - node_dns_packets_total
+                              - workload_dns_packets_total
                               - node_network_policy_events_total
                               - namespace_network_policy_events_total
                               - workload_network_policy_events_total
@@ -5557,6 +5563,9 @@ spec:
                               maximum: 65535
                               minimum: 1
                               type: integer
+                            scrapeInterval:
+                              description: Prometheus scraping interval, how often metrics are pulled.
+                              type: string
                             tls:
                               description: TLS configuration.
                               properties:

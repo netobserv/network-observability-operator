@@ -89,6 +89,10 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 	if useEndpointSlices {
 		sdRole = ptr.To(monitoringv1.EndpointSliceRole)
 	}
+	interval := "30s"
+	if target.Metrics.Server.ScrapeInterval != nil {
+		interval = target.Metrics.Server.ScrapeInterval.String()
+	}
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.EBPFAgentMetricsSvcMonitoringName,
@@ -103,7 +107,7 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 			Endpoints: []monitoringv1.Endpoint{
 				{
 					Port:      "metrics",
-					Interval:  "30s",
+					Interval:  monitoringv1.Duration(interval),
 					Scheme:    scheme,
 					TLSConfig: smTLS,
 				},

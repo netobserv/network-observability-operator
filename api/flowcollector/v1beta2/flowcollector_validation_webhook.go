@@ -449,8 +449,8 @@ func GetElligibleMetricsForAlert(template HealthRuleTemplate, alertDef *HealthRu
 	case HealthRuleIPsecErrors:
 		return []string{"node_ipsec_flows_total"}, []string{"node_to_node_ingress_flows_total"}
 	case HealthRuleDNSErrors, HealthRuleDNSNxDomain:
-		metricPatterns = []string{`%s_dns_latency_seconds`}
-		totalMetricPatterns = []string{"%s_dns_latency_seconds"}
+		metricPatterns = []string{`%s_dns_packets_total`}
+		totalMetricPatterns = []string{"%s_dns_packets_total"}
 	case HealthRuleExternalEgressHighTrend:
 		metricPatterns = []string{`%s_egress_bytes_total`}
 		totalMetricPatterns = []string{`%s_egress_bytes_total`}
