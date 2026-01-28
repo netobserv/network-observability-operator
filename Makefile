@@ -205,7 +205,7 @@ $(CONVERSION_GEN): ## Build conversion-gen from tools folder.
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.2)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.20.0)
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
@@ -242,7 +242,7 @@ ifeq (,$(shell which $(OPSDK) 2>/dev/null))
 	set -e ;\
 	mkdir -p $(dir $(OPSDK)) ;\
 	OS=$(shell go env GOOS) && ARCH=$(shell go env GOARCH) && \
-	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.40.0/operator-sdk_$${OS}_$${ARCH} ;\
+	curl -sSLo $(OPSDK) https://github.com/operator-framework/operator-sdk/releases/download/v1.42.0/operator-sdk_$${OS}_$${ARCH} ;\
 	chmod +x $(OPSDK) ;\
 	}
 endif
