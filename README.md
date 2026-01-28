@@ -76,6 +76,10 @@ spec:
     enable: false
   consolePlugin:
     standalone: true
+  processor:
+    advanced:
+      env:
+        SERVER_NOTLS: "true"
   loki:
     mode: Monolithic
     monolithic:
@@ -94,6 +98,7 @@ A few remarks:
 - `spec.consolePlugin.standalone` can be set to true to deploy the [web console](https://github.com/netobserv/network-observability-console-plugin) as a standalone, as opposed to an OpenShift Console plugin. If you're in OpenShift, it's not recommended to set this mode, so you get a more integrated experience with the Console.
 - You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom-stack=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
 - You can enable networkPolicy, which makes the operator lock down the namespaces that it manages; however, this is highly dependent on your cluster topology, and may cause malfunctions, such as preventing NetObserv pods from communicating with the Kube API server.
+- The processor env `SERVER_NOTLS` means that the communication between eBPF agents and Flowlogs-pipeline won't be encrypted. To enable TLS, you need to supply the TLS certificates to Flowlogs-pipeline (a Secret named `flowlogs-pipeline-cert`), and the CA to the eBPF agents (a ConfigMap named `flowlogs-pipeline-ca` in the privileged namespace). [Check this issue](https://github.com/netobserv/network-observability-operator/issues/2360) if you want to help making it simpler.
 
 To view the test console, you can port-forward 9001:
 

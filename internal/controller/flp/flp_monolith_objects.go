@@ -165,11 +165,9 @@ func (b *monolithBuilder) service() *corev1.Service {
 	port := *advancedConfig.Port
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      monoName,
-			Namespace: b.info.Namespace,
-			Annotations: map[string]string{
-				constants.OpenShiftCertificateAnnotation: monoCertSecretName,
-			},
+			Name:        monoName,
+			Namespace:   b.info.Namespace,
+			Annotations: map[string]string{},
 			Labels: map[string]string{
 				"part-of": constants.OperatorName,
 				"app":     monoName,
@@ -185,6 +183,9 @@ func (b *monolithBuilder) service() *corev1.Service {
 				TargetPort: intstr.FromInt32(port),
 			}},
 		},
+	}
+	if b.info.ClusterInfo.IsOpenShift() {
+		svc.Annotations[constants.OpenShiftCertificateAnnotation] = monoCertSecretName
 	}
 	return &svc
 }
