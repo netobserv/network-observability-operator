@@ -77,7 +77,7 @@ endif
 IMAGE ?= $(IMAGE_TAG_BASE):$(VERSION)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.23
-GOLANGCI_LINT_VERSION = v2.2.1
+GOLANGCI_LINT_VERSION = v2.8.0
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))

@@ -39,7 +39,7 @@ jobs:
       - name: set up go 1.x
         uses: actions/setup-go@v3
         with:
-          go-version: '1.24'
+          go-version: '1.25'
       - name: build operator
         run: |
           MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} CLEAN_BUILD=1 make image-build

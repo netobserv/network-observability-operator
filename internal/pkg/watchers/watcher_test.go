@@ -161,7 +161,7 @@ func TestGenDigests(t *testing.T) {
 	watcher := initWatcher(t)
 	assert.NotNil(watcher)
 	watcher.Reset(baseNamespace)
-	goclient := fake.NewSimpleClientset(&lokiCA, &kafkaCA, &kafkaUser, &kafkaSaslSecret)
+	goclient := fake.NewClientset(&lokiCA, &kafkaCA, &kafkaUser, &kafkaSaslSecret)
 	cl := setupClients(t, test.NewClient(), goclient)
 
 	digLoki, err := watcher.ProcessCACert(context.Background(), cl, &lokiTLS, baseNamespace)
@@ -219,7 +219,7 @@ func TestNoCopy(t *testing.T) {
 	watcher := initWatcher(t)
 	assert.NotNil(watcher)
 	watcher.Reset(baseNamespace)
-	goclient := fake.NewSimpleClientset(&lokiCA)
+	goclient := fake.NewClientset(&lokiCA)
 	cl := setupClients(t, test.NewClient(), goclient)
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &lokiTLS, baseNamespace)
@@ -241,7 +241,7 @@ func TestCopyCertificate(t *testing.T) {
 	watcher := initWatcher(t)
 	assert.NotNil(watcher)
 	watcher.Reset(baseNamespace)
-	goclient := fake.NewSimpleClientset(&otherLokiCA)
+	goclient := fake.NewClientset(&otherLokiCA)
 	cl := setupClients(t, clientMock, goclient)
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &otherLokiTLS, baseNamespace)
@@ -276,7 +276,7 @@ func TestUpdateCertificate(t *testing.T) {
 	watcher := initWatcher(t)
 	assert.NotNil(watcher)
 	watcher.Reset(baseNamespace)
-	goclient := fake.NewSimpleClientset(&otherLokiCA, &copied)
+	goclient := fake.NewClientset(&otherLokiCA, &copied)
 	cl := setupClients(t, clientMock, goclient)
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &otherLokiTLS, baseNamespace)
@@ -299,7 +299,7 @@ func TestNoUpdateCertificate(t *testing.T) {
 	watcher := initWatcher(t)
 	assert.NotNil(watcher)
 	watcher.Reset(baseNamespace)
-	goclient := fake.NewSimpleClientset(&otherLokiCA, &copied)
+	goclient := fake.NewClientset(&otherLokiCA, &copied)
 	cl := setupClients(t, clientMock, goclient)
 
 	_, _, err := watcher.ProcessMTLSCerts(context.Background(), cl, &otherLokiTLS, baseNamespace)
