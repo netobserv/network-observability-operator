@@ -125,7 +125,7 @@ func (b *builder) serviceMonitor() *monitoringv1.ServiceMonitor {
 				{
 					Port:     metricsPortName,
 					Interval: "15s",
-					Scheme:   ptr.To(monitoringv1.SchemeHTTPS),
+					Scheme:   ptr.To(monitoringv1.Scheme("https")),
 					TLSConfig: &monitoringv1.TLSConfig{
 						SafeTLSConfig: monitoringv1.SafeTLSConfig{
 							ServerName: ptr.To(serverName),
