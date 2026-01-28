@@ -7,8 +7,8 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
-	github.com/netobserv/flowlogs-pipeline v1.10.0-community.0.20251210194924-86e5b0087faa
-	github.com/netobserv/netobserv-ebpf-agent v1.10.0-community.0.20260105153759-648a4f37b74d
+	github.com/netobserv/flowlogs-pipeline v1.10.1-community.0.20260128081215-6575ca967373
+	github.com/netobserv/netobserv-ebpf-agent v1.10.1-community
 	github.com/onsi/ginkgo/v2 v2.27.5
 	github.com/onsi/gomega v1.39.0
 	github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
@@ -94,7 +94,7 @@ require (
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/term v0.38.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.12.0 // indirect

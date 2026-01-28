@@ -279,6 +279,10 @@ type Agent struct {
 	// This setting is only used when the interface name could not be found for a given index and MAC.
 	// E.g. "0a:58=eth0" (used for ovn-kubernetes)
 	PreferredInterfaceForMACPrefix string `env:"PREFERRED_INTERFACE_FOR_MAC_PREFIX"`
+	// EnableOpenSSLTracking enable tracking OpenSSL flows encryption
+	EnableOpenSSLTracking bool `env:"ENABLE_OPENSSL_TRACKING" envDefault:"false"`
+	// OpenSSLPath path to the openssl binary
+	OpenSSLPath string `env:"OPENSSL_PATH" envDefault:"/usr/bin/openssl"`
 
 	/* Deprecated configs are listed below this line
 	 * See manageDeprecatedConfigs function for details

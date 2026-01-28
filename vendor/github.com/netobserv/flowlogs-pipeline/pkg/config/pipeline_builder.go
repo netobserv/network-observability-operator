@@ -107,7 +107,11 @@ func NewPresetIngesterPipeline() PipelineBuilderStage {
 	return PipelineBuilderStage{pipeline: &p, lastStage: PresetIngesterStage}
 }
 
-func (b *PipelineBuilderStage) next(name string, param StageParam) PipelineBuilderStage {
+func (b *PipelineBuilderStage) next(name string, param StageParam, opts ...StageParamOption) PipelineBuilderStage {
+	p := &param
+	for _, o := range opts {
+		p = o(p)
+	}
 	b.pipeline.stages = append(b.pipeline.stages, Stage{Name: name, Follows: b.lastStage})
 	b.pipeline.config = append(b.pipeline.config, param)
 	return PipelineBuilderStage{pipeline: b.pipeline, lastStage: name}
@@ -129,15 +133,15 @@ func (b *PipelineBuilderStage) TransformGeneric(name string, gen api.TransformGe
 }
 
 // TransformFilter chains the current stage with a TransformFilter stage and returns that new stage
-func (b *PipelineBuilderStage) TransformFilter(name string, filter api.TransformFilter) PipelineBuilderStage {
-	return b.next(name, NewTransformFilterParams(name, filter))
+func (b *PipelineBuilderStage) TransformFilter(name string, filter api.TransformFilter, opts ...StageParamOption) PipelineBuilderStage {
+	return b.next(name, NewTransformFilterParams(name, filter), opts...)
 }
 
 // TransformNetwork chains the current stage with a TransformNetwork stage and returns that new stage
 //
 //nolint:gocritic // hugeParam can be ignored: func only used at init
-func (b *PipelineBuilderStage) TransformNetwork(name string, nw api.TransformNetwork) PipelineBuilderStage {
-	return b.next(name, NewTransformNetworkParams(name, nw))
+func (b *PipelineBuilderStage) TransformNetwork(name string, nw api.TransformNetwork, opts ...StageParamOption) PipelineBuilderStage {
+	return b.next(name, NewTransformNetworkParams(name, nw), opts...)
 }
 
 // ConnTrack chains the current stage with a ConnTrack stage and returns that new stage
@@ -148,8 +152,8 @@ func (b *PipelineBuilderStage) ConnTrack(name string, ct api.ConnTrack) Pipeline
 }
 
 // EncodePrometheus chains the current stage with a PromEncode stage (to expose metrics in Prometheus format) and returns that new stage
-func (b *PipelineBuilderStage) EncodePrometheus(name string, prom api.PromEncode) PipelineBuilderStage {
-	return b.next(name, NewEncodePrometheusParams(name, prom))
+func (b *PipelineBuilderStage) EncodePrometheus(name string, prom api.PromEncode, opts ...StageParamOption) PipelineBuilderStage {
+	return b.next(name, NewEncodePrometheusParams(name, prom), opts...)
 }
 
 // EncodeKafka chains the current stage with an EncodeKafka stage (writing to a Kafka topic) and returns that new stage
@@ -208,31 +212,17 @@ func (b *PipelineBuilderStage) GetStageParams() []StageParam {
 	return b.pipeline.config
 }
 
-func isStaticParam(param StageParam) bool {
-	if param.Encode != nil && param.Encode.Type == api.PromType {
-		return false
-	}
-	return true
-}
-
-func (b *PipelineBuilderStage) GetStaticStageParams() []StageParam {
-	res := []StageParam{}
+func (b *PipelineBuilderStage) GetSplitStageParams() ([]*StageParam, []*StageParam) {
+	static := []*StageParam{}
+	dynamic := []*StageParam{}
 	for _, param := range b.pipeline.config {
-		if isStaticParam(param) {
-			res = append(res, param)
+		if param.isDynamic {
+			dynamic = append(dynamic, &param)
+		} else {
+			static = append(static, &param)
 		}
 	}
-	return res
-}
-
-func (b *PipelineBuilderStage) GetDynamicStageParams() []StageParam {
-	res := []StageParam{}
-	for _, param := range b.pipeline.config {
-		if !isStaticParam(param) {
-			res = append(res, param)
-		}
-	}
-	return res
+	return static, dynamic
 }
 
 // IntoRootConfig injects the current pipeline and params in the provided config.Root object.
@@ -245,4 +235,13 @@ func (b *PipelineBuilderStage) IntoRootConfig(cfs *Root) *Root {
 // ToRootConfig returns the current pipeline and params as a new config.Root object.
 func (b *PipelineBuilderStage) ToRootConfig() *Root {
 	return b.IntoRootConfig(&Root{})
+}
+
+type StageParamOption func(*StageParam) *StageParam
+
+// Dynamic: this stage config will be whatched and hot-reloaded, without requiring a full restart.
+// This is not available for all stage types.
+func Dynamic(s *StageParam) *StageParam {
+	s.isDynamic = true
+	return s
 }
