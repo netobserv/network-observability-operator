@@ -50,7 +50,7 @@ amend_doc() {
   sed -i -r '/^= API endpoints/Q' docs/$filename
   sed -i -r 's/OpenShift/{product-title}/g' docs/$filename
   sed -i -r 's/\<NetObserv\>/Network Observability/g' docs/$filename
-  sed -i -r 's/<br>/ +\n/g' docs/$filename
+  sed -i -r 's~<br/?>~ +\n~g' docs/$filename
   sed -i -r 's/<i>/_/g' docs/$filename
   sed -i -r 's/<\/i>/_/g' docs/$filename
   sed -i -r 's/ may / might /g' docs/$filename
