@@ -493,3 +493,30 @@ func TestRefreshSuccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, info.IsOpenShift())
 }
+
+func TestHasLokiStack(t *testing.T) {
+	// Test 1: LokiStack CRD is available
+	infoWithLokiStack := Info{
+		apisMap: map[string]bool{
+			"lokistacks.loki.grafana.com/v1": true,
+		},
+		ready: true,
+	}
+	assert.True(t, infoWithLokiStack.HasLokiStack())
+
+	// Test 2: LokiStack CRD is not available
+	infoWithoutLokiStack := Info{
+		apisMap: map[string]bool{
+			"lokistacks.loki.grafana.com/v1": false,
+		},
+		ready: true,
+	}
+	assert.False(t, infoWithoutLokiStack.HasLokiStack())
+
+	// Test 3: Empty apisMap
+	infoEmpty := Info{
+		apisMap: map[string]bool{},
+		ready:   true,
+	}
+	assert.False(t, infoEmpty.HasLokiStack())
+}

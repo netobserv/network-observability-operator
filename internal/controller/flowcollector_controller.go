@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,10 +13,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/consoleplugin"
+	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/ebpf"
 	"github.com/netobserv/network-observability-operator/internal/controller/loki"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -62,6 +65,17 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	}
 	if mgr.ClusterInfo.HasConsolePlugin() {
 		builder.Owns(&osv1.ConsolePlugin{}, reconcilers.UpdateOrDeleteOnlyPred)
+	}
+
+	if mgr.ClusterInfo.HasLokiStack() {
+		builder.Watches(
+			&lokiv1.LokiStack{},
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []ctrl.Request {
+				// When a LokiStack changes, trigger reconcile of the FlowCollector
+				return []ctrl.Request{{NamespacedName: constants.FlowCollectorName}}
+			}),
+		)
+		log.Info("LokiStack CRD detected")
 	}
 
 	ctrl, err := builder.Build(&r)

@@ -10,15 +10,16 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper"
 	"github.com/netobserv/network-observability-operator/internal/pkg/resources"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // Type alias
@@ -83,7 +84,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 			}
 		}
 
-		cmDigest, err := r.reconcileConfigMap(ctx, &builder)
+		cmDigest, err := r.reconcileConfigMap(ctx, &builder, &desired.Spec)
 		if err != nil {
 			return err
 		}
@@ -158,7 +159,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 	pluginExists := true
 	err := r.Get(ctx, types.NamespacedName{Name: name}, &oldPlg)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			pluginExists = false
 		} else {
 			return err
@@ -179,8 +180,29 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 	return nil
 }
 
-func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder) (string, error) {
-	newCM, configDigest, err := builder.configMap(ctx)
+func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec) (string, error) {
+	var lokiStack *lokiv1.LokiStack
+	if desired.Loki.Mode == flowslatest.LokiModeLokiStack {
+		lokiStack = &lokiv1.LokiStack{}
+		ns := desired.Loki.LokiStack.Namespace
+		if ns == "" {
+			ns = desired.Namespace
+		}
+		if err := r.Client.Get(ctx, types.NamespacedName{Name: desired.Loki.LokiStack.Name, Namespace: ns}, lokiStack); err != nil {
+			lokiStack = nil
+			if apierrors.IsNotFound(err) {
+				log.FromContext(ctx).Info("LokiStack resource not found, status will not be available",
+					"name", desired.Loki.LokiStack.Name,
+					"namespace", ns)
+			} else {
+				log.FromContext(ctx).Error(err, "Failed to get LokiStack resource",
+					"name", desired.Loki.LokiStack.Name,
+					"namespace", ns)
+			}
+		}
+	}
+
+	newCM, configDigest, err := builder.configMap(ctx, lokiStack)
 	if err != nil {
 		return "", err
 	}
