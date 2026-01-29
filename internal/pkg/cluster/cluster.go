@@ -407,6 +407,14 @@ func getCRDPropertyInVersion(v *apix.CustomResourceDefinitionVersion, parts []st
 }
 
 // HasLokiStack returns true if "lokistack" API was found
-func (c *Info) HasLokiStack() bool {
+func (c *Info) HasLokiStack(ctx context.Context) bool {
+	if !c.apisMap[lokistacks] {
+		err := c.fetchAvailableAPIsInternal(ctx, true)
+		if err != nil {
+			return false
+		}
+	}
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
 	return c.apisMap[lokistacks]
 }
