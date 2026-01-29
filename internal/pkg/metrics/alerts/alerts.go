@@ -329,7 +329,7 @@ func (rb *ruleBuilder) ingressErrors() (*monitoringv1.Rule, error) {
 	return rb.createRule(promql, summary, description)
 }
 
-func (rb *ruleBuilder) ingressLatencyTrend() (*monitoringv1.Rule, error) {
+func (rb *ruleBuilder) ingressHTTPLatencyTrend() (*monitoringv1.Rule, error) {
 	if rb.side == asDest {
 		return nil, nil
 	}
@@ -341,13 +341,13 @@ func (rb *ruleBuilder) ingressLatencyTrend() (*monitoringv1.Rule, error) {
 
 	switch rb.healthRule.GroupBy {
 	case flowslatest.GroupByNode:
-		return nil, fmt.Errorf("IngressLatencyTrend health rule does not support grouping per node")
+		return nil, fmt.Errorf("IngressHTTPLatencyTrend health rule does not support grouping per node")
 	case flowslatest.GroupByNamespace:
 		legend = " [namespace={{ $labels.namespace }}]"
 		currentMetric = `avg(label_replace(haproxy_server_http_average_response_latency_milliseconds, "namespace", "$1", "exported_namespace", "(.*)")) by (namespace)`
 		baselineMetric = fmt.Sprintf(`avg(label_replace(haproxy_server_http_average_response_latency_milliseconds offset %s, "namespace", "$1", "exported_namespace", "(.*)")) by (namespace)`, offset)
 	case flowslatest.GroupByWorkload:
-		return nil, fmt.Errorf("IngressLatencyTrend health rule does not support grouping per workload")
+		return nil, fmt.Errorf("IngressHTTPLatencyTrend health rule does not support grouping per workload")
 	default:
 		currentMetric = `avg(haproxy_server_http_average_response_latency_milliseconds)`
 		baselineMetric = fmt.Sprintf(`avg(haproxy_server_http_average_response_latency_milliseconds offset %s)`, offset)

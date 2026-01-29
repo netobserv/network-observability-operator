@@ -204,7 +204,7 @@ var (
 			},
 		},
 		{
-			Template: HealthRuleIngressLatencyTrend,
+			Template: HealthRuleIngressHTTPLatencyTrend,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{

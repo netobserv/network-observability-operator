@@ -1,25 +1,29 @@
-# Alerts in the NetObserv Operator
+# Health rules in NetObserv
 
-The NetObserv operator comes with a set of predefined alerts, based on its [metrics](./Metrics.md), that you can configure, extend or disable.
-The configured alerts generate a `PrometheusRule` resource that is used to feed Prometheus AlertManager.
+The NetObserv operator comes with a set of predefined health rules, based on its [metrics](./Metrics.md), that you can configure, extend or disable.
+These rules are converted into a `PrometheusRule` resource, either as Alerts or as Recording rules. The alerts are then managed by Prometheus AlertManager. Both recording rules and alerts are displayed in the Network Health page of the Console.
 
-These alerts are provided as a convenience, to take the most of NetObserv built-in metrics without requiring you to write complexe PromQL or to do fine-tuning. They give a health indication of your cluster network.
+These health rules are provided as a convenience, to take the most of NetObserv built-in metrics without requiring you to write complexe PromQL or to do fine-tuning. They give a health indication of your cluster network.
 
-## Default alerts
+To get a detailed description of the rules, [check the runbooks](https://github.com/openshift/runbooks/tree/master/alerts/network-observability-operator).
 
-By default, NetObserv creates some alerts, contextual to the enabled features. For example, packet drops related alerts are only created if the `PacketDrop` feature is enabled. Because alerts are built upon metrics, you may also see configuration warnings if some enabled alerts are missing their required metrics, which can be configured in `spec.processor.metrics.includeList` (see [Metrics.md](./Metrics.md)).
+## Default rules
 
-Here is the list of alerts installed by default:
+By default, NetObserv creates health rules contextual to the enabled features. For example, packet drops related rules are only created if the `PacketDrop` feature is enabled. Because rules are built upon metrics, you may also see configuration warnings if some enabled rules are missing their required metrics, which can be configured in `spec.processor.metrics.includeList` (see [Metrics.md](./Metrics.md)).
 
-- `PacketDropsByDevice`: triggered on high percentage of packet drops from devices (`/proc/net/dev`).
-- `PacketDropsByKernel`: triggered on high percentage of packet drops by the kernel; it requires the `PacketDrop` agent feature.
-- `IPsecErrors`: triggered when NetObserv detects IPsec encyption errors; it requires the `IPSec` agent feature.
-- `NetpolDenied`: triggered when NetObserv detects traffic denied by network policies; it requires the `NetworkEvents` agent feature.
-- `LatencyHighTrend`: triggered when NetObserv detects an increase of TCP latency; it requires the `FlowRTT` agent feature.
-- `DNSErrors`: triggered when NetObserv detects DNS errors, other than NX_DOMAIN; it requires the `DNSTracking` agent feature.
-- `DNSNxDomain`: triggered when NetObserv detects DNS NX_DOMAIN errors; it requires the `DNSTracking` agent feature.
-- `ExternalEgressHighTrend`: triggered when NetObserv detects an important increase of external egress traffic.
-- `ExternalIngressHighTrend`: triggered when NetObserv detects an important increase of external ingress traffic.
+These rules are installed by default:
+
+- `PacketDropsByDevice`
+- `PacketDropsByKernel`
+- `IPsecErrors`
+- `NetpolDenied`
+- `LatencyHighTrend`
+- `DNSErrors`
+- `DNSNxDomain`
+- `ExternalEgressHighTrend`
+- `ExternalIngressHighTrend`
+- `Ingress5xxErrors`
+- `IngressHTTPLatencyTrend`
 
 On top of that, there are also some operational alerts that relate to NetObserv's self health:
 
@@ -42,8 +46,9 @@ Example:
 spec:
   processor:
     metrics:
-      alerts:
+      healthRules:
       - template: PacketDropsByKernel
+        mode: Alert # or Recording
         variants:
         # triggered when the whole cluster traffic (no grouping) reaches 10% of drops
         - thresholds:
@@ -56,17 +61,19 @@ spec:
           groupBy: Node
 ```
 
-When you configure an alert, it overrides (replaces) the default configuration for that template. So, if you want to add a new alert on top of the default ones for a template, you may want to replicate the default configuration manually, which is described in the section above.
+The `mode` setting can be either defined per variant, or for the whole template.
+
+When you configure a template, it overrides the default configuration for that template. So, if you want to add a new rule on top of the default ones for a template, you may want to replicate the default configuration manually. All defaults are described in the [runbooks](https://github.com/openshift/runbooks/tree/master/alerts/network-observability-operator).
 
 ## Disable predefined alerts
 
 Alert templates can be disabled in `spec.processor.metrics.disableAlerts`. This settings accepts a list of template names, as listed above.
 
-If a template is disabled _and_ overridden in `spec.processor.metrics.alerts`, the disable setting takes precedence: the alert rule will not be created.
+If a template is disabled _and_ overridden in `spec.processor.metrics.healthRules`, the disable setting takes precedence: the alert rule will not be created.
 
-## Creating your own alerts that contribute to the Health dashboard
+## Creating your own rules that contribute to the Health dashboard
 
-This alerting API in NetObserv `FlowCollector` is simply a mapping to the Prometheus operator API, generating a `PrometheusRule`.
+This health rule API in NetObserv `FlowCollector` is simply a mapping to the Prometheus operator API, generating a `PrometheusRule`.
 
 You can check what is the actual generated resource by running:
 
@@ -74,7 +81,7 @@ You can check what is the actual generated resource by running:
 kubectl get prometheusrules -n netobserv -oyaml
 ```
 
-While the above sections explain how you can customize those opinionated alerts, you are not limited to them: you can go further and create your own `AlertingRule` (or `PrometheusRule`) resources. You'll just need to be familiar with PromQL (or to learn).
+While the above sections explain how you can customize those opinionated rules, you are not limited to them: you can go further and create your own `AlertingRule` (or `PrometheusRule`) resources. You'll just need to be familiar with PromQL (or to learn).
 
 [Click here](../config/samples/alerts) to see sample alerts, that are not built-in NetObserv.
 
@@ -125,7 +132,7 @@ As you can see, you can leverage the output labels from the PromQL defined previ
 
 The severity label should be "critical", "warning" or "info".
 
-On top of that, in order to have the alert picked up in the Health dashboard, NetObserv needs other information:
+On top of that, in order to have the rule picked up in the Health dashboard, NetObserv needs other information:
 
 ```yaml
       annotations:
@@ -139,12 +146,16 @@ The label `netobserv: "true"` is required.
 The annotation `netobserv_io_network_health` is optional, and gives you some control on how the alert renders in the Health page. It is a JSON string that consists in:
 - `namespaceLabels`: one or more labels that hold namespaces. When provided, the alert will show up under the "Namespaces" tab.
 - `nodeLabels`: one or more labels that hold node names. When provided, the alert will show up under the "Nodes" tab.
+- `ownerLabels`: one or more labels that hold owner/workload names. When provided, the alert will show up under the "Owners" tab.
 - `threshold`: the alert threshold as a string, expected to match the one defined in PromQL.
 - `unit`: the data unit, used only for display purpose.
 - `upperBound`: an upper bound value used to compute score on a closed scale. It doesn't necessarily have to be a maximum of the metric values, but metric values will be clamped if they are above the upper bound.
 - `links`: a list of links to be displayed contextually to the alert. Each link consists in:
   - `name`: display name.
   - `url`: the link URL.
-- `trafficLinkFilter`: an additional filter to inject into the URL for the Network Traffic page.
+- `trafficLink`: information related to the link to the Network Traffic page, for URL building. Some filters will be set automatically, such as the node or namespace filter.
+  - `extraFilter`: an additional filter to inject (e.g: a DNS response code, for DNS-related alerts).
+  - `backAndForth`: should the filter include return traffic? (true/false)
+  - `filterDestination`: should the filter target the destination of the traffic instead of the source? (true/false)
 
 `namespaceLabels` and `nodeLabels` are mutually exclusive. If none of them is provided, the alert will show up under the "Global" tab.
