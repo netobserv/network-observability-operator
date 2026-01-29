@@ -18,6 +18,7 @@ import (
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/consoleplugin"
+	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/ebpf"
 	"github.com/netobserv/network-observability-operator/internal/controller/loki"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -67,7 +68,13 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	}
 
 	if mgr.ClusterInfo.HasLokiStack() {
-		builder.Watches(&lokiv1.LokiStack{}, &handler.EnqueueRequestForObject{})
+		builder.Watches(
+			&lokiv1.LokiStack{},
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []ctrl.Request {
+				// When a LokiStack changes, trigger reconcile of the FlowCollector
+				return []ctrl.Request{{NamespacedName: constants.FlowCollectorName}}
+			}),
+		)
 		log.Info("LokiStack CRD detected")
 	}
 
