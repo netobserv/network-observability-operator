@@ -495,28 +495,36 @@ func TestRefreshSuccess(t *testing.T) {
 }
 
 func TestHasLokiStack(t *testing.T) {
+	ctx := context.Background()
+
 	// Test 1: LokiStack CRD is available
-	infoWithLokiStack := Info{
-		apisMap: map[string]bool{
-			"lokistacks.loki.grafana.com/v1": true,
+	infoWithLokiStack := &Info{}
+	mockDclWithLoki := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("loki.grafana.com/v1", "lokistacks"),
 		},
-		ready: true,
+		err: nil,
 	}
-	assert.True(t, infoWithLokiStack.HasLokiStack())
+	infoWithLokiStack.dcl = mockDclWithLoki
+	assert.True(t, infoWithLokiStack.HasLokiStack(ctx))
 
 	// Test 2: LokiStack CRD is not available
-	infoWithoutLokiStack := Info{
-		apisMap: map[string]bool{
-			"lokistacks.loki.grafana.com/v1": false,
+	infoWithoutLokiStack := &Info{}
+	mockDclWithoutLoki := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("monitoring.coreos.com/v1", "servicemonitors"),
 		},
-		ready: true,
+		err: nil,
 	}
-	assert.False(t, infoWithoutLokiStack.HasLokiStack())
+	infoWithoutLokiStack.dcl = mockDclWithoutLoki
+	assert.False(t, infoWithoutLokiStack.HasLokiStack(ctx))
 
 	// Test 3: Empty apisMap
-	infoEmpty := Info{
-		apisMap: map[string]bool{},
-		ready:   true,
+	infoEmpty := &Info{}
+	mockDclEmpty := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{},
+		err:       nil,
 	}
-	assert.False(t, infoEmpty.HasLokiStack())
+	infoEmpty.dcl = mockDclEmpty
+	assert.False(t, infoEmpty.HasLokiStack(ctx))
 }
