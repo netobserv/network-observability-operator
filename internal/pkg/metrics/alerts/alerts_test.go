@@ -117,8 +117,8 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"LatencyHighTrend_PerDstNamespaceInfo",
 		"Ingress5xxErrors_PerSrcNamespaceWarning",
 		"Ingress5xxErrors_PerSrcNamespaceInfo",
-		"IngressLatencyTrend_PerSrcNamespaceWarning",
-		"IngressLatencyTrend_PerSrcNamespaceInfo",
+		"IngressHTTPLatencyTrend_PerSrcNamespaceWarning",
+		"IngressHTTPLatencyTrend_PerSrcNamespaceInfo",
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[0].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")
@@ -126,7 +126,7 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 	assert.Contains(t, rules[3].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [dest. namespace={{ $labels.namespace }}]")
 	assert.Equal(t, `{"links":[{"name":"View runbook","url":"`+runbookURLBase+`/PacketDropsByKernel.md"}],"namespaceLabels":["namespace"],"threshold":"10","unit":"%"}`, rules[3].Annotations["netobserv_io_network_health"])
 	assert.Contains(t, rules[4].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [source node={{ $labels.node }}]")
-	assert.Contains(t, rules[8].Annotations["description"], "node-exporter is detecting more than 5% of dropped packets [node={{ $labels.instance }}]")
+	assert.Contains(t, rules[8].Annotations["description"], "node-exporter is reporting more than 5% of dropped packets [node={{ $labels.instance }}]")
 	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
 }
 
