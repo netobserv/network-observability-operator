@@ -8,7 +8,7 @@ There are two ways to configure metrics:
 - By enabling or disabling any of the predefined metrics
 - Using the FlowMetrics API to create custom metrics
 
-For alerts documentation, see [Alerts.md](./Alerts.md).
+For alerts and health documentation, see [HealthRules.md](./HealthRules.md).
 
 ## Predefined metrics
 
