@@ -179,8 +179,8 @@ func (rb *ruleBuilder) convertToRule() (*monitoringv1.Rule, error) {
 		return rb.externalTrend(true)
 	case flowslatest.HealthRuleIngress5xxErrors:
 		return rb.ingressErrors()
-	case flowslatest.HealthRuleIngressLatencyTrend:
-		return rb.ingressLatencyTrend()
+	case flowslatest.HealthRuleIngressHTTPLatencyTrend:
+		return rb.ingressHTTPLatencyTrend()
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// error
 	}

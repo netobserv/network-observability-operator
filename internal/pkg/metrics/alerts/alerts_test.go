@@ -24,7 +24,7 @@ func allTemplates() []flowslatest.HealthRuleTemplate {
 		flowslatest.HealthRuleExternalEgressHighTrend,
 		flowslatest.HealthRuleExternalIngressHighTrend,
 		flowslatest.HealthRuleIngress5xxErrors,
-		flowslatest.HealthRuleIngressLatencyTrend,
+		flowslatest.HealthRuleIngressHTTPLatencyTrend,
 	}
 }
 
@@ -48,7 +48,7 @@ func TestBuildRules_DefaultWithDisabled(t *testing.T) {
 					flowslatest.HealthRuleExternalEgressHighTrend,
 					flowslatest.HealthRuleExternalIngressHighTrend,
 					flowslatest.HealthRuleIngress5xxErrors,
-					flowslatest.HealthRuleIngressLatencyTrend,
+					flowslatest.HealthRuleIngressHTTPLatencyTrend,
 				},
 			},
 		},
