@@ -48,6 +48,7 @@
   "DnsLatencyMs": "avoid",
   "DnsFlags": "fine",
   "DnsFlagsResponseCode": "fine",
+  "DnsName": "careful",
   "DnsErrno": "fine",
   "TimeFlowRttNs": "avoid",
   "NetworkEvents": "avoid",
