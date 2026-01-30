@@ -195,35 +195,37 @@ func TestHealthAnnotationMetadata(t *testing.T) {
 		groupBy                 flowslatest.HealthRuleGroupBy
 		expectedNodeLabels      []string
 		expectedNamespaceLabels []string
-		expectedOwnerLabels     []string
+		expectedWorkloadLabels  []string
+		expectedKindLabels      []string
 	}{
 		{
 			name:                    "Global (no grouping)",
 			groupBy:                 "",
 			expectedNodeLabels:      nil,
 			expectedNamespaceLabels: nil,
-			expectedOwnerLabels:     nil,
+			expectedWorkloadLabels:  nil,
 		},
 		{
 			name:                    "GroupBy Node",
 			groupBy:                 flowslatest.GroupByNode,
 			expectedNodeLabels:      []string{"node"},
 			expectedNamespaceLabels: nil,
-			expectedOwnerLabels:     nil,
+			expectedWorkloadLabels:  nil,
 		},
 		{
 			name:                    "GroupBy Namespace",
 			groupBy:                 flowslatest.GroupByNamespace,
 			expectedNodeLabels:      nil,
 			expectedNamespaceLabels: []string{"namespace"},
-			expectedOwnerLabels:     nil,
+			expectedWorkloadLabels:  nil,
 		},
 		{
 			name:                    "GroupBy Workload",
 			groupBy:                 flowslatest.GroupByWorkload,
 			expectedNodeLabels:      nil,
 			expectedNamespaceLabels: []string{"namespace"},
-			expectedOwnerLabels:     []string{"workload"},
+			expectedWorkloadLabels:  []string{"workload"},
+			expectedKindLabels:      []string{"kind"},
 		},
 	}
 
@@ -247,7 +249,8 @@ func TestHealthAnnotationMetadata(t *testing.T) {
 
 			assert.Equal(t, tt.expectedNodeLabels, ha.NodeLabels, "Expected nodeLabels=%s in annotation for %s", tt.expectedNodeLabels, tt.name)
 			assert.Equal(t, tt.expectedNamespaceLabels, ha.NamespaceLabels, "Expected namespaceLabels=%s in annotation for %s", tt.expectedNamespaceLabels, tt.name)
-			assert.Equal(t, tt.expectedOwnerLabels, ha.OwnerLabels, "Expected ownerLabels=%s in annotation for %s", tt.expectedOwnerLabels, tt.name)
+			assert.Equal(t, tt.expectedWorkloadLabels, ha.WorkloadLabels, "Expected workloadLabels=%s in annotation for %s", tt.expectedWorkloadLabels, tt.name)
+			assert.Equal(t, tt.expectedKindLabels, ha.KindLabels, "Expected kindLabels=%s in annotation for %s", tt.expectedKindLabels, tt.name)
 		})
 	}
 }

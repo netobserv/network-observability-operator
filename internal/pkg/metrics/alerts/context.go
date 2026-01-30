@@ -36,7 +36,8 @@ type healthAnnotation struct {
 	Unit                string               `json:"unit,omitempty"`
 	NodeLabels          []string             `json:"nodeLabels,omitempty"`
 	NamespaceLabels     []string             `json:"namespaceLabels,omitempty"`
-	OwnerLabels         []string             `json:"ownerLabels,omitempty"`
+	WorkloadLabels      []string             `json:"workloadLabels,omitempty"`
+	KindLabels          []string             `json:"kindLabels,omitempty"`
 	TrafficLink         *trafficLink         `json:"trafficLink,omitempty"`
 }
 
@@ -98,7 +99,8 @@ func newHealthAnnotation(ctx *ruleContext) *healthAnnotation {
 		annotation.NamespaceLabels = []string{"namespace"}
 	case flowslatest.GroupByWorkload:
 		annotation.NamespaceLabels = []string{"namespace"}
-		annotation.OwnerLabels = []string{"workload"}
+		annotation.WorkloadLabels = []string{"workload"}
+		annotation.KindLabels = []string{"kind"}
 	}
 	return &annotation
 }
