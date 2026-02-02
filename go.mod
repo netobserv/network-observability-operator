@@ -9,7 +9,7 @@ require (
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
 	github.com/netobserv/flowlogs-pipeline v1.10.1-community.0.20260128081215-6575ca967373
 	github.com/netobserv/netobserv-ebpf-agent v1.10.1-community
-	github.com/onsi/ginkgo/v2 v2.27.5
+	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.0
 	github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.87.0
@@ -55,7 +55,7 @@ require (
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/cel-go v0.26.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20250820193118-f64d9cf942d6 // indirect
+	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
