@@ -19,7 +19,7 @@ var TemplateMetadata = map[flowslatest.HealthRuleTemplate]TemplateInfo{
 	},
 	flowslatest.HealthRulePacketDropsByDevice: {
 		Summary:            "Too many drops from device",
-		DescriptionPattern: "node-exporter is detecting more than %s%% of dropped packets%s",
+		DescriptionPattern: "node-exporter is reporting more than %s%% of dropped packets%s",
 	},
 	flowslatest.HealthRuleIPsecErrors: {
 		Summary:            "Too many IPsec errors",
@@ -53,8 +53,8 @@ var TemplateMetadata = map[flowslatest.HealthRuleTemplate]TemplateInfo{
 		Summary:            "Too many ingress 5xx errors",
 		DescriptionPattern: "HAProxy is reporting more than %s%% of 5xx HTTP response codes from ingress traffic%s",
 	},
-	flowslatest.HealthRuleIngressLatencyTrend: {
-		Summary:            "Ingress latency increased",
-		DescriptionPattern: "HAProxy ingress average response latency increased by more than %s%%%s, compared to baseline (offset: %s)",
+	flowslatest.HealthRuleIngressHTTPLatencyTrend: {
+		Summary:            "Ingress HTTP latency increase",
+		DescriptionPattern: "HAProxy ingress average HTTP response latency increased by more than %s%%%s, compared to baseline (offset: %s)",
 	},
 }
