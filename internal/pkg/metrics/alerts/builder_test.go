@@ -158,14 +158,14 @@ func TestRecordingRuleNames(t *testing.T) {
 			template: flowslatest.HealthRuleLatencyHighTrend,
 			groupBy:  "",
 			side:     asSource,
-			expected: "netobserv:health:tcp_latency_p90:rate2m",
+			expected: "netobserv:health:tcp_latency_increase_p90:rate2m",
 		},
 		{
 			name:     "LatencyHighTrend by Node",
 			template: flowslatest.HealthRuleLatencyHighTrend,
 			groupBy:  flowslatest.GroupByNode,
 			side:     asDest,
-			expected: "netobserv:health:tcp_latency_p90:node:dst:rate2m",
+			expected: "netobserv:health:tcp_latency_increase_p90:node:dst:rate2m",
 		},
 	}
 
