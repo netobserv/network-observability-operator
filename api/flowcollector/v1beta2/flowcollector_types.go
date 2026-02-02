@@ -588,14 +588,14 @@ type FLPMetrics struct {
 
 	// `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
 	// Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`.
-	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`.
+	// More information on alerts: https://github.com/netobserv/network-observability-operator/blob/main/docs/HealthRules.md
 	// +optional
 	DisableAlerts []HealthRuleTemplate `json:"disableAlerts"`
 
 	// `healthRules` is a list of health rules to be created for Prometheus, organized by templates and variants.
 	// Each health rule can be configured to generate either alerts or recording rules based on the mode field.
-	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
+	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/HealthRules.md
 	// +optional
 	HealthRules *[]FLPHealthRule `json:"healthRules"`
 }
@@ -901,6 +901,7 @@ type LokiMicroservicesParams struct {
 type LokiMonolithParams struct {
 	// Set `installDemoLoki` to `true` to automatically create Loki deployment, service and storage.
 	// This is useful for development and demo purposes. Do not use it in production.
+	// [Unsupported (*)].
 	//+kubebuilder:default:=false
 	InstallDemoLoki *bool `json:"installDemoLoki,omitempty"`
 

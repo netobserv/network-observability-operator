@@ -34,7 +34,7 @@ const (
 	HealthRuleExternalEgressHighTrend  HealthRuleTemplate = "ExternalEgressHighTrend"
 	HealthRuleExternalIngressHighTrend HealthRuleTemplate = "ExternalIngressHighTrend"
 	HealthRuleIngress5xxErrors         HealthRuleTemplate = "Ingress5xxErrors"
-	HealthRuleIngressLatencyTrend      HealthRuleTemplate = "IngressLatencyTrend"
+	HealthRuleIngressHTTPLatencyTrend  HealthRuleTemplate = "IngressHTTPLatencyTrend"
 
 	GroupByNode      HealthRuleGroupBy = "Node"
 	GroupByNamespace HealthRuleGroupBy = "Namespace"
@@ -47,10 +47,10 @@ const (
 type FLPHealthRule struct {
 	// Health rule template name.
 	// Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressLatencyTrend`.
+	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`.
 	// Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
-	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/Alerts.md
-	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"DNSNxDomain";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"Ingress5xxErrors";"IngressLatencyTrend"
+	// More information on health rules: https://github.com/netobserv/network-observability-operator/blob/main/docs/HealthRules.md
+	// +kubebuilder:validation:Enum:="PacketDropsByKernel";"PacketDropsByDevice";"IPsecErrors";"NetpolDenied";"LatencyHighTrend";"DNSErrors";"DNSNxDomain";"ExternalEgressHighTrend";"ExternalIngressHighTrend";"Ingress5xxErrors";"IngressHTTPLatencyTrend"
 	// +required
 	Template HealthRuleTemplate `json:"template,omitempty"`
 
@@ -211,7 +211,7 @@ func (g *FLPHealthRule) IsAllowed(spec *FlowCollectorSpec) (bool, string) {
 		if !spec.Agent.EBPF.IsNetworkEventsEnabled() {
 			return false, fmt.Sprintf("HealthRule %s requires the %s agent feature to be enabled", g.Template, NetworkEvents)
 		}
-	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend, HealthRuleIngress5xxErrors, HealthRuleIngressLatencyTrend:
+	case AlertNoFlows, AlertLokiError, HealthRulePacketDropsByDevice, HealthRuleExternalEgressHighTrend, HealthRuleExternalIngressHighTrend, HealthRuleIngress5xxErrors, HealthRuleIngressHTTPLatencyTrend:
 		return true, ""
 	}
 	return true, ""
