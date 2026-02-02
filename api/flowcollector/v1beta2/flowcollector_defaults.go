@@ -49,17 +49,11 @@ var (
 	DefaultHealthRules = []FLPHealthRule{
 		{
 			Template: HealthRulePacketDropsByKernel,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
-					Mode: ptr.To(ModeRecording),
 					Thresholds: HealthRuleThresholds{
-						Info: "10",
-					},
-					LowVolumeThreshold: "5",
-					GroupBy:            GroupByNamespace,
-				},
-				{
-					Thresholds: HealthRuleThresholds{
+						Info:    "10",
 						Warning: "20",
 					},
 					LowVolumeThreshold: "5",
@@ -68,13 +62,8 @@ var (
 				{
 					Mode: ptr.To(ModeRecording),
 					Thresholds: HealthRuleThresholds{
-						Info: "5",
-					},
-					GroupBy: GroupByNode,
-				},
-				{
-					Thresholds: HealthRuleThresholds{
-						Warning: "10",
+						Info:    "5",
+						Warning: "15",
 					},
 					GroupBy: GroupByNode,
 				},
@@ -85,7 +74,8 @@ var (
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
-						Warning: "5",
+						Info:    "5",
+						Warning: "10",
 					},
 					GroupBy: GroupByNode,
 				},
@@ -96,12 +86,12 @@ var (
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
-						Critical: "2",
+						Warning: "2",
 					},
 				},
 				{
 					Thresholds: HealthRuleThresholds{
-						Critical: "2",
+						Warning: "2",
 					},
 					GroupBy: GroupByNode,
 				},
@@ -139,16 +129,11 @@ var (
 		},
 		{
 			Template: HealthRuleNetpolDenied,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
-					Mode: ptr.To(ModeRecording),
 					Thresholds: HealthRuleThresholds{
-						Info: "5",
-					},
-					GroupBy: GroupByNamespace,
-				},
-				{
-					Thresholds: HealthRuleThresholds{
+						Info:    "5",
 						Warning: "10",
 					},
 					GroupBy: GroupByNamespace,
