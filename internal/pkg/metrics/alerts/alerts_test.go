@@ -98,37 +98,49 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 	assert.Equal(t, []string{
 		"netobserv:health:packet_drops_kernel:namespace:src:rate2m",
 		"netobserv:health:packet_drops_kernel:namespace:dst:rate2m",
-		"PacketDropsByKernel_PerSrcNamespaceWarning",
-		"PacketDropsByKernel_PerDstNamespaceWarning",
 		"netobserv:health:packet_drops_kernel:node:src:rate2m",
 		"netobserv:health:packet_drops_kernel:node:dst:rate2m",
-		"PacketDropsByKernel_PerSrcNodeWarning",
-		"PacketDropsByKernel_PerDstNodeWarning",
 		"PacketDropsByDevice_PerNodeWarning",
-		"IPsecErrors_Critical",
-		"IPsecErrors_PerSrcNodeCritical",
-		"IPsecErrors_PerDstNodeCritical",
+		"PacketDropsByDevice_PerNodeInfo",
+		"IPsecErrors_Warning",
+		"IPsecErrors_PerSrcNodeWarning",
+		"IPsecErrors_PerDstNodeWarning",
 		"DNSErrors_Warning",
 		"DNSErrors_PerDstNamespaceWarning",
 		"DNSErrors_PerDstNamespaceInfo",
 		"netobserv:health:dns_nxdomain:namespace:dst:rate2m",
 		"netobserv:health:netpol_denied:namespace:src:rate2m",
 		"netobserv:health:netpol_denied:namespace:dst:rate2m",
-		"NetpolDenied_PerSrcNamespaceWarning",
-		"NetpolDenied_PerDstNamespaceWarning",
 		"netobserv:health:tcp_latency_increase_p90:namespace:src:rate2m",
 		"netobserv:health:tcp_latency_increase_p90:namespace:dst:rate2m",
 		"netobserv:health:ingress_5xx_errors:namespace:src:rate2m",
 		"netobserv:health:ingress_http_latency_increase_avg:namespace:src:rate2m",
 		"NetObservNoFlows",
 	}, allNames(rules))
-	assert.Contains(t, rules[2].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")
-	assert.Equal(t, `{"alertThreshold":"20","unit":"%","namespaceLabels":["namespace"]}`, rules[2].Annotations["netobserv_io_network_health"])
-	assert.Contains(t, rules[6].Annotations["description"], "NetObserv is detecting more than 10% of packets dropped by the kernel [source node={{ $labels.node }}]")
-	assert.Equal(t, `{"alertThreshold":"10","unit":"%","nodeLabels":["node"]}`, rules[6].Annotations["netobserv_io_network_health"])
-	assert.Contains(t, rules[8].Annotations["description"], "node-exporter is reporting more than 5% of dropped packets [node={{ $labels.instance }}]")
-	assert.Equal(t, `{"alertThreshold":"5","unit":"%","nodeLabels":["instance"]}`, rules[8].Annotations["netobserv_io_network_health"])
-	assert.Contains(t, rules[len(rules)-1].Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
+	r := findRule("PacketDropsByDevice_PerNodeWarning", rules)
+	assert.NotNil(t, r)
+	assert.Equal(t, "node-exporter is reporting more than 10% of dropped packets [node={{ $labels.instance }}].", r.Annotations["description"])
+	assert.Equal(t, `{"alertThreshold":"10","unit":"%","nodeLabels":["instance"]}`, r.Annotations["netobserv_io_network_health"])
+	r = findRule("IPsecErrors_Warning", rules)
+	assert.NotNil(t, r)
+	assert.Equal(t, "NetObserv is detecting more than 2% of IPsec errors.", r.Annotations["description"])
+	assert.Equal(t, `{"alertThreshold":"2","unit":"%"}`, r.Annotations["netobserv_io_network_health"])
+	r = findRule("DNSErrors_PerDstNamespaceWarning", rules)
+	assert.NotNil(t, r)
+	assert.Equal(t, "NetObserv is detecting more than 10% of DNS errors [dest. namespace={{ $labels.namespace }}] (other than NX_DOMAIN).", r.Annotations["description"])
+	assert.Contains(t, r.Annotations["netobserv_io_network_health"], `{"alertThreshold":"10","unit":"%","namespaceLabels":["namespace"]`)
+	r = findRule("NetObservNoFlows", rules)
+	assert.NotNil(t, r)
+	assert.Contains(t, r.Annotations["description"], "NetObserv flowlogs-pipeline is not receiving any flow")
+}
+
+func findRule(name string, rules []monitoringv1.Rule) *monitoringv1.Rule {
+	for i := range rules {
+		if rules[i].Alert == name {
+			return &rules[i]
+		}
+	}
+	return nil
 }
 
 func TestBuildRules_DefaultWithFeaturesAndAllDisabled(t *testing.T) {
