@@ -164,10 +164,8 @@ var (
 						Info: "100",
 					},
 					GroupBy:       GroupByNamespace,
-					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
-					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
-					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					// TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
@@ -180,10 +178,8 @@ var (
 						Warning: "200",
 					},
 					GroupBy:       GroupByNode,
-					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
-					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
-					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					// TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: HealthRuleThresholds{
@@ -191,10 +187,8 @@ var (
 						Warning: "500",
 					},
 					GroupBy:       GroupByNamespace,
-					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
-					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
-					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					// TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
@@ -207,10 +201,8 @@ var (
 						Warning: "200",
 					},
 					GroupBy:       GroupByNode,
-					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
-					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
-					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					// TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 				{
 					Thresholds: HealthRuleThresholds{
@@ -218,15 +210,14 @@ var (
 						Warning: "500",
 					},
 					GroupBy:       GroupByNamespace,
-					TrendOffset:   &v1.Duration{Duration: time.Minute * 30},
-					TrendDuration: &v1.Duration{Duration: time.Minute * 30},
-					// TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
-					// TrendDuration: &v1.Duration{Duration: time.Hour},
+					TrendOffset:   &v1.Duration{Duration: 24 * time.Hour},
+					TrendDuration: &v1.Duration{Duration: time.Hour},
 				},
 			},
 		},
 		{
 			Template: HealthRuleIngress5xxErrors,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -239,6 +230,7 @@ var (
 		},
 		{
 			Template: HealthRuleIngressHTTPLatencyTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{

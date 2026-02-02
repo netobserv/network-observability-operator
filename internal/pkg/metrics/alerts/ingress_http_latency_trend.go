@@ -16,7 +16,7 @@ func newIngressHTTPLatencyTrend(ctx *ruleContext) HealthRule {
 }
 
 func (r *ingressHTTPLatencyTrend) RecordingName() string {
-	return buildRecordingRuleName(r.ctx, "ingress_http_latency_avg", "2m")
+	return buildRecordingRuleName(r.ctx, "ingress_http_latency_increase_avg", "2m")
 }
 
 func (r *ingressHTTPLatencyTrend) GetAnnotations() (map[string]string, error) {

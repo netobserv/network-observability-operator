@@ -15,7 +15,7 @@ func newLatencyTrend(ctx *ruleContext) HealthRule {
 }
 
 func (r *latencyTrend) RecordingName() string {
-	return buildRecordingRuleName(r.ctx, "tcp_latency_p90", "2m")
+	return buildRecordingRuleName(r.ctx, "tcp_latency_increase_p90", "2m")
 }
 
 func (r *latencyTrend) GetAnnotations() (map[string]string, error) {

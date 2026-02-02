@@ -116,12 +116,10 @@ func TestBuildRules_DefaultWithFeaturesAndDisabled(t *testing.T) {
 		"netobserv:health:netpol_denied:namespace:dst:rate2m",
 		"NetpolDenied_PerSrcNamespaceWarning",
 		"NetpolDenied_PerDstNamespaceWarning",
-		"netobserv:health:tcp_latency_p90:namespace:src:rate2m",
-		"netobserv:health:tcp_latency_p90:namespace:dst:rate2m",
-		"Ingress5xxErrors_PerSrcNamespaceWarning",
-		"Ingress5xxErrors_PerSrcNamespaceInfo",
-		"IngressHTTPLatencyTrend_PerSrcNamespaceWarning",
-		"IngressHTTPLatencyTrend_PerSrcNamespaceInfo",
+		"netobserv:health:tcp_latency_increase_p90:namespace:src:rate2m",
+		"netobserv:health:tcp_latency_increase_p90:namespace:dst:rate2m",
+		"netobserv:health:ingress_5xx_errors:namespace:src:rate2m",
+		"netobserv:health:ingress_http_latency_increase_avg:namespace:src:rate2m",
 		"NetObservNoFlows",
 	}, allNames(rules))
 	assert.Contains(t, rules[2].Annotations["description"], "NetObserv is detecting more than 20% of packets dropped by the kernel [source namespace={{ $labels.namespace }}]")
