@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -11,11 +12,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/network-observability-operator/internal/controller/consoleplugin"
+	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	"github.com/netobserv/network-observability-operator/internal/controller/ebpf"
 	"github.com/netobserv/network-observability-operator/internal/controller/loki"
 	"github.com/netobserv/network-observability-operator/internal/controller/reconcilers"
@@ -33,9 +39,11 @@ const (
 // FlowCollectorReconciler reconciles a FlowCollector object
 type FlowCollectorReconciler struct {
 	client.Client
-	mgr     *manager.Manager
-	status  status.Instance
-	watcher *watchers.Watcher
+	mgr                *manager.Manager
+	status             status.Instance
+	watcher            *watchers.Watcher
+	ctrl               controller.Controller
+	lokiWatcherStarted bool
 }
 
 func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, error) {
@@ -64,10 +72,23 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 		builder.Owns(&osv1.ConsolePlugin{}, reconcilers.UpdateOrDeleteOnlyPred)
 	}
 
+	if mgr.ClusterInfo.HasLokiStack(ctx) {
+		builder.Watches(
+			&lokiv1.LokiStack{},
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, _ client.Object) []ctrl.Request {
+				// When a LokiStack changes, trigger reconcile of the FlowCollector
+				return []ctrl.Request{{NamespacedName: constants.FlowCollectorName}}
+			}),
+		)
+		r.lokiWatcherStarted = true
+		log.Info("LokiStack CRD detected")
+	}
+
 	ctrl, err := builder.Build(&r)
 	if err != nil {
 		return nil, err
 	}
+	r.ctrl = ctrl
 	r.watcher = watchers.NewWatcher(ctrl)
 
 	return nil, nil
@@ -95,6 +116,14 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
+	// Dynamically start LokiStack watcher if the API became available
+	if desired.Spec.Loki.Mode == flowslatest.LokiModeLokiStack {
+		if err := r.ensureLokiStackWatcher(ctx); err != nil {
+			l.Error(err, "Failed to start LokiStack watcher")
+			// Don't fail reconciliation, just log the error
+		}
+	}
+
 	// At the moment, status workflow is to start as ready then degrade if necessary
 	// Later (when legacy controller is broken down into individual controllers), status should start as unknown and only on success finishes as ready
 	r.status.SetReady()
@@ -111,6 +140,36 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *FlowCollectorReconciler) ensureLokiStackWatcher(ctx context.Context) error {
+	// Check if LokiStack API is available but watcher not started
+	if !r.mgr.ClusterInfo.HasLokiStack(ctx) {
+		return nil
+	}
+
+	if r.lokiWatcherStarted {
+		return nil
+	}
+
+	// LokiStack API is now available, start the watcher
+	log := log.FromContext(ctx)
+	log.Info("LokiStack CRD detected after startup, starting watcher")
+
+	h := handler.TypedEnqueueRequestsFromMapFunc(func(_ context.Context, _ *lokiv1.LokiStack) []reconcile.Request {
+		// When a LokiStack changes, trigger reconcile of the FlowCollector
+		return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+	})
+
+	src := source.Kind(r.mgr.GetCache(), &lokiv1.LokiStack{}, h)
+	err := r.ctrl.Watch(src)
+	if err != nil {
+		return fmt.Errorf("failed to start LokiStack watcher: %w", err)
+	}
+
+	r.lokiWatcherStarted = true
+	log.Info("LokiStack watcher started successfully")
+	return nil
 }
 
 func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {

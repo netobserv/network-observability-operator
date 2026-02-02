@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"gopkg.in/yaml.v2"
@@ -574,9 +575,25 @@ func (b *builder) getHealthRulesMetadata() []cfg.HealthRuleMetadata {
 	return metadata
 }
 
+func getLokiStatus(lokiStack *lokiv1.LokiStack) string {
+	if lokiStack == nil {
+		// This case should not happen
+		return ""
+	}
+	for _, conditions := range lokiStack.Status.Conditions {
+		if conditions.Reason == "ReadyComponents" {
+			if conditions.Status == "True" {
+				return "ready"
+			}
+			break
+		}
+	}
+	return "pending"
+}
+
 // returns a configmap with a digest of its configuration contents, which will be used to
 // detect any configuration change
-func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, error) {
+func (b *builder) configMap(ctx context.Context, lokiStack *lokiv1.LokiStack) (*corev1.ConfigMap, string, error) {
 	config := cfg.PluginConfig{
 		Server: cfg.ServerConfig{
 			Port: int(*b.advanced.Port),
@@ -592,6 +609,10 @@ func (b *builder) configMap(ctx context.Context) (*corev1.ConfigMap, string, err
 	// configure loki
 	var err error
 	config.Loki, err = b.getLokiConfig()
+	if lokiStack != nil {
+		config.Loki.Status = getLokiStatus(lokiStack)
+		config.Loki.StatusURL = ""
+	}
 	if err != nil {
 		return nil, "", err
 	}
