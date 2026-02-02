@@ -24,6 +24,7 @@ type LokiConfig struct {
 	URL    string   `yaml:"url" json:"url"`
 	Labels []string `yaml:"labels" json:"labels"`
 
+	Status             string       `yaml:"status,omitempty" json:"status,omitempty"`
 	StatusURL          string       `yaml:"statusUrl,omitempty" json:"statusUrl,omitempty"`
 	Timeout            api.Duration `yaml:"timeout,omitempty" json:"timeout,omitempty"`
 	TenantID           string       `yaml:"tenantID,omitempty" json:"tenantID,omitempty"`

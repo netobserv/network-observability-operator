@@ -493,3 +493,38 @@ func TestRefreshSuccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, info.IsOpenShift())
 }
+
+func TestHasLokiStack(t *testing.T) {
+	ctx := context.Background()
+
+	// Test 1: LokiStack CRD is available
+	infoWithLokiStack := &Info{}
+	mockDclWithLoki := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("loki.grafana.com/v1", "lokistacks"),
+		},
+		err: nil,
+	}
+	infoWithLokiStack.dcl = mockDclWithLoki
+	assert.True(t, infoWithLokiStack.HasLokiStack(ctx))
+
+	// Test 2: LokiStack CRD is not available
+	infoWithoutLokiStack := &Info{}
+	mockDclWithoutLoki := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("monitoring.coreos.com/v1", "servicemonitors"),
+		},
+		err: nil,
+	}
+	infoWithoutLokiStack.dcl = mockDclWithoutLoki
+	assert.False(t, infoWithoutLokiStack.HasLokiStack(ctx))
+
+	// Test 3: Empty apisMap
+	infoEmpty := &Info{}
+	mockDclEmpty := &mockDiscoveryClient{
+		resources: []*metav1.APIResourceList{},
+		err:       nil,
+	}
+	infoEmpty.dcl = mockDclEmpty
+	assert.False(t, infoEmpty.HasLokiStack(ctx))
+}

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/coreos/go-semver/semver"
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -54,6 +55,7 @@ var (
 	promRule       = "prometheusrules." + monv1.SchemeGroupVersion.String()
 	ocpSecurity    = "securitycontextconstraints." + securityv1.SchemeGroupVersion.String()
 	endpointSlices = "endpointslices." + discoveryv1.SchemeGroupVersion.String()
+	lokistacks     = "lokistacks." + lokiv1.GroupVersion.String()
 )
 
 func NewInfo(ctx context.Context, cfg *rest.Config, dcl *discovery.DiscoveryClient, onRefresh func()) (*Info, func(ctx context.Context) error, error) {
@@ -109,6 +111,7 @@ func (c *Info) fetchAvailableAPIsInternal(ctx context.Context, allowCriticalFail
 			promRule:       false,
 			ocpSecurity:    false,
 			endpointSlices: false,
+			lokistacks:     false,
 		}
 		firstRun = true
 	}
@@ -362,7 +365,6 @@ func (c *Info) HasPromRule() bool {
 	return c.apisMap[promRule]
 }
 
-// HasEndpointSlices returns true if "endpointslices.discovery.k8s.io" API was found
 func (c *Info) HasEndpointSlices() bool {
 	c.apisMapLock.RLock()
 	defer c.apisMapLock.RUnlock()
@@ -402,4 +404,17 @@ func getCRDPropertyInVersion(v *apix.CustomResourceDefinitionVersion, parts []st
 		return &next
 	}
 	return nil
+}
+
+// HasLokiStack returns true if "lokistack" API was found
+func (c *Info) HasLokiStack(ctx context.Context) bool {
+	if !c.apisMap[lokistacks] {
+		err := c.fetchAvailableAPIsInternal(ctx, true)
+		if err != nil {
+			return false
+		}
+	}
+	c.apisMapLock.RLock()
+	defer c.apisMapLock.RUnlock()
+	return c.apisMap[lokistacks]
 }
