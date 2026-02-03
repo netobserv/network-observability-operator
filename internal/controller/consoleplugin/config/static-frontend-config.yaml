@@ -695,6 +695,7 @@ filters:
     component: autocomplete
     placeholder: 'E.g: cluster-1, cluster-2'
     hint: Add cluster ID or name filter.
+    feature: multiCluster
   - id: namespace
     name: Namespace
     component: autocomplete
@@ -857,36 +858,42 @@ filters:
     category: endpoint
     placeholder: 'E.g: zone-1, zone-2'
     hint: Add zone filter.
+    feature: zones
   - id: src_zone
     name: Zone
     component: autocomplete
     category: source
     placeholder: 'E.g: zone-1, zone-2'
     hint: Add source zone filter.
+    feature: zones
   - id: dst_zone
     name: Zone
     component: autocomplete
     category: destination
     placeholder: 'E.g: zone-1, zone-2'
     hint: Add destination zone filter.
+    feature: zones
   - id: subnet_label
     name: Subnet Label
     component: autocomplete
     category: endpoint
     placeholder: 'E.g: Pods, Services, ExternalIP'
     hint: Add subnet label filter, or an empty string to get unmatched sources.
+    feature: subnetLabels
   - id: src_subnet_label
     name: Subnet Label
     component: autocomplete
     category: source
     placeholder: 'E.g: Pods, Services, ExternalIP'
     hint: Add source subnet label filter, or an empty string to get unmatched sources.
+    feature: subnetLabels
   - id: dst_subnet_label
     name: Subnet Label
     component: autocomplete
     category: destination
     placeholder: 'E.g: Pods, Services, ExternalIP'
     hint: Add destination subnet label filter, or an empty string to get unmatched destinations.
+    feature: subnetLabels
   - id: resource
     name: Resource
     component: autocomplete
@@ -1087,16 +1094,19 @@ filters:
     component: text
     category: endpoint
     hint: Add network name filter.
+    feature: multiNetworks
   - id: src_network
     name: Network Name
     component: text
     category: source
     hint: Add source network name filter.
+    feature: multiNetworks
   - id: dst_network
     name: Network Name
     component: text
     category: destination
     hint: Add destination network name filter.
+    feature: multiNetworks
   - id: protocol
     name: Protocol
     component: autocomplete
@@ -1157,6 +1167,7 @@ filters:
     name: User Defined Network
     component: autocomplete
     hint: Add user defined network name filter.
+    feature: udnMapping
   - id: id
     name: Conversation Id
     component: text
@@ -1171,6 +1182,7 @@ filters:
               - A _LINUX_TCP_STATES_H number like 1, 2, 3
               - A _LINUX_TCP_STATES_H TCP name like ESTABLISHED, SYN_SENT, SYN_RECV
     docUrl: https://github.com/torvalds/linux/blob/master/include/net/tcp_states.h
+    feature: pktDrop
   - id: pkt_drop_cause
     name: Packet drop latest cause
     component: autocomplete
@@ -1181,20 +1193,24 @@ filters:
               - A _LINUX_DROPREASON_CORE_H number like 2, 3, 4
               - A _LINUX_DROPREASON_CORE_H SKB_DROP_REASON name like NOT_SPECIFIED, NO_SOCKET, PKT_TOO_SMALL
     docUrl: https://github.com/torvalds/linux/blob/master/include/net/dropreason-core.h
+    feature: pktDrop
   - id: dns_id
     name: DNS Id
     component: number
     hint: Add DNS Id filter.
+    feature: dnsTracking
   - id: dns_name
     name: DNS Name
     component: text
     placeholder: 'E.g: www.example.com, www.example.org'
     hint: Add DNS name filter.
+    feature: dnsTracking
   - id: dns_latency
     name: DNS Latency
     component: number
     placeholder: 'E.g: 100, 200'
     hint: Add DNS Latency in milliseconds filter.
+    feature: dnsTracking
   - id: dns_flag_response_code
     name: DNS Response Code
     component: autocomplete
@@ -1206,47 +1222,57 @@ filters:
               - A IANA RCODE number like 0, 3, 9
               - A IANA RCODE name like NoError, NXDomain, NotAuth
     docUrl: https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-6
+    feature: dnsTracking
   - id: dns_errno
     name: DNS Error
     component: autocomplete
     hint: Add DNS error number filter.
+    feature: dnsTracking
   - id: time_flow_rtt
     name: Flow RTT
     component: number
     hint: Add TCP smoothed Round Trip Time in nanoseconds filter.
+    feature: flowRTT
   - id: network_events
     name: Network Events
     component: text
     hint: Add network event filter.
+    feature: networkEvents
   - id: xlat_zone_id
     name: Xlat Zone Id
     component: number
     hint: Add Xlat zone ID filter.
+    feature: packetTranslation
   - id: xlat_src_address
     name: Xlat source address
     component: text
     category: source
     hint: Add IP or range filter.
+    feature: packetTranslation
   - id: xlat_dst_address
     name: Xlat destination address
     component: text
     category: destination
     hint: Add destination IP or range filter.
+    feature: packetTranslation
   - id: xlat_src_port
     name: Xlat source port
     component: autocomplete
     category: source
     hint: Add source port number or name filter.
+    feature: packetTranslation
   - id: xlat_dst_port
     name: Xlat destination port
     component: autocomplete
     category: destination
     hint: Add destination port number or name filter.
+    feature: packetTranslation
   - id: ipsec_status
     name: IPsec Status
     component: text
     placeholder: 'E.g: success, error'
     hint: Add IPsec status filter.
+    feature: ipsec
 scopes:
   - id: cluster
     name: Cluster
