@@ -4,6 +4,7 @@ import (
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 var (
@@ -48,6 +49,7 @@ var (
 	DefaultHealthRules = []FLPHealthRule{
 		{
 			Template: HealthRulePacketDropsByKernel,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -58,9 +60,10 @@ var (
 					GroupBy:            GroupByNamespace,
 				},
 				{
+					Mode: ptr.To(ModeRecording),
 					Thresholds: HealthRuleThresholds{
 						Info:    "5",
-						Warning: "10",
+						Warning: "15",
 					},
 					GroupBy: GroupByNode,
 				},
@@ -71,7 +74,8 @@ var (
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
-						Warning: "5",
+						Info:    "5",
+						Warning: "10",
 					},
 					GroupBy: GroupByNode,
 				},
@@ -82,12 +86,12 @@ var (
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
-						Critical: "2",
+						Warning: "2",
 					},
 				},
 				{
 					Thresholds: HealthRuleThresholds{
-						Critical: "2",
+						Warning: "2",
 					},
 					GroupBy: GroupByNode,
 				},
@@ -112,6 +116,7 @@ var (
 		},
 		{
 			Template: HealthRuleDNSNxDomain,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -124,6 +129,7 @@ var (
 		},
 		{
 			Template: HealthRuleNetpolDenied,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -136,6 +142,7 @@ var (
 		},
 		{
 			Template: HealthRuleLatencyHighTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -149,6 +156,7 @@ var (
 		},
 		{
 			Template: HealthRuleExternalEgressHighTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -171,6 +179,7 @@ var (
 		},
 		{
 			Template: HealthRuleExternalIngressHighTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -193,6 +202,7 @@ var (
 		},
 		{
 			Template: HealthRuleIngress5xxErrors,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{
@@ -205,6 +215,7 @@ var (
 		},
 		{
 			Template: HealthRuleIngressHTTPLatencyTrend,
+			Mode:     ModeRecording,
 			Variants: []HealthRuleVariant{
 				{
 					Thresholds: HealthRuleThresholds{

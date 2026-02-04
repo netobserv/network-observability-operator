@@ -146,7 +146,8 @@ The label `netobserv: "true"` is required.
 The annotation `netobserv_io_network_health` is optional, and gives you some control on how the alert renders in the Health page. It is a JSON string that consists in:
 - `namespaceLabels`: one or more labels that hold namespaces. When provided, the alert will show up under the "Namespaces" tab.
 - `nodeLabels`: one or more labels that hold node names. When provided, the alert will show up under the "Nodes" tab.
-- `ownerLabels`: one or more labels that hold owner/workload names. When provided, the alert will show up under the "Owners" tab.
+- `workloadLabels`: one or more labels that hold owner/workload names. When provided alongside with `kindLabels`, the alert will show up under the "Owners" tab.
+- `kindLabels`: one or more labels that hold owner/workload kinds. When provided alongside with `workloadLabels`, the alert will show up under the "Owners" tab.
 - `threshold`: the alert threshold as a string, expected to match the one defined in PromQL.
 - `unit`: the data unit, used only for display purpose.
 - `upperBound`: an upper bound value used to compute score on a closed scale. It doesn't necessarily have to be a maximum of the metric values, but metric values will be clamped if they are above the upper bound.

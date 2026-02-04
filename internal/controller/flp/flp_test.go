@@ -570,7 +570,7 @@ func TestPrometheusRuleNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	r := alerts.BuildRules(context.Background(), &cfg)
+	r := alerts.BuildMonitoringRules(context.Background(), &cfg)
 	first := b.prometheusRule(r)
 
 	// Check no change
@@ -587,13 +587,13 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	// Get first
 	cfg := getConfig()
 	b := monoBuilder("namespace", &cfg)
-	r := alerts.BuildRules(context.Background(), &cfg)
+	r := alerts.BuildMonitoringRules(context.Background(), &cfg)
 	first := b.prometheusRule(r)
 
 	// Check enabled rule change
 	cfg.Processor.Metrics.DisableAlerts = []flowslatest.HealthRuleTemplate{flowslatest.AlertNoFlows}
 	b = monoBuilder("namespace", &cfg)
-	r = alerts.BuildRules(context.Background(), &cfg)
+	r = alerts.BuildMonitoringRules(context.Background(), &cfg)
 	second := b.prometheusRule(r)
 
 	report := helper.NewChangeReport("")
@@ -603,7 +603,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	// Check labels change
 	info := reconcilers.Common{Namespace: "namespace2", ClusterInfo: &cluster.Info{}}
 	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil, nil)
-	r = alerts.BuildRules(context.Background(), &cfg)
+	r = alerts.BuildMonitoringRules(context.Background(), &cfg)
 	third := b.prometheusRule(r)
 
 	report = helper.NewChangeReport("")
