@@ -116,45 +116,18 @@ type FieldConfig struct {
 	LokiLabel   bool   `yaml:"lokiLabel,omitempty" json:"lokiLabel,omitempty"`
 }
 
-type HealthRuleLink struct {
-	Name string `yaml:"name" json:"name"`
-	URL  string `yaml:"url" json:"url"`
-}
-
-type HealthRuleMetadata struct {
-	Template    string                      `yaml:"template" json:"template"`
-	Mode        string                      `yaml:"mode" json:"mode"`
-	Variants    []HealthRuleVariantMetadata `yaml:"variants" json:"variants"`
-	Description string                      `yaml:"description,omitempty" json:"description,omitempty"`
-	Summary     string                      `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Links       []HealthRuleLink            `yaml:"links,omitempty" json:"links,omitempty"`
-}
-
-type HealthRuleVariantMetadata struct {
-	GroupBy            string            `yaml:"groupBy,omitempty" json:"groupBy,omitempty"`
-	LowVolumeThreshold string            `yaml:"lowVolumeThreshold,omitempty" json:"lowVolumeThreshold,omitempty"`
-	Thresholds         ThresholdMetadata `yaml:"thresholds" json:"thresholds"`
-	UpperBound         string            `yaml:"upperBound,omitempty" json:"upperBound,omitempty"`
-}
-
-type ThresholdMetadata struct {
-	Info     string `yaml:"info,omitempty" json:"info,omitempty"`
-	Warning  string `yaml:"warning,omitempty" json:"warning,omitempty"`
-	Critical string `yaml:"critical,omitempty" json:"critical,omitempty"`
-}
-
 type FrontendConfig struct {
-	RecordTypes     []api.ConnTrackOutputRecordTypeEnum `yaml:"recordTypes" json:"recordTypes"`
-	PortNaming      flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
-	Columns         []ColumnConfig                      `yaml:"columns" json:"columns"`
-	Filters         []FilterConfig                      `yaml:"filters,omitempty" json:"filters,omitempty"`
-	Scopes          []ScopeConfig                       `yaml:"scopes" json:"scopes"`
-	QuickFilters    []flowslatest.QuickFilter           `yaml:"quickFilters,omitempty" json:"quickFilters,omitempty"`
-	AlertNamespaces []string                            `yaml:"alertNamespaces,omitempty" json:"alertNamespaces,omitempty"`
-	Sampling        int                                 `yaml:"sampling" json:"sampling"`
-	Features        []string                            `yaml:"features" json:"features"`
-	Fields          []FieldConfig                       `yaml:"fields" json:"fields"`
-	HealthRules     []HealthRuleMetadata                `yaml:"healthRules,omitempty" json:"healthRules,omitempty"`
+	RecordTypes          []api.ConnTrackOutputRecordTypeEnum `yaml:"recordTypes" json:"recordTypes"`
+	PortNaming           flowslatest.ConsolePluginPortConfig `yaml:"portNaming,omitempty" json:"portNaming,omitempty"`
+	Columns              []ColumnConfig                      `yaml:"columns" json:"columns"`
+	Filters              []FilterConfig                      `yaml:"filters,omitempty" json:"filters,omitempty"`
+	Scopes               []ScopeConfig                       `yaml:"scopes" json:"scopes"`
+	QuickFilters         []flowslatest.QuickFilter           `yaml:"quickFilters,omitempty" json:"quickFilters,omitempty"`
+	AlertNamespaces      []string                            `yaml:"alertNamespaces,omitempty" json:"alertNamespaces,omitempty"`
+	Sampling             int                                 `yaml:"sampling" json:"sampling"`
+	Features             []string                            `yaml:"features" json:"features"`
+	Fields               []FieldConfig                       `yaml:"fields" json:"fields"`
+	RecordingAnnotations map[string]map[string]string        `yaml:"recordingAnnotations,omitempty" json:"recordingAnnotations,omitempty"`
 }
 
 type PluginConfig struct {
