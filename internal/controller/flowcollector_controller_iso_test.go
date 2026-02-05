@@ -81,6 +81,9 @@ func flowCollectorIsoSpecs() {
 					DropUnusedFields:               ptr.To(false),
 				},
 				LogTypes: ptr.To(flowslatest.LogTypeAll),
+				SubnetLabels: flowslatest.SubnetLabels{
+					OpenShiftAutoDetect: ptr.To(true),
+				},
 				Metrics: flowslatest.FLPMetrics{
 					Server: flowslatest.MetricsServerConfig{
 						Port: ptr.To(int32(12347)),
