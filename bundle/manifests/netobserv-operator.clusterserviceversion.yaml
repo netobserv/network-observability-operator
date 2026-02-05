@@ -48,12 +48,14 @@ metadata:
                 "sampling": 50
               }
             },
+            "deploymentModel": "Service",
             "loki": {
               "mode": "Monolithic",
               "monolithic": {
                 "url": "http://loki.netobserv.svc.cluster.local.:3100/"
               }
             },
+            "namespace": "netobserv",
             "processor": {
               "metrics": {
                 "disableAlerts": []
