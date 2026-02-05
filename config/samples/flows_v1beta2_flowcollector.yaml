@@ -3,21 +3,20 @@ kind: FlowCollector
 metadata:
   name: cluster
 spec:
-  namespace: netobserv
-  deploymentModel: Service
-  networkPolicy:
-    enable: true
-    additionalNamespaces: []
+  # namespace: netobserv  # default
+  # deploymentModel: Service  # default
+  # networkPolicy:
+  #   enable: true  # default on OVN-Kubernetes, false otherwise
+  #   additionalNamespaces: []
   agent:
-    type: eBPF
+    # type: eBPF  # default
     ebpf:
-      # imagePullPolicy: IfNotPresent
-      # logLevel: info
+      # imagePullPolicy: IfNotPresent  # default
+      # logLevel: info  # default
       sampling: 50
       cacheActiveTimeout: 5s
       cacheMaxFlows: 100000
-      # Change privileged to "true" on old kernel version not knowing CAP_BPF or when using "PacketDrop" feature
-      privileged: false
+      # privileged: false  # default - Change to "true" on old kernels not knowing CAP_BPF or when using "PacketDrop" feature
       # features:
       # - "PacketDrop"
       # - "DNSTracking"
@@ -29,9 +28,13 @@ spec:
       # - "IPSec"
       interfaces: []
       excludeInterfaces: ["lo"]
-      # kafkaBatchSize: 1048576
+      # kafkaBatchSize: 1048576  # default
+      # metrics:
+      #   enable: true  # default
+      #   server:
+      #     port: 9400
       #flowFilter:
-      #  enable: true
+      #  enable: false  # default - set to true to enable flow filtering
       #  rules:
       #  - action: Accept
       #    cidr: 0.0.0.0/0
@@ -52,21 +55,18 @@ spec:
       #    cidr: 2.2.2.2/24
       #    protocol: TCP
       #    sourcePorts: 53
-      # metrics:
-      #   server:
-      #     port: 9400
-      # Custom optionnal resources configuration
+      # Custom optional resources configuration
       # resources:
       #   requests:
       #     memory: 50Mi
       #     cpu: 100m
       #   limits:
       #     memory: 800Mi
-  # kafka:
+  # kafka:  # Only needed when deploymentModel: Kafka
   #   address: "kafka-cluster-kafka-bootstrap.netobserv"
   #   topic: network-flows
   #   tls:
-  #     enable: false
+  #     enable: false  # default
   #     caCert:
   #       type: secret
   #       name: kafka-cluster-cluster-ca-cert
@@ -77,15 +77,15 @@ spec:
   #       certFile: user.crt
   #       certKey: user.key
   processor:
-    # imagePullPolicy: IfNotPresent
-    # logLevel: info
-    # Change logTypes to "Conversations", "EndedConversations" or "All" to enable conversation tracking
-    # logTypes: Flows
+    # imagePullPolicy: IfNotPresent  # default
+    # logLevel: info  # default
+    # logTypes: Flows  # default - Change to "Conversations", "EndedConversations" or "All" for conversation tracking
+    # multiClusterDeployment: false  # default - Set to true to add clusterName label
     # Append a unique cluster name to each record
     # clusterName: <CLUSTER NAME>
-    # addZone: true
+    # addZone: false  # default - Set to true to add zone awareness
     # subnetLabels:
-    #   openShiftAutoDetect: true
+    #   openShiftAutoDetect: true  # default on OpenShift
     #   customLabels:
     #   - cidrs: []
     #     name: ""
@@ -93,7 +93,7 @@ spec:
       # server:
       #   port: 9401
       disableAlerts: []
-      # includeList:
+      # includeList:  # Defaults to a standard set of metrics, override here if needed
       # - "node_ingress_bytes_total"
       # - "node_ingress_packets_total"
       # - "workload_ingress_bytes_total"
@@ -102,7 +102,7 @@ spec:
       # - "namespace_drop_packets_total"
       # - "node_drop_packets_total"
       # - "namespace_rtt_seconds"
-      # healthRules:
+      # healthRules:  # Default health rules are configured, override here if needed
       # - template: PacketDropsByKernel
       #   mode: Alert  # or "Recording" to generate recording rules instead of alerts
       #   variants:
@@ -122,14 +122,15 @@ spec:
       #       info: "5"
       #     groupBy: Namespace
       #     lowVolumeThreshold: "5"
-    slicesConfig:
-      enable: false
-      # collectionMode: AllowList
-      # namespacesAllowList:
-      # - /openshift-.*|netobserv.*/
+    # slicesConfig:
+    #   enable: false  # default - Set to true to enable FlowCollectorSlice feature
+    #   collectionMode: AlwaysCollect  # default
+    #   namespacesAllowList:
+    #   - /openshift-.*|netobserv.*/
     # FLP replicas
-    consumerReplicas: 3
-    # Custom optionnal resources configuration
+    # consumerReplicas: 3  # default
+    # unmanagedReplicas: false  # default - Set to true when using external autoscaler
+    # Custom optional resources configuration
     # resources:
     #   requests:
     #     memory: 100Mi
@@ -137,8 +138,8 @@ spec:
     #   limits:
     #     memory: 800Mi
     # deduper:
-    #   mode: Sample
-    #   sampling: 100
+    #   mode: Disabled  # default - Set to "Sample" or "Drop" to enable
+    #   sampling: 50  # default
     # filters:
     #   - query: |
     #       (SrcK8S_Namespace="netobserv" OR (SrcK8S_Namespace="openshift-console" AND DstK8S_Namespace="netobserv"))
@@ -150,111 +151,112 @@ spec:
     #       # Any of: MAC, IP, Interface
     #       index: [MAC]
   loki:
-    enable: true
+    # enable: true  # default
     # Change mode to "LokiStack" to use with the loki operator
     mode: Monolithic
     monolithic:
       # NB: trailing dot (...local.:3100) is a DNS optimization for exact name match without extra search
       url: 'http://loki.netobserv.svc.cluster.local.:3100/'
-      # tenantID: netobserv
+      # tenantID: netobserv  # default
       # tls:
-      #   enable: false
+      #   enable: false  # default
       #   caCert:
       #     type: configmap
       #     name: loki-gateway-ca-bundle
       #     certFile: service-ca.crt
-      # Enable automatic install for dev / demo purposes
-      # installDemoLoki: true
-    lokiStack:
-      name: loki
-      # Change loki operator instance namespace
-      # namespace: loki-operator
+      # installDemoLoki: false  # default - Enable for dev/demo purposes ONLY
+    # lokiStack:  # Only needed when mode: LokiStack
+    #   name: loki  # default
+    #   namespace: <loki-operator-namespace>  # defaults to spec.namespace
     # Console plugin read timeout
-    # readTimeout: 30s
+    # readTimeout: 30s  # default
     # # Write stage configuration
-    # writeTimeout: 10s
-    # writeBatchWait: 1s
-    # writeBatchSize: 10485760
+    # writeTimeout: 10s  # default
+    # writeBatchWait: 1s  # default
+    # writeBatchSize: 10485760  # default
   # prometheus:
   #   querier:
-  #     enable: true
-  #     mode: Auto
-  #     timeout: 30s
-  consolePlugin:
-    enable: true
-    # imagePullPolicy: IfNotPresent
-    # logLevel: info
-    # Scaling configuration
-    # replicas: 1
-    # autoscaler:
-    #   status: Disabled
-    #   minReplicas: 1
-    #   maxReplicas: 3
-    #   metrics:
-    #   - type: Resource
-    #     resource:
-    #       name: cpu
-    #       target:
-    #         type: Utilization
-    #         averageUtilization: 50
-    # Custom optionnal port-to-service name translation
-    # portNaming:
-    #   enable: true
-    #   portNames:
-    #     "3100": loki
-    # Custom optionnal filter presets
-    # quickFilters:
-    # - name: Applications
-    #   filter:
-    #     flow_layer: '"app"'
-    #   default: true
-    # - name: Infrastructure
-    #   filter:
-    #     flow_layer: '"infra"'
-    # - name: Pods network
-    #   filter:
-    #     src_kind: '"Pod"'
-    #     dst_kind: '"Pod"'
-    #   default: true
-    # - name: Services network
-    #   filter:
-    #     dst_kind: '"Service"'
-    # - name: External ingress
-    #   filter:
-    #     src_subnet_label: '"",EXT:'
-    # - name: External egress
-    #   filter:
-    #     dst_subnet_label: '"",EXT:'
-    # Custom optionnal resources configuration
-    # resources:
-    #   requests:
-    #     memory: 50Mi
-    #     cpu: 100m
-    #   limits:
-    #     memory: 100Mi
-  exporters: []
-    # - type: Kafka
-    #   kafka:
-    #     address: "kafka-cluster-kafka-bootstrap.netobserv"
-    #     topic: netobserv-flows-export
-    # or
-    # - type: IPFIX
-    #   ipfix:
-    #     # see https://github.com/netobserv/flowlogs-pipeline/blob/main/contrib/kubernetes/ipfix-collector-stdout.yaml
-    #     targetHost: "flp-ipfix-stdout.netobserv.svc.cluster.local"
-    #     targetPort: 2055
-    #     transport: UDP
-    #     enterpriseID: 2021
-    # or
-    # - type: OpenTelemetry
-    #   openTelemetry:
-    #     targetHost: "1.2.3.4:443"
-    #     targetPort: 4317
-    #     protocol: grpc
-    #     logs:
-    #       enable: true
-    #     metrics:
-    #       enable: true
-    #       prefix: netobserv
-    #       pushTimeInterval: 20s
-    #       expiryTime: 2m
+  #     enable: true  # default
+  #     mode: Auto  # default
+  #     timeout: 30s  # default
+  # consolePlugin:
+  #   enable: true  # default
+  #   standalone: false  # default
+  #   imagePullPolicy: IfNotPresent  # default
+  #   logLevel: info  # default
+  #   # Scaling configuration
+  #   replicas: 1  # default
+  #   unmanagedReplicas: false  # default - Set to true when using external autoscaler
+  #   autoscaler:  # deprecated
+  #     status: Disabled
+  #     minReplicas: 1
+  #     maxReplicas: 3
+  #     metrics:
+  #     - type: Resource
+  #       resource:
+  #         name: cpu
+  #         target:
+  #           type: Utilization
+  #           averageUtilization: 50
+  #   # Custom optional port-to-service name translation
+  #   portNaming:
+  #     enable: true  # default
+  #     portNames:
+  #       "3100": loki
+  #   # Custom optional filter presets (defaults provided, override here if needed)
+  #   quickFilters:
+  #   - name: Applications
+  #     filter:
+  #       flow_layer: '"app"'
+  #     default: true
+  #   - name: Infrastructure
+  #     filter:
+  #       flow_layer: '"infra"'
+  #   - name: Pods network
+  #     filter:
+  #       src_kind: '"Pod"'
+  #       dst_kind: '"Pod"'
+  #     default: true
+  #   - name: Services network
+  #     filter:
+  #       dst_kind: '"Service"'
+  #   - name: External ingress
+  #     filter:
+  #       src_subnet_label: '"",EXT:'
+  #   - name: External egress
+  #     filter:
+  #       dst_subnet_label: '"",EXT:'
+  #   # Custom optional resources configuration
+  #   resources:
+  #     requests:
+  #       memory: 50Mi
+  #       cpu: 100m
+  #     limits:
+  #       memory: 100Mi
+  # exporters: # empty by default, uncomment examples below to add exporters
+  # Example: Kafka exporter
+  #   - type: Kafka
+  #     kafka:
+  #       address: "kafka-cluster-kafka-bootstrap.netobserv"
+  #       topic: netobserv-flows-export
+  # Example: IPFIX exporter
+  #   - type: IPFIX
+  #     ipfix:
+  #       # see https://github.com/netobserv/flowlogs-pipeline/blob/main/contrib/kubernetes/ipfix-collector-stdout.yaml
+  #       targetHost: "flp-ipfix-stdout.netobserv.svc.cluster.local"
+  #       targetPort: 2055
+  #       transport: UDP
+  #       enterpriseID: 2021
+  # Example: OpenTelemetry exporter
+  #   - type: OpenTelemetry
+  #     openTelemetry:
+  #       targetHost: "1.2.3.4:443"
+  #       targetPort: 4317
+  #       protocol: grpc
+  #       logs:
+  #         enable: true  # default
+  #       metrics:
+  #         enable: true  # default
+  #         prefix: netobserv
+  #         pushTimeInterval: 20s
+  #         expiryTime: 2m

@@ -1440,6 +1440,7 @@ spec:
                               type: object
                           type: object
                         privileged:
+                          default: false
                           description: |-
                             Privileged mode for the eBPF Agent container. When set to `true`, the agent is able to capture more traffic, including from secondary interfaces.
                             When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
@@ -2932,6 +2933,7 @@ spec:
                         description: '`QuickFilter` defines preset configuration for Console''s quick filters'
                         properties:
                           default:
+                            default: false
                             description: '`default` defines whether this filter should be active by default or not'
                             type: boolean
                           filter:
@@ -3023,12 +3025,14 @@ spec:
                           type: object
                       type: object
                     standalone:
+                      default: false
                       description: |-
                         Deploy as a standalone console, instead of a plugin of the OpenShift Console.
                         This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
                         [Unsupported (*)].
                       type: boolean
                     unmanagedReplicas:
+                      default: false
                       description: If `unmanagedReplicas` is `true`, the operator will not reconcile `replicas`. This is useful when using a pod autoscaler.
                       type: boolean
                   type: object
@@ -5774,6 +5778,7 @@ spec:
                           type: boolean
                       type: object
                     unmanagedReplicas:
+                      default: false
                       description: If `unmanagedReplicas` is `true`, the operator will not reconcile `consumerReplicas`. This is useful when using a pod autoscaler.
                       type: boolean
                   type: object
@@ -5872,6 +5877,7 @@ spec:
                                   type: string
                               type: object
                             forwardUserToken:
+                              default: false
                               description: Set `true` to forward logged in user token in queries to Prometheus
                               type: boolean
                             tls:
@@ -5942,6 +5948,8 @@ spec:
                               default: http://prometheus:9090
                               description: '`url` is the address of an existing Prometheus service to use for querying metrics.'
                               type: string
+                          required:
+                            - forwardUserToken
                           type: object
                         mode:
                           default: Auto

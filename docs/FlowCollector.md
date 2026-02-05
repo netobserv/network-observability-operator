@@ -368,6 +368,8 @@ Otherwise it is matched as a case-sensitive string.<br/>
           Privileged mode for the eBPF Agent container. When set to `true`, the agent is able to capture more traffic, including from secondary interfaces.
 When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
 Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3091,6 +3093,8 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           Deploy as a standalone console, instead of a plugin of the OpenShift Console.
 This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
 [Unsupported (*)].<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -3098,6 +3102,8 @@ This is not recommended when using with OpenShift, as it doesn't provide an inte
         <td>boolean</td>
         <td>
           If `unmanagedReplicas` is `true`, the operator will not reconcile `replicas`. This is useful when using a pod autoscaler.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -5916,6 +5922,8 @@ for example, `filter: {"src_namespace": "namespace1,namespace2"}`.<br/>
         <td>boolean</td>
         <td>
           `default` defines whether this filter should be active by default or not<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -8598,6 +8606,8 @@ When a subnet matches the source or destination IP of a flow, a corresponding fi
         <td>boolean</td>
         <td>
           If `unmanagedReplicas` is `true`, the operator will not reconcile `consumerReplicas`. This is useful when using a pod autoscaler.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12292,19 +12302,21 @@ Prometheus configuration for `Manual` mode.
         </tr>
     </thead>
     <tbody><tr>
+        <td><b>forwardUserToken</b></td>
+        <td>boolean</td>
+        <td>
+          Set `true` to forward logged in user token in queries to Prometheus<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecprometheusqueriermanualalertmanager">alertManager</a></b></td>
         <td>object</td>
         <td>
           AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
 When used in OpenShift it can be left empty to use the Console API instead.
 [Unsupported (*)].<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>forwardUserToken</b></td>
-        <td>boolean</td>
-        <td>
-          Set `true` to forward logged in user token in queries to Prometheus<br/>
         </td>
         <td>false</td>
       </tr><tr>

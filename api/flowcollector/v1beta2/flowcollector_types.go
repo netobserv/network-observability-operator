@@ -372,7 +372,7 @@ type FlowCollectorEBPF struct {
 	// Privileged mode for the eBPF Agent container. When set to `true`, the agent is able to capture more traffic, including from secondary interfaces.
 	// When ignored or set to `false`, the operator sets granular capabilities (BPF, PERFMON, NET_ADMIN) to the container.
 	// Some agent features require the privileged mode, such as packet drops tracking (see `features`) and SR-IOV support.
-	// +optional
+	//+kubebuilder:default:=false
 	Privileged bool `json:"privileged,omitempty"`
 
 	//+kubebuilder:default:=1048576
@@ -656,7 +656,7 @@ type FlowCollectorFLP struct {
 	ConsumerReplicas *int32 `json:"consumerReplicas,omitempty"`
 
 	// If `unmanagedReplicas` is `true`, the operator will not reconcile `consumerReplicas`. This is useful when using a pod autoscaler.
-	// +optional
+	//+kubebuilder:default:=false
 	UnmanagedReplicas bool `json:"unmanagedReplicas,omitempty"`
 
 	//+kubebuilder:default:=1000
@@ -1030,7 +1030,7 @@ type PrometheusQuerierManual struct {
 	TLS ClientTLS `json:"tls"`
 
 	// Set `true` to forward logged in user token in queries to Prometheus
-	// +optional
+	//+kubebuilder:default:=false
 	ForwardUserToken bool `json:"forwardUserToken"`
 
 	// AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
@@ -1106,6 +1106,7 @@ type FlowCollectorConsolePlugin struct {
 	// Deploy as a standalone console, instead of a plugin of the OpenShift Console.
 	// This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
 	// [Unsupported (*)].
+	//+kubebuilder:default:=false
 	Standalone bool `json:"standalone,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
@@ -1114,7 +1115,7 @@ type FlowCollectorConsolePlugin struct {
 	Replicas *int32 `json:"replicas,omitempty"`
 
 	// If `unmanagedReplicas` is `true`, the operator will not reconcile `replicas`. This is useful when using a pod autoscaler.
-	// +optional
+	//+kubebuilder:default:=false
 	UnmanagedReplicas bool `json:"unmanagedReplicas,omitempty"`
 
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
@@ -1178,7 +1179,7 @@ type QuickFilter struct {
 	// +kubebuilder:MinProperties:=1
 	Filter map[string]string `json:"filter"`
 	// `default` defines whether this filter should be active by default or not
-	// +optional
+	//+kubebuilder:default:=false
 	Default bool `json:"default,omitempty"`
 }
 
