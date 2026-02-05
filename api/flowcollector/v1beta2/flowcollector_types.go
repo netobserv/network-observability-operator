@@ -214,7 +214,8 @@ type EBPFMetrics struct {
 	Server MetricsServerConfig `json:"server,omitempty"`
 
 	// Set `enable` to `false` to disable eBPF agent metrics collection. It is enabled by default.
-	// +optional
+	//+kubebuilder:default:=true
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// `disableAlerts` is a list of alerts that should be disabled.
@@ -299,6 +300,8 @@ type EBPFFlowFilterRule struct {
 // `EBPFFlowFilter` defines the desired eBPF agent configuration regarding flow filtering.
 type EBPFFlowFilter struct {
 	// Set `enable` to `true` to enable the eBPF flow filtering feature.
+	//+kubebuilder:default:=false
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// [Deprecated (*)]. This setting is not used anymore. It is replaced with the `rules` list.
@@ -456,13 +459,15 @@ type FlowCollectorIPFIXReceiver struct {
 
 type FlowCollectorOpenTelemetryLogs struct {
 	// Set `enable` to `true` to send logs to an OpenTelemetry receiver.
-	// +kubebuilder:default:=true
+	//+kubebuilder:default:=true
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 }
 
 type FlowCollectorOpenTelemetryMetrics struct {
 	// Set `enable` to `true` to send metrics to an OpenTelemetry receiver.
-	// +kubebuilder:default:=true
+	//+kubebuilder:default:=true
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// Specify how often metrics are sent to a collector.
@@ -679,13 +684,15 @@ type FlowCollectorFLP struct {
 	// `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.
 	ClusterName string `json:"clusterName,omitempty"`
 
-	//+kubebuilder:default:=false
 	// Set `multiClusterDeployment` to `true` to enable multi clusters feature. This adds `clusterName` label to flows data
+	//+kubebuilder:default:=false
+	// +optional
 	MultiClusterDeployment *bool `json:"multiClusterDeployment,omitempty"`
 
-	//+optional
 	// `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
 	// This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
+	//+kubebuilder:default:=false
+	//+optional
 	AddZone *bool `json:"addZone,omitempty"`
 
 	//+optional
@@ -903,6 +910,7 @@ type LokiMonolithParams struct {
 	// This is useful for development and demo purposes. Do not use it in production.
 	// [Unsupported (*)].
 	//+kubebuilder:default:=false
+	//+optional
 	InstallDemoLoki *bool `json:"installDemoLoki,omitempty"`
 
 	//+kubebuilder:default:="http://loki:3100/"
@@ -950,6 +958,7 @@ type FlowCollectorLoki struct {
 	// If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
 	// If they are both disabled, the Console plugin is not deployed.
 	//+kubebuilder:default:=true
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// `mode` must be set according to the installation mode of Loki:<br>
@@ -1064,6 +1073,8 @@ type PrometheusQuerier struct {
 	// such as getting per-pod information or viewing raw flows.
 	// If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
 	// If they are both disabled, the Console plugin is not deployed.
+	//+kubebuilder:default:=true
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
@@ -1087,8 +1098,9 @@ type PrometheusQuerier struct {
 
 // FlowCollectorConsolePlugin defines the desired ConsolePlugin state of FlowCollector.
 type FlowCollectorConsolePlugin struct {
-	//+kubebuilder:default:=true
 	// Enables the console plugin deployment.
+	//+kubebuilder:default:=true
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// Deploy as a standalone console, instead of a plugin of the OpenShift Console.
@@ -1145,8 +1157,9 @@ type FlowCollectorConsolePlugin struct {
 
 // Configuration of the port to service name translation feature of the console plugin
 type ConsolePluginPortConfig struct {
-	//+kubebuilder:default:=true
 	// Enable the console plugin port-to-service name translation
+	//+kubebuilder:default:=true
+	//+optional
 	Enable *bool `json:"enable,omitempty"`
 
 	// `portNames` defines additional port names to use in the console,
@@ -1462,11 +1475,11 @@ type AdvancedPluginConfig struct {
 	//+optional
 	Args []string `json:"args,omitempty"`
 
-	//+kubebuilder:default:=true
-	//+optional
 	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
 	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
 	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
+	//+kubebuilder:default:=true
+	//+optional
 	Register *bool `json:"register,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
@@ -1486,6 +1499,7 @@ type SubnetLabels struct {
 	// `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
 	// OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
 	// external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default on OpenShift.
+	//+kubebuilder:default:=true
 	//+optional
 	OpenShiftAutoDetect *bool `json:"openShiftAutoDetect,omitempty"`
 

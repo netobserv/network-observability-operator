@@ -1199,6 +1199,7 @@ spec:
                             - Egress
                             type: string
                           enable:
+                            default: false
                             description: Set `enable` to `true` to enable the eBPF
                               flow filtering feature.
                             type: boolean
@@ -1457,6 +1458,7 @@ spec:
                               type: string
                             type: array
                           enable:
+                            default: true
                             description: Set `enable` to `false` to disable eBPF agent
                               metrics collection. It is enabled by default.
                             type: boolean
@@ -4307,6 +4309,7 @@ spec:
                   enriches them, generates metrics, and forwards them to the Loki persistence layer and/or any available exporter.
                 properties:
                   addZone:
+                    default: false
                     description: |-
                       `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
                       This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.
@@ -6227,6 +6230,7 @@ spec:
                           type: object
                         type: array
                       openShiftAutoDetect:
+                        default: true
                         description: |-
                           `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
                           OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
@@ -6248,6 +6252,7 @@ spec:
                       settings, used in the Console plugin.
                     properties:
                       enable:
+                        default: true
                         description: |-
                           When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
                           It is enbaled by default: set it to `false` to disable this feature.

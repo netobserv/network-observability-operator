@@ -2239,6 +2239,8 @@ To filter two ports, use a "port1,port2" in string format. For example, `ports: 
         <td>boolean</td>
         <td>
           Set `enable` to `true` to enable the eBPF flow filtering feature.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -2510,6 +2512,8 @@ Possible values are:<br>
         <td>boolean</td>
         <td>
           Set `enable` to `false` to disable eBPF agent metrics collection. It is enabled by default.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -8425,6 +8429,8 @@ enriches them, generates metrics, and forwards them to the Loki persistence laye
         <td>
           `addZone` allows availability zone awareness by labeling flows with their source and destination zones.
 This feature requires the "topology.kubernetes.io/zone" label to be set on nodes.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12136,6 +12142,8 @@ If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subne
           `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
 OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
 external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default on OpenShift.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -12242,6 +12250,8 @@ Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disa
 such as getting per-pod information or viewing raw flows.
 If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
 If they are both disabled, the Console plugin is not deployed.<br/>
+          <br/>
+            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr><tr>
