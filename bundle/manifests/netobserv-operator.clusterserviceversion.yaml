@@ -78,6 +78,11 @@ metadata:
               "slicesConfig": {
                 "enable": false
               }
+            },
+            "prometheus": {
+              "querier": {
+                "enable": true
+              }
             }
           }
         }
