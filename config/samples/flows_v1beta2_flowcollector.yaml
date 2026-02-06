@@ -175,9 +175,9 @@ spec:
     # writeTimeout: 10s
     # writeBatchWait: 1s
     # writeBatchSize: 10485760
-  # prometheus:
-  #   querier:
-  #     enable: true
+  prometheus:
+    querier:
+      enable: true
   #     mode: Auto
   #     timeout: 30s
   consolePlugin:
