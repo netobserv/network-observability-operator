@@ -11,11 +11,11 @@ spec:
   agent:
     type: eBPF
     ebpf:
-      # imagePullPolicy: IfNotPresent
-      # logLevel: info
+      # imagePullPolicy: Always
+      # logLevel: debug
       sampling: 50
-      cacheActiveTimeout: 5s
-      cacheMaxFlows: 100000
+      cacheActiveTimeout: 15s
+      cacheMaxFlows: 120000
       # Change privileged to "true" on old kernel version not knowing CAP_BPF or when using "PacketDrop" feature
       privileged: false
       # features:
@@ -77,8 +77,8 @@ spec:
   #       certFile: user.crt
   #       certKey: user.key
   processor:
-    # imagePullPolicy: IfNotPresent
-    # logLevel: info
+    # imagePullPolicy: Always
+    # logLevel: debug
     # Change logTypes to "Conversations", "EndedConversations" or "All" to enable conversation tracking
     # logTypes: Flows
     # Append a unique cluster name to each record
@@ -182,8 +182,8 @@ spec:
   #     timeout: 30s
   consolePlugin:
     enable: true
-    # imagePullPolicy: IfNotPresent
-    # logLevel: info
+    # imagePullPolicy: Always
+    # logLevel: debug
     # Scaling configuration
     # replicas: 1
     # autoscaler:
