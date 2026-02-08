@@ -14,6 +14,7 @@ const (
 	tagNamespaces = "namespaces"
 	tagNodes      = "nodes"
 	tagWorkloads  = "workloads"
+	tagNetworks   = "networks"
 	tagIngress    = "ingress"
 	tagEgress     = "egress"
 	tagBytes      = "bytes"
@@ -26,6 +27,7 @@ var (
 		tagNodes:      {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_HostName", "DstK8S_HostName"},
 		tagNamespaces: {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
 		tagWorkloads:  {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
+		tagNetworks:   {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_NetworkName", "DstK8S_NetworkName", "K8S_FlowLayer"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
@@ -44,7 +46,7 @@ type taggedMetricDefinition struct {
 }
 
 func init() {
-	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads, tagNetworks} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
 		// Bytes / packets metrics
@@ -88,7 +90,7 @@ func init() {
 			tags: []string{group, group + "-flows", "flows"},
 		})
 	}
-	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads, tagNetworks} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
 		// RTT metrics
@@ -109,7 +111,7 @@ func init() {
 			tags: []string{group, "rtt"},
 		})
 	}
-	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads, tagNetworks} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
 		// Drops metrics
@@ -144,7 +146,7 @@ func init() {
 			tags: []string{group, tagBytes, "drop"},
 		})
 	}
-	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads, tagNetworks} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
 		// DNS metrics
@@ -168,7 +170,7 @@ func init() {
 		})
 	}
 
-	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads, tagNetworks} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
 		// Netpol metrics
@@ -195,7 +197,7 @@ func init() {
 		})
 	}
 
-	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads, tagNetworks} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
 		// IPSEC
@@ -320,6 +322,9 @@ func GetDefinitions(fc *flowslatest.FlowCollectorSpec, allMetrics bool) []metric
 	}
 	if !fc.Processor.IsMultiClusterEnabled() {
 		labelsToRemove = append(labelsToRemove, "K8S_ClusterName")
+	}
+	if !fc.Agent.EBPF.IsUDNMappingEnabled() && !fc.Processor.HasSecondaryIndexes() {
+		labelsToRemove = append(labelsToRemove, "SrcK8S_NetworkName", "DstK8S_NetworkName")
 	}
 
 	var filterRecordType *metricslatest.MetricFilter
