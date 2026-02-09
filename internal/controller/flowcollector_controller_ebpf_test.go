@@ -57,7 +57,7 @@ func flowCollectorEBPFSpecs() {
 						Type: "eBPF",
 						EBPF: flowslatest.FlowCollectorEBPF{
 							Sampling:           ptr.To(int32(123)),
-							CacheActiveTimeout: "15s",
+							CacheActiveTimeout: "1s",
 							CacheMaxFlows:      100,
 							Interfaces:         []string{"veth0", "/^br-/"},
 							ExcludeInterfaces:  []string{"br-3", "lo"},
@@ -96,7 +96,7 @@ func flowCollectorEBPFSpecs() {
 			Expect(*spec.Containers[0].SecurityContext.RunAsUser).To(Equal(int64(0)))
 			Expect(spec.Containers[0].Env).To(ContainElements(
 				v1.EnvVar{Name: "EXPORT", Value: "grpc"},
-				v1.EnvVar{Name: "CACHE_ACTIVE_TIMEOUT", Value: "15s"},
+				v1.EnvVar{Name: "CACHE_ACTIVE_TIMEOUT", Value: "1s"},
 				v1.EnvVar{Name: "CACHE_MAX_FLOWS", Value: "100"},
 				v1.EnvVar{Name: "LOG_LEVEL", Value: "trace"},
 				v1.EnvVar{Name: "INTERFACES", Value: "veth0,/^br-/"},

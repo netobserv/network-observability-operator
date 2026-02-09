@@ -110,7 +110,7 @@ func flowCollectorIsoSpecs() {
 				},
 				EBPF: flowslatest.FlowCollectorEBPF{
 					Sampling:           &zero,
-					CacheActiveTimeout: "5s",
+					CacheActiveTimeout: "15s",
 					CacheMaxFlows:      100,
 					ImagePullPolicy:    "Always",
 					Advanced:           &flowslatest.AdvancedAgentConfig{},
