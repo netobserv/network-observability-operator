@@ -9,7 +9,7 @@ To release them, a tag in the format "v1.6.0-community" or "v1.6.0-crc0" must be
 E.g:
 
 ```bash
-version="v1.10.1-community"
+version="v1.11.0-community"
 git tag -a "$version" -m "$version"
 git push upstream --tags
 ```
@@ -24,7 +24,7 @@ We can then proceed with the operator. Edit the [Makefile](./Makefile) to update
 BUNDLE_SET_DATE=true make update-bundle
 
 # Set desired operator version - CAREFUL, no leading "v" here
-version="1.10.1-community"
+version="1.11.0-community"
 vv=v$version
 test_branch=test-$vv
 
@@ -143,15 +143,15 @@ From the operator repository:
 ```bash
 helm package helm/
 index_path=/path/to/netobserv.github.io/static/helm
-mkdir -p $index_path/new && mv netobserv-operator-1.10.1.tgz $index_path/new && cd $index_path
+mkdir -p $index_path/new && mv netobserv-operator-1.11.0.tgz $index_path/new && cd $index_path
 helm repo index --merge index.yaml new/ --url https://netobserv.io/static/helm/
 mv new/* . && rmdir new
 
 # Now, check there's nothing wrong in the generated files before commit (comparing last 2 versions)
 colordiff <(yq '.entries.netobserv-operator[1]' index.yaml) <(yq '.entries.netobserv-operator[0]' index.yaml)
 
-git add netobserv-operator-1.10.1.tgz index.yaml
-git commit -m "Publish helm 1.10.1-community"
+git add netobserv-operator-1.11.0.tgz index.yaml
+git commit -m "Publish helm 1.11.0-community"
 git push upstream HEAD:main
 ```
 
