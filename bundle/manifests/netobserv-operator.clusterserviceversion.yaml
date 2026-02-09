@@ -39,8 +39,8 @@ metadata:
           "spec": {
             "agent": {
               "ebpf": {
-                "cacheActiveTimeout": "5s",
-                "cacheMaxFlows": 100000,
+                "cacheActiveTimeout": "15s",
+                "cacheMaxFlows": 120000,
                 "excludeInterfaces": [
                   "lo"
                 ],
