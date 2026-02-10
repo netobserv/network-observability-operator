@@ -71,23 +71,24 @@ A couple of settings deserve special attention:
 ## Resource considerations
 
 The following table outlines examples of resource considerations for clusters with certain workload sizes.
-The examples outlined in the table demonstrate scenarios that are tailored to specific workloads. Consider each example only as a baseline from which adjustments can be made to accommodate your workload needs.
+The examples outlined in the table demonstrate scenarios that are tailored to specific workloads. Consider each example only as a baseline from which adjustments can be made to accommodate your workload needs. The test beds are:
+
+- Extra small: 10 nodes cluster, 4 vCPUs and 16GiB mem per worker, LokiStack size `1x.extra-small`, tested on AWS M6i instances.
+- Small: 25 nodes cluster, 16 vCPUs and 64GiB mem per worker, LokiStack size `1x.small`, tested on AWS M6i instances.
+- Large: 250 nodes cluster, 16 vCPUs and 64GiB mem per worker, LokiStack size `1x.medium`, tested on AWS M6i instances. In addition to this worker and its controller, 3 infra nodes (size `M6i.12xlarge`) and 1 workload node (size `M6i.8xlarge`) were tested.
 
 
-| Resource recommendations                        | Extra small (10 nodes) | Small (25 nodes)       | Medium (65 nodes) **    | Large (120 nodes) **          |
-| ----------------------------------------------- | ---------------------- | ---------------------- | ----------------------- | ----------------------------- |
-| *Worker Node vCPU and memory*                   | 4 vCPUs\| 16GiB mem *  | 16 vCPUs\| 64GiB mem * | 16 vCPUs\| 64GiB mem  * |16 vCPUs\| 64GiB Mem *         |
-| *LokiStack size*                                | `1x.extra-small`       | `1x.small`             | `1x.small`              | `1x.medium`                   |
-| *Network Observability controller memory limit* | 400Mi (default)        | 400Mi (default)        | 400Mi (default)         | 800Mi                         |
-| *eBPF sampling interval*                        | 50 (default)           | 50 (default)           | 50 (default)            | 50 (default)                  |
-| *eBPF memory limit*                             | 800Mi (default)        | 800Mi (default)        | 2000Mi                  | 800Mi (default)               |
-| *FLP memory limit*                              | 800Mi (default)        | 800Mi (default)        | 800Mi (default)         | 800Mi (default)               |
-| *FLP Kafka partitions*                          | N/A                    | 48                     | 48                      | 48                            |
-| *Kafka consumer replicas*                       | N/A                    | 24                     | 24                      | 24                            |
-| *Kafka brokers*                                 | N/A                    | 3 (default)            | 3 (default)             | 3 (default)                   |
-
-*. Tested with AWS M6i instances.
-**. In addition to this worker and its controller, 3 infra nodes (size `M6i.12xlarge`) and 1 workload node (size `M6i.8xlarge`) were tested.
+| Resource recommendations                                                          | Extra small (10 nodes) | Small (25 nodes)    | Large (250 nodes)    |
+| --------------------------------------------------------------------------------- | ---------------------- | ------------------- | -------------------- |
+| Operator memory limit<br>*In `Subscription` `spec.config.resources`*              | 400Mi (default)        | 400Mi (default)     | 400Mi (default)      |
+| eBPF agent sampling interval<br>*In `FlowCollector` `spec.agent.ebpf.sampling`*   | 50 (default)           | 50 (default)        | 50 (default)         |
+| eBPF agent memory limit<br>*In `FlowCollector` `spec.agent.ebpf.resources`*       | 800Mi (default)        | 800Mi (default)     | 1600Mi               |
+| eBPF agent cache size<br>*In `FlowCollector` `spec.agent.ebpf.cacheMaxSize`*      | 50,000                 | 120,000 (default)   | 120,000 (default)    |
+| Processor memory limit<br>*In `FlowCollector` `spec.processor.resources`*         | 800Mi (default)        | 800Mi (default)     | 800Mi (default)      |
+| Processor replicas<br>*In `FlowCollector` `spec.processor.consumerReplicas`*      | 3 (default)            | 6                   | 18                   |
+| Deployment model<br>*In `FlowCollector` `spec.deploymentModel`*                   | Service (default)      | Kafka               | Kafka                |
+| Kafka partitions<br>*In your Kafka installation*                                  | N/A                    | 48                  | 48                   |
+| Kafka brokers<br>*In your Kafka installation*                                     | N/A                    | 3 (default)         | 3 (default)          |
 
 ## Further reading
 
