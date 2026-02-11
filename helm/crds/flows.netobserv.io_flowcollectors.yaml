@@ -5754,7 +5754,9 @@ spec:
                                   type: string
                                 type: array
                               name:
-                                description: Label name, used to flag matching flows.
+                                description: |-
+                                  Label name, used to flag matching flows.
+                                  External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
                                 pattern: ^[a-zA-Z_:-][a-zA-Z0-9_:-]*$
                                 type: string
                             required:
@@ -5782,7 +5784,7 @@ spec:
                         enable:
                           description: |-
                             When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
-                            It is enbaled by default: set it to `false` to disable this feature.
+                            It is enabled by default: set it to `false` to disable this feature.
                             The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
                             Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
                             such as getting per-pod information or viewing raw flows.

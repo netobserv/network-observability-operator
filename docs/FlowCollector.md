@@ -12169,7 +12169,8 @@ SubnetLabel allows to label subnets and IPs, such as to identify cluster-externa
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Label name, used to flag matching flows.<br/>
+          Label name, used to flag matching flows.
+External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/><br/>
         </td>
         <td>true</td>
       </tr></tbody>
@@ -12236,7 +12237,7 @@ Prometheus querying configuration, such as client settings, used in the Console 
         <td>boolean</td>
         <td>
           When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
-It is enbaled by default: set it to `false` to disable this feature.
+It is enabled by default: set it to `false` to disable this feature.
 The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
 Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
 such as getting per-pod information or viewing raw flows.

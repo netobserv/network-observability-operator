@@ -189,13 +189,13 @@ override the default Linux capabilities from there.
 
 | `cacheActiveTimeout`
 | `string`
-| `cacheActiveTimeout` is the max period during which the reporter aggregates flows before sending.
+| `cacheActiveTimeout` is the period during which the agent aggregates flows before sending.
 Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load,
 however you can expect higher memory consumption and an increased latency in the flow collection.
 
 | `cacheMaxFlows`
 | `integer`
-| `cacheMaxFlows` is the max number of flows in an aggregate; when reached, the reporter sends the flows.
+| `cacheMaxFlows` is the maximum number of flows in an aggregate; when reached, the reporter sends the flows.
 Increasing `cacheMaxFlows` and `cacheActiveTimeout` can decrease the network traffic overhead and the CPU load,
 however you can expect higher memory consumption and an increased latency in the flow collection.
 
@@ -3591,6 +3591,8 @@ Required::
 | `name`
 | `string`
 | Label name, used to flag matching flows.
+External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided. +
+
 
 |===
 == .spec.prometheus
