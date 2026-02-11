@@ -12169,7 +12169,8 @@ SubnetLabel allows to label subnets and IPs, such as to identify cluster-externa
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Label name, used to flag matching flows.<br/>
+          Label name, used to flag matching flows.
+External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/><br/>
         </td>
         <td>true</td>
       </tr></tbody>

@@ -21,7 +21,7 @@ Resource Types:
 
 
 
-FlowMetric is the API allowing to create custom metrics from the collected flow logs.
+FlowCollectorSlice is the API allowing to decentralize some of the FlowCollector configuration per namespace tenant.
 
 <table>
     <thead>
@@ -97,9 +97,10 @@ FlowCollectorSliceSpec defines the desired state of FlowCollectorSlice
         <td><b><a href="#flowcollectorslicespecsubnetlabelsindex">subnetLabels</a></b></td>
         <td>[]object</td>
         <td>
-          `subnetLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+          `subnetLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
 Beware that the subnet labels configured in FlowCollectorSlice are not limited to the flows of the related namespace: any flow
-in the whole cluster can be labelled using this configuration. However, subnet labels defined in the cluster-scoped FlowCollector take
+in the whole cluster can be labeled using this configuration. However, subnet labels defined in the cluster-scoped FlowCollector take
 precedence in case of conflicting rules.<br/>
         </td>
         <td>false</td>
@@ -134,7 +135,8 @@ SubnetLabel allows to label subnets and IPs, such as to identify cluster-externa
         <td><b>name</b></td>
         <td>string</td>
         <td>
-          Label name, used to flag matching flows.<br/>
+          Label name, used to flag matching flows.
+External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/><br/>
         </td>
         <td>true</td>
       </tr></tbody>

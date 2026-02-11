@@ -1504,6 +1504,7 @@ type SubnetLabel struct {
 	CIDRs []string `json:"cidrs,omitempty"` // Note, starting with k8s 1.31 / ocp 4.16 there's a new way to validate CIDR such as `+kubebuilder:validation:XValidation:rule="isCIDR(self)",message="field should be in CIDR notation format"`. But older versions would reject the CRD so we cannot implement it now to maintain compatibility.
 
 	// Label name, used to flag matching flows.
+	// External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
 	// +kubebuilder:validation:Pattern:="^[a-zA-Z_:-][a-zA-Z0-9_:-]*$"
 	//+required
 	Name string `json:"name,omitempty"`
