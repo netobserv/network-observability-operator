@@ -277,6 +277,8 @@ spec:
       value: $(tasks.build-container.results.IMAGE_DIGEST)
     - name: image-url
       value: $(tasks.build-container.results.IMAGE_URL)
+    - name: ARGS
+      value: "--project-name=netobserv-bundle --report --org=824715e7-b597-4123-bdb7-ba8abc3d3b2f"
     runAfter:
     - build-container
     taskRef:
