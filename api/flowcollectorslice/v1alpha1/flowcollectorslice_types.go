@@ -6,9 +6,10 @@ import (
 
 // FlowCollectorSliceSpec defines the desired state of FlowCollectorSlice
 type FlowCollectorSliceSpec struct {
-	// `subnetLabels` allows to customize subnets and IPs labelling, such as to identify cluster-external workloads or web services.
+	// `subnetLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+	// External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
 	// Beware that the subnet labels configured in FlowCollectorSlice are not limited to the flows of the related namespace: any flow
-	// in the whole cluster can be labelled using this configuration. However, subnet labels defined in the cluster-scoped FlowCollector take
+	// in the whole cluster can be labeled using this configuration. However, subnet labels defined in the cluster-scoped FlowCollector take
 	// precedence in case of conflicting rules.
 	//+optional
 	SubnetLabels []SubnetLabel `json:"subnetLabels,omitempty"`
@@ -24,7 +25,9 @@ type SubnetLabel struct {
 	// List of CIDRs, such as `["1.2.3.4/32"]`.
 	//+required
 	CIDRs []string `json:"cidrs,omitempty"` // Note, starting with k8s 1.31 / ocp 4.16 there's a new way to validate CIDR such as `+kubebuilder:validation:XValidation:rule="isCIDR(self)",message="field should be in CIDR notation format"`. But older versions would reject the CRD so we cannot implement it now to maintain compatibility.
+
 	// Label name, used to flag matching flows.
+	// External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
 	//+required
 	Name string `json:"name,omitempty"`
 }
@@ -43,7 +46,7 @@ type FlowCollectorSliceStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// FlowMetric is the API allowing to create custom metrics from the collected flow logs.
+// FlowCollectorSlice is the API allowing to decentralize some of the FlowCollector configuration per namespace tenant.
 type FlowCollectorSlice struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -1058,7 +1058,7 @@ type FlowCollectorPrometheus struct {
 // `PrometheusQuerier` defines the desired state for querying Prometheus (client...)
 type PrometheusQuerier struct {
 	// When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
-	// It is enbaled by default: set it to `false` to disable this feature.
+	// It is enabled by default: set it to `false` to disable this feature.
 	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
 	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
 	// such as getting per-pod information or viewing raw flows.
@@ -1504,6 +1504,7 @@ type SubnetLabel struct {
 	CIDRs []string `json:"cidrs,omitempty"` // Note, starting with k8s 1.31 / ocp 4.16 there's a new way to validate CIDR such as `+kubebuilder:validation:XValidation:rule="isCIDR(self)",message="field should be in CIDR notation format"`. But older versions would reject the CRD so we cannot implement it now to maintain compatibility.
 
 	// Label name, used to flag matching flows.
+	// External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
 	// +kubebuilder:validation:Pattern:="^[a-zA-Z_:-][a-zA-Z0-9_:-]*$"
 	//+required
 	Name string `json:"name,omitempty"`
