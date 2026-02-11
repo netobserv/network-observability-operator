@@ -586,13 +586,15 @@ spec:
     kubectl edit flowcollector cluster
     ```
 
-    As it operates cluster-wide on every node, only a single `FlowCollector` is allowed, and it has to be named `cluster`.
+    Only a single `FlowCollector` is allowed, and it has to be named `cluster`.
 
     A couple of settings deserve special attention:
 
     - Sampling (`spec.agent.ebpf.sampling`): a value of `100` means: one flow every 100 is sampled. `1` means all flows are sampled. The lower it is, the more flows you get, and the more accurate are derived metrics, but the higher amount of resources are consumed. By default, sampling is set to 50 (ie. 1:50). Note that more sampled flows also means more storage needed. We recommend to start with default values and refine empirically, to figure out which setting your cluster can manage.
 
     - Loki (`spec.loki`): configure here how to reach Loki. The default values match the Loki quick install paths mentioned above, but you might have to configure differently if you used another installation method. Make sure to disable it (`spec.loki.enable`) if you don't want to use Loki.
+
+    - Processor replicas (`spec.processor.consumerReplicas`): how many replicas of `flowlogs-pipeline` should be deployed. Those pods collect, transform and re-export network flows. They can also be configured as unmanaged via `unmanagedReplicas`, if you want to use an auto-scaler.
 
     - Kafka (`spec.deploymentModel: Kafka` and `spec.kafka`): when enabled, integrates the flow collection pipeline with Kafka, by splitting ingestion from transformation (kube enrichment, derived metrics, ...). Kafka can provide better scalability, resiliency and high availability ([view more details](https://www.redhat.com/en/topics/integration/what-is-apache-kafka)). Assumes Kafka is already deployed and a topic is created.
 
