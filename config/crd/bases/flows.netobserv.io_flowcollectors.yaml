@@ -5750,7 +5750,9 @@ spec:
                                   type: string
                                 type: array
                               name:
-                                description: Label name, used to flag matching flows.
+                                description: |-
+                                  Label name, used to flag matching flows.
+                                  External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
                                 pattern: ^[a-zA-Z_:-][a-zA-Z0-9_:-]*$
                                 type: string
                             required:
