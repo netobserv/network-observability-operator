@@ -65,6 +65,10 @@ spec:
     default: 'false'
     description: Enable cache proxy configuration
     type: string
+  - name: snyk-args
+    default: ''
+    description: Snyk arguments, e.g. for report upload
+    type: string
   results:
   - description: ""
     name: IMAGE_URL
@@ -277,6 +281,8 @@ spec:
       value: $(tasks.build-container.results.IMAGE_DIGEST)
     - name: image-url
       value: $(tasks.build-container.results.IMAGE_URL)
+    - name: ARGS
+      value: $(params.snyk-args)
     runAfter:
     - build-container
     taskRef:

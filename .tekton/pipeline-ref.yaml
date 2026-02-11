@@ -79,6 +79,10 @@ spec:
     default: docker
     type: string
     description: The format for the resulting image's mediaType. Valid values are oci or docker.
+  - name: snyk-args
+    default: ''
+    description: Snyk arguments, e.g. for report upload
+    type: string
   results:
   - description: ""
     name: IMAGE_URL
@@ -382,6 +386,8 @@ spec:
       value: $(tasks.prefetch-dependencies.results.SOURCE_ARTIFACT)
     - name: CACHI2_ARTIFACT
       value: $(tasks.prefetch-dependencies.results.CACHI2_ARTIFACT)
+    - name: ARGS
+      value: $(params.snyk-args)
     runAfter:
     - build-image-index
     taskRef:
