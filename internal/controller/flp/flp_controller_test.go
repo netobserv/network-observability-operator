@@ -255,7 +255,9 @@ func ControllerSpecs() {
 					Protocol:      "TCP",
 				}))
 				g.Expect(cnt.Env).To(Equal([]v1.EnvVar{
-					{Name: "GOGC", Value: "400"}, {Name: "GOMAXPROCS", Value: "33"}, {Name: "GODEBUG", Value: "http2server=0"},
+					{Name: "GOGC", Value: "400"},
+					{Name: "GOMAXPROCS", Value: "33"},
+					{Name: "GODEBUG", Value: "http2server=0"},
 				}))
 
 				By("Allocating the proper toleration to allow its placement in the master nodes")
