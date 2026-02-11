@@ -45,6 +45,8 @@ spec:
     value: Dockerfile-args.downstream
   - name: dockerfile
     value: ./Dockerfile.downstream
+  - name: snyk-args
+    value: "--project-name=netobserv-operator --report --org=824715e7-b597-4123-bdb7-ba8abc3d3b2f"
   pipelineRef:
     name: build-pipeline
   taskRunTemplate:
