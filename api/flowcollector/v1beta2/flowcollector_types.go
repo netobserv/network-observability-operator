@@ -1058,7 +1058,7 @@ type FlowCollectorPrometheus struct {
 // `PrometheusQuerier` defines the desired state for querying Prometheus (client...)
 type PrometheusQuerier struct {
 	// When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
-	// It is enbaled by default: set it to `false` to disable this feature.
+	// It is enabled by default: set it to `false` to disable this feature.
 	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
 	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
 	// such as getting per-pod information or viewing raw flows.
