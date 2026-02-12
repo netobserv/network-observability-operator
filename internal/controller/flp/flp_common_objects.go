@@ -161,6 +161,8 @@ func podTemplate(
 	}
 	envs = append(envs, constants.EnvNoHTTP2)
 
+	envs = helper.EnvFromReqsLimits(envs, &desired.Processor.Resources)
+
 	container := corev1.Container{
 		Name:            constants.FLPName,
 		Image:           imageName,

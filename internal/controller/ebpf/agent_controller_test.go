@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 )
@@ -98,7 +99,6 @@ func TestGetEnvConfig_Default(t *testing.T) {
 
 	env := getEnvConfig(&fc, &cluster.Info{})
 	assert.Equal(t, []corev1.EnvVar{
-		{Name: "GOMEMLIMIT", Value: "0"},
 		{Name: "METRICS_ENABLE", Value: "true"},
 		{Name: "METRICS_SERVER_PORT", Value: "9400"},
 		{Name: "METRICS_PREFIX", Value: "netobserv_agent_"},
@@ -129,6 +129,9 @@ func TestGetEnvConfig_WithOverrides(t *testing.T) {
 							"TC_ATTACH_MODE":                     "any",
 						},
 					},
+					Resources: corev1.ResourceRequirements{
+						Limits: corev1.ResourceList{corev1.ResourceMemory: resource.MustParse("800Mi")},
+					},
 					Metrics: flowslatest.EBPFMetrics{
 						Enable: ptr.To(false),
 					},
@@ -148,7 +151,7 @@ func TestGetEnvConfig_WithOverrides(t *testing.T) {
 
 	env := getEnvConfig(&fc, &cluster.Info{})
 	assert.Equal(t, []corev1.EnvVar{
-		{Name: "GOMEMLIMIT", Value: "0"},
+		{Name: "GOMEMLIMIT", Value: "754974720"},
 		{Name: "FLOW_FILTER_RULES", Value: `[{"ip_cidr":"0.0.0.0/0","action":"Accept"}]`},
 		{Name: "AGENT_IP", Value: "",
 			ValueFrom: &corev1.EnvVarSource{
@@ -177,7 +180,6 @@ func TestGetEnvConfig_OCP4_14(t *testing.T) {
 	info.Mock("4.14.5", "")
 	env := getEnvConfig(&fc, &info)
 	assert.Equal(t, []corev1.EnvVar{
-		{Name: "GOMEMLIMIT", Value: "0"},
 		{Name: "METRICS_ENABLE", Value: "true"},
 		{Name: "METRICS_SERVER_PORT", Value: "9400"},
 		{Name: "METRICS_PREFIX", Value: "netobserv_agent_"},

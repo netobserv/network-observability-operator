@@ -130,8 +130,9 @@ func volumesChanged(old, n *corev1.PodTemplateSpec, report *ChangeReport) bool {
 func containerChanged(old, n *corev1.Container, report *ChangeReport) bool {
 	return report.Check("Image changed", n.Image != old.Image) ||
 		report.Check("Pull policy changed", n.ImagePullPolicy != old.ImagePullPolicy) ||
-		report.Check("Args changed", !deepDerivative(n.Args, old.Args)) ||
+		report.Check("Args changed", !deepEqual(n.Args, old.Args)) ||
 		report.Check("Resources req/limit changed", !deepDerivative(n.Resources, old.Resources)) ||
+		report.Check("Env changed", !deepEqual(n.Env, old.Env)) ||
 		report.Check("Liveness probe changed", probeChanged(n.LivenessProbe, old.LivenessProbe)) ||
 		report.Check("Startup probe changed", probeChanged(n.StartupProbe, old.StartupProbe))
 }
