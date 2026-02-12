@@ -56,7 +56,6 @@ const (
 	envKafkaSASLIDPath            = "KAFKA_SASL_CLIENT_ID_PATH"
 	envKafkaSASLSecretPath        = "KAFKA_SASL_CLIENT_SECRET_PATH"
 	envLogLevel                   = "LOG_LEVEL"
-	envGoMemLimit                 = "GOMEMLIMIT"
 	envEnablePktDrop              = "ENABLE_PKT_DROPS"
 	envEnableDNSTracking          = "ENABLE_DNS_TRACKING"
 	envEnableFlowRTT              = "ENABLE_RTT"
@@ -730,16 +729,8 @@ func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1
 		})
 	}
 
-	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached
-	// to prevent OOM
-	if coll.Spec.Agent.EBPF.Resources.Limits.Memory() != nil {
-		if memLimit, ok := coll.Spec.Agent.EBPF.Resources.Limits.Memory().AsInt64(); ok {
-			// we will set the GOMEMLIMIT to current memlimit - 10% as a headroom to account for
-			// memory sources the Go runtime is unaware of
-			memLimit -= int64(float64(memLimit) * 0.1)
-			config = append(config, corev1.EnvVar{Name: envGoMemLimit, Value: fmt.Sprint(memLimit)})
-		}
-	}
+	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached to prevent OOM
+	config = helper.EnvFromReqsLimits(config, &coll.Spec.Agent.EBPF.Resources)
 
 	if coll.Spec.Agent.EBPF.IsPktDropEnabled() {
 		config = append(config, corev1.EnvVar{
