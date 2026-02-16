@@ -1,11 +1,11 @@
 # Do not remove comment lines, they are there to reduce conflicts
 # Operator
-export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:4c311dd42d61418f58a26d03dea63d87979b80eca6a6dd90d251b482f9ed6cbd'
+export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-rhel9-operator@sha256:5561b2f07ad5fc5322f4a29efafb32ba6d8db9e29a231ed2684442b4daee32f7'
 # eBPF agent
-export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:683e3c9dd4789382904ddad542bd482740fbbef3344d2a7c3a1d8c8f51304fe0'
+export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:32deb0934211b73260a8f30eea9ccd39437adaa389d20712733732e9df15cd7e'
 # Flowlogs-pipeline
-export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:cac5f1d4a57918d6aac6f1936cd71a2f238b5e15e42d6bc43a133a62060f9dda'
+export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:2de0b3b1f869cf83b1fe18efb9d4dff4c3573f83c7d9cca594193969be55090a'
 # Console plugin
-export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:1c609f8c467f2142b19445dc2149137bd4f89b8a3a5110e53becc3b1d4c6e046'
+export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:c0cb4c15ad7e7d93b146f8f0029a1edb8d49c7dc3a15db1e3af0a6718afe4b65'
 # Compatibility Console plugin
-export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:50c5193b7abb1f46897880015365ef50a17e6cf04261b83d76a05a93bf5a7ceb'
+export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:a58e5694d30e8fc92d29d94010d42a75e3e1cc854eac650c9d637b0333233edc'
