@@ -16,7 +16,7 @@ consolePlugin:
   image: quay.io/netobserv/network-observability-console-plugin
   version: v1.11.0-community
 standaloneConsole:
-  enable: false
+  enable: true
   image: quay.io/netobserv/network-observability-standalone-frontend
   version: v1.11.0-community
 operator:
