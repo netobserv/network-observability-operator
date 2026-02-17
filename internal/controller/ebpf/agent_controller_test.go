@@ -222,3 +222,49 @@ func TestBpfmanConfig(t *testing.T) {
 		"csi.bpfman.io/program": "netobserv",
 	}, ds.Spec.Template.Spec.Volumes[1].CSI.VolumeAttributes)
 }
+
+func TestNetworkEventsOVNMount(t *testing.T) {
+	fc := flowslatest.FlowCollector{
+		Spec: flowslatest.FlowCollectorSpec{
+			Agent: flowslatest.FlowCollectorAgent{
+				EBPF: flowslatest.FlowCollectorEBPF{
+					Privileged: true,
+					Features:   []flowslatest.AgentFeature{flowslatest.NetworkEvents},
+				},
+			},
+		},
+	}
+
+	// Upstream OVN
+	info := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &cluster.Info{}}
+	inst := info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: "ebpf-agent"}, status.Instance{})
+	agent := NewAgentController(inst)
+	ds, err := agent.desired(context.Background(), &fc)
+	assert.NoError(t, err)
+	assert.NotNil(t, ds)
+
+	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[2].Name)
+	assert.Equal(t, "/var/run/openvswitch", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
+
+	// OpenShift OVN
+	info.ClusterInfo.Mock("4.20.0", cluster.OVNKubernetes)
+	ds, err = agent.desired(context.Background(), &fc)
+	assert.NoError(t, err)
+	assert.NotNil(t, ds)
+
+	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[2].Name)
+	assert.Equal(t, "/var/run/ovn-ic", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
+
+	// Custom
+	fc.Spec.Agent.EBPF.Advanced = &flowslatest.AdvancedAgentConfig{
+		Env: map[string]string{
+			envOVNObservHostMountPath: "/foo/bar",
+		},
+	}
+	ds, err = agent.desired(context.Background(), &fc)
+	assert.NoError(t, err)
+	assert.NotNil(t, ds)
+
+	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[2].Name)
+	assert.Equal(t, "/foo/bar", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
+}
