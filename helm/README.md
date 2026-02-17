@@ -16,7 +16,9 @@ Flow data is then available in multiple ways, each optional:
 You can install the NetObserv Operator using [Helm](https://helm.sh/), or directly from sources.
 
 > [!TIP]
-> If you are running on OpenShift, please refer to the [product documentation](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/installing-network-observability-operators) instead. NetObserv is referred to as the Network Observability operator there.
+NetObserv can be used in downstream products, which may provide their own documentation. If you are using such a product, please refer to that documentation instead:
+> 
+> - On OpenShift: [see Network Observability operator](https://docs.redhat.com/en/documentation/openshift_container_platform/latest/html/network_observability/installing-network-observability-operators).
 
 ### Pre-requisite
 
@@ -52,8 +54,6 @@ helm install my-netobserv -n netobserv --create-namespace --set install.loki=tru
 
 # OR minimal install (Prometheus/Loki must be installed separately)
 helm install my-netobserv -n netobserv --create-namespace netobserv/netobserv-operator
-
-# If you're in OpenShift, you can use "--set standaloneConsole.enable=false" to use the Console plugin instead.
 ```
 
 You can now create a `FlowCollector` resource ([full API reference](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowsnetobserviov1beta2)). A short `FlowCollector` should work, using most default values, plus with the standalone console enabled:
@@ -89,7 +89,6 @@ EOF
 ```
 
 A few remarks:
-- `spec.consolePlugin.standalone` can be set to true to deploy the [web console](https://github.com/netobserv/network-observability-console-plugin) as a standalone.
 - You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom-stack=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
 - You can enable networkPolicy, which makes the operator lock down the namespaces that it manages; however, this is highly dependent on your cluster topology, and may cause malfunctions, such as preventing NetObserv pods from communicating with the Kube API server.
 - The processor env `SERVER_NOTLS` means that the communication between eBPF agents and Flowlogs-pipeline won't be encrypted. To enable TLS, you need to supply the TLS certificates to Flowlogs-pipeline (a Secret named `flowlogs-pipeline-cert`), and the CA to the eBPF agents (a ConfigMap named `flowlogs-pipeline-ca` in the privileged namespace).

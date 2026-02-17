@@ -45,7 +45,7 @@ When all component drafts are ready, you can test the helm chart on your cluster
 helm repo add cert-manager https://charts.jetstack.io
 helm install my-cert-manager cert-manager/cert-manager --set crds.enabled=true
 
-helm install my-netobserv -n netobserv --create-namespace --set --set install.loki=true --set install.prom-stack=true ./helm
+helm install my-netobserv -n netobserv --create-namespace --set install.loki=true --set install.prom-stack=true ./helm
 
 cat <<EOF | kubectl apply -f -
 apiVersion: flows.netobserv.io/v1beta2
