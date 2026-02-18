@@ -74,27 +74,27 @@ const (
 	envDNSTrackingPort            = "DNS_TRACKING_PORT"
 	envPreferredInterface         = "PREFERRED_INTERFACE_FOR_MAC_PREFIX"
 	envAttachMode                 = "TC_ATTACH_MODE"
+	envOVNObservHostMountPath     = "OVN_OBSERV_HOST_MOUNT_PATH"
 	envListSeparator              = ","
 )
 
 const (
-	exportKafka                 = "kafka"
-	exportGRPC                  = "grpc"
-	kafkaCerts                  = "kafka-certs"
-	averageMessageSize          = 100
-	bpfTraceMountName           = "bpf-kernel-debug"
-	bpfTraceMountPath           = "/sys/kernel/debug"
-	bpfNetNSMountName           = "var-run-netns"
-	bpfNetNSMountPath           = "/var/run/netns"
-	droppedFlowsAlertThreshold  = 100
-	ovnObservMountName          = "var-run-ovn"
-	ovnObservMountPath          = "/var/run/ovn"
-	ovnObservHostMountPath      = "/var/run/ovn-ic"
-	ovsMountPath                = "/var/run/openvswitch"
-	ovsHostMountPath            = "/var/run/openvswitch"
-	ovsMountName                = "var-run-ovs"
-	defaultNetworkEventsGroupID = "10"
-	defaultPreferredInterface   = "0a:58=eth0" // Hard-coded default config to deal with OVN-generated MACs
+	exportKafka                     = "kafka"
+	exportGRPC                      = "grpc"
+	averageMessageSize              = 100
+	bpfTraceMountName               = "bpf-kernel-debug"
+	bpfTraceMountPath               = "/sys/kernel/debug"
+	bpfNetNSMountName               = "var-run-netns"
+	bpfNetNSMountPath               = "/var/run/netns"
+	droppedFlowsAlertThreshold      = 100
+	ovnObservMountName              = "var-run-ovn"
+	ovnObservMountPath              = "/var/run/ovn"
+	ovnObservHostMountPathOpenShift = "/var/run/ovn-ic"
+	ovsMountPath                    = "/var/run/openvswitch"
+	ovsHostMountPath                = "/var/run/openvswitch"
+	ovsMountName                    = "var-run-ovs"
+	defaultNetworkEventsGroupID     = "10"
+	defaultPreferredInterface       = "0a:58=eth0" // Hard-coded default config to deal with OVN-generated MACs
 )
 
 const (
@@ -221,6 +221,7 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if err != nil {
 		return nil, err
 	}
+	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
 
 	if coll.Spec.Agent.EBPF.Metrics.Server.TLS.Type != flowslatest.ServerTLSDisabled {
 		var promTLS *flowslatest.CertificateReference
@@ -300,15 +301,22 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	if coll.Spec.Agent.EBPF.IsAgentFeatureEnabled(flowslatest.NetworkEvents) ||
 		coll.Spec.Agent.EBPF.IsAgentFeatureEnabled(flowslatest.UDNMapping) {
 		if !coll.Spec.Agent.EBPF.Privileged {
-			rlog.Error(fmt.Errorf("invalid configuration"), "To use Network Events Monitor"+
-				"features privileged mode needs to be enabled")
+			rlog.Error(fmt.Errorf("invalid configuration"), "To use NetworkEvents or UDNMapping features, privileged mode needs to be enabled")
 		} else {
+			hostPath := advancedConfig.Env[envOVNObservHostMountPath]
+			if hostPath == "" {
+				if c.ClusterInfo.IsOpenShift() {
+					hostPath = ovnObservHostMountPathOpenShift
+				} else {
+					hostPath = ovsHostMountPath
+				}
+			}
 			volume := corev1.Volume{
 				Name: ovnObservMountName,
 				VolumeSource: corev1.VolumeSource{
 					HostPath: &corev1.HostPathVolumeSource{
 						Type: newHostPathType(corev1.HostPathDirectory),
-						Path: ovnObservHostMountPath,
+						Path: hostPath,
 					},
 				},
 			}
@@ -360,8 +368,6 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 		}
 		volumeMounts = append(volumeMounts, volumeMount)
 	}
-
-	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
 
 	return &v1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
