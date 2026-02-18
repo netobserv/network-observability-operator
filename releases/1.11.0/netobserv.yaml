@@ -1,0 +1,54 @@
+apiVersion: appstudio.redhat.com/v1alpha1
+kind: Release
+metadata:
+  name: release-netobserv-1-11-0-0
+  namespace: ocp-network-observab-tenant
+  labels:
+    release.appstudio.openshift.io/author: 'jtakvori'
+spec:
+  releasePlan: netobserv-ystream
+  snapshot: netobserv-ystream-20260216-083806-000
+  data:
+    releaseNotes:
+      type: RHSA
+      cves:
+        - key: CVE-2026-24842
+          component: network-observability-console-plugin-ystream
+        - key: CVE-2026-24842
+          component: network-observability-console-plugin-pf4-ystream
+        - key: CVE-2025-13465
+          component: network-observability-console-plugin-ystream
+        - key: CVE-2025-13465
+          component: network-observability-console-plugin-pf4-ystream
+        - key: CVE-2026-24049
+          component: network-observability-operator-bundle-ystream
+        - key: CVE-2026-23745
+          component: network-observability-console-plugin-ystream
+        - key: CVE-2025-64329
+          component: network-observability-cli-ystream
+        - key: CVE-2026-21441
+          component: network-observability-cli-ystream
+        - key: CVE-2025-66471
+          component: network-observability-cli-ystream
+        - key: CVE-2025-15284
+          component: network-observability-console-plugin-ystream
+        - key: CVE-2025-15284
+          component: network-observability-console-plugin-pf4-ystream
+        - key: CVE-2025-52881
+          component: network-observability-cli-ystream
+        - key: CVE-2025-66418
+          component: network-observability-cli-ystream
+        - key: CVE-2025-66506
+          component: network-observability-cli-ystream
+        - key: CVE-2025-12816
+          component: network-observability-console-plugin-ystream
+        - key: CVE-2025-12816
+          component: network-observability-console-plugin-pf4-ystream
+        - key: CVE-2024-25621
+          component: network-observability-cli-ystream
+        - key: CVE-2025-66031
+          component: network-observability-console-plugin-ystream
+        - key: CVE-2025-66031
+          component: network-observability-console-plugin-pf4-ystream
+        - key: CVE-2025-58183
+          component: network-observability-operator-ystream
