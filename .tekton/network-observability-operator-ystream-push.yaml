@@ -8,24 +8,24 @@ metadata:
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     # switch comment in/out at branch cut
-    # pipelinesascode.tekton.dev/on-cel-expression: |
-    #   event == "push" && target_branch == "main" && (
-    #     ".tekton/***".pathChanged() ||
-    #     ".dockerignore".pathChanged() ||
-    #     "api/***".pathChanged() ||
-    #     "internal/***".pathChanged() ||
-    #     "Dockerfile.downstream".pathChanged() ||
-    #     "docs/***".pathChanged() ||
-    #     "go.mod".pathChanged() ||
-    #     "go.sum".pathChanged() ||
-    #     "hack/update-build.sh".pathChanged() ||
-    #     "LICENSE".pathChanged() ||
-    #     "main.go".pathChanged() ||
-    #     "Makefile".pathChanged() ||
-    #     "manifests/***".pathChanged() ||
-    #     "vendor/***".pathChanged()
-    #   )
-    pipelinesascode.tekton.dev/on-cel-expression: "false"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push" && target_branch == "main" && (
+        ".tekton/***".pathChanged() ||
+        ".dockerignore".pathChanged() ||
+        "api/***".pathChanged() ||
+        "internal/***".pathChanged() ||
+        "Dockerfile.downstream".pathChanged() ||
+        "docs/***".pathChanged() ||
+        "go.mod".pathChanged() ||
+        "go.sum".pathChanged() ||
+        "hack/update-build.sh".pathChanged() ||
+        "LICENSE".pathChanged() ||
+        "main.go".pathChanged() ||
+        "Makefile".pathChanged() ||
+        "manifests/***".pathChanged() ||
+        "vendor/***".pathChanged()
+      )
+    # pipelinesascode.tekton.dev/on-cel-expression: "false"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: netobserv-ystream
