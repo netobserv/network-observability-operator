@@ -4,25 +4,27 @@ metadata:
   annotations:
     build.appstudio.openshift.io/repo: https://github.com/netobserv/network-observability-operator?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
-    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
+    # switch comment in/out at branch cut
     pipelinesascode.tekton.dev/on-cel-expression: |
-      event == "pull_request" && target_branch == "release-1.11" && (
+      event == "push" && target_branch == "release-1.11" && (
         ".tekton/***".pathChanged() ||
         ".dockerignore".pathChanged() ||
         "bundle.Dockerfile.downstream".pathChanged() ||
         "bundle/***".pathChanged() ||
         "requirements.txt".pathChanged() ||
         "hack/update-build.sh".pathChanged() ||
+        "hack/nudging/container_digest.sh".pathChanged() ||
         "hack/patch_csv.py".pathChanged()
       )
+    # pipelinesascode.tekton.dev/on-cel-expression: "false"
   creationTimestamp: null
   labels:
-    appstudio.openshift.io/application: netobserv-ystream
-    appstudio.openshift.io/component: network-observability-operator-bundle-ystream
+    appstudio.openshift.io/application: netobserv-zstream
+    appstudio.openshift.io/component: network-observability-operator-bundle-zstream
     pipelines.appstudio.openshift.io/type: build
-  name: network-observability-operator-bundle-ystream-on-pull-request
+  name: network-observability-operator-bundle-zstream-on-push
   namespace: ocp-network-observab-tenant
 spec:
   params:
@@ -31,9 +33,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-ystream:on-pr-{{revision}}
-  - name: image-expires-after
-    value: 5d
+    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-zstream:latest
   - name: build-args-file
     value: Dockerfile-args.downstream
   - name: dockerfile
@@ -43,7 +43,7 @@ spec:
   pipelineRef:
     name: build-bundle-pipeline
   taskRunTemplate:
-    serviceAccountName: build-pipeline-network-observability-operator-bundle-ystream
+    serviceAccountName: build-pipeline-network-observability-operator-bundle-zstream
   workspaces:
   - name: workspace
     volumeClaimTemplate:

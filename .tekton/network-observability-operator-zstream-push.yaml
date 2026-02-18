@@ -28,10 +28,10 @@ metadata:
     # pipelinesascode.tekton.dev/on-cel-expression: "false"
   creationTimestamp: null
   labels:
-    appstudio.openshift.io/application: netobserv-ystream
-    appstudio.openshift.io/component: network-observability-operator-ystream
+    appstudio.openshift.io/application: netobserv-zstream
+    appstudio.openshift.io/component: network-observability-operator-zstream
     pipelines.appstudio.openshift.io/type: build
-  name: network-observability-operator-ystream-on-push
+  name: network-observability-operator-zstream-on-push
   namespace: ocp-network-observab-tenant
 spec:
   params:
@@ -40,7 +40,7 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-ystream:{{revision}}
+    value: quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-zstream:{{revision}}
   - name: build-args-file
     value: Dockerfile-args.downstream
   - name: dockerfile
@@ -48,5 +48,5 @@ spec:
   pipelineRef:
     name: build-pipeline
   taskRunTemplate:
-    serviceAccountName: build-pipeline-network-observability-operator-ystream
+    serviceAccountName: build-pipeline-network-observability-operator-zstream
 status: {}
