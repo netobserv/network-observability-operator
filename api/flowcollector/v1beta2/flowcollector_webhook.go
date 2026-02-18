@@ -22,8 +22,7 @@ import (
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-flows-netobserv-io-v1beta2-flowcollector,mutating=false,failurePolicy=fail,sideEffects=None,groups=flows.netobserv.io,resources=flowcollectors,versions=v1beta2,name=flowcollectorconversionwebhook.netobserv.io,admissionReviewVersions=v1
 func (r *FlowCollector) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
 		WithValidator(r).
 		Complete()
 }

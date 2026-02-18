@@ -11,8 +11,6 @@ import (
 	"strings"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/dsl"
-	kerr "k8s.io/apimachinery/pkg/api/errors"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -33,27 +31,19 @@ var (
 )
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *FlowCollector) ValidateCreate(ctx context.Context, newObj runtime.Object) (admission.Warnings, error) {
+func (r *FlowCollector) ValidateCreate(ctx context.Context, fc *FlowCollector) (admission.Warnings, error) {
 	log.Info("validate create", "name", r.Name)
-	fc, ok := newObj.(*FlowCollector)
-	if !ok {
-		return nil, kerr.NewBadRequest(fmt.Sprintf("expected a FlowCollector but got a %T", newObj))
-	}
 	return r.Validate(ctx, fc)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *FlowCollector) ValidateUpdate(ctx context.Context, _, newObj runtime.Object) (admission.Warnings, error) {
+func (r *FlowCollector) ValidateUpdate(ctx context.Context, _, fc *FlowCollector) (admission.Warnings, error) {
 	log.Info("validate update", "name", r.Name)
-	fc, ok := newObj.(*FlowCollector)
-	if !ok {
-		return nil, kerr.NewBadRequest(fmt.Sprintf("expected a FlowCollector but got a %T", newObj))
-	}
 	return r.Validate(ctx, fc)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *FlowCollector) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (r *FlowCollector) ValidateDelete(_ context.Context, _ *FlowCollector) (admission.Warnings, error) {
 	log.Info("validate delete", "name", r.Name)
 	return nil, nil
 }

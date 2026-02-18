@@ -9,12 +9,10 @@ import (
 	"github.com/netobserv/network-observability-operator/internal/pkg/helper/cardinality"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -26,39 +24,26 @@ type FlowMetricWebhook struct {
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-flows-netobserv-io-v1alpha1-flowmetric,mutating=false,failurePolicy=fail,sideEffects=None,groups=flows.netobserv.io,resources=flowmetrics,versions=v1alpha1,name=flowmetricvalidationwebhook.netobserv.io,admissionReviewVersions=v1
-var (
-	_ webhook.CustomValidator = &FlowMetricWebhook{FlowMetric{}}
-)
-
 func (r *FlowMetricWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&FlowMetric{}).
+	return ctrl.NewWebhookManagedBy(mgr, &FlowMetric{}).
 		WithValidator(&FlowMetricWebhook{}).
 		Complete()
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *FlowMetricWebhook) ValidateCreate(ctx context.Context, newObj runtime.Object) (warnings admission.Warnings, err error) {
+func (r *FlowMetricWebhook) ValidateCreate(ctx context.Context, fm *FlowMetric) (warnings admission.Warnings, err error) {
 	flowmetriclog.Info("validate create", "name", r.Name)
-	newFlowMetric, ok := newObj.(*FlowMetric)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an FlowMetric but got a %T", newObj))
-	}
-	return validateFlowMetric(ctx, newFlowMetric)
+	return validateFlowMetric(ctx, fm)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *FlowMetricWebhook) ValidateUpdate(ctx context.Context, _, newObj runtime.Object) (warnings admission.Warnings, err error) {
+func (r *FlowMetricWebhook) ValidateUpdate(ctx context.Context, _, fm *FlowMetric) (warnings admission.Warnings, err error) {
 	flowmetriclog.Info("validate update", "name", r.Name)
-	newFlowMetric, ok := newObj.(*FlowMetric)
-	if !ok {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an FlowMetric but got a %T", newObj))
-	}
-	return validateFlowMetric(ctx, newFlowMetric)
+	return validateFlowMetric(ctx, fm)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *FlowMetricWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (warnings admission.Warnings, err error) {
+func (r *FlowMetricWebhook) ValidateDelete(_ context.Context, _ *FlowMetric) (warnings admission.Warnings, err error) {
 	flowmetriclog.Info("validate delete", "name", r.Name)
 	return nil, nil
 }
