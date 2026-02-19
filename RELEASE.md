@@ -54,12 +54,14 @@ kind: FlowCollector
 metadata:
   name: cluster
 spec:
-  namespace: netobserv
   networkPolicy:
     enable: false
-  deploymentModel: Direct
+  consumerReplicas: 1
   consolePlugin:
     standalone: true
+  processor:
+    service:
+      tlsType: Auto-mTLS
   loki:
     mode: Monolithic
     monolithic:
