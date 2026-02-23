@@ -170,8 +170,8 @@ github.com/netobserv/flowlogs-pipeline/pkg/config
 github.com/netobserv/flowlogs-pipeline/pkg/dsl
 github.com/netobserv/flowlogs-pipeline/pkg/utils
 github.com/netobserv/flowlogs-pipeline/pkg/utils/filters
-# github.com/netobserv/netobserv-ebpf-agent v1.10.1-community
-## explicit; go 1.24.0
+# github.com/netobserv/netobserv-ebpf-agent v1.11.0-community
+## explicit; go 1.25.0
 github.com/netobserv/netobserv-ebpf-agent/pkg/config
 github.com/netobserv/netobserv-ebpf-agent/pkg/maps
 # github.com/netsampler/goflow2 v1.3.7
