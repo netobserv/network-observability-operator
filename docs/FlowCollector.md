@@ -8394,8 +8394,10 @@ configuration, you can disable it and install your own instead.<br/>
         <td>
           Deploys network policies on the namespaces used by NetObserv (main and privileged).
 These network policies better isolate the NetObserv components to prevent undesired connections from and to them.
-This option is enabled by default when using with OVNKubernetes, and disabled otherwise (it has not been tested with other CNIs).
-When disabled, you can manually create the network policies for the NetObserv components.<br/>
+Because it cannot be tested with all CNIs, this option is only enabled by default when NetObserv runs in a known
+supported environment, and it is disabled by default otherwise.
+When disabled, it is highly recommended to create network policies manually, to prevent undesired accesses.
+More information: https://github.com/netobserv/network-observability-operator/blob/main/docs/NetworkPolicy.md.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

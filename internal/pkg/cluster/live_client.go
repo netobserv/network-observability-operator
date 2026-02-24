@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	configv1 "github.com/openshift/api/config/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,6 +36,10 @@ func newLiveClient(c *rest.Config) (*liveClient, error) {
 
 func (lc *liveClient) getNodes(ctx context.Context) (*v1.NodeList, error) {
 	return lc.kc.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+}
+
+func (lc *liveClient) getKubeSystemDS(ctx context.Context) (*appsv1.DaemonSetList, error) {
+	return lc.kc.AppsV1().DaemonSets(constants.KubeSystemNamespace).List(ctx, metav1.ListOptions{})
 }
 
 func (lc *liveClient) getNetworkConfig(ctx context.Context) (*configv1.Network, error) {
