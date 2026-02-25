@@ -40,7 +40,7 @@ type Info struct {
 	ready                       bool
 	readinessLock               sync.RWMutex
 	dcl                         discoveryClient
-	livecl                      *liveClient
+	livecl                      liveClient
 	onRefresh                   func()
 }
 
