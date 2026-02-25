@@ -74,23 +74,23 @@ func TestNpBuilder(t *testing.T) {
 	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	name, np := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, nil)
+	name, np := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv", name.Namespace)
 	assert.NotNil(np)
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv-privileged", name.Namespace)
 	assert.NotNil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(false)
-	_, np = buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, nil)
+	_, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	name, np = buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, nil)
+	name, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -115,14 +115,14 @@ func TestNpBuilder(t *testing.T) {
 		}},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
 	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
 
 	desired.Spec.NetworkPolicy.AdditionalNamespaces = []string{"foo", "bar"}
-	name, np = buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, nil)
+	name, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -156,7 +156,7 @@ func TestNpBuilder(t *testing.T) {
 		}},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OVNKubernetes)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -170,15 +170,15 @@ func TestNpBuilderSDN(t *testing.T) {
 	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	_, np := buildMainNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN, nil)
+	_, np := buildMainNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN, nil)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	_, np = buildMainNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN, nil)
+	_, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN, nil)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, cluster.OpenShiftSDN)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN)
 	assert.Nil(np)
 }
 
@@ -206,7 +206,7 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 
 	desired := getConfig()
 	clusterInfo := &cluster.Info{}
-	clusterInfo.Mock("4.14.0", cluster.OVNKubernetes) // Mock as OpenShift 4.14 with OVN
+	clusterInfo.Mock("4.14.0", flowslatest.OVNKubernetes) // Mock as OpenShift 4.14 with OVN
 	mgr := &manager.Manager{
 		ClusterInfo: clusterInfo,
 		Config:      &manager.Config{DownstreamDeployment: false},
@@ -214,7 +214,7 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 
 	// Test with specific API server IPs (HyperShift scenario)
 	apiServerIPs := []string{"172.20.0.1", "10.0.0.5"}
-	_, np := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, apiServerIPs)
+	_, np := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, apiServerIPs)
 	assert.NotNil(np)
 
 	// Verify that we have a single egress rule with multiple IP peers
@@ -231,7 +231,7 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 	assert.True(found, "Expected to find a single egress rule with multiple API server IPs")
 
 	// Test without API server IPs - should not create the external API server egress rule
-	_, npWithoutIPs := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, nil)
+	_, npWithoutIPs := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
 	assert.NotNil(npWithoutIPs)
 
 	// Verify that we do NOT have an egress rule for external API server when IPs are not provided
@@ -251,7 +251,7 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 
 	// Test with IPv6 addresses
 	apiServerIPsV6 := []string{"2001:db8::1", "2001:db8::2"}
-	_, npV6 := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, apiServerIPsV6)
+	_, npV6 := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, apiServerIPsV6)
 	assert.NotNil(npV6)
 
 	// Verify IPv6 addresses get /128 CIDR
@@ -268,7 +268,7 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 
 	// Test with mixed IPv4 and IPv6
 	apiServerIPsMixed := []string{"192.168.1.1", "2001:db8::1"}
-	_, npMixed := buildMainNetworkPolicy(&desired, mgr, cluster.OVNKubernetes, apiServerIPsMixed)
+	_, npMixed := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, apiServerIPsMixed)
 	assert.NotNil(npMixed)
 
 	foundMixed := false

@@ -2,9 +2,10 @@ package v1beta2
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
+	"github.com/coreos/go-semver/semver"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +13,40 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
+
+type clusterInfoMock struct {
+	cni     NetworkType
+	version string
+}
+
+func (m *clusterInfoMock) IsOpenShift() bool {
+	return m.version != ""
+}
+
+func (m *clusterInfoMock) IsOpenShiftVersionAtLeast(v string) (bool, string, error) {
+	if m.version == "" {
+		return false, "", errors.New("unknown OpenShift version, cannot compare versions")
+	}
+	openshiftVersion, err := semver.NewVersion(m.version)
+	if err != nil {
+		return false, "", err
+	}
+	version, err := semver.NewVersion(v)
+	if err != nil {
+		return false, "", err
+	}
+	// Ignore pre-release block for comparison
+	openshiftVersion.PreRelease = ""
+	return !openshiftVersion.LessThan(*version), m.version, nil
+}
+
+func (m *clusterInfoMock) GetNbNodes() (uint16, error) {
+	return 1, nil
+}
+
+func (m *clusterInfoMock) GetCNI() (NetworkType, error) {
+	return m.cni, nil
+}
 
 func TestValidateAgent(t *testing.T) {
 	tests := []struct {
@@ -437,9 +472,8 @@ func TestValidateAgent(t *testing.T) {
 		},
 	}
 
-	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
-		CurrentClusterInfo.Mock(test.ocpVersion, "")
+		CurrentClusterInfo = &clusterInfoMock{version: test.ocpVersion}
 		v := validator{fc: &test.fc.Spec}
 		v.validateAgent()
 		if test.expectedError == "" {
@@ -527,8 +561,7 @@ func TestValidateConntrack(t *testing.T) {
 	}
 
 	r := FlowCollector{}
-	CurrentClusterInfo = &cluster.Info{}
-	CurrentClusterInfo.Mock("", "")
+	CurrentClusterInfo = &clusterInfoMock{}
 	for _, test := range tests {
 		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
@@ -862,10 +895,9 @@ func TestValidateFLP(t *testing.T) {
 		},
 	}
 
-	CurrentClusterInfo = &cluster.Info{}
 	r := FlowCollector{}
 	for _, test := range tests {
-		CurrentClusterInfo.Mock(test.ocpVersion, "")
+		CurrentClusterInfo = &clusterInfoMock{version: test.ocpVersion}
 		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.NoError(t, err, test.name)
@@ -1021,10 +1053,9 @@ func TestValidateScheduling(t *testing.T) {
 		},
 	}
 
-	CurrentClusterInfo = &cluster.Info{}
 	r := FlowCollector{}
 	for _, test := range tests {
-		CurrentClusterInfo.Mock(test.ocpVersion, "")
+		CurrentClusterInfo = &clusterInfoMock{version: test.ocpVersion}
 		warnings, err := r.Validate(context.TODO(), test.fc)
 		if test.expectedError == "" {
 			assert.NoError(t, err, test.name)
@@ -1063,7 +1094,7 @@ func TestValidateNetPol(t *testing.T) {
 	tests := []struct {
 		name             string
 		fc               *FlowCollector
-		cni              cluster.NetworkType
+		cni              NetworkType
 		expectedError    string
 		expectedWarnings admission.Warnings
 	}{
@@ -1075,7 +1106,7 @@ func TestValidateNetPol(t *testing.T) {
 				},
 				Spec: FlowCollectorSpec{},
 			},
-			cni: cluster.OVNKubernetes,
+			cni: OVNKubernetes,
 		},
 		{
 			name: "Empty config is valid for sdn",
@@ -1085,7 +1116,7 @@ func TestValidateNetPol(t *testing.T) {
 				},
 				Spec: FlowCollectorSpec{},
 			},
-			cni: cluster.OpenShiftSDN,
+			cni: OpenShiftSDN,
 		},
 		{
 			name: "Empty config is valid for unknown",
@@ -1107,7 +1138,7 @@ func TestValidateNetPol(t *testing.T) {
 					NetworkPolicy: NetworkPolicy{Enable: ptr.To(true)},
 				},
 			},
-			cni: cluster.OVNKubernetes,
+			cni: OVNKubernetes,
 		},
 		{
 			name: "Enabled netpol triggers warning for sdn",
@@ -1119,7 +1150,7 @@ func TestValidateNetPol(t *testing.T) {
 					NetworkPolicy: NetworkPolicy{Enable: ptr.To(true)},
 				},
 			},
-			cni:              cluster.OpenShiftSDN,
+			cni:              OpenShiftSDN,
 			expectedWarnings: admission.Warnings{"OpenShiftSDN detected with unsupported setting: spec.networkPolicy.enable; this setting will be ignored; to remove this warning set spec.networkPolicy.enable to false."},
 		},
 		{
@@ -1137,9 +1168,11 @@ func TestValidateNetPol(t *testing.T) {
 		},
 	}
 
-	CurrentClusterInfo = &cluster.Info{}
 	for _, test := range tests {
-		CurrentClusterInfo.Mock("4.20.0", test.cni)
+		CurrentClusterInfo = &clusterInfoMock{
+			version: "4.20.0",
+			cni:     test.cni,
+		}
 		v := validator{fc: &test.fc.Spec}
 		v.validateNetPol()
 		if test.expectedError == "" {
