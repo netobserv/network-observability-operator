@@ -6161,7 +6161,8 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
         <td><b><a href="#flowcollectorspecexportersindexkafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.<br/>
+          TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
+We recommend the use of mTLS for higher security standards.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6323,7 +6324,8 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
+TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
+We recommend the use of mTLS for higher security standards.
 
 <table>
     <thead>
@@ -6901,7 +6903,8 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td><b><a href="#flowcollectorspeckafkatls">tls</a></b></td>
         <td>object</td>
         <td>
-          TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.<br/>
+          TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
+We recommend the use of mTLS for higher security standards.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7063,7 +7066,8 @@ If the namespace is different, the config map or the secret is copied so that it
 
 
 
-TLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
+TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
+We recommend the use of mTLS for higher security standards.
 
 <table>
     <thead>
