@@ -247,7 +247,7 @@ func TestNetworkEventsOVNMount(t *testing.T) {
 	assert.Equal(t, "/var/run/openvswitch", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
 
 	// OpenShift OVN
-	info.ClusterInfo.Mock("4.20.0", cluster.OVNKubernetes)
+	info.ClusterInfo.Mock("4.20.0", flowslatest.OVNKubernetes)
 	ds, err = agent.desired(context.Background(), &fc)
 	assert.NoError(t, err)
 	assert.NotNil(t, ds)

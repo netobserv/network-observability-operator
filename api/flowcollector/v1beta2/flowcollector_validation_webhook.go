@@ -14,13 +14,25 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-
-	"github.com/netobserv/network-observability-operator/internal/pkg/cluster"
 )
+
+type NetworkType string
+
+const (
+	OpenShiftSDN  NetworkType = "OpenShiftSDN"
+	OVNKubernetes NetworkType = "OVNKubernetes"
+)
+
+type clusterInfo interface {
+	IsOpenShift() bool
+	IsOpenShiftVersionAtLeast(v string) (bool, string, error)
+	GetNbNodes() (uint16, error)
+	GetCNI() (NetworkType, error)
+}
 
 var (
 	log                    = logf.Log.WithName("flowcollector-resource")
-	CurrentClusterInfo     *cluster.Info
+	CurrentClusterInfo     clusterInfo
 	needPrivileged         = []AgentFeature{UDNMapping, NetworkEvents}
 	neededOpenShiftVersion = map[AgentFeature]string{
 		PacketDrop:    "4.14.0",
@@ -98,9 +110,9 @@ func (v *validator) validateNetPol() {
 		cni, err := CurrentClusterInfo.GetCNI()
 		if err != nil {
 			v.warnings = append(v.warnings, fmt.Sprintf("Could not detect CNI: %s", err.Error()))
-		} else if cni == cluster.OpenShiftSDN && v.fc.NetworkPolicy.Enable != nil && *v.fc.NetworkPolicy.Enable {
+		} else if cni == OpenShiftSDN && v.fc.NetworkPolicy.Enable != nil && *v.fc.NetworkPolicy.Enable {
 			v.warnings = append(v.warnings, "OpenShiftSDN detected with unsupported setting: spec.networkPolicy.enable; this setting will be ignored; to remove this warning set spec.networkPolicy.enable to false.")
-		} else if cni != cluster.OVNKubernetes && v.fc.DeployNetworkPolicyOtherCNI() {
+		} else if cni != OVNKubernetes && v.fc.DeployNetworkPolicyOtherCNI() {
 			v.warnings = append(v.warnings, "Network policy is enabled via spec.networkPolicy.enable, despite not running OVN-Kubernetes: this configuration has not been tested; to remove this warning set spec.networkPolicy.enable to false.")
 		}
 	} else {

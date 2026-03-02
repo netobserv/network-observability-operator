@@ -9,6 +9,7 @@ import (
 
 	"github.com/coreos/go-semver/semver"
 	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
+	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -21,13 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type NetworkType string
-
-const (
-	OpenShiftSDN  NetworkType = "OpenShiftSDN"
-	OVNKubernetes NetworkType = "OVNKubernetes"
-)
-
 // discoveryClient is an interface for API discovery operations
 type discoveryClient interface {
 	ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
@@ -38,7 +32,7 @@ type Info struct {
 	apisMapLock                 sync.RWMutex
 	id                          string
 	openShiftVersion            *semver.Version
-	cni                         NetworkType
+	cni                         flowslatest.NetworkType
 	nbNodes                     uint16
 	hasPromServiceDiscoveryRole bool
 	ready                       bool
@@ -183,7 +177,7 @@ func (c *Info) postCreate(ctx context.Context) error {
 func (c *Info) fetchClusterInfo(ctx context.Context) error {
 	var id string
 	var openShiftVersion *semver.Version
-	var cni NetworkType
+	var cni flowslatest.NetworkType
 	var nbNodes uint16
 	var hasPromServiceDiscoveryRole bool
 	if c.IsOpenShift() {
@@ -205,7 +199,7 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("could not fetch Network resource: %w", err)
 		}
-		cni = NetworkType(network.Spec.NetworkType)
+		cni = flowslatest.NetworkType(network.Spec.NetworkType)
 	}
 	if c.HasSvcMonitor() && c.HasEndpointSlices() {
 		// Check whether servicemonitor spec.serviceDiscoveryRole exists
@@ -233,7 +227,7 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 	return nil
 }
 
-func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni NetworkType, nbNodes uint16, hasPromServiceDiscoveryRole bool) {
+func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni flowslatest.NetworkType, nbNodes uint16, hasPromServiceDiscoveryRole bool) {
 	c.readinessLock.Lock()
 	defer c.readinessLock.Unlock()
 	c.id = id
@@ -245,7 +239,7 @@ func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni NetworkT
 }
 
 // Mock shouldn't be used except for testing
-func (c *Info) Mock(v string, cni NetworkType) {
+func (c *Info) Mock(v string, cni flowslatest.NetworkType) {
 	if c.apisMap == nil {
 		c.apisMap = make(map[string]bool)
 	}
@@ -279,7 +273,7 @@ func (c *Info) GetOpenShiftVersion() (string, error) {
 	return c.openShiftVersion.String(), nil
 }
 
-func (c *Info) GetCNI() (NetworkType, error) {
+func (c *Info) GetCNI() (flowslatest.NetworkType, error) {
 	c.readinessLock.RLock()
 	defer c.readinessLock.RUnlock()
 	if !c.ready {
