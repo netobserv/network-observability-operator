@@ -26,18 +26,19 @@ jobs:
         run: |
           docker load --input ./operator.tar
           docker load --input ./bundle.tar
-          docker load --input ./catalog.tar
       - name: docker login to quay.io
         uses: docker/login-action@v2
         with:
           username: ${{ env.WF_REGISTRY_USER }}
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
-      - name: push images
+      - name: push operator and bundle
         run: |
           DOCKER_BUILDKIT=1 docker push $(cat ./operator-name)
           DOCKER_BUILDKIT=1 docker push $(cat ./bundle-name)
-          DOCKER_BUILDKIT=1 docker push $(cat ./catalog-name)
+      - name: build and push catalog
+        run: |
+          IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-sha-$(cat ./short-sha) make shortlived-catalog-build catalog-push
       - uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -47,7 +48,6 @@ jobs:
             var shortSha = String(fs.readFileSync('./short-sha')).trim();
             var operatorImage = fs.readFileSync('./operator-name');
             var bundleImage = fs.readFileSync('./bundle-name');
-            var catalogImage = fs.readFileSync('./catalog-name');
             github.rest.issues.createComment({
               issue_number: issueNumber,
               owner: context.repo.owner,
@@ -56,7 +56,7 @@ jobs:
             \`\`\`bash
             ${operatorImage}
             ${bundleImage}
-            ${catalogImage}
+            quay.io/netobserv/network-observability-operator-catalog:v0.0.0-sha-${shortSha}
             \`\`\`
 
             They will expire in two weeks.
@@ -79,7 +79,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${catalogImage}
+              image: quay.io/netobserv/network-observability-operator-catalog:v0.0.0-sha-${shortSha}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:
