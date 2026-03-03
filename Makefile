@@ -374,6 +374,14 @@ extract-binaries: ## Extract all MULTIARCH_TARGETS binaries
 	mkdir -p release-assets; \
 	$(foreach target,$(MULTIARCH_TARGETS),$(call extract_target,$(target)))
 
+.PHONY: tar-image
+tar-image: MULTIARCH_TARGETS=amd64
+tar-image: image-build ## Build single arch (amd64) and save as a tar
+	$(OCI_BIN) tag $(IMAGE)-amd64 $(IMAGE)
+	mkdir -p ./out
+	$(OCI_BIN) save -o out/operator.tar $(IMAGE)
+	echo $(IMAGE) > ./out/operator-name
+
 ##@ Deployment
 
 install: kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
@@ -451,7 +459,13 @@ bundle-build: ## Build the bundle image.
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.
-	$(OCI_BIN) push ${BUNDLE_IMAGE};
+	$(OCI_BIN) push ${BUNDLE_IMAGE}
+
+.PHONY: bundle-tar
+bundle-tar: bundle-build ## Build bundle image and save as a tar
+	mkdir -p ./out
+	$(OCI_BIN) save -o out/bundle.tar $(BUNDLE_IMAGE)
+	echo $(BUNDLE_IMAGE) > ./out/bundle-name
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMAGES=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
@@ -473,10 +487,6 @@ catalog-build: opm ## Build a catalog image.
 	OPM=$(OPM) BUNDLE_IMAGE=$(BUNDLE_IMAGE) BUNDLE_TAG="v$(BUNDLE_VERSION)" ./hack/update_fbc.sh
 	$(OCI_BIN) build $(OCI_BUILD_OPTS) --build-arg CATALOG_PATH="catalog/out/v$(BUNDLE_VERSION)" -f catalog.Dockerfile -t $(CATALOG_IMAGE) .
 
-shortlived-catalog-build: ## Build a temporary catalog image, expiring after 2 weeks on quay
-	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
-	echo "FROM temp-catalog" | $(OCI_BIN) build --label quay.expires-after=2w -t $(CATALOG_IMAGE) -
-
 # Push the catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
@@ -491,6 +501,14 @@ catalog-deploy: ## Deploy a catalog image.
 .PHONY: catalog-undeploy
 catalog-undeploy: ## Undeploy a catalog image.
 	kubectl delete -f ./config/samples/catalog/catalog.yaml
+
+.PHONY: catalog-tar
+catalog-tar: ## Build catalog image and save as a tar, expiring after 2 weeks on quay
+	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
+	echo "FROM temp-catalog" | $(OCI_BIN) build --label quay.expires-after=2w -t $(CATALOG_IMAGE) -
+	mkdir -p ./out
+	$(OCI_BIN) save -o out/catalog.tar $(CATALOG_IMAGE)
+	echo $(CATALOG_IMAGE) > ./out/catalog-name
 
 ##@ Misc
 

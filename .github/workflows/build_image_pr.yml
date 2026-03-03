@@ -1,0 +1,40 @@
+name: Build PR image and upload artifact
+on:
+  pull_request:
+    types: [labeled]
+
+env:
+  WF_REGISTRY: quay.io/netobserv
+  WF_IMAGE: network-observability-operator
+  WF_ORG: netobserv
+  WF_RELIMG_VERSION: main
+
+jobs:
+  build-pr-image:
+    if: ${{ github.event.label.name == 'ok-to-test' }}
+    name: Build PR image and upload artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install make
+        run: sudo apt -y install make
+      - name: get short sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: build and save operator image
+        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} CLEAN_BUILD=1 make tar-image
+      - name: get related images target
+        if: startsWith(github.ref_name, 'release-')
+        run: echo "WF_RELIMG_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: build and save bundle image
+        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=${{ env.WF_RELIMG_VERSION }} FLP_VERSION=${{ env.WF_RELIMG_VERSION }} BPF_VERSION=${{ env.WF_RELIMG_VERSION }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} CLEAN_BUILD=1 BUNDLE_SET_DATE=true make bundle bundle-tar
+      - name: build catalog
+        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make catalog-tar
+      - name: save PR number
+        run: |
+          echo ${{ github.event.number }} > ./out/pr-id
+          echo ${{ env.short_sha }} > ./out/short-sha
+      - name: upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr
+          path: out/
