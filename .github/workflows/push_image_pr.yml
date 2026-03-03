@@ -1,79 +1,73 @@
-name: Build and push PR image to quay.io
+name: Push PR image to quay.io
 on:
-  pull_request_target:
-    types: [labeled]
+  workflow_run:
+    workflows: ["Build PR image and upload artifact"]
+    types:
+      - completed
 
 env:
   WF_REGISTRY_USER: netobserv+github_ci
-  WF_REGISTRY: quay.io/netobserv
-  WF_IMAGE: network-observability-operator
-  WF_ORG: netobserv
-  WF_RELIMG_VERSION: main
 
 jobs:
   push-pr-image:
-    if: ${{ github.event.label.name == 'ok-to-test' }}
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
     name: push PR image
     runs-on: ubuntu-latest
     steps:
-      - name: install make
-        run: sudo apt-get install make
-      - name: set up go 1.x
-        uses: actions/setup-go@v3
+      - name: download artifact
+        uses: actions/download-artifact@v5
         with:
-          go-version: '1.25'
-      - name: checkout
-        uses: actions/checkout@v3
-        with:
-          ref: "refs/pull/${{ github.event.number }}/merge"
+          name: pr
+          run-id: ${{github.event.workflow_run.id }}
+          github-token: ${{secrets.GITHUB_TOKEN}}
+      - name: load images
+        run: |
+          docker load --input ./operator.tar
+          docker load --input ./bundle.tar
       - name: docker login to quay.io
         uses: docker/login-action@v2
         with:
           username: ${{ env.WF_REGISTRY_USER }}
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
-      - name: get short sha
-        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-      - name: build image
-        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} CLEAN_BUILD=1 make image-build
-      - name: push image
-        run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make image-push
-      - name: build and push manifest
-        run: IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make manifest-build manifest-push
-      - name: get related images target
-        if: startsWith(github.ref_name, 'release-')
+      - name: push operator and bundle
         run: |
-          echo "WF_RELIMG_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
-      - name: build bundle
-        run: OCI_BUILD_OPTS="--label quay.expires-after=2w" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} PLG_VERSION=${{ env.WF_RELIMG_VERSION }} FLP_VERSION=${{ env.WF_RELIMG_VERSION }} BPF_VERSION=${{ env.WF_RELIMG_VERSION }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} CLEAN_BUILD=1 BUNDLE_SET_DATE=true make bundle bundle-build
-      - name: push bundle to quay.io
-        run: IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.short_sha }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make bundle-push
-      - name: build catalog
-        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make shortlived-catalog-build
-      - name: push catalog to quay.io
-        run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} make catalog-push
-      - uses: actions/github-script@v5
+          DOCKER_BUILDKIT=1 docker push $(cat ./operator-name)
+          DOCKER_BUILDKIT=1 docker push $(cat ./bundle-name)
+      - name: build and push catalog
+        run: |
+          IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=0.0.0-sha-$(cat ./short-sha) make shortlived-catalog-build catalog-push
+      - uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            var fs = require('fs');
+            var issueNumber = Number(fs.readFileSync('./pr-id'));
+            var shortSha = String(fs.readFileSync('./short-sha')).trim();
+            var operatorImage = fs.readFileSync('./operator-name');
+            var bundleImage = fs.readFileSync('./bundle-name');
             github.rest.issues.createComment({
-              issue_number: context.issue.number,
+              issue_number: issueNumber,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `New images:
-            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }}
-            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-sha-${{ env.short_sha }}
-            * ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-sha-${{ env.short_sha }}
+            \`\`\`bash
+            ${operatorImage}
+            ${bundleImage}
+            quay.io/netobserv/network-observability-operator-catalog:v0.0.0-sha-${shortSha}
+            \`\`\`
 
-            They will expire after two weeks.
+            They will expire in two weeks.
 
             To deploy this build:
             \`\`\`bash
             # Direct deployment, from operator repo
-            IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.short_sha }} make deploy
+            IMAGE=${operatorImage} make deploy
 
             # Or using operator-sdk
-            operator-sdk run bundle ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-sha-${{ env.short_sha }}
+            operator-sdk run bundle ${bundleImage}
             \`\`\`
 
             Or as a Catalog Source:
@@ -85,7 +79,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-sha-${{ env.short_sha }}
+              image: quay.io/netobserv/network-observability-operator-catalog:v0.0.0-sha-${shortSha}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:
