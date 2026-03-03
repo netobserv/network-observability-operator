@@ -8,4 +8,4 @@ export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-obse
 # Console plugin
 export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:8c8ac3109966689a9b3d9ab7aa42305d459495aa5728cf5b4fbb8b1b934dbd0d'
 # Compatibility Console plugin
-export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:120a92557b01ad610c80cb0079167efd3c1ab23865933120ae7c01b5d142639c'
+export CONSOLE_COMPAT_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9@sha256:b09a2c0cf07d5004a33fd1680acb6d442bd7846132313b48c36c1bc728edfc8a'
