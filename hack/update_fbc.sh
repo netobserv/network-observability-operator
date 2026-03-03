@@ -23,7 +23,7 @@ if [ -z "${YQ}" ]; then
   exit 1
 fi
 
-echo "Creating new bundle using image ${BUNDLE_IMAGE}..."
+echo "Creating new catalog..."
 
 dir_catalog="catalog/out/${BUNDLE_TAG}"
 dir_catalog_legacy="catalog/out-legacy/${BUNDLE_TAG}"
@@ -32,8 +32,8 @@ mkdir -p "${dir_catalog_legacy}"
 cp -f catalog/parts/other.yaml ${dir_catalog}
 cp -f catalog/parts/other.yaml ${dir_catalog_legacy}
 
-${OPM} render "${BUNDLE_IMAGE}" --output=yaml --migrate-level=bundle-object-to-csv-metadata > "${dir_catalog}/bundle.yaml"
-${OPM} render "${BUNDLE_IMAGE}" --output=yaml > "${dir_catalog_legacy}/bundle.yaml"
+${OPM} render ./bundle --output=yaml --migrate-level=bundle-object-to-csv-metadata > "${dir_catalog}/bundle.yaml"
+${OPM} render ./bundle --output=yaml > "${dir_catalog_legacy}/bundle.yaml"
 
 echo "Generating single index..."
 cat <<EOF > "${dir_catalog}/index.yaml"
