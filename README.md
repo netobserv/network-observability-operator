@@ -70,8 +70,6 @@ metadata:
   name: cluster
 spec:
   namespace: netobserv
-  networkPolicy:
-    enable: false
   consolePlugin:
     standalone: true
   processor:
@@ -94,8 +92,8 @@ EOF
 
 A few remarks:
 - You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom-stack=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/network-observability-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
-- You can enable networkPolicy, which makes the operator lock down the namespaces that it manages; however, this is highly dependent on your cluster topology, and may cause malfunctions, such as preventing NetObserv pods from communicating with the Kube API server.
-- The processor env `SERVER_NOTLS` means that the communication between eBPF agents and Flowlogs-pipeline won't be encrypted. To enable TLS, you need to supply the TLS certificates to Flowlogs-pipeline (a Secret named `flowlogs-pipeline-cert`), and the CA to the eBPF agents (a ConfigMap named `flowlogs-pipeline-ca` in the privileged namespace). [Check this issue](https://github.com/netobserv/network-observability-operator/issues/2360) if you want to help making it simpler.
+- Depending on the Kubernetes distribution and CNI, NetObserv may come secured by default with a built-in network policy. You can force installing it or not by setting `spec.networkPolicy.enable` in `FlowCollector`. If the built-in policy does not work as intended, it is recommended to turn it off and create your own instead. NetObserv runs some highly privileged workloads, thus it is important to keep it as much isolated as possible. See [NetworkPolicy.md](./docs/NetworkPolicy.md) for more details on how to create a policy.
+- The processor env `SERVER_NOTLS` means that the communication between eBPF agents and Flowlogs-pipeline won't be encrypted. To enable TLS, you need to supply the TLS certificates to Flowlogs-pipeline (a Secret named `flowlogs-pipeline-cert`), and the CA to the eBPF agents (a ConfigMap named `flowlogs-pipeline-ca` in the privileged namespace).
 
 To view the test console, you can port-forward 9001:
 
@@ -256,9 +254,7 @@ More information about multi-tenancy can be found on [this page](https://github.
 
 For a production deployment, it is highly recommended to lock down the `netobserv` namespace (or wherever NetObserv is installed) using network policies.
 
-You can set `spec.networkPolicy.enable` to `true` to make NetObserv install automatically a network policy. The policy may need to be fined-tuned for your environment (e.g. for access to kube apiserver, or Prometheus), by adding authorized namespaces.
-
-A simple example of network policy is [provided here](https://github.com/netobserv/documents/blob/main/examples/lockdown-netobserv.yaml).
+You can set `spec.networkPolicy.enable` to `true` to make NetObserv install automatically a network policy. The policy may need to be fined-tuned for your environment (e.g. for access to kube apiserver, or Prometheus), by adding authorized namespaces. More information [here](./docs/NetworkPolicy.md).
 
 #### Communications
 

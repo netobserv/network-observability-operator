@@ -177,11 +177,10 @@ func (spec *FlowCollectorFLP) GetMetricsPort() int32 {
 	return port
 }
 
-func (spec *FlowCollectorSpec) DeployNetworkPolicyOVN() bool {
-	return spec.NetworkPolicy.Enable == nil || *spec.NetworkPolicy.Enable
-}
-
-func (spec *FlowCollectorSpec) DeployNetworkPolicyOtherCNI() bool {
+func (spec *FlowCollectorSpec) DeployNetworkPolicy(trueByDefault bool) bool {
+	if trueByDefault {
+		return spec.NetworkPolicy.Enable == nil || *spec.NetworkPolicy.Enable
+	}
 	return spec.NetworkPolicy.Enable != nil && *spec.NetworkPolicy.Enable
 }
 

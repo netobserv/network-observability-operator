@@ -1163,8 +1163,8 @@ func TestValidateNetPol(t *testing.T) {
 					NetworkPolicy: NetworkPolicy{Enable: ptr.To(true)},
 				},
 			},
-			cni:              "unknown",
-			expectedWarnings: admission.Warnings{"Network policy is enabled via spec.networkPolicy.enable, despite not running OVN-Kubernetes: this configuration has not been tested; to remove this warning set spec.networkPolicy.enable to false."},
+			cni:              "",
+			expectedWarnings: admission.Warnings{"Network policy is enabled via spec.networkPolicy.enable, despite running on an unknown CNI: this configuration has not been tested; to remove this warning set spec.networkPolicy.enable to false."},
 		},
 	}
 

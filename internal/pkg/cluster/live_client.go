@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/netobserv/network-observability-operator/internal/controller/constants"
 	configv1 "github.com/openshift/api/config/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,12 +17,20 @@ import (
 )
 
 // liveClient performs only live queries - no cache
-type liveClient struct {
+type liveClient interface {
+	getNodes(ctx context.Context) (*v1.NodeList, error)
+	getKubeSystemDS(ctx context.Context) (*appsv1.DaemonSetList, error)
+	getNetworkConfig(ctx context.Context) (*configv1.Network, error)
+	getClusterVersion(ctx context.Context) (*configv1.ClusterVersion, error)
+	getCRD(ctx context.Context, name string) (*apix.CustomResourceDefinition, error)
+}
+
+type liveClientImpl struct {
 	kc kubernetes.Interface
 	dc dynamic.Interface
 }
 
-func newLiveClient(c *rest.Config) (*liveClient, error) {
+func newLiveClient(c *rest.Config) (*liveClientImpl, error) {
 	kc, err := kubernetes.NewForConfig(c)
 	if err != nil {
 		return nil, err
@@ -29,14 +39,18 @@ func newLiveClient(c *rest.Config) (*liveClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &liveClient{kc: kc, dc: dc}, nil
+	return &liveClientImpl{kc: kc, dc: dc}, nil
 }
 
-func (lc *liveClient) getNodes(ctx context.Context) (*v1.NodeList, error) {
+func (lc *liveClientImpl) getNodes(ctx context.Context) (*v1.NodeList, error) {
 	return lc.kc.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 }
 
-func (lc *liveClient) getNetworkConfig(ctx context.Context) (*configv1.Network, error) {
+func (lc *liveClientImpl) getKubeSystemDS(ctx context.Context) (*appsv1.DaemonSetList, error) {
+	return lc.kc.AppsV1().DaemonSets(constants.KubeSystemNamespace).List(ctx, metav1.ListOptions{})
+}
+
+func (lc *liveClientImpl) getNetworkConfig(ctx context.Context) (*configv1.Network, error) {
 	unst, err := lc.dc.Resource(configv1.GroupVersion.WithResource("networks")).Get(ctx, "cluster", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -48,7 +62,7 @@ func (lc *liveClient) getNetworkConfig(ctx context.Context) (*configv1.Network, 
 	return &obj, nil
 }
 
-func (lc *liveClient) getClusterVersion(ctx context.Context) (*configv1.ClusterVersion, error) {
+func (lc *liveClientImpl) getClusterVersion(ctx context.Context) (*configv1.ClusterVersion, error) {
 	unst, err := lc.dc.Resource(configv1.GroupVersion.WithResource("clusterversions")).Get(ctx, "version", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -60,7 +74,7 @@ func (lc *liveClient) getClusterVersion(ctx context.Context) (*configv1.ClusterV
 	return &obj, nil
 }
 
-func (lc *liveClient) getCRD(ctx context.Context, name string) (*apix.CustomResourceDefinition, error) {
+func (lc *liveClientImpl) getCRD(ctx context.Context, name string) (*apix.CustomResourceDefinition, error) {
 	unst, err := lc.dc.Resource(apix.SchemeGroupVersion.WithResource("customresourcedefinitions")).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err

@@ -2,12 +2,18 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/coreos/go-semver/semver"
+	flowslatest "github.com/netobserv/network-observability-operator/api/flowcollector/v1beta2"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -527,4 +533,122 @@ func TestHasLokiStack(t *testing.T) {
 	}
 	infoEmpty.dcl = mockDclEmpty
 	assert.False(t, infoEmpty.HasLokiStack(ctx))
+}
+
+type mockLiveClient struct {
+	nodes        []v1.Node
+	ksDaemonSets []appsv1.DaemonSet
+	network      *configv1.Network
+	cv           *configv1.ClusterVersion
+	crds         map[string]*apix.CustomResourceDefinition
+}
+
+func (m *mockLiveClient) getNodes(_ context.Context) (*v1.NodeList, error) {
+	return &v1.NodeList{Items: m.nodes}, nil
+}
+
+func (m *mockLiveClient) getKubeSystemDS(_ context.Context) (*appsv1.DaemonSetList, error) {
+	return &appsv1.DaemonSetList{Items: m.ksDaemonSets}, nil
+}
+
+func (m *mockLiveClient) getNetworkConfig(_ context.Context) (*configv1.Network, error) {
+	if m.network != nil {
+		return m.network, nil
+	}
+	return nil, errors.New("Network not found")
+}
+
+func (m *mockLiveClient) getClusterVersion(_ context.Context) (*configv1.ClusterVersion, error) {
+	if m.cv != nil {
+		return m.cv, nil
+	}
+	return nil, errors.New("ClusterVersion not found")
+}
+
+func (m *mockLiveClient) getCRD(_ context.Context, name string) (*apix.CustomResourceDefinition, error) {
+	if crd, found := m.crds[name]; found {
+		return crd, nil
+	}
+	return nil, fmt.Errorf("CRD %s not found", name)
+}
+
+func stubOpenShiftInfo(version string) (*Info, *configv1.ClusterVersion) {
+	return &Info{
+			apisMap: map[string]bool{
+				ocpSecurity: true,
+			},
+		},
+		&configv1.ClusterVersion{
+			Spec: configv1.ClusterVersionSpec{
+				ClusterID: "abc",
+			},
+			Status: configv1.ClusterVersionStatus{
+				History: []configv1.UpdateHistory{
+					{
+						State:   "Completed",
+						Version: version,
+					},
+				},
+			},
+		}
+}
+
+func TestFetchClusterInfo_CNI_OpenShift_OVN(t *testing.T) {
+	info, cv := stubOpenShiftInfo("4.21.1")
+	info.livecl = &mockLiveClient{
+		cv: cv,
+		network: &configv1.Network{
+			Spec: configv1.NetworkSpec{NetworkType: string(flowslatest.OVNKubernetes)},
+		},
+	}
+
+	err := info.fetchClusterInfo(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, flowslatest.OVNKubernetes, info.cni)
+}
+
+func TestFetchClusterInfo_CNI_OpenShift_SDN(t *testing.T) {
+	info, cv := stubOpenShiftInfo("4.21.1")
+	info.livecl = &mockLiveClient{
+		cv: cv,
+		network: &configv1.Network{
+			Spec: configv1.NetworkSpec{NetworkType: string(flowslatest.OpenShiftSDN)},
+		},
+	}
+
+	err := info.fetchClusterInfo(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, flowslatest.OpenShiftSDN, info.cni)
+}
+
+func TestFetchClusterInfo_CNI_OVN_Upstream(t *testing.T) {
+	info := Info{}
+	info.livecl = &mockLiveClient{
+		nodes: []v1.Node{{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					"k8s.ovn.org/host-cidrs": "something",
+				},
+			},
+		}},
+	}
+
+	err := info.fetchClusterInfo(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, flowslatest.OVNKubernetes, info.cni)
+}
+
+func TestFetchClusterInfo_CNI_Kindnet(t *testing.T) {
+	info := Info{}
+	info.livecl = &mockLiveClient{
+		ksDaemonSets: []appsv1.DaemonSet{{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "kindnet",
+			},
+		}},
+	}
+
+	err := info.fetchClusterInfo(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, flowslatest.Kindnet, info.cni)
 }

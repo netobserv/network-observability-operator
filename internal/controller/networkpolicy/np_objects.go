@@ -53,17 +53,8 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	ns := desired.Spec.GetNamespace()
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
-	switch cni {
-	case flowslatest.OpenShiftSDN:
+	if cni == flowslatest.OpenShiftSDN || !desired.Spec.DeployNetworkPolicy(cni != "") {
 		return name, nil
-	case flowslatest.OVNKubernetes:
-		if !desired.Spec.DeployNetworkPolicyOVN() {
-			return name, nil
-		}
-	default:
-		if !desired.Spec.DeployNetworkPolicyOtherCNI() {
-			return name, nil
-		}
 	}
 
 	np := networkingv1.NetworkPolicy{
@@ -194,6 +185,25 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 		// Not OpenShift
 		// Allow fetching from apiserver / kube-system
 		allowedNamespacesOut = append(allowedNamespacesOut, constants.KubeSystemNamespace)
+
+		if cni == flowslatest.OVNKubernetes && desired.Spec.DeploymentModel == flowslatest.DeploymentModelService {
+			// Upstream OVN-K: allow host-network on processor port (from agents)
+			// Can be counter-intuitive, but only the DeploymentModelService mode needs an explicit rule for host-network (agents are still hostnetwork pods)
+			advanced := helper.GetAdvancedProcessorConfig(&desired.Spec)
+			np.Spec.Ingress = append(np.Spec.Ingress, networkingv1.NetworkPolicyIngressRule{
+				From: []networkingv1.NetworkPolicyPeer{
+					{
+						NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+							"kubernetes.io/metadata.name": "ovn-host-network",
+						}},
+					},
+				},
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: ptr.To(corev1.ProtocolTCP),
+					Port:     ptr.To(intstr.FromInt32(*advanced.Port)),
+				}},
+			})
+		}
 	}
 
 	allowedNamespacesIn = append(allowedNamespacesIn, desired.Spec.NetworkPolicy.AdditionalNamespaces...)
@@ -209,17 +219,8 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 	privNs := mainNs + constants.EBPFPrivilegedNSSuffix
 
 	name := types.NamespacedName{Name: netpolName, Namespace: privNs}
-	switch cni {
-	case flowslatest.OpenShiftSDN:
+	if cni == flowslatest.OpenShiftSDN || !desired.Spec.DeployNetworkPolicy(cni != "") {
 		return name, nil
-	case flowslatest.OVNKubernetes:
-		if !desired.Spec.DeployNetworkPolicyOVN() {
-			return name, nil
-		}
-	default:
-		if !desired.Spec.DeployNetworkPolicyOtherCNI() {
-			return name, nil
-		}
 	}
 
 	np := networkingv1.NetworkPolicy{

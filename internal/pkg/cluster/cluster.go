@@ -14,6 +14,8 @@ import (
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +40,7 @@ type Info struct {
 	ready                       bool
 	readinessLock               sync.RWMutex
 	dcl                         discoveryClient
-	livecl                      *liveClient
+	livecl                      liveClient
 	onRefresh                   func()
 }
 
@@ -215,6 +217,16 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 		return fmt.Errorf("could not retrieve number of nodes: %w", err)
 	}
 	nbNodes = uint16(len(l.Items))
+	if cni == "" {
+		cni = guessCNIFromNodes(l.Items)
+		if cni == "" {
+			ds, err := c.livecl.getKubeSystemDS(ctx)
+			if err != nil {
+				return fmt.Errorf("could not retrieve kube-system daemon sets: %w", err)
+			}
+			cni = guessCNIFromSystemDS(ds.Items)
+		}
+	}
 	c.setInfo(id, openShiftVersion, cni, nbNodes, hasPromServiceDiscoveryRole)
 	log.FromContext(ctx).Info("Cluster info fetched",
 		"id", id,
@@ -225,6 +237,26 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 	)
 
 	return nil
+}
+
+func guessCNIFromNodes(nodes []v1.Node) flowslatest.NetworkType {
+	for i := range nodes {
+		if annots := nodes[i].Annotations; annots != nil {
+			if cfg, ok := annots["k8s.ovn.org/host-cidrs"]; ok && len(cfg) > 0 {
+				return flowslatest.OVNKubernetes
+			}
+		}
+	}
+	return ""
+}
+
+func guessCNIFromSystemDS(ds []appsv1.DaemonSet) flowslatest.NetworkType {
+	for i := range ds {
+		if ds[i].Name == "kindnet" {
+			return flowslatest.Kindnet
+		}
+	}
+	return ""
 }
 
 func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni flowslatest.NetworkType, nbNodes uint16, hasPromServiceDiscoveryRole bool) {
