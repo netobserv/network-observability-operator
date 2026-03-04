@@ -45,9 +45,9 @@ jobs:
             var fs = require('fs');
             var issueNumber = Number(fs.readFileSync('./pr-id'));
             var shortSha = String(fs.readFileSync('./short-sha')).trim();
-            var operatorImage = fs.readFileSync('./operator-name');
-            var bundleImage = fs.readFileSync('./bundle-name');
-            var catalogImage = fs.readFileSync('./catalog-name');
+            var operatorImage = String(fs.readFileSync('./operator-name')).trim();
+            var bundleImage = String(fs.readFileSync('./bundle-name')).trim();
+            var catalogImage = String(fs.readFileSync('./catalog-name')).trim();
             github.rest.issues.createComment({
               issue_number: issueNumber,
               owner: context.repo.owner,
