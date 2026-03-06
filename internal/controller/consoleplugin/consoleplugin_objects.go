@@ -2,7 +2,6 @@ package consoleplugin
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"path/filepath"
@@ -20,7 +19,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -40,7 +38,7 @@ const proxyAlias = "backend"
 const configMapName = "console-plugin-config"
 
 // Annotation on PrometheusRule metadata for recording-rule metadata (key = metric name, value = same as alert annotations).
-const recordingAnnotationsAnnotation = "netobserv.io/recording-annotations"
+const recordingAnnotationsAnnotation = "netobserv.io/network-health"
 const configFile = "config.yaml"
 const configVolume = "config-volume"
 const configPath = "/opt/app-root/"
@@ -524,35 +522,6 @@ func (b *builder) getHealthRecordingAnnotations() map[string]map[string]string {
 		}
 	}
 	return annotsPerRecording
-}
-
-// getExternalRecordingAnnotations reads PrometheusRules with netobserv.io/recording-annotations and returns metric name -> annotations.
-func getExternalRecordingAnnotations(ctx context.Context, cl client.Client) map[string]map[string]string {
-	out := make(map[string]map[string]string)
-	list := &monitoringv1.PrometheusRuleList{}
-	if err := cl.List(ctx, list, client.InNamespace(metav1.NamespaceAll)); err != nil {
-		log.FromContext(ctx).Error(err, "Failed to list PrometheusRules for recording annotations")
-		return out
-	}
-	for i := range list.Items {
-		pr := &list.Items[i]
-		raw, ok := pr.Annotations[recordingAnnotationsAnnotation]
-		if !ok || raw == "" {
-			continue
-		}
-		var perRule map[string]map[string]string
-		if err := json.Unmarshal([]byte(raw), &perRule); err != nil {
-			log.FromContext(ctx).Info("Invalid netobserv.io/recording-annotations on PrometheusRule",
-				"namespace", pr.Namespace, "name", pr.Name, "error", err)
-			continue
-		}
-		for ruleName, annots := range perRule {
-			if ruleName != "" && len(annots) > 0 {
-				out[ruleName] = annots
-			}
-		}
-	}
-	return out
 }
 
 func getLokiStatus(lokiStack *lokiv1.LokiStack) string {

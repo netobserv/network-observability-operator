@@ -370,7 +370,7 @@ func TestConfigMapExternalRecordingAnnotations(t *testing.T) {
 
 	external := map[string]map[string]string{
 		"my_custom_metric": {
-			"summary":                    "Custom metric",
+			"summary":                     "Custom metric",
 			"netobserv_io_network_health": `{"recordingThresholds":{"info":"10"}}`,
 		},
 	}

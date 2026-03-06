@@ -85,12 +85,20 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	}
 
 	// When a PrometheusRule changes, trigger reconcile so console-plugin config is updated (recording-rule annotations)
-	builder.Watches(
-		&monitoringv1.PrometheusRule{},
-		handler.EnqueueRequestsFromMapFunc(func(_ context.Context, _ client.Object) []reconcile.Request {
-			return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
-		}),
-	)
+	if mgr.ClusterInfo.HasPromRule() {
+		builder.Watches(
+			&monitoringv1.PrometheusRule{},
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
+				// Only trigger reconcile for PrometheusRules with netobserv=true label
+				labels := o.GetLabels()
+				if labels != nil && labels["netobserv"] == "true" {
+					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+				}
+				return []reconcile.Request{}
+			}),
+		)
+		log.Info("PrometheusRule CRD detected, watching for netobserv=true rules")
+	}
 
 	ctrl, err := builder.Build(&r)
 	if err != nil {
