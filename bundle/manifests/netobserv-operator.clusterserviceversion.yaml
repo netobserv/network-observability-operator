@@ -410,6 +410,10 @@ spec:
         path: consolePlugin.standalone
       - displayName: Unmanaged replicas
         path: consolePlugin.unmanagedReplicas
+      - displayName: Execution
+        path: execution
+      - displayName: Mode
+        path: execution.mode
       - displayName: Address
         path: kafka.address
       - displayName: Topic

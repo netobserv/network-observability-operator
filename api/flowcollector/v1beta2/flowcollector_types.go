@@ -91,6 +91,9 @@ type FlowCollectorSpec struct {
 
 	// `networkPolicy` defines network policy settings for NetObserv components isolation.
 	NetworkPolicy NetworkPolicy `json:"networkPolicy,omitempty"`
+
+	// `execution` defines configuration related to the execution of the flow collection process.
+	Execution FlowCollectorExecution `json:"execution,omitempty"`
 }
 
 type NetworkPolicy struct {
@@ -1540,6 +1543,25 @@ type FlowCollectorExporter struct {
 	// OpenTelemetry configuration, such as the IP address and port to send enriched logs or metrics to.
 	// +optional
 	OpenTelemetry FlowCollectorOpenTelemetry `json:"openTelemetry,omitempty"`
+}
+
+type ExecutionMode string
+
+const (
+	Running ExecutionMode = "Running"
+	OnHold  ExecutionMode = "OnHold"
+)
+
+// `FlowCollectorExecution` defines the flow collection process execution desired state.
+type FlowCollectorExecution struct {
+	// `mode` is the flow collection process execution desired mode: `Running` or `OnHold`.
+	// When `OnHold`, the operator deletes all managed services and workloads, with the exception
+	// of the static console plugin, and the operator itself.
+	// It allows to use minimal cluster resources without losing configuration.
+	// +kubebuilder:validation:Enum:="";"Running";"OnHold"
+	// +kubebuilder:default:=Running
+	// +optional
+	Mode ExecutionMode `json:"mode"`
 }
 
 // `FlowCollectorStatus` defines the observed state of FlowCollector

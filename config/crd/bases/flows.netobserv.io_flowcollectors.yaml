@@ -3040,6 +3040,22 @@ spec:
                     - Direct
                     - Kafka
                   type: string
+                execution:
+                  description: '`execution` defines configuration related to the execution of the flow collection process.'
+                  properties:
+                    mode:
+                      default: Running
+                      description: |-
+                        `mode` is the flow collection process execution desired mode: `Running` or `OnHold`.
+                        When `OnHold`, the operator deletes all managed services and workloads, with the exception
+                        of the static console plugin, and the operator itself.
+                        It allows to use minimal cluster resources without losing configuration.
+                      enum:
+                        - ""
+                        - Running
+                        - OnHold
+                      type: string
+                  type: object
                 exporters:
                   description: '`exporters` defines additional optional exporters for custom consumption or storage.'
                   items:

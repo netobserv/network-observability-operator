@@ -123,6 +123,13 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecexecution">execution</a></b></td>
+        <td>object</td>
+        <td>
+          `execution` defines configuration related to the execution of the flow collection process.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b><a href="#flowcollectorspecexportersindex">exporters</a></b></td>
         <td>[]object</td>
         <td>
@@ -6002,6 +6009,39 @@ inside a container.<br/>
           Request is the name chosen for a request in the referenced claim.
 If empty, everything from the claim is made available, otherwise
 only the result of this request.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.execution
+<sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
+
+
+
+`execution` defines configuration related to the execution of the flow collection process.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>mode</b></td>
+        <td>enum</td>
+        <td>
+          `mode` is the flow collection process execution desired mode: `Running` or `OnHold`.
+When `OnHold`, the operator deletes all managed services and workloads, with the exception
+of the static console plugin, and the operator itself.
+It allows to use minimal cluster resources without losing configuration.<br/>
+          <br/>
+            <i>Enum</i>: , Running, OnHold<br/>
+            <i>Default</i>: Running<br/>
         </td>
         <td>false</td>
       </tr></tbody>
