@@ -5,6 +5,7 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	sliceslatest "github.com/netobserv/netobserv-operator/api/flowcollectorslice/v1alpha1"
@@ -23,6 +24,7 @@ const (
 	transfoDynConfigMap   = transfoName + "-config-dynamic"
 	transfoServiceMonitor = transfoName + "-monitor"
 	transfoPromRule       = transfoName + "-alert"
+	transfoCertSecretName = transfoName + "-cert"
 )
 
 type transfoBuilder struct {
@@ -37,6 +39,11 @@ type transfoBuilder struct {
 }
 
 func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, fcSlices []sliceslatest.FlowCollectorSlice, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
+	// Validate port conflicts early
+	if err := validatePortConflicts(desired); err != nil {
+		return transfoBuilder{}, err
+	}
+
 	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
 	promTLS, err := getPromTLS(desired, constants.FLPTransfoMetricsSvcName)
 	if err != nil {
@@ -62,6 +69,7 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 		b.desired,
 		&b.volumes,
 		pull,
+		transfoCertSecretName,
 		annotations,
 	)
 	replicas := b.desired.Processor.GetFLPReplicas()
@@ -183,4 +191,46 @@ func (b *transfoBuilder) prometheusRule(rules []monitoringv1.Rule) *monitoringv1
 		transfoName,
 		b.version,
 	)
+}
+
+// service creates a Service for k8scache (informers communication)
+// This service is only needed when centralized informers are enabled
+func (b *transfoBuilder) service() *corev1.Service {
+	svc := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      transfoName,
+			Namespace: b.info.Namespace,
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     transfoName,
+				"version": b.version,
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": transfoName},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "k8scache",
+					Port:       k8scachePort,
+					Protocol:   corev1.ProtocolTCP,
+					TargetPort: intstr.FromInt(k8scachePort),
+				},
+			},
+		},
+	}
+	// In OpenShift with TLS Auto mode, request service-ca to generate certificate
+	// This certificate will be used by the k8scache gRPC server
+	if b.info.ClusterInfo.IsOpenShift() {
+		if b.desired.Processor.Informers != nil && b.desired.Processor.Informers.TLS != nil {
+			if b.desired.Processor.Informers.TLS.Type == flowslatest.TLSAuto || b.desired.Processor.Informers.TLS.Type == flowslatest.TLSAutoMTLS {
+				if svc.Annotations == nil {
+					svc.Annotations = make(map[string]string)
+				}
+				svc.Annotations[constants.OpenShiftCertificateAnnotation] = transfoCertSecretName
+			}
+		}
+	}
+	// Note: k8scache TLS Auto mode generates a service-ca certificate (transfoCertSecretName)
+	// for the transformer service DNS name
+	return &svc
 }

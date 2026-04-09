@@ -82,6 +82,21 @@ spec:
     kind: ClusterIssuer
     group: cert-manager.io
 ---
+# Certificate for k8scache client (flp-informers)
+# Note: k8scache server reuses the flowlogs-pipeline-cert certificate
+# since both gRPC ports use the same service DNS name
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: flp-informers-k8scache-client-cert
+spec:
+  secretName: flp-informers-k8scache-client-cert
+  commonName: netobserv-flp-informers
+  issuerRef:
+    name: netobserv-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
 # Certificate for eBPF agents
 apiVersion: v1
 kind: Namespace

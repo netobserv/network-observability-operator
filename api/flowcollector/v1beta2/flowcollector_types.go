@@ -753,11 +753,80 @@ type FlowCollectorFLP struct {
 	// +optional
 	Service *ProcessorServiceConfig `json:"service,omitempty"`
 
+	// `informers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
+	// This reduces load on the Kubernetes API server by having a single component (flp-informers) query the API instead of N FLP processors.
+	// When enabled, a dedicated `flp-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+	// +optional
+	Informers *FlowCollectorInformers `json:"informers,omitempty"`
+
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedProcessorConfig `json:"advanced,omitempty"`
+}
+
+// `FlowCollectorInformers` defines the configuration for centralized Kubernetes informers
+type FlowCollectorInformers struct {
+	// `enabled` controls whether to deploy centralized Kubernetes informers.
+	// When `true`, a dedicated `flp-informers` deployment watches K8s resources and pushes cache updates via gRPC to FLP processors.
+	// When `false`, each FLP processor uses local informers (previous behavior).
+	// +kubebuilder:default:=false
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// `replicas` defines the number of replicas for the flp-informers deployment.
+	// For high availability, a minimum of 2 replicas is required when `enabled` is `true`.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default:=2
+	Replicas *int32 `json:"replicas,omitempty"`
+
+	// `resources` are the compute resources required by the informers container.
+	// For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+	// +kubebuilder:default:={requests:{memory:"128Mi",cpu:"50m"},limits:{memory:"256Mi",cpu:"200m"}}
+	// +optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
+
+	// `advanced` allows setting some technical parameters of the informers component.
+	// +optional
+	Advanced *AdvancedInformersConfig `json:"advanced,omitempty"`
+
+	// `tls` defines the TLS configuration for the gRPC communication between informers and processors.
+	// +optional
+	TLS *InformersTLSConfig `json:"tls,omitempty"`
+}
+
+// `AdvancedInformersConfig` defines advanced configuration for the informers component
+type AdvancedInformersConfig struct {
+	// `resyncInterval` defines the interval in seconds to rediscover processors and sync state.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default:=60
+	// +optional
+	ResyncInterval *int `json:"resyncInterval,omitempty"`
+
+	// `batchSize` defines the maximum number of cache entries to send in a single update batch.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default:=100
+	// +optional
+	BatchSize *int `json:"batchSize,omitempty"`
+
+	// `sendTimeout` defines the timeout in seconds for sending updates to processors.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default:=10
+	// +optional
+	SendTimeout *int `json:"sendTimeout,omitempty"`
+
+	// `updateBufferSize` defines the size of the internal update channel buffer.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:default:=100
+	// +optional
+	UpdateBufferSize *int `json:"updateBufferSize,omitempty"`
+
+	// `processorPort` defines the gRPC port where flowlogs-pipeline processors listen for k8s cache updates.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	// +kubebuilder:default:=9090
+	// +optional
+	ProcessorPort *int32 `json:"processorPort,omitempty"`
 }
 
 type FLPDeduperMode string
@@ -1573,6 +1642,25 @@ type ProcessorServiceConfig struct {
 	TLSType TLSConfigType `json:"tlsType,omitempty"`
 
 	// TLS or mTLS configuration when `type` is set to `Provided`.
+	// +optional
+	ProvidedCertificates *ClientServerTLS `json:"providedCertificates,omitempty"`
+}
+
+// `InformersTLSConfig` defines the TLS configuration for gRPC communication between informers and processors
+type InformersTLSConfig struct {
+	// Select the type of TLS configuration:<br>
+	// - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
+	// - `Provided` to manually provide cert/key references for mTLS.<br>
+	// - `Auto` (default) to use OpenShift service-ca for automatic server certificate generation (simple TLS, OpenShift only).<br>
+	// - `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
+	// See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.
+	// +kubebuilder:validation:Enum:="Disabled";"Provided";"Auto";"Auto-mTLS"
+	// +kubebuilder:validation:Required
+	// +kubebuilder:default:="Auto"
+	Type TLSConfigType `json:"type,omitempty"`
+
+	// mTLS configuration when `type` is set to `Provided`.
+	// `serverCert` is required. `clientCert` is optional; if provided, mTLS is enabled.
 	// +optional
 	ProvidedCertificates *ClientServerTLS `json:"providedCertificates,omitempty"`
 }

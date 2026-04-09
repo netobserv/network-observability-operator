@@ -25,6 +25,7 @@ import (
 type transformerReconciler struct {
 	*reconcilers.Instance
 	deployment       *appsv1.Deployment
+	service          *corev1.Service
 	promService      *corev1.Service
 	hpa              *ascv2.HorizontalPodAutoscaler
 	serviceAccount   *corev1.ServiceAccount
@@ -32,7 +33,7 @@ type transformerReconciler struct {
 	dynamicConfigMap *corev1.ConfigMap
 	rbConfigWatcher  *rbacv1.RoleBinding
 	rbLokiWriter     *rbacv1.ClusterRoleBinding
-	rbInformer       *rbacv1.ClusterRoleBinding
+	rbInformers      *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
 }
@@ -41,6 +42,7 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 	rec := transformerReconciler{
 		Instance:         cmn,
 		deployment:       cmn.Managed.NewDeployment(transfoName),
+		service:          cmn.Managed.NewService(transfoName),
 		promService:      cmn.Managed.NewService(constants.FLPTransfoMetricsSvcName),
 		hpa:              cmn.Managed.NewHPA(transfoName),
 		serviceAccount:   cmn.Managed.NewServiceAccount(transfoName),
@@ -48,7 +50,7 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 		dynamicConfigMap: cmn.Managed.NewConfigMap(transfoDynConfigMap),
 		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole)),
 		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.LokiWriterRole)),
-		rbInformer:       cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.FLPInformersRole)),
+		rbInformers:      cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.FLPInformersRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(transfoServiceMonitor)
@@ -113,6 +115,11 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
+		return err
+	}
+
+	// Reconcile k8scache service for informers communication (only when informers enabled)
+	if err := r.reconcileService(ctx, &builder, &desired.Spec); err != nil {
 		return err
 	}
 
@@ -191,6 +198,26 @@ func (r *transformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *fl
 	)
 }
 
+func (r *transformerReconciler) reconcileService(ctx context.Context, builder *transfoBuilder, desired *flowslatest.FlowCollectorSpec) error {
+	report := helper.NewChangeReport("FLP k8scache service")
+	defer report.LogIfNeeded(ctx)
+
+	// Only create k8scache service when centralized informers are enabled
+	informersEnabled := desired.Processor.Informers != nil &&
+		desired.Processor.Informers.Enabled != nil &&
+		*desired.Processor.Informers.Enabled
+
+	if informersEnabled {
+		if err := r.ReconcileService(ctx, r.service, builder.service(), &report); err != nil {
+			return err
+		}
+	} else {
+		// Delete service if informers are disabled
+		r.Managed.TryDelete(ctx, r.service)
+	}
+	return nil
+}
+
 func (r *transformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {
 	report := helper.NewChangeReport("FLP prometheus service")
 	defer report.LogIfNeeded(ctx)
@@ -219,12 +246,6 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
 
-	// Informers
-	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPInformersRole)
-	if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformer); err != nil {
-		return err
-	}
-
 	// Loki writer
 	if builder.desired.UseLoki() && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
 		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.LokiWriterRole)
@@ -233,6 +254,21 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 		}
 	} else {
 		r.Managed.TryDelete(ctx, r.rbLokiWriter)
+	}
+
+	// Informers - when centralized informers are disabled, flowlogs-pipeline needs direct K8s API access
+	informersEnabled := builder.desired.Processor.Informers != nil &&
+		builder.desired.Processor.Informers.Enabled != nil &&
+		*builder.desired.Processor.Informers.Enabled
+	if !informersEnabled {
+		// Local informers mode - grant K8s API permissions to flowlogs-pipeline ServiceAccount
+		r.rbInformers = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPInformersRole)
+		if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformers); err != nil {
+			return err
+		}
+	} else {
+		// Centralized informers mode - permissions handled by flp-informers ServiceAccount
+		r.Managed.TryDelete(ctx, r.rbInformers)
 	}
 
 	// Config watcher

@@ -124,3 +124,91 @@ When `spec.processor.service.tlsType` is "Auto-mTLS":
 When `spec.processor.service.tlsType` is "Provided", you can specify any Secret or ConfigMap for TLS or mTLS, via `spec.processor.service.providedCertificates`.
 
 For mTLS, configure `spec.processor.service.providedCertificates.clientCert`. For simple TLS, do not set the client cert config.
+
+## Informers to Processor certificates
+
+When `spec.processor.informers.enabled` is `true`, informers communicate with processors via gRPC on port 9090 (k8scache). TLS can be configured for this communication.
+
+### Auto (TLS)
+
+When `spec.processor.informers.tls.type` is "Auto":
+
+<table>
+  <thead>
+    <tr>
+      <th>Needed by</th>
+      <th>Resource kind</th>
+      <th>Resource name</th>
+      <th>Resource keys</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>flowlogs-pipeline</td>
+      <td>Secret</td>
+      <td>flowlogs-pipeline-cert</td>
+      <td>tls.crt, tls.key</td>
+      <td>Reuses the same certificate as the main gRPC service.</td>
+    </tr>
+    <tr>
+      <td>flp-informers</td>
+      <td>ConfigMap</td>
+      <td>openshift-service-ca.crt</td>
+      <td>service-ca.crt</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+### Auto (mTLS)
+
+When `spec.processor.informers.tls.type` is "Auto-mTLS":
+
+<table>
+  <thead>
+    <tr>
+      <th>Needed by</th>
+      <th>Resource kind</th>
+      <th>Resource name</th>
+      <th>Resource keys</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>flowlogs-pipeline</td>
+      <td>Secret</td>
+      <td>flowlogs-pipeline-cert</td>
+      <td>tls.crt, tls.key</td>
+      <td>Reuses the same certificate as the main gRPC service.</td>
+    </tr>
+    <tr>
+      <td>flowlogs-pipeline</td>
+      <td>ConfigMap</td>
+      <td>netobserv-ca</td>
+      <td>service-ca.crt</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>flp-informers</td>
+      <td>Secret</td>
+      <td>flp-informers-k8scache-client-cert</td>
+      <td>tls.crt, tls.key</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>flp-informers</td>
+      <td>ConfigMap</td>
+      <td>netobserv-ca</td>
+      <td>service-ca.crt</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+### Provided
+
+When `spec.processor.informers.tls.type` is "Provided", you can specify any Secret or ConfigMap for TLS or mTLS, via `spec.processor.informers.tls.providedCertificates`.
+
+For mTLS, configure both `serverCert` and `clientCert`. For simple TLS, only configure `serverCert`.

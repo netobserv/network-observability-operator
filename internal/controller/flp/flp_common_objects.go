@@ -27,6 +27,7 @@ const (
 	healthPortName          = "health"
 	prometheusPortName      = "prometheus"
 	profilePortName         = "pprof"
+	k8scachePort            = 9090
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
 	startupFailureThreshold = 5
@@ -94,11 +95,46 @@ const (
 	pull
 )
 
+// validatePortConflicts checks if any user-configured ports conflict with the hardcoded k8scache port
+// Only validates when centralized informers are enabled (when k8scache port is actually used)
+func validatePortConflicts(desired *flowslatest.FlowCollectorSpec) error {
+	// Only check port conflicts when centralized informers are enabled
+	if desired.Processor.Informers == nil || desired.Processor.Informers.Enabled == nil || !*desired.Processor.Informers.Enabled {
+		return nil
+	}
+
+	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
+
+	// Check FLP port
+	if advancedConfig.Port != nil && *advancedConfig.Port == k8scachePort {
+		return fmt.Errorf("flowlogs-pipeline port %d conflicts with reserved k8scache port %d", *advancedConfig.Port, k8scachePort)
+	}
+
+	// Check health port
+	if advancedConfig.HealthPort != nil && *advancedConfig.HealthPort == k8scachePort {
+		return fmt.Errorf("flowlogs-pipeline health port %d conflicts with reserved k8scache port %d", *advancedConfig.HealthPort, k8scachePort)
+	}
+
+	// Check metrics port
+	metricsPort := desired.Processor.GetMetricsPort()
+	if metricsPort == k8scachePort {
+		return fmt.Errorf("flowlogs-pipeline metrics port %d conflicts with reserved k8scache port %d", metricsPort, k8scachePort)
+	}
+
+	// Check profile port (optional)
+	if advancedConfig.ProfilePort != nil && *advancedConfig.ProfilePort == k8scachePort {
+		return fmt.Errorf("flowlogs-pipeline profile port %d conflicts with reserved k8scache port %d", *advancedConfig.ProfilePort, k8scachePort)
+	}
+
+	return nil
+}
+
 func podTemplate(
 	appName, version, imageName, cmName string,
 	desired *flowslatest.FlowCollectorSpec,
 	vols *volumes.Builder,
 	netType flowNetworkType,
+	certSecretName string,
 	annotations map[string]string,
 ) corev1.PodTemplateSpec {
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
@@ -130,6 +166,14 @@ func podTemplate(
 		Name:          prometheusPortName,
 		ContainerPort: desired.Processor.GetMetricsPort(),
 	})
+	// Only expose k8scache port when centralized informers are enabled
+	if desired.Processor.Informers != nil && desired.Processor.Informers.Enabled != nil && *desired.Processor.Informers.Enabled {
+		ports = append(ports, corev1.ContainerPort{
+			Name:          "k8scache",
+			ContainerPort: k8scachePort,
+			Protocol:      corev1.ProtocolTCP,
+		})
+	}
 
 	if advancedConfig.ProfilePort != nil && *advancedConfig.ProfilePort > 0 {
 		ports = append(ports, corev1.ContainerPort{
@@ -164,11 +208,17 @@ func podTemplate(
 
 	envs = helper.EnvFromReqsLimits(envs, &desired.Processor.Resources)
 
+	// Build args - only include k8scache flags when centralized informers are enabled
+	args := []string{
+		fmt.Sprintf(`--config=%s/%s`, configPath, configFile),
+	}
+	addK8sCacheArgs(desired, vols, certSecretName, &args)
+
 	container := corev1.Container{
 		Name:            constants.FLPName,
 		Image:           imageName,
 		ImagePullPolicy: corev1.PullPolicy(desired.Processor.ImagePullPolicy),
-		Args:            []string{fmt.Sprintf(`--config=%s/%s`, configPath, configFile)},
+		Args:            args,
 		Resources:       *desired.Processor.Resources.DeepCopy(),
 		VolumeMounts:    volumeMounts,
 		Ports:           ports,
@@ -267,6 +317,54 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 		}
 	}
 	return metricsSettings
+}
+
+// addK8sCacheArgs adds k8scache server arguments for centralized informers
+func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Builder, certSecretName string, args *[]string) {
+	if desired.Processor.Informers == nil || desired.Processor.Informers.Enabled == nil || !*desired.Processor.Informers.Enabled {
+		return
+	}
+
+	*args = append(*args,
+		fmt.Sprintf("--k8scache.port=%d", k8scachePort),
+		"--k8scache.address=0.0.0.0",
+	)
+
+	// Add TLS configuration if enabled
+	if desired.Processor.Informers.TLS == nil || desired.Processor.Informers.TLS.Type == flowslatest.TLSDisabled {
+		return
+	}
+
+	var serverCert *flowslatest.CertificateReference
+	var caFile *flowslatest.FileReference
+
+	if desired.Processor.Informers.TLS.Type == flowslatest.TLSProvided {
+		// Manual mode: user provides certificates
+		if desired.Processor.Informers.TLS.ProvidedCertificates != nil {
+			serverCert = desired.Processor.Informers.TLS.ProvidedCertificates.ServerCert
+			caFile = desired.Processor.Informers.TLS.ProvidedCertificates.CAFile
+		}
+	} else if desired.Processor.Informers.TLS.Type == flowslatest.TLSAuto || desired.Processor.Informers.TLS.Type == flowslatest.TLSAutoMTLS {
+		// Auto mode: use service-ca certificate for the k8scache service
+		serverCert = helper.DefaultCertificateReference(certSecretName, "")
+		if desired.Processor.Informers.TLS.Type == flowslatest.TLSAutoMTLS {
+			caFile = helper.DefaultCAReference("netobserv-ca", "")
+		}
+	}
+
+	if serverCert != nil {
+		certPath, keyPath := vols.AddCertificate(serverCert, "svc-certs")
+		*args = append(*args,
+			"--k8scache.tls-enabled=true",
+			fmt.Sprintf("--k8scache.tls-cert-path=%s", certPath),
+			fmt.Sprintf("--k8scache.tls-key-path=%s", keyPath),
+		)
+
+		if caFile != nil {
+			caPath := vols.AddVolume(caFile, "k8scache-client-ca")
+			*args = append(*args, fmt.Sprintf("--k8scache.tls-ca-path=%s", caPath))
+		}
+	}
 }
 
 func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder, promTLS *flowslatest.CertificateReference, pipeline *PipelineBuilder, dynCMName string) (string, string, error) {
