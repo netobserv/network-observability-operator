@@ -21,9 +21,9 @@ const (
 var (
 	latencyBuckets = []string{".005", ".01", ".02", ".03", ".04", ".05", ".075", ".1", ".25", "1"}
 	mapLabels      = map[string][]string{
-		tagNodes:      {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_HostName", "DstK8S_HostName", "TLSVersion"},
-		tagNamespaces: {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "TLSVersion"},
-		tagWorkloads:  {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_NetworkName", "DstK8S_NetworkName", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type", "TLSVersion"},
+		tagNodes:      {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_HostName", "DstK8S_HostName"},
+		tagNamespaces: {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel"},
+		tagWorkloads:  {"K8S_ClusterName", "SrcK8S_Zone", "DstK8S_Zone", "SrcK8S_Namespace", "DstK8S_Namespace", "K8S_FlowLayer", "SrcSubnetLabel", "DstSubnetLabel", "SrcK8S_NetworkName", "DstK8S_NetworkName", "SrcK8S_OwnerName", "DstK8S_OwnerName", "SrcK8S_OwnerType", "DstK8S_OwnerType", "SrcK8S_Type", "DstK8S_Type"},
 	}
 	mapValueFields = map[string]string{
 		tagBytes:   "Bytes",
@@ -86,10 +86,10 @@ func init() {
 			tags: []string{group, group + "-flows", "flows"},
 		})
 	}
+	// RTT metrics
 	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
-		// RTT metrics
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_rtt_seconds", groupTrimmed),
@@ -107,10 +107,10 @@ func init() {
 			tags: []string{group, "rtt"},
 		})
 	}
+	// Drops metrics
 	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
-		// Drops metrics
 		dropLabels := labels
 		dropLabels = append(dropLabels, "PktDropLatestState", "PktDropLatestDropCause")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
@@ -142,10 +142,10 @@ func init() {
 			tags: []string{group, tagBytes, "drop"},
 		})
 	}
+	// DNS metrics
 	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
-		// DNS metrics
 		dnsLabels := labels
 		dnsLabels = append(dnsLabels, "DnsFlagsResponseCode")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
@@ -166,10 +166,10 @@ func init() {
 		})
 	}
 
+	// Netpol metrics
 	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
-		// Netpol metrics
 		netpolLabels := labels
 		netpolLabels = append(netpolLabels, "NetworkEvents>Type", "NetworkEvents>Namespace", "NetworkEvents>Name", "NetworkEvents>Action", "NetworkEvents>Direction")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
@@ -193,10 +193,10 @@ func init() {
 		})
 	}
 
+	// IPSEC
 	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
-		// IPSEC
 		ipsecLabels := labels
 		ipsecLabels = append(ipsecLabels, "IPSecStatus")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
@@ -211,6 +211,26 @@ func init() {
 			tags: []string{group, "ipsec"},
 		})
 	}
+
+	// TLS
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+		groupTrimmed := strings.TrimSuffix(group, "s")
+		labels := mapLabels[group]
+		tlsLabels := labels
+		tlsLabels = append(tlsLabels, "TLSVersion", "TLSCipherSuite", "TLSGroup", "TLSTypes", "Proto")
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_tls_flows_total", groupTrimmed),
+				Type:       metricslatest.CounterMetric,
+				Help:       fmt.Sprintf("Total TLS flows per %s", groupTrimmed),
+				Filters:    []metricslatest.MetricFilter{{Field: "TLSVersion", MatchType: metricslatest.MatchPresence}},
+				Labels:     tlsLabels,
+				//				Charts:     tlsStatusChart(group),
+			},
+			tags: []string{group, "tls"},
+		})
+	}
+
 	// Cross-nodes metric
 	predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 		FlowMetricSpec: metricslatest.FlowMetricSpec{

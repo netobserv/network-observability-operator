@@ -5655,6 +5655,9 @@ spec:
                               - node_ipsec_flows_total
                               - namespace_ipsec_flows_total
                               - workload_ipsec_flows_total
+                              - node_tls_flows_total
+                              - namespace_tls_flows_total
+                              - workload_tls_flows_total
                               - node_to_node_ingress_flows_total
                             type: string
                           type: array

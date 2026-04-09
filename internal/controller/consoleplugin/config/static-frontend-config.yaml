@@ -447,11 +447,11 @@ columns:
     filter: tls_cipher_suite
     width: 15
     feature: tlsTracking
-  - id: TLSCurve
+  - id: TLSGroup
     group: Protocol Info
-    name: TLS Curve
-    field: TLSCurve
-    filter: tls_curve
+    name: TLS Group
+    field: TLSGroup
+    filter: tls_group
     width: 10
     feature: tlsTracking
   - id: TLSTypes
@@ -1161,11 +1161,11 @@ filters:
     placeholder: 'E.g: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256'
     hint: Specify a TLS cipher suite.
     feature: tlsTracking
-  - id: tls_curve
-    name: TLS curve
+  - id: tls_group
+    name: TLS group
     component: text
     placeholder: 'E.g: X25519'
-    hint: Specify a TLS curve name.
+    hint: Specify a TLS group name.
     feature: tlsTracking
   - id: tls_types
     name: TLS packet type
@@ -1588,9 +1588,9 @@ fields:
   - name: TLSCipherSuite
     type: string
     description: TLS cipher suite
-  - name: TLSCurve
+  - name: TLSGroup
     type: string
-    description: TLS curve name
+    description: TLS group name
   - name: Dscp
     type: number
     description: Differentiated Services Code Point (DSCP) value
