@@ -432,9 +432,9 @@ type FlowCollectorKafka struct {
 	Topic string `json:"topic"`
 
 	// +kubebuilder:validation:Enum:="none";"gzip";"snappy";"lz4";"zstd"
-	// +kubebuilder:default:="lz4"
+	// +kubebuilder:default:="none"
 	// Compression codec to use when producing messages to Kafka.
-	// Accepted values are: `none`, `gzip`, `snappy`, `lz4` (default), `zstd`.
+	// Accepted values are: `none` (default), `gzip`, `snappy`, `lz4`, `zstd`.
 	// +optional
 	Compression string `json:"compression,omitempty"`
 

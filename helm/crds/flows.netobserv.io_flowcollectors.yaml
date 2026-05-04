@@ -3111,10 +3111,10 @@ spec:
                             description: Address of the Kafka server
                             type: string
                           compression:
-                            default: lz4
+                            default: none
                             description: |-
                               Compression codec to use when producing messages to Kafka.
-                              Accepted values are: `none`, `gzip`, `snappy`, `lz4` (default), `zstd`.
+                              Accepted values are: `none` (default), `gzip`, `snappy`, `lz4`, `zstd`.
                             enum:
                               - none
                               - gzip
@@ -3396,10 +3396,10 @@ spec:
                       description: Address of the Kafka server
                       type: string
                     compression:
-                      default: lz4
+                      default: none
                       description: |-
                         Compression codec to use when producing messages to Kafka.
-                        Accepted values are: `none`, `gzip`, `snappy`, `lz4` (default), `zstd`.
+                        Accepted values are: `none` (default), `gzip`, `snappy`, `lz4`, `zstd`.
                       enum:
                         - none
                         - gzip

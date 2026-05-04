@@ -6201,10 +6201,10 @@ Kafka configuration, such as the address and topic, to send enriched flows to.
         <td>enum</td>
         <td>
           Compression codec to use when producing messages to Kafka.
-Accepted values are: `none`, `gzip`, `snappy`, `lz4` (default), `zstd`.<br/>
+Accepted values are: `none` (default), `gzip`, `snappy`, `lz4`, `zstd`.<br/>
           <br/>
             <i>Enum</i>: none, gzip, snappy, lz4, zstd<br/>
-            <i>Default</i>: lz4<br/>
+            <i>Default</i>: none<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -6954,10 +6954,10 @@ Kafka configuration, allowing to use Kafka as a broker as part of the flow colle
         <td>enum</td>
         <td>
           Compression codec to use when producing messages to Kafka.
-Accepted values are: `none`, `gzip`, `snappy`, `lz4` (default), `zstd`.<br/>
+Accepted values are: `none` (default), `gzip`, `snappy`, `lz4`, `zstd`.<br/>
           <br/>
             <i>Enum</i>: none, gzip, snappy, lz4, zstd<br/>
-            <i>Default</i>: lz4<br/>
+            <i>Default</i>: none<br/>
         </td>
         <td>false</td>
       </tr><tr>
