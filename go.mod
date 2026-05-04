@@ -16,7 +16,7 @@ require (
 	github.com/prometheus/common v0.67.5
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.35.4
 	k8s.io/apiextensions-apiserver v0.35.4
