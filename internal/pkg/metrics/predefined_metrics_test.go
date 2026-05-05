@@ -24,6 +24,7 @@ func TestIncludeExclude(t *testing.T) {
 		"namespace_network_policy_events_total",
 		"namespace_rtt_seconds",
 		"namespace_sampling",
+		"namespace_tls_flows_total",
 		"node_dns_latency_seconds",
 		"node_drop_bytes_total",
 		"node_ingress_bytes_total",
@@ -31,6 +32,7 @@ func TestIncludeExclude(t *testing.T) {
 		"node_network_policy_events_total",
 		"node_rtt_seconds",
 		"node_sampling",
+		"node_tls_flows_total",
 		"node_to_node_ingress_flows_total",
 		"workload_dns_latency_seconds",
 		"workload_drop_bytes_total",
@@ -39,6 +41,7 @@ func TestIncludeExclude(t *testing.T) {
 		"workload_network_policy_events_total",
 		"workload_rtt_seconds",
 		"workload_sampling",
+		"workload_tls_flows_total",
 	}, *res)
 
 	// IgnoreTags set, Include list set => keep include list
