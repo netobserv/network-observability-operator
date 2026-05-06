@@ -156,6 +156,9 @@ func (s *FlowCollectorSpec) GetIncludeList() []string {
 	if !s.Agent.EBPF.IsIPSecEnabled() {
 		list = removeMetricsByPattern(list, "_ipsec_")
 	}
+	if !s.Agent.EBPF.IsTLSTrackingEnabled() {
+		list = removeMetricsByPattern(list, "_tls_")
+	}
 	return list
 }
 

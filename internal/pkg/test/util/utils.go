@@ -10,7 +10,7 @@ func SpecForMetrics(metrics ...string) *flowslatest.FlowCollectorSpec {
 		Agent: flowslatest.FlowCollectorAgent{
 			EBPF: flowslatest.FlowCollectorEBPF{
 				Privileged: true,
-				Features:   []flowslatest.AgentFeature{flowslatest.FlowRTT, flowslatest.DNSTracking, flowslatest.PacketDrop, flowslatest.UDNMapping, flowslatest.IPSec},
+				Features:   []flowslatest.AgentFeature{flowslatest.FlowRTT, flowslatest.DNSTracking, flowslatest.PacketDrop, flowslatest.UDNMapping, flowslatest.IPSec, flowslatest.TLSTracking},
 			},
 		},
 		Processor: flowslatest.FlowCollectorFLP{

@@ -243,6 +243,48 @@ func ipsecStatusChart(group string) []metricslatest.Chart {
 	return charts
 }
 
+func tlsStatusChart() []metricslatest.Chart {
+	sectionName := "TLS"
+	return []metricslatest.Chart{
+		{
+			Type:          metricslatest.ChartTypeSingleStat,
+			SectionName:   "",
+			DashboardName: mainDashboard,
+			Title:         "TLS traffic",
+			Unit:          metricslatest.UnitPercent,
+			Queries: []metricslatest.Query{
+				{
+					PromQL: `sum(rate($METRIC[2m])) / (sum(rate(netobserv_namespace_flows_total[1m])) OR sum(rate(netobserv_workload_flows_total[1m])) OR sum(rate(netobserv_node_flows_total[1m])))`,
+				},
+			},
+		},
+		{
+			Type:          metricslatest.ChartTypeLine,
+			SectionName:   sectionName,
+			DashboardName: mainDashboard,
+			Title:         "Flows rate per TLS version",
+			Queries: []metricslatest.Query{
+				{
+					PromQL: `sum(rate($METRIC{TLSVersion!=""}[2m])) by (TLSVersion)`,
+					Legend: "{{ TLSVersion }}",
+				},
+			},
+		},
+		{
+			Type:          metricslatest.ChartTypeLine,
+			SectionName:   sectionName,
+			DashboardName: mainDashboard,
+			Title:         "Flows rate per TLS group",
+			Queries: []metricslatest.Query{
+				{
+					PromQL: `sum(rate($METRIC{TLSGroup!=""}[2m])) by (TLSGroup)`,
+					Legend: "{{ TLSGroup }}",
+				},
+			},
+		},
+	}
+}
+
 func chartVariantsFor(chart *metricslatest.Chart, group, unit string) []metricslatest.Chart {
 	var additionalCharts []metricslatest.Chart
 	if group == tagWorkloads {

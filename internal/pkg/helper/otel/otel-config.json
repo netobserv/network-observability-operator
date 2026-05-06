@@ -50,6 +50,10 @@
   "PktDropLatestDropCause": "drops.latestcause",
   "PktDropLatestFlags": "drops.latestflags",
   "PktDropLatestState": "drops.lateststate",
+  "TLSVersion": "tls.version",
+  "TLSGroup": "tls.group",
+  "TLSTypes": "tls.types",
+  "TLSCipherSuite": "tls.ciphersuite",
   "TimeFlowEndMs": "timeflowend",
   "TimeFlowStartMs": "timeflowstart",
   "TimeReceived": "timereceived"

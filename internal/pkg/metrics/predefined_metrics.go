@@ -193,6 +193,25 @@ func init() {
 		})
 	}
 
+	// TLS
+	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
+		groupTrimmed := strings.TrimSuffix(group, "s")
+		labels := mapLabels[group]
+		tlsLabels := labels
+		tlsLabels = append(tlsLabels, "TLSVersion", "TLSCipherSuite", "TLSGroup")
+		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
+			FlowMetricSpec: metricslatest.FlowMetricSpec{
+				MetricName: fmt.Sprintf("%s_tls_flows_total", groupTrimmed),
+				Type:       metricslatest.CounterMetric,
+				Help:       fmt.Sprintf("Total TLS flows per %s", groupTrimmed),
+				Filters:    []metricslatest.MetricFilter{{Field: "TLSTypes", MatchType: metricslatest.MatchPresence}},
+				Labels:     tlsLabels,
+				Charts:     tlsStatusChart(),
+			},
+			tags: []string{group, "tls"},
+		})
+	}
+
 	// IPSEC
 	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
@@ -209,25 +228,6 @@ func init() {
 				Charts:     ipsecStatusChart(group),
 			},
 			tags: []string{group, "ipsec"},
-		})
-	}
-
-	// TLS
-	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
-		groupTrimmed := strings.TrimSuffix(group, "s")
-		labels := mapLabels[group]
-		tlsLabels := labels
-		tlsLabels = append(tlsLabels, "TLSVersion", "TLSCipherSuite", "TLSGroup")
-		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
-			FlowMetricSpec: metricslatest.FlowMetricSpec{
-				MetricName: fmt.Sprintf("%s_tls_flows_total", groupTrimmed),
-				Type:       metricslatest.CounterMetric,
-				Help:       fmt.Sprintf("Total TLS flows per %s", groupTrimmed),
-				Filters:    []metricslatest.MetricFilter{{Field: "TLSTypes", MatchType: metricslatest.MatchPresence}},
-				Labels:     tlsLabels,
-				//				Charts:     tlsStatusChart(group),
-			},
-			tags: []string{group, "tls"},
 		})
 	}
 
@@ -341,9 +341,6 @@ func GetDefinitions(fc *flowslatest.FlowCollectorSpec, allMetrics bool) []metric
 	}
 	if !fc.Agent.EBPF.IsUDNMappingEnabled() && len(fc.GetSecondaryIndexes()) == 0 {
 		labelsToRemove = append(labelsToRemove, "SrcK8S_NetworkName", "DstK8S_NetworkName")
-	}
-	if !fc.Agent.EBPF.IsTLSTrackingEnabled() {
-		labelsToRemove = append(labelsToRemove, "TLSVersion")
 	}
 
 	var filterRecordType *metricslatest.MetricFilter
