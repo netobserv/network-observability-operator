@@ -23,6 +23,7 @@ var (
 		"namespace_rtt_seconds",
 		"namespace_dns_latency_seconds",
 		"namespace_network_policy_events_total",
+		"namespace_tls_flows_total",
 		"node_ipsec_flows_total",
 		"node_to_node_ingress_flows_total",
 	}
@@ -42,6 +43,7 @@ var (
 		"workload_drop_packets_total",
 		"workload_rtt_seconds",
 		"workload_dns_latency_seconds",
+		"workload_tls_flows_total",
 		"namespace_network_policy_events_total",
 		"node_ipsec_flows_total",
 		"node_to_node_ingress_flows_total",
