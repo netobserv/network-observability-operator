@@ -217,13 +217,13 @@ func init() {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
 		tlsLabels := labels
-		tlsLabels = append(tlsLabels, "TLSVersion", "TLSCipherSuite", "TLSGroup", "TLSTypes", "Proto")
+		tlsLabels = append(tlsLabels, "TLSVersion", "TLSCipherSuite", "TLSGroup")
 		predefinedMetrics = append(predefinedMetrics, taggedMetricDefinition{
 			FlowMetricSpec: metricslatest.FlowMetricSpec{
 				MetricName: fmt.Sprintf("%s_tls_flows_total", groupTrimmed),
 				Type:       metricslatest.CounterMetric,
 				Help:       fmt.Sprintf("Total TLS flows per %s", groupTrimmed),
-				Filters:    []metricslatest.MetricFilter{{Field: "TLSVersion", MatchType: metricslatest.MatchPresence}},
+				Filters:    []metricslatest.MetricFilter{{Field: "TLSTypes", MatchType: metricslatest.MatchPresence}},
 				Labels:     tlsLabels,
 				//				Charts:     tlsStatusChart(group),
 			},
