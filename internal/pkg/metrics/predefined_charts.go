@@ -254,7 +254,7 @@ func tlsStatusChart() []metricslatest.Chart {
 			Unit:          metricslatest.UnitPercent,
 			Queries: []metricslatest.Query{
 				{
-					PromQL: `sum(rate($METRIC[2m])) / (sum(rate(netobserv_namespace_flows_total[1m])) OR sum(rate(netobserv_workload_flows_total[1m])) OR sum(rate(netobserv_node_flows_total[1m])))`,
+					PromQL: `sum(rate($METRIC[2m])) / (sum(rate(netobserv_namespace_flows_total[2m])) OR sum(rate(netobserv_workload_flows_total[2m])) OR sum(rate(netobserv_node_flows_total[2m])))`,
 				},
 			},
 		},
