@@ -4,7 +4,7 @@ export OPERATOR_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network
 # eBPF agent
 export EBPF_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9@sha256:d0c9fae97636a23a8980bff0d3b10e229a6f1453d489b27200c49b181e6aed9d'
 # Flowlogs-pipeline
-export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:a0b8f1daa8c8688512183e5c71abf2088b479ecec1ec69db84464eaca9062c59'
+export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9@sha256:9e8c681d294ee37b464d2e5fd0d9aca44ef091770f8faf3c0d0e5b98809f1bf7'
 # Console plugin
 export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:fca8f2ed2b91548710c6be449813750c2f103f4b9f98eecbcd0cc6919b86ecb8'
 # Compatibility Console plugin
