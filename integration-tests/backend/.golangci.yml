@@ -1,15 +1,6 @@
 version: "2"
 run:
   go: "1.23"
-  skip-dirs:
-    - api
-    - cmd
-    - config
-    - docs
-    - hack
-    - internal
-    - pkg
-    - vendor
 linters:
   enable:
     - copyloopvar
@@ -25,10 +16,6 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
     rules:
       - linters:
         - staticcheck
@@ -39,9 +26,3 @@ linters:
 formatters:
   enable:
     - gofmt
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$

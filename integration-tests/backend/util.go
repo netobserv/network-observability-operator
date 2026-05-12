@@ -489,6 +489,7 @@ func waitForConfigMapDataInjection(oc *exutil.CLI, namespace, configMapName, dat
 	})
 	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("ConfigMap %s/%s data was not populated within timeout", namespace, configMapName))
 }
+
 // WaitForDeploymentPodsToBeReady waits for the specific deployment to be ready
 func waitForDeploymentPodsToBeReady(oc *exutil.CLI, namespace, name string) error {
 	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
