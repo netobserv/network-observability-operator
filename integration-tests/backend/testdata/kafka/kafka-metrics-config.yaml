@@ -139,7 +139,7 @@ objects:
           values: ["Kafka", "KafkaConnect", "KafkaMirrorMaker", "KafkaMirrorMaker2"]
     namespaceSelector:
       matchNames:
-        - kafka-cluster
+        - ${NAMESPACE}
     podMetricsEndpoints:
     - path: /metrics
       port: tcp-prometheus
@@ -172,3 +172,6 @@ objects:
         targetLabel: node_ip
         replacement: $1
         action: replace
+parameters:
+- name: NAMESPACE
+  value: "netobserv"

@@ -9,7 +9,7 @@ objects:
     name: ${OG_NAME}
     namespace: ${NAMESPACE}
   spec:
-    upgradeStratergy: Default
+    upgradeStrategy: Default
 parameters:
   - name: OG_NAME
     value: "netobserv-operator"

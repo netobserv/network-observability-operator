@@ -21,7 +21,7 @@ objects:
     storageClassName: ${StorageClass}
     hashRing:
       memberlist:
-        enableIPv6: "${{EnableIPV6}}"
+        enableIPv6: ${{EnableIPV6}}
     tenants:
       mode: ${Tenant}
     template:
