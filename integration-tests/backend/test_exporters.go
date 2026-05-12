@@ -177,9 +177,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		compat_otp.ApplyNsResourceFromTemplate(oc, namespace, "-f", otelCollectorTemplatePath, "-p", "NAME="+collectorname, "OTLP_GRPC_ENDPOINT="+strconv.Itoa(otlpEndpoint), "OTLP_PROM_PORT="+promEndpoint)
 		otelPodLabel := "app.kubernetes.io/component=opentelemetry-collector"
 		defer func() {
-			oc.AsAdmin().WithoutNamespace().Run("delete").Args("opentelemetrycollector", collectorname, "-n", namespace).Execute()
-			oc.AsAdmin().WithoutNamespace().Run("delete").Args("service", collectorname+"-collector", "-n", namespace).Execute()
-			oc.AsAdmin().WithoutNamespace().Run("delete").Args("configmap", "service-ca", "-n", namespace).Execute()
+			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("opentelemetrycollector", collectorname, "-n", namespace).Execute()
+			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("service", collectorname+"-collector", "-n", namespace).Execute()
+			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("configmap", "service-ca", "-n", namespace).Execute()
 		}()
 		WaitForPodsReadyWithLabel(oc, namespace, otelPodLabel)
 
@@ -220,7 +220,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Exporters:     []string{config_str},
 		}
 
-		defer flow.DeleteFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector(oc) }()
 		flow.CreateFlowcollector(oc)
 
 		g.By("Verify OTEL collector is receiving TLS-encrypted flows")
