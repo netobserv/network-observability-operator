@@ -326,7 +326,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	g.Context("with Loki", func() {
 		var (
 			lokiDir, _ = filePath.Abs("testdata/loki")
-			// Loki Operator variables
+                      	// Loki Operator variables
 			lokiPackageName = "loki-operator"
 			lokiSource      CatalogSourceObjects
 			lokiCatalog     = "redhat-operators"
@@ -341,8 +341,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				OperatorGroup: filePath.Join(subscriptionDir, "allnamespace-og.yaml"),
 				CatalogSource: &lokiSource,
 			}
-
-			// LokiStack variables
+                       	// LokiStack variables
 			ipStackType       string
 			lokiStackTemplate = filePath.Join(lokiDir, "lokistack-simple.yaml")
 			lokiTenant        = "openshift-network"
@@ -633,7 +632,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			verifyFlowCorrectness(testClient.ObjectSize, flowRecords)
 
 			// verify inner metrics
-			query := fmt.Sprintf(`sum(rate(netobserv_workload_ingress_bytes_total{SrcK8SNamespace="%s"}[1m]))`, testClient.ClientNS)
+			query := fmt.Sprintf(`sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="%s"}[1m]))`, testClient.ClientNS)
 			metrics := pollMetrics(oc, query)
 
 			// verfy metric is between 270 and 330
@@ -1898,7 +1897,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			g.By("Deploy FlowCollector with FLP tail-based filter and FlowRTT enabled")
 			FLPFiltersConfig := []map[string]any{
 				{
-					"query":        fmt.Sprintf(`SrcK8SNamespace="%s" and SrcK8S_Name=~"flowlogs-pipeline-*" and SrcPort!=9401 and with(TimeFlowRttNs)`, namespace),
+					"query":        fmt.Sprintf(`SrcK8S_Namespace="%s" and SrcK8S_Name=~"flowlogs-pipeline-*" and SrcPort!=9401 and with(TimeFlowRttNs)`, namespace),
 					"outputTarget": "Loki",
 					"sampling":     2,
 				},

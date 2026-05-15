@@ -67,22 +67,22 @@ type Flowcollector struct {
 type Flowlog struct {
 	// Source
 	SrcPort         int
-	SrcK8SType      string
-	SrcK8SName      string
-	SrcK8SHostName  string
-	SrcK8SOwnerType string
+	SrcK8SType      string `json:"SrcK8S_Type,omitempty"`
+	SrcK8SName      string `json:"SrcK8S_Name,omitempty"`
+	SrcK8SHostName  string `json:"SrcK8S_HostName,omitempty"`
+	SrcK8SOwnerType string `json:"SrcK8S_OwnerType,omitempty"`
 	SrcAddr         string
 	SrcMac          string
 	SrcSubnetLabel  string
 	// Destination
 	DstPort         int
-	DstK8SType      string
-	DstK8SName      string
-	DstK8SHostName  string
-	DstK8SOwnerType string
+	DstK8SType      string `json:"DstK8S_Type,omitempty"`
+	DstK8SName      string `json:"DstK8S_Name,omitempty"`
+	DstK8SHostName  string `json:"DstK8S_HostName,omitempty"`
+	DstK8SOwnerType string `json:"DstK8S_OwnerType,omitempty"`
 	DstAddr         string
 	DstMac          string
-	DstK8SHostIP    string
+	DstK8SHostIP    string `json:"DstK8S_HostIP,omitempty"`
 	DstSubnetLabel  string
 	// Protocol
 	Proto    int
@@ -164,17 +164,18 @@ type FlowRecord struct {
 }
 
 type Lokilabels struct {
-	App             string
-	SrcK8SNamespace string
-	DstK8SNamespace string
-	RecordType      string
-	FlowDirection   string
-	SrcK8SOwnerName string
-	DstK8SOwnerName string
-	K8SClusterName  string
-	SrcK8SType      string
-	DstK8SType      string
-	Interfaces      string
+	App             string `loki:"app"`
+	SrcK8SNamespace string `loki:"SrcK8S_Namespace"`
+	DstK8SNamespace string `loki:"DstK8S_Namespace"`
+	RecordType      string `loki:"_RecordType"`
+	FlowDirection   string `loki:"FlowDirection"`
+	SrcK8SOwnerName string `loki:"SrcK8S_OwnerName"`
+	DstK8SOwnerName string `loki:"DstK8S_OwnerName"`
+	K8SClusterName  string `loki:"K8S_ClusterName"`
+	K8SFlowLayer    string `loki:"K8S_FlowLayer"`
+	SrcK8SType      string `loki:"SrcK8S_Type"`
+	DstK8SType      string `loki:"DstK8S_Type"`
+	Interfaces      string `loki:"Interfaces"`
 }
 
 // create flowcollector CRD for a given manifest file

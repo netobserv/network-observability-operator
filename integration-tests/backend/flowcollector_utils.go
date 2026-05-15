@@ -245,21 +245,26 @@ func (flowlog *Flowlog) verifyIPFIXFields() {
 
 func (lokilabels Lokilabels) getLokiQueryLabels() string {
 	label := reflect.ValueOf(&lokilabels).Elem()
+	labelType := label.Type()
 	var lokiQuery = "{"
 	for i := 0; i < label.NumField(); i++ {
 		if label.Field(i).Interface() != "" {
-			switch labelName := label.Type().Field(i).Name; labelName {
-			case "App":
-				lokiQuery += fmt.Sprintf("%s=\"%s\", ", strings.ToLower(label.Type().Field(i).Name), label.Field(i).Interface())
-			case "RecordType":
-				lokiQuery += fmt.Sprintf("_%s=\"%s\", ", label.Type().Field(i).Name, label.Field(i).Interface())
-			case "FlowDirection":
-				if label.Field(i).Interface() == "0" || label.Field(i).Interface() == "1" || label.Field(i).Interface() == "2" {
-					lokiQuery += fmt.Sprintf("%s=\"%s\", ", label.Type().Field(i).Name, label.Field(i).Interface())
-				}
-			default:
-				lokiQuery += fmt.Sprintf("%s=\"%s\", ", label.Type().Field(i).Name, label.Field(i).Interface())
+			field := labelType.Field(i)
+
+			// Get the label name from loki tag, or use field name as fallback
+			labelName := field.Name
+			if lokiTag := field.Tag.Get("loki"); lokiTag != "" {
+				labelName = lokiTag
 			}
+
+			// Handle FlowDirection special case: only include if value is 0, 1, or 2
+			if field.Name == "FlowDirection" {
+				if label.Field(i).Interface() != "0" && label.Field(i).Interface() != "1" && label.Field(i).Interface() != "2" {
+					continue
+				}
+			}
+
+			lokiQuery += fmt.Sprintf("%s=\"%s\", ", labelName, label.Field(i).Interface())
 		}
 	}
 	lokiQuery = strings.TrimSuffix(lokiQuery, ", ")
