@@ -8,6 +8,6 @@ export FLP_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-obse
 # Console plugin
 export CONSOLE_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-rhel9@sha256:14edbf32483439b404115326f698c0bd724f713ac60d0e27860f83a01ae7f8b5'
 # Console plugin PF4 (default / OCP < 4.15)
-export CONSOLE_PF4_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-pf4-rhel9@sha256:cdedba76e796f23a63e1301671e137f68d70a98a4923af429f15fc879b86a326'
+export CONSOLE_PF4_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-pf4-rhel9@sha256:e2ae81fff5d17b39ef31ff8376e3fe619b014d85896aab6c8afb0eb3a14b2c20'
 # Console plugin PF5 (OCP 4.15–4.21)
 export CONSOLE_PF5_IMAGE_PULLSPEC='registry.redhat.io/network-observability/network-observability-console-plugin-pf5-rhel9@sha256:df10209b1966db57727d6cbc1426c2c998377362733b6dd0059d904d70cea652'
