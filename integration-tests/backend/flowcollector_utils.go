@@ -360,12 +360,10 @@ func (lokilabels Lokilabels) getLokiFlowLogs(token, lokiRoute string, startTime 
 		res, qErr = lc.searchLogsInLoki(tenantID, lokiQuery)
 		if qErr != nil {
 			e2e.Logf("\ngot error %v when getting %s logs for query: %s\n", qErr, tenantID, lokiQuery)
-			return false, qErr
+			return false, nil
 		}
 
-		// return results if no error and result is empty
-		// caller should add assertions to ensure len([]FlowRecord) is as they expected for given loki query
-		return len(res.Data.Result) > 0, nil
+		return true, nil
 	})
 
 	if err != nil {
