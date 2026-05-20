@@ -38,7 +38,7 @@ jobs:
           DOCKER_BUILDKIT=1 docker push $(cat ./operator-name)
           DOCKER_BUILDKIT=1 docker push $(cat ./bundle-name)
           DOCKER_BUILDKIT=1 docker push $(cat ./catalog-name)
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v9
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |

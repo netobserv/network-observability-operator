@@ -25,7 +25,6 @@ RELEASE.md
 
 # Examples and samples (not needed for build)
 **/helm/
-**/releases/
 **/test-assets/
 **/_tmp/
 

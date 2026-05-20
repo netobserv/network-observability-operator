@@ -9,13 +9,18 @@ env:
   WF_ORG: netobserv
   WF_RELIMG_VERSION: main
 
+permissions:
+  contents: read
+
 jobs:
   build-pr-image:
     if: ${{ github.event.label.name == 'ok-to-test' }}
     name: Build PR image and upload artifact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Install make
         run: sudo apt -y install make
       - name: get short sha

@@ -11,19 +11,20 @@ env:
   WF_MULTIARCH_TARGETS: amd64 arm64 ppc64le s390x
   WF_VERSION: ${{ github.ref_name }}
 
+permissions:
+  contents: read
+
 jobs:
   push-image:
-    name: push image
+    name: build and push images
     runs-on: ubuntu-latest
     steps:
       - name: install make
         run: sudo apt-get install make
-      - name: set up go 1.x
-        uses: actions/setup-go@v3
-        with:
-          go-version: '1.25'
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: docker login to quay.io
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
         with:
@@ -60,11 +61,13 @@ jobs:
     - name: install make
       run: sudo apt-get install make
     - name: set up go 1.x
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
         go-version: '1.25'
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - name: Test
       run: make test
     - name: Report coverage

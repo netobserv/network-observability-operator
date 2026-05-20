@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: ['*']
 
+permissions:
+  contents: read
+
 jobs:
   build-lint-test:
     name: Build, lint, test
@@ -12,11 +15,13 @@ jobs:
     - name: install make
       run: sudo apt-get install make
     - name: set up go 1.x
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
         go-version: '1.25'
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - name: check format
       run: make fmt && git add -A && git diff --exit-code
     - name: build, lint, test
@@ -38,7 +43,9 @@ jobs:
     - name: install make
       run: sudo apt-get install make
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - name: generate bundle
       run: make update-bundle
     - name: check bundle clean state
@@ -55,7 +62,9 @@ jobs:
       run: sudo apt-get install make
 
     - name: checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
+      with:
+        persist-credentials: false
 
     - name: generate helm
       run: make helm-update
