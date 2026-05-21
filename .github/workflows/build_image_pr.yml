@@ -39,7 +39,7 @@ jobs:
           echo ${{ github.event.number }} > ./out/pr-id
           echo ${{ env.short_sha }} > ./out/short-sha
       - name: upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pr
           path: out/

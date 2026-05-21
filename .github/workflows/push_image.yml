@@ -26,7 +26,7 @@ jobs:
         with:
           persist-credentials: false
       - name: docker login to quay.io
-        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.2.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ env.WF_REGISTRY_USER }}
           password: ${{ secrets.QUAY_SECRET }}
