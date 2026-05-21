@@ -126,6 +126,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		// If Loki Operator was installed by NetObserv tests,
 		//  it will install and uninstall after each spec/test.
 		if !Lokiexisting {
+			g.DeferCleanup(LO.uninstallOperator, oc)
 			ensureOperatorDeployed(oc, LO, lokiSource, "name="+LO.OperatorName)
 		} else {
 			channelName, err := checkOperatorChannel(oc, LO.Namespace, LO.PackageName)
@@ -133,6 +134,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			if channelName != lokiChannel {
 				e2e.Logf("found %s channel for loki operator, removing and reinstalling with %s channel instead", channelName, lokiSource.Channel)
 				LO.uninstallOperator(oc)
+				g.DeferCleanup(LO.uninstallOperator, oc)
 				ensureOperatorDeployed(oc, LO, lokiSource, "name="+LO.OperatorName)
 				Lokiexisting = false
 			}
@@ -149,6 +151,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		if len(objectStorageType) == 0 && ipStackType != "ipv6single" {
 			g.Skip("Current cluster doesn't have a proper object storage for this test!")
 		}
+
+		g.DeferCleanup(oc.DeleteSpecifiedNamespaceAsAdmin, lokiStackNS)
 		oc.CreateSpecifiedNamespaceAsAdmin(lokiStackNS)
 
 		ls = &lokiStack{
@@ -168,11 +172,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ls.EnableIPV6 = "true"
 		}
 
+		g.DeferCleanup(ls.removeObjectStorage, oc)
 		err = ls.prepareResourcesForLokiStack(oc)
 		if err != nil {
 			g.Skip("Skipping test since LokiStack resources were not deployed")
 		}
 
+		g.DeferCleanup(ls.removeLokiStack, oc)
 		err = ls.deployLokiStack(oc)
 		if err != nil {
 			g.Skip("Skipping test since LokiStack was not deployed")
@@ -189,16 +195,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			g.Skip("Skipping test since LokiStack is not ready")
 		}
 		ls.Route = "https://" + getRouteAddress(oc, ls.Namespace, ls.Name)
-
-		// Defer cleanup - runs even if test fails or panics
-		g.DeferCleanup(func() {
-			ls.removeLokiStack(oc)
-			ls.removeObjectStorage(oc)
-			if !Lokiexisting {
-				LO.uninstallOperator(oc)
-			}
-			oc.DeleteSpecifiedNamespaceAsAdmin(lokiStackNS)
-		})
 	})
 
 	g.It("Author:aramesha-Critical-86388-Verify flowCollectorSlice collectionMode: AlwaysCollect [Serial]", func() {
@@ -404,7 +400,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		serverPodIP, _ := getPodIP(oc, testPingPodsTemplate.ServerNS, "ping-server", ipStackType)
 
 		// Continuously ping server for 300 seconds to generate sustained traffic
-		_, _ = e2eoutput.RunHostCmd(testPingPodsTemplate.ClientNS, "ping-client", "timeout 300 ping "+serverPodIP)
+		_, err = e2eoutput.RunHostCmd(testPingPodsTemplate.ClientNS, "ping-client", "ping -w 300 "+serverPodIP)
+		o.Expect(err).NotTo(o.HaveOccurred())
 		time.Sleep(60 * time.Second)
 
 		lokilabels = Lokilabels{

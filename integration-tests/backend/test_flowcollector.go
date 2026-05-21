@@ -371,6 +371,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			// If Loki Operator was installed by NetObserv tests,
 			//  it will install and uninstall after each spec/test.
 			if !Lokiexisting {
+				g.DeferCleanup(LO.uninstallOperator, oc)
 				ensureOperatorDeployed(oc, LO, lokiSource, "name="+LO.OperatorName)
 			} else {
 				channelName, err := checkOperatorChannel(oc, LO.Namespace, LO.PackageName)
@@ -378,6 +379,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				if channelName != lokiChannel {
 					e2e.Logf("found %s channel for loki operator, removing and reinstalling with %s channel instead", channelName, lokiSource.Channel)
 					LO.uninstallOperator(oc)
+					g.DeferCleanup(LO.uninstallOperator, oc)
 					ensureOperatorDeployed(oc, LO, lokiSource, "name="+LO.OperatorName)
 					Lokiexisting = false
 				}
@@ -394,6 +396,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			if len(objectStorageType) == 0 && ipStackType != "ipv6single" {
 				g.Skip("Current cluster doesn't have a proper object storage for this test!")
 			}
+
+			g.DeferCleanup(oc.DeleteSpecifiedNamespaceAsAdmin, lokiStackNS)
 			oc.CreateSpecifiedNamespaceAsAdmin(lokiStackNS)
 
 			ls = &lokiStack{
@@ -413,11 +417,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				ls.EnableIPV6 = "true"
 			}
 
+			g.DeferCleanup(ls.removeObjectStorage, oc)
 			err = ls.prepareResourcesForLokiStack(oc)
 			if err != nil {
 				g.Skip("Skipping test since LokiStack resources were not deployed")
 			}
 
+			g.DeferCleanup(ls.removeLokiStack, oc)
 			err = ls.deployLokiStack(oc)
 			if err != nil {
 				g.Skip("Skipping test since LokiStack was not deployed")
@@ -434,16 +440,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				g.Skip("Skipping test since LokiStack is not ready")
 			}
 			ls.Route = "https://" + getRouteAddress(oc, ls.Namespace, ls.Name)
-
-			// Defer cleanup - runs even if test fails or panics
-			g.DeferCleanup(func() {
-				ls.removeLokiStack(oc)
-				ls.removeObjectStorage(oc)
-				if !Lokiexisting {
-					LO.uninstallOperator(oc)
-				}
-				oc.DeleteSpecifiedNamespaceAsAdmin(lokiStackNS)
-			})
 		})
 
 		g.Context("FLP, eBPF and Console metrics:", func() {
@@ -852,6 +848,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.It("Author:aramesha-NonPreRelease-Critical-59746-NetObserv upgrade testing [Serial]", func() {
 			SkipIfOCPBelow("v4.10")
+
+			// Defer cleanup - ensures operator is uninstalled if test fails/passes
+			g.DeferCleanup(func() {
+				NO.uninstallOperator(oc)
+				oc.DeleteSpecifiedNamespaceAsAdmin(netobservNS)
+			})
+
 			g.By("Uninstall operator deployed by BeforeEach and delete operator NS")
 			NO.uninstallOperator(oc)
 			oc.DeleteSpecifiedNamespaceAsAdmin(netobservNS)
@@ -885,7 +888,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				LokiNamespace: lokiStackNS,
 			}
 
-			defer func() { _ = flow.DeleteFlowcollector(oc) }()
+			defer flow.DeleteFlowcollector(oc)
 			flow.CreateFlowcollector(oc)
 
 			g.By("Get NetObserv and components versions")
@@ -2907,6 +2910,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				AMQexisting, err = CheckOperatorStatus(oc, amq.Namespace, amq.PackageName)
 				o.Expect(err).NotTo(o.HaveOccurred())
 				if !AMQexisting {
+					g.DeferCleanup(amq.uninstallOperator, oc)
 					ensureOperatorDeployed(oc, amq, kafkaSource, "name="+amq.OperatorName)
 					// before creating kafka, check the existence of crd kafkas.kafka.strimzi.io
 					checkResource(oc, true, true, "kafka.strimzi.io", []string{"crd", "kafkas.kafka.strimzi.io", "-ojsonpath={.spec.group}"})
@@ -2945,11 +2949,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				}
 
 				g.By("Deploy Kafka with TLS")
+				g.DeferCleanup(oc.DeleteSpecifiedNamespaceAsAdmin, kafkaNs)
 				oc.CreateSpecifiedNamespaceAsAdmin(kafkaNs)
 				kafkaMetrics.deployKafkaMetrics(oc)
+				g.DeferCleanup(kafkaNodePool.deleteKafkaNodePool, oc)
 				kafkaNodePool.deployKafkaNodePool(oc)
+				g.DeferCleanup(kafka.deleteKafka, oc)
 				kafka.deployKafka(oc)
+				g.DeferCleanup(kafkaTopic.deleteKafkaTopic, oc)
 				kafkaTopic.deployKafkaTopic(oc)
+				g.DeferCleanup(kafkaUser.deleteKafkaUser, oc)
 				kafkaUser.deployKafkaUser(oc)
 
 				g.By("Check if Kafka and Kafka topic are ready")
@@ -2957,18 +2966,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				WaitForPodsReadyWithLabel(oc, kafka.Namespace, "strimzi.io/pool-name=kafka-pool")
 				waitForKafkaReady(oc, kafka.Name, kafka.Namespace)
 				waitForKafkaTopicReady(oc, kafkaTopic.TopicName, kafkaTopic.Namespace)
-
-				// Defer cleanup - runs even if test fails or panics
-				g.DeferCleanup(func() {
-					kafkaUser.deleteKafkaUser(oc)
-					kafkaTopic.deleteKafkaTopic(oc)
-					kafkaNodePool.deleteKafkaNodePool(oc)
-					kafka.deleteKafka(oc)
-					if !AMQexisting {
-						amq.uninstallOperator(oc)
-					}
-					oc.DeleteSpecifiedNamespaceAsAdmin(kafkaNs)
-				})
 			})
 
 			g.It("Author:aramesha-NonPreRelease-Longduration-Critical-56362-High-53597-High-56326-High-64880-High-75340-Verify network flows are captured with Kafka with TLS [Serial][Slow]", func() {
@@ -3192,22 +3189,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				VOexisting, err = CheckOperatorStatus(oc, VO.Namespace, VO.PackageName)
 				o.Expect(err).NotTo(o.HaveOccurred())
 				if !VOexisting {
+					g.DeferCleanup(VO.uninstallOperator, oc)
 					ensureOperatorDeployed(oc, VO, virtSource, "name=virt-operator")
 				}
 
 				g.By("Deploy OpenShift Virtualization Deployment CR")
+				g.DeferCleanup(deleteResource, oc, "hyperconverged", "kubevirt-hyperconverged", virtOperatorNS)
 				_, err = oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", kubevirtHyperconvergedPath).Output()
 				o.Expect(err).ToNot(o.HaveOccurred())
 				waitUntilHyperConvergedReady(oc, "kubevirt-hyperconverged", virtOperatorNS)
 				WaitForPodsReadyWithLabel(oc, virtOperatorNS, "app.kubernetes.io/managed-by=virt-operator")
-
-				// Defer cleanup - runs even if test fails or panics
-				g.DeferCleanup(func() {
-					deleteResource(oc, "hyperconverged", "kubevirt-hyperconverged", virtOperatorNS)
-					if !VOexisting {
-						VO.uninstallOperator(oc)
-					}
-				})
 			})
 
 			g.It("Author:aramesha-NonPreRelease-Longduration-High-76537-Verify flow enrichment for VM's secondary interfaces [Disruptive][Slow]", func() {
