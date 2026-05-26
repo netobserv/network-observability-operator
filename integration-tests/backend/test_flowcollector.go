@@ -408,7 +408,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				}
 
 				g.By(fmt.Sprintf("[%s]: Wait for metrics to be available", t.Name))
-				time.Sleep(60 * time.Second)
+				time.Sleep(90 * time.Second)
 
 				// Get all netobserv metrics currently exposed
 				g.By(fmt.Sprintf("[%s]: Query Prometheus for all netobserv_* metrics", t.Name))
