@@ -174,7 +174,24 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 		name,
 		constants.ConsoleTokenReviewRole,
 	)
-	return r.ReconcileClusterRoleBinding(ctx, binding)
+	if err := r.ReconcileClusterRoleBinding(ctx, binding); err != nil {
+		return err
+	}
+	if builder.useStandalone {
+		// Currently, standalone mode uses service account token, not user token, for permissions.
+		// Add FlowCollector viewer role so that it can display the FC status icon.
+		binding := resources.GetClusterRoleBinding(
+			r.Namespace,
+			constants.PluginShortName,
+			name,
+			name,
+			constants.FlowCollectorViewerRole,
+		)
+		if err := r.ReconcileClusterRoleBinding(ctx, binding); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec, name, displayName string) error {
