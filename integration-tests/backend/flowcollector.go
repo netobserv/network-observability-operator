@@ -146,7 +146,7 @@ type Flowlog struct {
 	// TLS
 	TLSVersion     string   `json:"TLSVersion,omitempty"`
 	TLSTypes       []string `json:"TLSTypes,omitempty"`
-	TLSCurve       string   `json:"TLSCurve,omitempty"`
+	TLSGroup       string   `json:"TLSGroup,omitempty"`
 	TLSCipherSuite string   `json:"TLSCipherSuite,omitempty"`
 }
 

@@ -165,6 +165,13 @@ func verifyEBPFFeatureMetrics(oc *exutil.CLI, feature string) {
 	o.Expect(metrics).Should(o.BeNumerically(">", 0), fmt.Sprintf("%s metrics is 0", feature))
 }
 
+// verify TLS metrics with specified label
+func verifyTLSMetrics(oc *exutil.CLI, field string) {
+	query := fmt.Sprintf(`sum(netobserv_namespace_tls_flows_total{%s!=""})`, field)
+	metrics := pollMetrics(oc, query)
+	o.Expect(metrics).Should(o.BeNumerically(">", 0), fmt.Sprintf("TLS metrics with %s label should be > 0", field))
+}
+
 func getMetricsScheme(oc *exutil.CLI, servicemonitor string, namespace string) (string, error) {
 	out, err := oc.AsAdmin().Run("get").Args("servicemonitor", servicemonitor, "-n", namespace, "-o", "jsonpath='{.spec.endpoints[].scheme}'").Output()
 	return out, err

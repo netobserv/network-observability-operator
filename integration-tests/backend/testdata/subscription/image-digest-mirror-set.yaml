@@ -29,5 +29,10 @@ spec:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-operator-bundle-zstream
       source: registry.redhat.io/network-observability/network-observability-operator-bundle
     - mirrors:
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf5-ystream
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf5-zstream
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-pf5-rhel9
+    - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-ystream
-      source: registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9
+      - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-zstream
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-pf4-rhel9

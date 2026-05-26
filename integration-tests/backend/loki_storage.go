@@ -89,13 +89,6 @@ func generateS3Config(cred s3Credential) aws.Config {
 	var err error
 	var cfg aws.Config
 	if len(cred.Endpoint) > 0 {
-		customResolver := aws.EndpointResolverWithOptionsFunc(func(_, _ string, _ ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				URL:               cred.Endpoint,
-				HostnameImmutable: true,
-				Source:            aws.EndpointSourceCustom,
-			}, nil
-		})
 		// For ODF and Minio, they're deployed in OCP clusters
 		// In some clusters, we can't connect it without proxy, here add proxy settings to s3 client when there has http_proxy or https_proxy in the env var
 		httpClient := awshttp.NewBuildableClient().WithTransportOptions(func(tr *http.Transport) {
@@ -109,7 +102,7 @@ func generateS3Config(cred s3Credential) aws.Config {
 		})
 		cfg, err = config.LoadDefaultConfig(context.TODO(),
 			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cred.AccessKeyID, cred.SecretAccessKey, "")),
-			config.WithEndpointResolverWithOptions(customResolver),
+			config.WithBaseEndpoint(cred.Endpoint),
 			config.WithHTTPClient(httpClient),
 			config.WithRegion("auto"))
 	} else {

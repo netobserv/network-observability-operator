@@ -3,7 +3,7 @@ apiVersion: template.openshift.io/v1
 metadata:
   name: kafka-node-pool-template
 objects:
-- apiVersion: kafka.strimzi.io/v1beta2
+- apiVersion: kafka.strimzi.io/v1
   kind: KafkaNodePool
   metadata:
     name: "${NODEPOOL}"
