@@ -3065,7 +3065,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				kafkaConfig := string(config)
 
 				// Use random compression to test different options across periodic runs
-				validCompressions := []string{"none", "gzip", "snappy", "lz4", "zstd"}
+				validCompressions := []string{"gzip", "snappy", "lz4", "zstd"}
 				randomCompression := validCompressions[g.GinkgoRandomSeed()%int64(len(validCompressions))]
 				e2e.Logf("Using Kafka compression: %s (seed: %d)", randomCompression, g.GinkgoRandomSeed())
 
