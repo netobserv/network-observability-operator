@@ -74,6 +74,7 @@ objects:
       kafka:
         address: "${KafkaAddress}"
         topic: "${KafkaTopic}"
+        compression: "${KafkaCompression}"
         tls:
           enable: "${{KafkaTLSEnable}}"
           caCert:
@@ -217,6 +218,8 @@ parameters:
     value: '[]'
   - name: SecondaryNetworks
     value: '[]'
+  - name: "KafkaCompression"
+    value: 'none'
   - name: ServiceTLSType
     description: "TLS type for Service deployment model (Auto, Provided, Disabled, Auto-mTLS)"
     value: "Auto"
