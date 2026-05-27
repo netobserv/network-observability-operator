@@ -81,7 +81,8 @@ func getMinIOCreds(oc *exutil.CLI, ns string) s3Credential {
 	secretAccessKey, err := os.ReadFile(dirname + "/secret_access_key")
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	endpoint := "http://" + getRouteAddress(oc, ns, "minio")
+	// endpoint := "http://" + getRouteAddress(oc, ns, "minio")
+	endpoint := "https://" + getRouteAddress(oc, ns, "minio")
 	return s3Credential{Endpoint: endpoint, AccessKeyID: string(accessKeyID), SecretAccessKey: string(secretAccessKey)}
 }
 
@@ -944,7 +945,31 @@ func deployMinIO(oc *exutil.CLI) {
 		_ = Resource{rs, "minio", minioNS}.WaitForResourceToAppear(oc)
 	}
 	WaitForDeploymentPodsToBeReady(oc, minioNS, "minio")
+
+       // patch routes to enable TLS termination
+       patchMinioRoutesWithTLS(oc, minioNS)
 }
+
+// patchMinioRoutesWithTLS patches the MinIO routes to add edge TLS termination
+func patchMinioRoutesWithTLS(oc *exutil.CLI, ns string) {
+       tlsPatch := `{"spec":{"tls":{"termination":"edge","insecureEdgeTerminationPolicy":"Redirect"}}}`
+
+       // Patch the main MinIO route
+       err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("route", "minio", "-n", ns, "--type=merge", "-p", tlsPatch).Execute()
+       if err != nil {
+               e2e.Logf("Warning: failed to patch minio route with TLS: %v", err)
+       } else {
+               e2e.Logf("Successfully patched minio route with edge TLS termination")
+       }
+
+       // Patch the MinIO console route
+       err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("route", "minio-console", "-n", ns, "--type=merge", "-p", tlsPatch).Execute()
+       if err != nil {
+               e2e.Logf("Warning: failed to patch minio-console route with TLS: %v", err)
+       } else {
+               e2e.Logf("Successfully patched minio-console route with edge TLS termination")
+       }
+ }
 
 func getPoolID(oc *exutil.CLI) (string, error) {
 	// pool_id="$(oc get authentication cluster -o json | jq -r .spec.serviceAccountIssuer | sed 's/.*\/\([^\/]*\)-oidc/\1/')"
