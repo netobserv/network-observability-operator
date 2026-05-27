@@ -423,11 +423,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 					actualSet[m] = true
 				}
 
-				expectedSet := make(map[string]bool)
-				for _, m := range t.ExpectedMetrics {
-					expectedSet[m] = true
-				}
-
 				o.Expect(len(t.ExpectedMetrics)).To(o.Equal(len(allMetrics)),
 					fmt.Sprintf("[%s]: expected %d metrics but found %d: %v", t.Name, len(t.ExpectedMetrics), len(allMetrics), allMetrics))
 
