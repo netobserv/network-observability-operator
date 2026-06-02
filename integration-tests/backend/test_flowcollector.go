@@ -842,8 +842,12 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				FlowDirection:   "0",
 			}
 			flowRecords, err = lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime)
-			o.Expect(err).NotTo(o.HaveOccurred())
-			o.Expect(len(flowRecords)).NotTo(o.BeNumerically(">", 0), "expected number of flowRecords to be equal to 0")
+			// Multi-tenancy verification: Loki Gateway returns permission errors for unauthorized namespace access
+			if err != nil {
+				o.Expect(err.Error()).To(o.ContainSubstring("permission"), "expected permission error for unauthorized namespace access, got: %v", err)
+			} else {
+				o.Expect(len(flowRecords)).To(o.Equal(0), "expected zero flowRecords for unauthorized namespace access")
+			}
 		})
 
 		g.It("Author:aramesha-NonPreRelease-Critical-59746-NetObserv upgrade testing [Serial]", func() {

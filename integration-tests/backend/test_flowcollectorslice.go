@@ -609,8 +609,12 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			FlowDirection:   "0",
 		}
 		flowRecords, err = lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime)
-		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(len(flowRecords)).Should(o.BeNumerically("==", 0), "expected testuser to NOT see flows from test-b namespace")
+		// Multi-tenancy verification: Loki Gateway returns permission errors for unauthorized namespace access
+		if err != nil {
+			o.Expect(err.Error()).Should(o.ContainSubstring("permission"), "expected permission error for unauthorized namespace access, got: %v", err)
+		} else {
+			o.Expect(len(flowRecords)).Should(o.BeNumerically("==", 0), "expected testuser to NOT see flows from test-b namespace")
+		}
 
 		g.By("Add testuser-0 as viewer for test-b namespace")
 		err = oc.AsAdmin().WithoutNamespace().Run("create").Args("rolebinding", "testuser-0-view",

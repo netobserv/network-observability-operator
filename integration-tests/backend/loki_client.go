@@ -287,6 +287,14 @@ func (c *lokiClient) doRequest(path, query string, quiet bool, out interface{}) 
 		if resp.StatusCode/100 != 2 {
 			buf, _ := io.ReadAll(resp.Body) //  nolint
 			e2e.Logf("Error response from server: %s (%v) attempts remaining: %d", string(buf), err, attempts)
+			// Don't retry on authorization/authentication errors - these are permanent failures
+			// Verifies multi-tenancy behavior
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
+				if err := resp.Body.Close(); err != nil {
+					e2e.Logf("error closing body: %v", err)
+				}
+				return fmt.Errorf("permission denied: %s", string(buf))
+			}
 			if err := resp.Body.Close(); err != nil {
 				e2e.Logf("error closing body: %v", err)
 			}
