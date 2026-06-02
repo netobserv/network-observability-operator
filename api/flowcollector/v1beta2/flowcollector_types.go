@@ -1510,9 +1510,8 @@ type AdvancedPluginConfig struct {
 	//+optional
 	Args []string `json:"args,omitempty"`
 
-	//+kubebuilder:default:=true
-	//+optional
 	// `register` is deprecated and unused. In OpenShift, use the Console plugins interface to enable or disable this plugin.
+	//+optional
 	//
 	// Deprecated: unused field.
 	Register *bool `json:"register,omitempty"`

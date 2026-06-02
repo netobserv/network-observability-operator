@@ -1763,7 +1763,6 @@ spec:
                         minimum: 1
                         type: integer
                       register:
-                        default: true
                         description: |-
                           `register` is deprecated and unused. In OpenShift, use the Console plugins interface to enable or disable this plugin.
 

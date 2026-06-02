@@ -3170,8 +3170,6 @@ in edge debug or support scenarios.<br/>
           `register` is deprecated and unused. In OpenShift, use the Console plugins interface to enable or disable this plugin.
 
 Deprecated: unused field.<br/>
-          <br/>
-            <i>Default</i>: true<br/>
         </td>
         <td>false</td>
       </tr><tr>
