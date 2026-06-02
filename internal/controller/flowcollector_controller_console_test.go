@@ -4,8 +4,6 @@ package controllers
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	configv1 "github.com/openshift/api/config/v1"
-	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -42,9 +40,6 @@ func flowCollectorConsolePluginSpecs() {
 	crKey := types.NamespacedName{
 		Name: "cluster",
 	}
-	consoleCRKey := types.NamespacedName{
-		Name: "cluster",
-	}
 	rbKeyPlugin := types.NamespacedName{Name: "netobserv-token-review-plugin"}
 
 	BeforeEach(func() {
@@ -58,30 +53,6 @@ func flowCollectorConsolePluginSpecs() {
 	Context("Console plugin test init", func() {
 		It("Should create controller pod owner", func() {
 			createFakeController()
-		})
-
-		It("Should create Console CR", func() {
-			created := &operatorsv1.Console{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: consoleCRKey.Name,
-				},
-				Spec: operatorsv1.ConsoleSpec{
-					OperatorSpec: operatorsv1.OperatorSpec{
-						ManagementState: operatorsv1.Unmanaged,
-						LogLevel:        operatorsv1.Normal,
-					},
-					Providers: operatorsv1.ConsoleProviders{},
-					Route: operatorsv1.ConsoleConfigRoute{
-						Hostname: "",
-						Secret: configv1.SecretNameReference{
-							Name: "",
-						},
-					},
-				},
-			}
-
-			// Create
-			Expect(k8sClient.Create(ctx, created)).Should(Succeed())
 		})
 	})
 
@@ -114,9 +85,7 @@ func flowCollectorConsolePluginSpecs() {
 					ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 						Enable:          ptr.To(true),
 						ImagePullPolicy: "Never",
-						Advanced: &flowslatest.AdvancedPluginConfig{
-							Register: ptr.To(false),
-						},
+						Advanced:        &flowslatest.AdvancedPluginConfig{},
 						Autoscaler: flowslatest.FlowCollectorHPA{
 							Status:      flowslatest.HPAStatusEnabled,
 							MinReplicas: ptr.To(int32(1)),
@@ -272,34 +241,6 @@ func flowCollectorConsolePluginSpecs() {
 		})
 	})
 
-	Context("Registering to the Console CR", func() {
-		It("Should start with static plugin registered", func() {
-			Eventually(func() interface{} {
-				cr := operatorsv1.Console{}
-				if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
-					return err
-				}
-				return cr.Spec.Plugins
-			}, timeout, interval).Should(Equal([]string{"netobserv-plugin-static"}))
-		})
-
-		It("Should be registered", func() {
-			By("Update CR to registered")
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Advanced.Register = ptr.To(true)
-			})
-
-			By("Expecting the Console CR to have both plugins registered")
-			Eventually(func() interface{} {
-				cr := operatorsv1.Console{}
-				if err := k8sClient.Get(ctx, consoleCRKey, &cr); err != nil {
-					return err
-				}
-				return cr.Spec.Plugins
-			}, timeout, interval).Should(Equal([]string{"netobserv-plugin-static", "netobserv-plugin"}))
-		})
-	})
-
 	Context("Update enable option", func() {
 		It("Should be initially enabled", func() {
 			Eventually(func() interface{} {
@@ -413,16 +354,6 @@ func flowCollectorConsolePluginSpecs() {
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
 			cleanupCR(crKey)
-		})
-
-		It("Should delete Console CR", func() {
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &operatorsv1.Console{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: consoleCRKey.Name,
-					},
-				})
-			}, timeout, interval).Should(Succeed())
 		})
 
 		It("Should delete fake controller", func() {

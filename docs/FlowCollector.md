@@ -3167,9 +3167,9 @@ in edge debug or support scenarios.<br/>
         <td><b>register</b></td>
         <td>boolean</td>
         <td>
-          `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
-When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
-`oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`<br/>
+          `register` is deprecated and unused. In OpenShift, use the Console plugins interface to enable or disable this plugin.
+
+Deprecated: unused field.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>

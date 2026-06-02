@@ -1512,9 +1512,9 @@ type AdvancedPluginConfig struct {
 
 	//+kubebuilder:default:=true
 	//+optional
-	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
-	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
-	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
+	// `register` is deprecated and unused. In OpenShift, use the Console plugins interface to enable or disable this plugin.
+	//
+	// Deprecated: unused field.
 	Register *bool `json:"register,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1

@@ -221,10 +221,9 @@ func GetAdvancedLokiConfig(specConfig *flowslatest.AdvancedLokiConfig) flowslate
 
 func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flowslatest.AdvancedPluginConfig {
 	cfg := flowslatest.AdvancedPluginConfig{
-		Env:      map[string]string{},
-		Args:     []string{},
-		Register: ptr.To(GetFieldDefaultBool(PluginAdvancedPath, "register")),
-		Port:     ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
+		Env:  map[string]string{},
+		Args: []string{},
+		Port: ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
 		Scheduling: &flowslatest.SchedulingConfig{
 			NodeSelector:      map[string]string{},
 			Tolerations:       nil,
@@ -239,9 +238,6 @@ func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flows
 		}
 		if len(specConfig.Args) > 0 {
 			cfg.Args = specConfig.Args
-		}
-		if specConfig.Register != nil {
-			cfg.Register = specConfig.Register
 		}
 		if specConfig.Port != nil && *specConfig.Port > 0 {
 			cfg.Port = specConfig.Port

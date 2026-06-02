@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	osv1 "github.com/openshift/api/console/v1"
-	operatorsv1 "github.com/openshift/api/operator/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -83,11 +82,6 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	hasPluginAPI := r.ClusterInfo.HasConsolePlugin()
-	if hasPluginAPI {
-		if err = r.checkAutoPatch(ctx, desired, constants.PluginName); err != nil {
-			return err
-		}
-	}
 
 	if desired.Spec.NeedsConsolePluginDeployment(hasPluginAPI) {
 		// Create object builder
@@ -140,25 +134,6 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 		}
 	}
 
-	return nil
-}
-
-func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector, name string) error {
-	console := operatorsv1.Console{}
-	advancedConfig := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
-	reg := desired.Spec.UseWebConsole() && *advancedConfig.Register
-	if err := r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, &console); err != nil {
-		if reg {
-			log.FromContext(ctx).Error(err, "Could not get the Console Operator resource for plugin registration. Please register manually.")
-			r.Status.SetDegraded("PluginRegistrationFailed", "Could not auto-register console plugin; manual registration needed")
-		}
-		return nil
-	}
-	registered := helper.ContainsString(console.Spec.Plugins, name)
-	if reg && !registered {
-		console.Spec.Plugins = append(console.Spec.Plugins, name)
-		return r.Client.Update(ctx, &console)
-	}
 	return nil
 }
 

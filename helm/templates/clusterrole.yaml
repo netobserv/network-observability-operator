@@ -231,15 +231,6 @@ rules:
   - apiGroups:
       - operator.openshift.io
     resources:
-      - consoles
-    verbs:
-      - get
-      - list
-      - update
-      - watch
-  - apiGroups:
-      - operator.openshift.io
-    resources:
       - networks
     verbs:
       - get

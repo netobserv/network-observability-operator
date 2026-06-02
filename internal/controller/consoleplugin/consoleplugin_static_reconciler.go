@@ -28,9 +28,6 @@ func (r *CPReconciler) ReconcileStaticPlugin(ctx context.Context, enable bool) e
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 				Enable:   ptr.To(enable),
 				LogLevel: "info",
-				Advanced: &flowslatest.AdvancedPluginConfig{
-					Register: ptr.To(true),
-				},
 			},
 		},
 	})
@@ -45,12 +42,6 @@ func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest
 	err := r.Managed.FetchAll(ctx)
 	if err != nil {
 		return err
-	}
-
-	if r.ClusterInfo.HasConsolePlugin() {
-		if err = r.checkAutoPatch(ctx, desired, constants.StaticPluginName); err != nil {
-			return err
-		}
 	}
 
 	if r.ClusterInfo.HasConsolePlugin() {
