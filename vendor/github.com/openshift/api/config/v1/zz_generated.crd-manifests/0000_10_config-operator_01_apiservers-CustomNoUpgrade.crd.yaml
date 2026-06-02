@@ -168,59 +168,267 @@ spec:
                       managing the lifecyle of the encryption keys outside of the control plane.
                       This allows integration with an external provider to manage the data encryption keys securely.
                     properties:
-                      aws:
-                        description: |-
-                          aws defines the key config for using an AWS KMS instance
-                          for the encryption. The AWS KMS instance is managed
-                          by the user outside the purview of the control plane.
-                        properties:
-                          keyARN:
-                            description: |-
-                              keyARN specifies the Amazon Resource Name (ARN) of the AWS KMS key used for encryption.
-                              The value must adhere to the format `arn:aws:kms:<region>:<account_id>:key/<key_id>`, where:
-                              - `<region>` is the AWS region consisting of lowercase letters and hyphens followed by a number.
-                              - `<account_id>` is a 12-digit numeric identifier for the AWS account.
-                              - `<key_id>` is a unique identifier for the KMS key, consisting of lowercase hexadecimal characters and hyphens.
-                            maxLength: 128
-                            minLength: 1
-                            type: string
-                            x-kubernetes-validations:
-                            - message: keyARN must follow the format `arn:aws:kms:<region>:<account_id>:key/<key_id>`.
-                                The account ID must be a 12 digit number and the region
-                                and key ID should consist only of lowercase hexadecimal
-                                characters and hyphens (-).
-                              rule: self.matches('^arn:aws:kms:[a-z0-9-]+:[0-9]{12}:key/[a-f0-9-]+$')
-                          region:
-                            description: |-
-                              region specifies the AWS region where the KMS instance exists, and follows the format
-                              `<region-prefix>-<region-name>-<number>`, e.g.: `us-east-1`.
-                              Only lowercase letters and hyphens followed by numbers are allowed.
-                            maxLength: 64
-                            minLength: 1
-                            type: string
-                            x-kubernetes-validations:
-                            - message: region must be a valid AWS region, consisting
-                                of lowercase characters, digits and hyphens (-) only.
-                              rule: self.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
-                        required:
-                        - keyARN
-                        - region
-                        type: object
                       type:
                         description: |-
                           type defines the kind of platform for the KMS provider.
-                          Available provider types are AWS only.
+                          Allowed values are Vault.
+                          When set to Vault, the plugin connects to a HashiCorp Vault server for key management.
                         enum:
-                        - AWS
+                        - Vault
                         type: string
+                      vault:
+                        description: |-
+                          vault defines the configuration for the Vault KMS plugin.
+                          The plugin connects to a Vault Enterprise server that is managed
+                          by the user outside the purview of the control plane.
+                          This field must be set when type is Vault, and must be unset otherwise.
+                        properties:
+                          authentication:
+                            description: authentication defines the authentication
+                              method used to authenticate with Vault.
+                            properties:
+                              appRole:
+                                description: |-
+                                  appRole defines the configuration for AppRole authentication.
+                                  This field must be set when type is AppRole, and must be unset otherwise.
+                                properties:
+                                  secret:
+                                    description: |-
+                                      secret references a secret in the openshift-config namespace containing
+                                      the AppRole credentials used to authenticate with Vault.
+                                      The referenced Secret must contain two keys: "role-id" for the AppRole Role ID and "secret-id" for the AppRole Secret ID.
+                                    properties:
+                                      name:
+                                        description: |-
+                                          name is the metadata.name of the referenced secret in the openshift-config namespace.
+                                          The name must be a valid DNS subdomain name: it must contain no more than 253 characters,
+                                          contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character.
+                                        maxLength: 253
+                                        minLength: 1
+                                        type: string
+                                        x-kubernetes-validations:
+                                        - message: 'name must be a valid DNS subdomain
+                                            name: contain no more than 253 characters,
+                                            contain only lowercase alphanumeric characters,
+                                            ''-'' or ''.'', and start and end with
+                                            an alphanumeric character'
+                                          rule: '!format.dns1123Subdomain().validate(self).hasValue()'
+                                    required:
+                                    - name
+                                    type: object
+                                required:
+                                - secret
+                                type: object
+                              type:
+                                description: |-
+                                  type defines the authentication method used to authenticate with Vault.
+                                  Allowed values are AppRole.
+                                  When set to AppRole, the plugin uses AppRole credentials to authenticate with Vault.
+                                enum:
+                                - AppRole
+                                type: string
+                            required:
+                            - type
+                            type: object
+                            x-kubernetes-validations:
+                            - message: appRole config is required when authentication
+                                type is AppRole, and forbidden otherwise
+                              rule: 'self.type == ''AppRole'' ? has(self.appRole)
+                                : !has(self.appRole)'
+                          kmsPluginImage:
+                            description: |-
+                              kmsPluginImage specifies the container image for the HashiCorp Vault KMS plugin.
+
+                              The image must be a fully qualified OCI image pull spec with a SHA256 digest.
+                              The format is: host[:port][/namespace]/name@sha256:<digest>
+                              where the digest must be 64 characters long and consist only of lowercase hexadecimal characters, a-f and 0-9.
+                              The total length must be between 75 and 447 characters.
+
+                              Short names (e.g., "vault-plugin" or "hashicorp/vault-plugin") are not allowed.
+                              The registry hostname must be included and must contain at least one dot.
+                              Image tags (e.g., ":latest", ":v1.0.0") are not allowed.
+
+                              Consult the OpenShift documentation for compatible plugin versions with your cluster version,
+                              then obtain the image digest for that version from HashiCorp's container registry.
+
+                              For disconnected environments, mirror the plugin image to an accessible registry
+                              and reference the mirrored location with its digest.
+                            maxLength: 447
+                            minLength: 75
+                            type: string
+                            x-kubernetes-validations:
+                            - message: the OCI Image reference must end with a valid
+                                '@sha256:<digest>' suffix, where '<digest>' is 64
+                                characters long
+                              rule: (self.split('@').size() == 2 && self.split('@')[1].matches('^sha256:[a-f0-9]{64}$'))
+                            - message: the OCI Image name should follow the host[:port][/namespace]/name
+                                format, resembling a valid URL without the scheme.
+                                Short names are not allowed, the registry hostname
+                                must be included.
+                              rule: (self.split('@')[0].matches('^([a-zA-Z0-9-]+\\.)+[a-zA-Z0-9-]+(:[0-9]{2,5})?(/[a-zA-Z0-9-_.]+)+$'))
+                          tls:
+                            description: |-
+                              tls contains the TLS configuration for connecting to the Vault server.
+                              When this field is not set, system default TLS settings are used.
+                            minProperties: 1
+                            properties:
+                              caBundle:
+                                description: |-
+                                  caBundle references a ConfigMap in the openshift-config namespace containing
+                                  the CA certificate bundle used to verify the TLS connection to the Vault server.
+                                  The referenced ConfigMap must contain the CA bundle in the key "ca-bundle.crt".
+                                  When this field is not set, the system's trusted CA certificates are used.
+
+                                  The namespace for the ConfigMap is openshift-config.
+
+                                  Example ConfigMap:
+                                    apiVersion: v1
+                                    kind: ConfigMap
+                                    metadata:
+                                      name: vault-ca-bundle
+                                      namespace: openshift-config
+                                    data:
+                                      ca-bundle.crt: |
+                                        -----BEGIN CERTIFICATE-----
+                                        ...
+                                        -----END CERTIFICATE-----
+                                properties:
+                                  name:
+                                    description: |-
+                                      name is the metadata.name of the referenced ConfigMap in the openshift-config namespace.
+                                      The name must be a valid DNS subdomain name: it must contain no more than 253 characters,
+                                      contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character.
+                                    maxLength: 253
+                                    minLength: 1
+                                    type: string
+                                    x-kubernetes-validations:
+                                    - message: 'name must be a valid DNS subdomain
+                                        name: contain no more than 253 characters,
+                                        contain only lowercase alphanumeric characters,
+                                        ''-'' or ''.'', and start and end with an
+                                        alphanumeric character'
+                                      rule: '!format.dns1123Subdomain().validate(self).hasValue()'
+                                required:
+                                - name
+                                type: object
+                              serverName:
+                                description: |-
+                                  serverName specifies the Server Name Indication (SNI) to use when connecting to Vault via TLS.
+                                  This is useful when the Vault server's hostname doesn't match its TLS certificate.
+                                  When this field is not set, the hostname from vaultAddress is used for SNI.
+
+                                  The value must be a valid DNS hostname: it must contain no more than 253 characters,
+                                  contain only lowercase alphanumeric characters, '-' or '.', and start and end with an alphanumeric character.
+                                maxLength: 253
+                                minLength: 1
+                                type: string
+                                x-kubernetes-validations:
+                                - message: 'serverName must be a valid DNS hostname:
+                                    contain no more than 253 characters, contain only
+                                    lowercase alphanumeric characters, ''-'' or ''.'',
+                                    and start and end with an alphanumeric character'
+                                  rule: '!format.dns1123Subdomain().validate(self).hasValue()'
+                            type: object
+                          transitKey:
+                            description: |-
+                              transitKey specifies the name of the encryption key in Vault's Transit engine.
+                              This key is used to encrypt and decrypt data.
+
+                              The transit key must be between 1 and 512 characters, cannot contain forward slashes,
+                              and must only contain alphanumeric characters, hyphens, periods, and underscores.
+                            maxLength: 512
+                            minLength: 1
+                            type: string
+                            x-kubernetes-validations:
+                            - message: transitKey cannot contain forward slashes
+                              rule: '!self.contains(''/'')'
+                            - message: transitKey must only contain alphanumeric characters,
+                                hyphens, periods, and underscores
+                              rule: self.matches('^[a-zA-Z0-9._-]+$')
+                          transitMount:
+                            description: |-
+                              transitMount specifies the mount path of the Vault Transit engine.
+
+                              The transit mount must be between 1 and 1024 characters, cannot start or
+                              end with a forward slash, cannot contain consecutive forward slashes, and
+                              must only contain RFC 3986 unreserved characters (alphanumeric, hyphen,
+                              period, underscore, tilde) and forward slashes as path separators.
+                            maxLength: 1024
+                            minLength: 1
+                            type: string
+                            x-kubernetes-validations:
+                            - message: transitMount cannot start with a forward slash
+                              rule: '!self.startsWith(''/'')'
+                            - message: transitMount cannot end with a forward slash
+                              rule: '!self.endsWith(''/'')'
+                            - message: transitMount cannot contain consecutive forward
+                                slashes
+                              rule: '!self.contains(''//'')'
+                            - message: transitMount must only contain RFC 3986 unreserved
+                                characters (alphanumeric, hyphen, period, underscore,
+                                tilde) and forward slashes
+                              rule: self.matches('^[a-zA-Z0-9._~/-]+$')
+                          vaultAddress:
+                            description: |-
+                              vaultAddress specifies the address of the HashiCorp Vault instance.
+                              The value must be a valid HTTPS URL containing only scheme, host, and optional port.
+                              Paths, user info, query parameters, and fragments are not allowed.
+
+                              Format: https://hostname[:port]
+                              Example: https://vault.example.com:8200
+
+                              The value must be between 1 and 512 characters.
+                            maxLength: 512
+                            minLength: 1
+                            type: string
+                            x-kubernetes-validations:
+                            - message: must be a valid URL
+                              rule: isURL(self)
+                            - message: must use the 'https' scheme
+                              rule: isURL(self) && url(self).getScheme() == 'https'
+                            - message: must not contain a path
+                              rule: isURL(self) && (url(self).getEscapedPath() ==
+                                '' || url(self).getEscapedPath() == '/')
+                            - message: must not have a query
+                              rule: isURL(self) && url(self).getQuery() == {}
+                            - message: must not have a fragment
+                              rule: self.find('#(.+)$') == ''
+                            - message: must not have user info
+                              rule: self.find('@') == ''
+                          vaultNamespace:
+                            description: |-
+                              vaultNamespace specifies the Vault namespace where the Transit secrets engine is mounted.
+                              This is only applicable for Vault Enterprise installations.
+                              When this field is not set, no namespace is used.
+
+                              The value must be between 1 and 4096 characters.
+                              The namespace cannot end with a forward slash, cannot contain spaces, and cannot be one of the reserved strings: root, sys, audit, auth, cubbyhole, or identity.
+                            maxLength: 4096
+                            minLength: 1
+                            type: string
+                            x-kubernetes-validations:
+                            - message: vaultNamespace cannot end with a forward slash
+                              rule: '!self.endsWith(''/'')'
+                            - message: vaultNamespace cannot contain spaces
+                              rule: '!self.contains('' '')'
+                            - message: vaultNamespace cannot be a reserved string
+                                (root, sys, audit, auth, cubbyhole, identity)
+                              rule: '!(self in [''root'', ''sys'', ''audit'', ''auth'',
+                                ''cubbyhole'', ''identity''])'
+                        required:
+                        - authentication
+                        - kmsPluginImage
+                        - transitKey
+                        - transitMount
+                        - vaultAddress
+                        type: object
                     required:
                     - type
                     type: object
                     x-kubernetes-validations:
-                    - message: aws config is required when kms provider type is AWS,
-                        and forbidden otherwise
-                      rule: 'has(self.type) && self.type == ''AWS'' ?  has(self.aws)
-                        : !has(self.aws)'
+                    - message: vault config is required when kms provider type is
+                        Vault, and forbidden otherwise
+                      rule: 'self.type == ''Vault'' ? has(self.vault) : !has(self.vault)'
                   type:
                     description: |-
                       type defines what encryption type should be used to encrypt resources at the datastore layer.
@@ -292,45 +500,121 @@ spec:
                     type: array
                     x-kubernetes-list-type: atomic
                 type: object
+              tlsAdherence:
+                description: |-
+                  tlsAdherence controls if components in the cluster adhere to the TLS security profile
+                  configured on this APIServer resource.
+
+                  Valid values are "LegacyAdheringComponentsOnly" and "StrictAllComponents".
+
+                  When set to "LegacyAdheringComponentsOnly", components that already honor the
+                  cluster-wide TLS profile continue to do so. Components that do not already honor
+                  it continue to use their individual TLS configurations.
+
+                  When set to "StrictAllComponents", all components must honor the configured TLS
+                  profile unless they have a component-specific TLS configuration that overrides
+                  it. This mode is recommended for security-conscious deployments and is required
+                  for certain compliance frameworks.
+
+                  Note: Some components such as Kubelet and IngressController have their own
+                  dedicated TLS configuration mechanisms via KubeletConfig and IngressController
+                  CRs respectively. When these component-specific TLS configurations are set,
+                  they take precedence over the cluster-wide tlsSecurityProfile. When not set,
+                  these components fall back to the cluster-wide default.
+
+                  Components that encounter an unknown value for tlsAdherence should treat it
+                  as "StrictAllComponents" and log a warning to ensure forward compatibility
+                  while defaulting to the more secure behavior.
+
+                  This field is optional.
+                  When omitted, this means the user has no opinion and the platform is left
+                  to choose reasonable defaults. These defaults are subject to change over time.
+                  The current default is LegacyAdheringComponentsOnly.
+
+                  Once set, this field may be changed to a different value, but may not be removed.
+                enum:
+                - LegacyAdheringComponentsOnly
+                - StrictAllComponents
+                type: string
               tlsSecurityProfile:
                 description: |-
                   tlsSecurityProfile specifies settings for TLS connections for externally exposed servers.
 
-                  If unset, a default (which may change between releases) is chosen. Note that only Old,
-                  Intermediate and Custom profiles are currently supported, and the maximum available
-                  minTLSVersion is VersionTLS12.
+                  When omitted, this means no opinion and the platform is left to choose a reasonable default, which is subject to change over time.
+                  The current default is the Intermediate profile.
                 properties:
                   custom:
                     description: |-
                       custom is a user-defined TLS security profile. Be extremely careful using a custom
-                      profile as invalid configurations can be catastrophic. An example custom profile
-                      looks like this:
+                      profile as invalid configurations can be catastrophic.
 
-                        ciphers:
+                      The supported groups list for this profile is empty by default.
 
-                          - ECDHE-ECDSA-CHACHA20-POLY1305
-
-                          - ECDHE-RSA-CHACHA20-POLY1305
-
-                          - ECDHE-RSA-AES128-GCM-SHA256
-
-                          - ECDHE-ECDSA-AES128-GCM-SHA256
+                      An example custom profile looks like this:
 
                         minTLSVersion: VersionTLS11
+                        ciphers:
+                          - ECDHE-ECDSA-CHACHA20-POLY1305
+                          - ECDHE-RSA-CHACHA20-POLY1305
+                          - ECDHE-RSA-AES128-GCM-SHA256
+                          - ECDHE-ECDSA-AES128-GCM-SHA256
                     nullable: true
                     properties:
                       ciphers:
                         description: |-
                           ciphers is used to specify the cipher algorithms that are negotiated
-                          during the TLS handshake.  Operators may remove entries their operands
-                          do not support.  For example, to use DES-CBC3-SHA  (yaml):
+                          during the TLS handshake. Operators may remove entries that their operands
+                          do not support. For example, to use only ECDHE-RSA-AES128-GCM-SHA256 (yaml):
 
                             ciphers:
-                              - DES-CBC3-SHA
+                              - ECDHE-RSA-AES128-GCM-SHA256
+
+                          TLS 1.3 cipher suites (e.g. TLS_AES_128_GCM_SHA256) are not configurable
+                          and are always enabled when TLS 1.3 is negotiated.
                         items:
                           type: string
                         type: array
                         x-kubernetes-list-type: atomic
+                      groups:
+                        description: |-
+                          groups is an optional, ordered field used to specify the supported groups (formerly known as
+                          elliptic curves) that are used during the TLS handshake.  The order of the groups represents
+                          a suggested preference, with the most preferred group first. Note that not all platform
+                          components honor the ordering: Go-based components use Go's internal preference order and
+                          treat this list as a filter of allowed groups rather than an ordered preference.
+                          Operators may remove entries their operands do not support.
+
+                          When omitted, this means no opinion and the platform is left to choose reasonable defaults which are
+                          subject to change over time and may be different per platform component depending on the underlying TLS
+                          libraries they use. If specified, the list must contain at least one and at most 7 groups,
+                          and each group must be unique.
+
+                          For example, to use X25519 and secp256r1 (yaml):
+
+                            groups:
+                              - X25519
+                              - secp256r1
+                        items:
+                          description: |-
+                            TLSGroup is a supported group identifier that can be used in TLSProfile.Groups.
+                            There is a one-to-one mapping between these names and the group IDs defined
+                            in Go's crypto/tls package based on IANA's "TLS Supported Groups" registry:
+                            https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8
+                            Note that X25519MLKEM768 is a post-quantum hybrid group that is not
+                            FIPS-approved and should be ignored by components running in FIPS mode.
+                          enum:
+                          - X25519
+                          - secp256r1
+                          - secp384r1
+                          - secp521r1
+                          - X25519MLKEM768
+                          - SecP256r1MLKEM768
+                          - SecP384r1MLKEM1024
+                          type: string
+                        maxItems: 7
+                        minItems: 1
+                        type: array
+                        x-kubernetes-list-type: set
                       minTLSVersion:
                         description: |-
                           minTLSVersion is used to specify the minimal version of the TLS protocol
@@ -338,8 +622,6 @@ spec:
                           versions 1.1, 1.2 and 1.3 (yaml):
 
                             minTLSVersion: VersionTLS11
-
-                          NOTE: currently the highest minTLSVersion allowed is VersionTLS12
                         enum:
                         - VersionTLS10
                         - VersionTLS11
@@ -349,143 +631,100 @@ spec:
                     type: object
                   intermediate:
                     description: |-
-                      intermediate is a TLS security profile based on:
+                      intermediate is a TLS profile for use when you do not need compatibility with
+                      legacy clients and want to remain highly secure while being compatible with
+                      most clients currently in use.
 
-                      https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28recommended.29
+                      The supported groups list includes by default the following groups
+                      in suggested preference order (ordering may not be honored by all implementations):
+                      X25519MLKEM768, X25519, secp256r1, secp384r1.
 
-                      and looks like this (yaml):
-
-                        ciphers:
-
-                          - TLS_AES_128_GCM_SHA256
-
-                          - TLS_AES_256_GCM_SHA384
-
-                          - TLS_CHACHA20_POLY1305_SHA256
-
-                          - ECDHE-ECDSA-AES128-GCM-SHA256
-
-                          - ECDHE-RSA-AES128-GCM-SHA256
-
-                          - ECDHE-ECDSA-AES256-GCM-SHA384
-
-                          - ECDHE-RSA-AES256-GCM-SHA384
-
-                          - ECDHE-ECDSA-CHACHA20-POLY1305
-
-                          - ECDHE-RSA-CHACHA20-POLY1305
-
-                          - DHE-RSA-AES128-GCM-SHA256
-
-                          - DHE-RSA-AES256-GCM-SHA384
-
+                      This profile is equivalent to a Custom profile specified as:
                         minTLSVersion: VersionTLS12
+                        ciphers:
+                          - TLS_AES_128_GCM_SHA256
+                          - TLS_AES_256_GCM_SHA384
+                          - TLS_CHACHA20_POLY1305_SHA256
+                          - ECDHE-ECDSA-AES128-GCM-SHA256
+                          - ECDHE-RSA-AES128-GCM-SHA256
+                          - ECDHE-ECDSA-AES256-GCM-SHA384
+                          - ECDHE-RSA-AES256-GCM-SHA384
+                          - ECDHE-ECDSA-CHACHA20-POLY1305
+                          - ECDHE-RSA-CHACHA20-POLY1305
                     nullable: true
                     type: object
                   modern:
                     description: |-
-                      modern is a TLS security profile based on:
-
-                      https://wiki.mozilla.org/Security/Server_Side_TLS#Modern_compatibility
-
-                      and looks like this (yaml):
-
-                        ciphers:
-
-                          - TLS_AES_128_GCM_SHA256
-
-                          - TLS_AES_256_GCM_SHA384
-
-                          - TLS_CHACHA20_POLY1305_SHA256
-
+                      modern is a TLS security profile for use with clients that support TLS 1.3 and
+                      do not need backward compatibility for older clients.
+                      The supported groups list includes by default the following groups
+                      in suggested preference order (ordering may not be honored by all implementations):
+                      X25519MLKEM768, X25519, secp256r1, secp384r1.
+                      This profile is equivalent to a Custom profile specified as:
                         minTLSVersion: VersionTLS13
+                        ciphers:
+                          - TLS_AES_128_GCM_SHA256
+                          - TLS_AES_256_GCM_SHA384
+                          - TLS_CHACHA20_POLY1305_SHA256
                     nullable: true
                     type: object
                   old:
                     description: |-
-                      old is a TLS security profile based on:
+                      old is a TLS profile for use when services need to be accessed by very old
+                      clients or libraries and should be used only as a last resort.
 
-                      https://wiki.mozilla.org/Security/Server_Side_TLS#Old_backward_compatibility
+                      The supported groups list includes by default the following groups
+                      in suggested preference order (ordering may not be honored by all implementations):
+                      X25519MLKEM768, X25519, secp256r1, secp384r1.
 
-                      and looks like this (yaml):
-
-                        ciphers:
-
-                          - TLS_AES_128_GCM_SHA256
-
-                          - TLS_AES_256_GCM_SHA384
-
-                          - TLS_CHACHA20_POLY1305_SHA256
-
-                          - ECDHE-ECDSA-AES128-GCM-SHA256
-
-                          - ECDHE-RSA-AES128-GCM-SHA256
-
-                          - ECDHE-ECDSA-AES256-GCM-SHA384
-
-                          - ECDHE-RSA-AES256-GCM-SHA384
-
-                          - ECDHE-ECDSA-CHACHA20-POLY1305
-
-                          - ECDHE-RSA-CHACHA20-POLY1305
-
-                          - DHE-RSA-AES128-GCM-SHA256
-
-                          - DHE-RSA-AES256-GCM-SHA384
-
-                          - DHE-RSA-CHACHA20-POLY1305
-
-                          - ECDHE-ECDSA-AES128-SHA256
-
-                          - ECDHE-RSA-AES128-SHA256
-
-                          - ECDHE-ECDSA-AES128-SHA
-
-                          - ECDHE-RSA-AES128-SHA
-
-                          - ECDHE-ECDSA-AES256-SHA384
-
-                          - ECDHE-RSA-AES256-SHA384
-
-                          - ECDHE-ECDSA-AES256-SHA
-
-                          - ECDHE-RSA-AES256-SHA
-
-                          - DHE-RSA-AES128-SHA256
-
-                          - DHE-RSA-AES256-SHA256
-
-                          - AES128-GCM-SHA256
-
-                          - AES256-GCM-SHA384
-
-                          - AES128-SHA256
-
-                          - AES256-SHA256
-
-                          - AES128-SHA
-
-                          - AES256-SHA
-
-                          - DES-CBC3-SHA
-
+                      This profile is equivalent to a Custom profile specified as:
                         minTLSVersion: VersionTLS10
+                        ciphers:
+                          - TLS_AES_128_GCM_SHA256
+                          - TLS_AES_256_GCM_SHA384
+                          - TLS_CHACHA20_POLY1305_SHA256
+                          - ECDHE-ECDSA-AES128-GCM-SHA256
+                          - ECDHE-RSA-AES128-GCM-SHA256
+                          - ECDHE-ECDSA-AES256-GCM-SHA384
+                          - ECDHE-RSA-AES256-GCM-SHA384
+                          - ECDHE-ECDSA-CHACHA20-POLY1305
+                          - ECDHE-RSA-CHACHA20-POLY1305
+                          - ECDHE-ECDSA-AES128-SHA256
+                          - ECDHE-RSA-AES128-SHA256
+                          - ECDHE-ECDSA-AES128-SHA
+                          - ECDHE-RSA-AES128-SHA
+                          - ECDHE-ECDSA-AES256-SHA384
+                          - ECDHE-RSA-AES256-SHA384
+                          - ECDHE-ECDSA-AES256-SHA
+                          - ECDHE-RSA-AES256-SHA
+                          - AES128-GCM-SHA256
+                          - AES256-GCM-SHA384
+                          - AES128-SHA256
+                          - AES256-SHA256
+                          - AES128-SHA
+                          - AES256-SHA
+                          - DES-CBC3-SHA
                     nullable: true
                     type: object
                   type:
                     description: |-
-                      type is one of Old, Intermediate, Modern or Custom. Custom provides
-                      the ability to specify individual TLS security profile parameters.
-                      Old, Intermediate and Modern are TLS security profiles based on:
+                      type is one of Old, Intermediate, Modern or Custom. Custom provides the
+                      ability to specify individual TLS security profile parameters.
 
-                      https://wiki.mozilla.org/Security/Server_Side_TLS#Recommended_configurations
+                      The cipher and groups lists in these profiles are based on version 5.8 of the
+                      Mozilla Server Side TLS configuration guidelines.
+                      See: https://ssl-config.mozilla.org/guidelines/5.8.json
 
-                      The profiles are intent based, so they may change over time as new ciphers are developed and existing ciphers
-                      are found to be insecure.  Depending on precisely which ciphers are available to a process, the list may be
-                      reduced.
+                      The groups are listed in suggested preference order, with the most preferred group first.
+                      Note that not all platform components honor the ordering: Go-based components use Go's
+                      internal preference order and treat this list as a filter of allowed groups rather than
+                      an ordered preference.
+                      Note that X25519MLKEM768 is a post-quantum hybrid group that is not
+                      FIPS-approved and should be ignored by components running in FIPS mode.
 
-                      Note that the Modern profile is currently not supported because it is not
-                      yet well adopted by common software libraries.
+                      The profiles are intent based, so they may change over time as new ciphers are
+                      developed and existing ciphers are found to be insecure. Depending on
+                      precisely which ciphers are available to a process, the list may be reduced.
                     enum:
                     - Old
                     - Intermediate
@@ -494,6 +733,9 @@ spec:
                     type: string
                 type: object
             type: object
+            x-kubernetes-validations:
+            - message: tlsAdherence may not be removed once set
+              rule: 'has(oldSelf.tlsAdherence) ? has(self.tlsAdherence) : true'
           status:
             description: status holds observed values from the cluster. They may not
               be overridden.

@@ -108,9 +108,6 @@ github.com/go-openapi/swag/yamlutils
 # github.com/go-task/slim-sprig/v3 v3.0.0
 ## explicit; go 1.20
 github.com/go-task/slim-sprig/v3
-# github.com/gogo/protobuf v1.3.2
-## explicit; go 1.15
-github.com/gogo/protobuf/proto
 # github.com/golang-jwt/jwt/v5 v5.3.1
 ## explicit; go 1.21
 github.com/golang-jwt/jwt/v5
@@ -239,8 +236,8 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
-## explicit; go 1.23.0
+# github.com/openshift/api v0.0.0-20260601143908-70f01b82bb53
+## explicit; go 1.25.0
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1/zz_generated.crd-manifests
 github.com/openshift/api/console/v1
