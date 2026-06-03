@@ -3203,6 +3203,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				o.Expect(err).ToNot(o.HaveOccurred())
 				waitUntilHyperConvergedReady(oc, "kubevirt-hyperconverged", virtOperatorNS)
 				WaitForPodsReadyWithLabel(oc, virtOperatorNS, "app.kubernetes.io/managed-by=virt-operator")
+				// Wait for kubemacpool service endpoints to be ready to avoid race condition when creating VMs
+				waitForServiceEndpoints(oc, virtOperatorNS, "kubemacpool-service")
 			})
 
 			g.It("Author:aramesha-NonPreRelease-Longduration-High-76537-Verify flow enrichment for VM's secondary interfaces [Disruptive][Slow]", func() {
