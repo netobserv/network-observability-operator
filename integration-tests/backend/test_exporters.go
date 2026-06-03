@@ -126,7 +126,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Sampling:                          strconv.Itoa(samplingValue),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
+		defer flow.DeleteFlowcollector(oc)
 		flow.CreateFlowcollector(oc)
 
 		g.By("Verify flowcollector is deployed with IPFIX exporter")

@@ -111,6 +111,7 @@ objects:
       targetPort: 9000
     tls:
       termination: edge
+      insecureEdgeTerminationPolicy: Redirect
     to:
       kind: Service
       name: ${NAME}
@@ -124,6 +125,9 @@ objects:
   spec:
     port:
       targetPort: 9001
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
     to:
       kind: Service
       name: minio-service-console

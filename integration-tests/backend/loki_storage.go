@@ -81,7 +81,7 @@ func getMinIOCreds(oc *exutil.CLI, ns string) s3Credential {
 	secretAccessKey, err := os.ReadFile(dirname + "/secret_access_key")
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	endpoint := "http://" + getRouteAddress(oc, ns, "minio")
+	endpoint := "https://" + getRouteAddress(oc, ns, "minio")
 	return s3Credential{Endpoint: endpoint, AccessKeyID: string(accessKeyID), SecretAccessKey: string(secretAccessKey)}
 }
 
