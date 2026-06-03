@@ -418,11 +418,12 @@ deploy: kustomize set-manager-images ## Deploy controller to the K8s cluster spe
 	$(KUSTOMIZE) build config/openshift | sed -r "s/openshift-netobserv-operator\.svc/${NAMESPACE}.svc/" | kubectl apply --server-side --force-conflicts -f -
 	kubectl get ns openshift-netobserv-operator || kubectl create ns openshift-netobserv-operator
 	cat bundle/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl apply --server-side --force-conflicts -f -
-	kubectl patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"},{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin-static"}]'
+	kubectl patch console.operator.openshift.io cluster --type='json' -p "$(shell kubectl get console.operator.openshift.io cluster -o json | jq '[{"op": "replace", "path": "/spec/plugins", "value": (.spec.plugins + ["netobserv-plugin", "netobserv-plugin-static"] | unique)}]')"
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | kubectl --ignore-not-found=true delete -f - || true
 	cat bundle/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl --ignore-not-found=true delete -f - || true
+	kubectl patch console.operator.openshift.io cluster --type='json' -p "$(shell kubectl get console.operator.openshift.io cluster -o json | jq '[{"op": "replace", "path": "/spec/plugins", "value": (.spec.plugins - ["netobserv-plugin", "netobserv-plugin-static"])}]')"
 
 run: fmt lint ## Run a controller from your host.
 	go run ./main.go
