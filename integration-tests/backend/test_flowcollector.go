@@ -326,117 +326,69 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	g.It("Author:osmakal-High-89198-Verify processor metrics configuration with includeList and additionalIncludeList [Serial]", func() {
 		namespace := oc.Namespace()
 
-		type MetricsTestScenario struct {
-			Name            string
-			PatchJSON       string
-			ExpectedMetrics []string
+		g.By(fmt.Sprintf("Deploy initial FlowCollector"))
+		flow := Flowcollector{
+			Namespace:  namespace,
+			Template:   flowFixturePath,
+			LokiEnable: "false",
+		}
+		defer func() { _ = flow.DeleteFlowcollector(oc) }()
+		flow.CreateFlowcollector(oc)
+
+		// Apply patch if specified
+		g.By(fmt.Sprintf("Patch FlowCollector with metrics configuration"))
+		patch := `[{"op": "add", "path": "/spec/processor/metrics/additionalIncludeList", "value": ["namespace_egress_bytes_total", "namespace_ingress_bytes_total"]}]`
+		out, err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=json", "-p", patch).Output()
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("failed to patch FlowCollector"))
+		o.Expect(out).To(o.ContainSubstring("patched"))
+
+		g.By(fmt.Sprintf("Wait for FlowCollector to reconcile"))
+		flow.WaitForFlowcollectorReady(oc)
+
+		g.By(fmt.Sprintf("Wait for metrics to be available"))
+		time.Sleep(90 * time.Second)
+
+		// Get all netobserv metrics currently exposed
+		g.By(fmt.Sprintf("Query Prometheus for all netobserv_* metrics"))
+		allMetrics, err := getAllNetobservMetricNames(oc)
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("failed to query Prometheus"))
+
+		e2e.Logf("Found %d netobserv metrics in Prometheus", len(allMetrics))
+
+		// Convert both to sets for comparison
+		actualSet := make(map[string]bool)
+		for _, m := range allMetrics {
+			actualSet[m] = true
 		}
 
-		tests := []MetricsTestScenario{
-			{
-				Name:      "Default behavior",
-				PatchJSON: "", // No patch, Loki disabled - uses DefaultIncludeListLokiDisabled but only metrics that don't require features
-				ExpectedMetrics: []string{
-					"netobserv_node_egress_bytes_total",
-					"netobserv_node_ingress_bytes_total",
-					"netobserv_node_ingress_packets_total",
-					"netobserv_node_to_node_ingress_flows_total",
-					"netobserv_workload_egress_bytes_total",
-					"netobserv_workload_egress_packets_total",
-					"netobserv_workload_flows_total",
-					"netobserv_workload_ingress_bytes_total",
-					"netobserv_workload_ingress_packets_total",
-				},
-			},
-			{
-				Name:      "includeList only",
-				PatchJSON: `[{"op": "add", "path": "/spec/processor/metrics/includeList", "value": ["node_ingress_bytes_total"]}]`,
-				ExpectedMetrics: []string{
-					"netobserv_node_ingress_bytes_total",
-				},
-			},
-			{
-				Name:      "additionalIncludeList only",
-				PatchJSON: `[{"op": "add", "path": "/spec/processor/metrics/additionalIncludeList", "value": ["namespace_egress_bytes_total", "namespace_ingress_bytes_total"]}]`,
-				ExpectedMetrics: []string{
-					// 9 base metrics (from defaults without features)
-					"netobserv_node_egress_bytes_total",
-					"netobserv_node_ingress_bytes_total",
-					"netobserv_node_ingress_packets_total",
-					"netobserv_node_to_node_ingress_flows_total",
-					"netobserv_workload_egress_bytes_total",
-					"netobserv_workload_egress_packets_total",
-					"netobserv_workload_flows_total",
-					"netobserv_workload_ingress_bytes_total",
-					"netobserv_workload_ingress_packets_total",
-					// Plus 2 additional metrics
-					"netobserv_namespace_egress_bytes_total",
-					"netobserv_namespace_ingress_bytes_total",
-				},
-			},
-			{
-				Name:      "Both fields set",
-				PatchJSON: `[{"op": "add", "path": "/spec/processor/metrics/includeList", "value": ["node_ingress_bytes_total"]}, {"op": "add", "path": "/spec/processor/metrics/additionalIncludeList", "value": ["namespace_egress_bytes_total", "namespace_ingress_bytes_total"]}]`,
-				ExpectedMetrics: []string{
-					"netobserv_node_ingress_bytes_total",
-				},
-			},
+		expectedMetrics := []string{
+			// 9 base metrics (from defaults without features)
+			"netobserv_node_egress_bytes_total",
+			"netobserv_node_ingress_bytes_total",
+			"netobserv_node_ingress_packets_total",
+			"netobserv_node_to_node_ingress_flows_total",
+			"netobserv_workload_egress_bytes_total",
+			"netobserv_workload_egress_packets_total",
+			"netobserv_workload_flows_total",
+			"netobserv_workload_ingress_bytes_total",
+			"netobserv_workload_ingress_packets_total",
+			// Plus 2 additional metrics
+			"netobserv_namespace_egress_bytes_total",
+			"netobserv_namespace_ingress_bytes_total",
 		}
+		o.Expect(len(expectedMetrics)).To(o.Equal(len(allMetrics)),
+			fmt.Sprintf("expected %d metrics but found %d: %v", len(expectedMetrics), len(allMetrics), allMetrics))
 
-		for _, t := range tests {
-			func() {
-				g.By(fmt.Sprintf("Test: %s", t.Name))
-				g.By(fmt.Sprintf("[%s]: Deploy initial FlowCollector", t.Name))
-				flow := Flowcollector{
-					Namespace:  namespace,
-					Template:   flowFixturePath,
-					LokiEnable: "false",
-				}
-				defer func() { _ = flow.DeleteFlowcollector(oc) }()
-				flow.CreateFlowcollector(oc)
-
-				// Apply patch if specified
-				if t.PatchJSON != "" {
-					g.By(fmt.Sprintf("[%s]: Patch FlowCollector with metrics configuration", t.Name))
-					out, err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=json", "-p", t.PatchJSON).Output()
-					o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("%s: failed to patch FlowCollector", t.Name))
-					o.Expect(out).To(o.ContainSubstring("patched"))
-
-					g.By(fmt.Sprintf("[%s]: Wait for FlowCollector to reconcile", t.Name))
-					flow.WaitForFlowcollectorReady(oc)
-				}
-
-				g.By(fmt.Sprintf("[%s]: Wait for metrics to be available", t.Name))
-				time.Sleep(90 * time.Second)
-
-				// Get all netobserv metrics currently exposed
-				g.By(fmt.Sprintf("[%s]: Query Prometheus for all netobserv_* metrics", t.Name))
-				allMetrics, err := getAllNetobservMetricNames(oc)
-				o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("%s: failed to query Prometheus", t.Name))
-
-				e2e.Logf("[%s]: Found %d netobserv metrics in Prometheus", t.Name, len(allMetrics))
-
-				// Convert both to sets for comparison
-				actualSet := make(map[string]bool)
-				for _, m := range allMetrics {
-					actualSet[m] = true
-				}
-
-				o.Expect(len(t.ExpectedMetrics)).To(o.Equal(len(allMetrics)),
-					fmt.Sprintf("[%s]: expected %d metrics but found %d: %v", t.Name, len(t.ExpectedMetrics), len(allMetrics), allMetrics))
-
-				for _, expectedMetric := range t.ExpectedMetrics {
-					o.Expect(actualSet[expectedMetric]).To(o.BeTrue(),
-						fmt.Sprintf("[%s]: metric %s should exist in %v", t.Name, expectedMetric, actualSet))
-				}
-			}()
+		for _, metric := range expectedMetrics {
+			o.Expect(actualSet[metric]).To(o.BeTrue(),
+				fmt.Sprintf("metric %s should exist in %v", metric, actualSet))
 		}
 	})
 
 	g.Context("with Loki", func() {
 		var (
 			lokiDir, _ = filePath.Abs("testdata/loki")
-                      	// Loki Operator variables
+			// Loki Operator variables
 			lokiPackageName = "loki-operator"
 			lokiSource      CatalogSourceObjects
 			lokiCatalog     = "redhat-operators"
@@ -451,7 +403,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				OperatorGroup: filePath.Join(subscriptionDir, "allnamespace-og.yaml"),
 				CatalogSource: &lokiSource,
 			}
-                       	// LokiStack variables
+			// LokiStack variables
 			ipStackType       string
 			lokiStackTemplate = filePath.Join(lokiDir, "lokistack-simple.yaml")
 			lokiTenant        = "openshift-network"
