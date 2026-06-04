@@ -324,7 +324,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	})
 
 	g.It("Author:osmakal-High-89198-Verify processor metrics configuration with includeList and additionalIncludeList [Serial]", func() {
-		SkipIfOCPBelow("v4.14")
 		namespace := oc.Namespace()
 
 		type MetricsTestScenario struct {
