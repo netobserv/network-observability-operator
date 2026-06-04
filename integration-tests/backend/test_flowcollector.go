@@ -2972,7 +2972,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				waitForKafkaTopicReady(oc, kafkaTopic.TopicName, kafkaTopic.Namespace)
 			})
 
-			g.It("Author:aramesha-NonPreRelease-Longduration-Critical-56362-High-53597-High-56326-High-64880-High-75340-High-89197-Verify network flows are captured with Kafka with TLS [Serial][Slow]", func() {
+			g.It("Author:aramesha-NonPreRelease-Longduration-Critical-56362-High-53597-High-56326-High-64880-High-75340-Low-89197-Verify network flows are captured with Kafka with TLS [Serial][Slow]", func() {
 				SkipIfOCPBelow("v4.14")
 
 				g.By("Deploy FlowCollector with Kafka TLS")
@@ -2985,7 +2985,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 					KafkaTLSEnable:                    "true",
 					KafkaNamespace:                    kafkaNs,
 					NetworkPolicyAdditionalNamespaces: []string{additionalNamespaces},
-					KafkaCompression:                  "none",
 				}
 
 				defer func() { _ = flow.DeleteFlowcollector(oc) }()
@@ -3027,7 +3026,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				o.Expect(err).NotTo(o.HaveOccurred())
 			})
 
-			g.It("Author:aramesha-NonPreRelease-Longduration-High-57397-High-65116-High-89197-Verify network-flows export with Kafka and netobserv installation without Loki[Serial]", func() {
+			g.It("Author:aramesha-NonPreRelease-Longduration-High-57397-High-65116-Low-89197-Verify network-flows export with Kafka and netobserv installation without Loki[Serial]", func() {
 				SkipIfOCPBelow("v4.10")
 				g.By("Deploy kafka Topic for export")
 				// deploy kafka topic for export
