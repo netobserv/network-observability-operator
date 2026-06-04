@@ -3,25 +3,35 @@ package consoleplugin
 import (
 	"context"
 
+	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
+	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 )
 
-func NewStaticReconciler(cmn *reconcilers.Instance) CPReconciler {
-	rec := CPReconciler{
-		Instance:       cmn,
-		deployment:     cmn.Managed.NewDeployment(constants.StaticPluginName),
-		service:        cmn.Managed.NewService(constants.StaticPluginName),
-		serviceAccount: cmn.Managed.NewServiceAccount(constants.StaticPluginName),
-	}
-	return rec
+type StaticReconciler struct {
+	CPReconciler
+	cfg *manager.StaticPluginConfig
 }
 
-func (r *CPReconciler) ReconcileStaticPlugin(ctx context.Context, enable bool) error {
+func NewStaticReconciler(cmn *reconcilers.Instance, cfg *manager.StaticPluginConfig) StaticReconciler {
+	return StaticReconciler{
+		CPReconciler: CPReconciler{
+			Instance:       cmn,
+			deployment:     cmn.Managed.NewDeployment(constants.StaticPluginName),
+			service:        cmn.Managed.NewService(constants.StaticPluginName),
+			serviceAccount: cmn.Managed.NewServiceAccount(constants.StaticPluginName),
+		},
+		cfg: cfg,
+	}
+}
+
+func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable bool) error {
 	// Fake a FlowCollector to create console plugin and expose forms
 	return r.reconcileStatic(ctx, &flowslatest.FlowCollector{
 		Spec: flowslatest.FlowCollectorSpec{
@@ -37,7 +47,7 @@ func (r *CPReconciler) ReconcileStaticPlugin(ctx context.Context, enable bool) e
 }
 
 // Reconcile is the reconciler entry point to reconcile the static plugin state with the desired configuration
-func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest.FlowCollector) error {
+func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	l := log.FromContext(ctx).WithName("static-console-plugin")
 	ctx = log.IntoContext(ctx, l)
 
@@ -54,6 +64,23 @@ func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest
 	}
 
 	if r.ClusterInfo.HasConsolePlugin() {
+		// Retrieve toleration
+		if r.cfg.InheritedTolerationFromSubscription != "" {
+			sub := olm.Subscription{}
+			if err = r.Client.Get(
+				ctx,
+				types.NamespacedName{Name: r.cfg.InheritedTolerationFromSubscription, Namespace: r.Namespace},
+				&sub,
+			); err != nil {
+				return err
+			}
+			desired.Spec.ConsolePlugin.Advanced.Scheduling = &flowslatest.SchedulingConfig{
+				Tolerations:  sub.Spec.Config.Tolerations,
+				NodeSelector: sub.Spec.Config.NodeSelector,
+				Affinity:     sub.Spec.Config.Affinity,
+			}
+		}
+
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.StaticPluginName)
 

@@ -145,6 +145,7 @@ func main() {
 	}
 	setupLog.Info("Starting " + appVersion)
 
+	readConfigFromEnv(&config)
 	if err := config.Validate(); err != nil {
 		setupLog.Error(err, "unable to start the manager")
 		os.Exit(1)
@@ -236,5 +237,11 @@ func main() {
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
+	}
+}
+
+func readConfigFromEnv(c *manager.Config) {
+	c.StaticPluginConfig = manager.StaticPluginConfig{
+		InheritedTolerationFromSubscription: os.Getenv("STATIC_PLUGIN_INHERITED_TOLERATION_SUBSCRIPTION"),
 	}
 }

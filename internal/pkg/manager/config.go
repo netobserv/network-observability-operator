@@ -32,10 +32,18 @@ type Config struct {
 	ConsolePluginImageVariants []ConsolePluginImageVariant
 	// EBPFByteCodeImage is the ebpf byte code image used by EBPF Manager
 	EBPFByteCodeImage string
-	// Default namespace
+	// Operator namespace
 	Namespace string
 	// Release kind is either upstream or downstream
 	DownstreamDeployment bool
+	// Static plugin configuration
+	StaticPluginConfig StaticPluginConfig
+}
+
+// Config of the static plugin.
+type StaticPluginConfig struct {
+	// Inherited toleration from Subscriptions, for static controller (static plugin)
+	InheritedTolerationFromSubscription string
 }
 
 // ParseConsolePluginImages parses console plugin image configuration.
