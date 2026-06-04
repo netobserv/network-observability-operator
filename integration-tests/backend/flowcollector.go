@@ -38,7 +38,7 @@ type Flowcollector struct {
 	KafkaClusterName                  string
 	KafkaTopic                        string
 	KafkaUser                         string
-	KafkaCompression 		  string
+	KafkaCompression                  string
 	KafkaNamespace                    string
 	FLPMetricServerTLSType            string
 	EBPFMetricServerTLSType           string
