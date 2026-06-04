@@ -2972,7 +2972,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				waitForKafkaTopicReady(oc, kafkaTopic.TopicName, kafkaTopic.Namespace)
 			})
 
-			g.It("Author:aramesha-NonPreRelease-Longduration-Critical-56362-High-53597-High-56326-High-64880-High-75340-Low-89197-Verify network flows are captured with Kafka with TLS [Serial][Slow]", func() {
+			g.It("Author:aramesha-NonPreRelease-Longduration-Critical-56362-High-53597-High-56326-High-64880-High-75340-Verify network flows are captured with Kafka with TLS [Serial][Slow]", func() {
 				SkipIfOCPBelow("v4.14")
 
 				g.By("Deploy FlowCollector with Kafka TLS")
