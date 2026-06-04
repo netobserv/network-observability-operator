@@ -842,8 +842,12 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				FlowDirection:   "0",
 			}
 			flowRecords, err = lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime)
-			o.Expect(err).NotTo(o.HaveOccurred())
-			o.Expect(len(flowRecords)).NotTo(o.BeNumerically(">", 0), "expected number of flowRecords to be equal to 0")
+			// Multi-tenancy verification: Loki Gateway returns permission errors for unauthorized namespace access
+			if err != nil {
+				o.Expect(err.Error()).To(o.ContainSubstring("permission"), "expected permission error for unauthorized namespace access, got: %v", err)
+			} else {
+				o.Expect(len(flowRecords)).To(o.Equal(0), "expected zero flowRecords for unauthorized namespace access")
+			}
 		})
 
 		g.It("Author:aramesha-NonPreRelease-Critical-59746-NetObserv upgrade testing [Serial]", func() {
@@ -3206,6 +3210,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				o.Expect(err).ToNot(o.HaveOccurred())
 				waitUntilHyperConvergedReady(oc, "kubevirt-hyperconverged", virtOperatorNS)
 				WaitForPodsReadyWithLabel(oc, virtOperatorNS, "app.kubernetes.io/managed-by=virt-operator")
+				// Wait for kubemacpool service endpoints to be ready to avoid race condition when creating VMs
+				waitForServiceEndpoints(oc, virtOperatorNS, "kubemacpool-service")
 			})
 
 			g.It("Author:aramesha-NonPreRelease-Longduration-High-76537-Verify flow enrichment for VM's secondary interfaces [Disruptive][Slow]", func() {

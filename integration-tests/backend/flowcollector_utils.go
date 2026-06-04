@@ -360,6 +360,10 @@ func (lokilabels Lokilabels) getLokiFlowLogs(token, lokiRoute string, startTime 
 		res, qErr = lc.searchLogsInLoki(tenantID, lokiQuery)
 		if qErr != nil {
 			e2e.Logf("\ngot error %v when getting %s logs for query: %s\n", qErr, tenantID, lokiQuery)
+			// Don't retry on permission errors
+			if strings.Contains(qErr.Error(), "permission") {
+				return false, qErr
+			}
 			return false, nil
 		}
 

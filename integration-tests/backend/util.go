@@ -531,6 +531,35 @@ func waitForStatefulsetReady(oc *exutil.CLI, namespace, name string) error {
 	return err
 }
 
+// waitForServiceEndpoints waits for a service to have available endpoints
+func waitForServiceEndpoints(oc *exutil.CLI, namespace, serviceName string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 360*time.Second, false, func(context.Context) (done bool, err error) {
+		endpoints, err := oc.AdminKubeClient().CoreV1().Endpoints(namespace).Get(context.Background(), serviceName, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				e2e.Logf("Waiting for endpoints for service %s to appear\n", serviceName)
+				return false, nil
+			}
+			return false, err
+		}
+		// Check if endpoints has at least one address
+		hasEndpoints := false
+		for _, subset := range endpoints.Subsets {
+			if len(subset.Addresses) > 0 {
+				hasEndpoints = true
+				break
+			}
+		}
+		if !hasEndpoints {
+			e2e.Logf("Waiting for service %s to have available endpoints...\n", serviceName)
+			return false, nil
+		}
+		e2e.Logf("Service %s has available endpoints\n", serviceName)
+		return true, nil
+	})
+	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Service %s does not have available endpoints", serviceName))
+}
+
 // wait until DaemonSet is Ready
 func waitUntilDaemonSetReady(oc *exutil.CLI, daemonset, namespace string) {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {

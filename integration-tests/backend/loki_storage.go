@@ -658,8 +658,12 @@ func getStorageType(oc *exutil.CLI) string {
 }
 
 // initialize a s3 client with credential
-func newS3Client(cfg aws.Config) *s3.Client {
-	return s3.NewFromConfig(cfg)
+func newS3Client(cfg aws.Config, usePathStyle ...bool) *s3.Client {
+	return s3.NewFromConfig(cfg, func(o *s3.Options) {
+		if len(usePathStyle) > 0 && usePathStyle[0] {
+			o.UsePathStyle = true
+		}
+	})
 }
 
 func getStorageClassName(oc *exutil.CLI) (string, error) {
@@ -807,7 +811,7 @@ func (l lokiStack) prepareResourcesForLokiStack(oc *exutil.CLI) error {
 		{
 			cred := getMinIOCreds(oc, minioNS)
 			cfg := generateS3Config(cred)
-			client := newS3Client(cfg)
+			client := newS3Client(cfg, true)
 			err = createS3Bucket(client, l.BucketName, "")
 			if err != nil {
 				return err
@@ -905,7 +909,7 @@ func (l lokiStack) removeObjectStorage(oc *exutil.CLI) {
 		{
 			cred := getMinIOCreds(oc, minioNS)
 			cfg := generateS3Config(cred)
-			client := newS3Client(cfg)
+			client := newS3Client(cfg, true)
 			err = deleteS3Bucket(client, l.BucketName)
 		}
 	}
