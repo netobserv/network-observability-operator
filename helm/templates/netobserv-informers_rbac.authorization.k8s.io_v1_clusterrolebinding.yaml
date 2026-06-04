@@ -8,5 +8,5 @@ roleRef:
   name: netobserv-informers
 subjects:
   - kind: ServiceAccount
-    name: flp-informers
+    name: flowlogs-pipeline-informers
     namespace: '{{ .Release.Namespace }}'

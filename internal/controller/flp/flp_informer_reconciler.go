@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	informerName      = "flp-informers"
+	informerName      = "flowlogs-pipeline-informers"
 	informerShortName = "informers"
 )
 
@@ -65,8 +65,8 @@ func (r *informerReconciler) reconcile(ctx context.Context, desired *flowslatest
 
 	// Check if informers are enabled (default: false)
 	enabled := false
-	if desired.Spec.Processor.Informers != nil && desired.Spec.Processor.Informers.Enabled != nil {
-		enabled = *desired.Spec.Processor.Informers.Enabled
+	if desired.Spec.Processor.CentralizedInformers != nil && desired.Spec.Processor.CentralizedInformers.Enabled != nil {
+		enabled = *desired.Spec.Processor.CentralizedInformers.Enabled
 	}
 
 	if !enabled {

@@ -186,7 +186,7 @@ func (b *monolithBuilder) service() *corev1.Service {
 		},
 	}
 	// Only expose k8scache port when centralized informers are enabled
-	if b.desired.Processor.Informers != nil && b.desired.Processor.Informers.Enabled != nil && *b.desired.Processor.Informers.Enabled {
+	if b.desired.Processor.CentralizedInformers != nil && b.desired.Processor.CentralizedInformers.Enabled != nil && *b.desired.Processor.CentralizedInformers.Enabled {
 		svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
 			Name:       "k8scache",
 			Port:       k8scachePort,

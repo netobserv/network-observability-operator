@@ -99,7 +99,7 @@ const (
 // Only validates when centralized informers are enabled (when k8scache port is actually used)
 func validatePortConflicts(desired *flowslatest.FlowCollectorSpec) error {
 	// Only check port conflicts when centralized informers are enabled
-	if desired.Processor.Informers == nil || desired.Processor.Informers.Enabled == nil || !*desired.Processor.Informers.Enabled {
+	if desired.Processor.CentralizedInformers == nil || desired.Processor.CentralizedInformers.Enabled == nil || !*desired.Processor.CentralizedInformers.Enabled {
 		return nil
 	}
 
@@ -167,7 +167,7 @@ func podTemplate(
 		ContainerPort: desired.Processor.GetMetricsPort(),
 	})
 	// Only expose k8scache port when centralized informers are enabled
-	if desired.Processor.Informers != nil && desired.Processor.Informers.Enabled != nil && *desired.Processor.Informers.Enabled {
+	if desired.Processor.CentralizedInformers != nil && desired.Processor.CentralizedInformers.Enabled != nil && *desired.Processor.CentralizedInformers.Enabled {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          "k8scache",
 			ContainerPort: k8scachePort,
@@ -321,7 +321,7 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 
 // addK8sCacheArgs adds k8scache server arguments for centralized informers
 func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Builder, certSecretName string, args *[]string) {
-	if desired.Processor.Informers == nil || desired.Processor.Informers.Enabled == nil || !*desired.Processor.Informers.Enabled {
+	if desired.Processor.CentralizedInformers == nil || desired.Processor.CentralizedInformers.Enabled == nil || !*desired.Processor.CentralizedInformers.Enabled {
 		return
 	}
 
@@ -330,24 +330,29 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 		"--k8scache.address=0.0.0.0",
 	)
 
-	// Add TLS configuration if enabled
-	if desired.Processor.Informers.TLS == nil || desired.Processor.Informers.TLS.Type == flowslatest.TLSDisabled {
+	// Apply default TLS type if not specified
+	tlsType := flowslatest.TLSAuto
+	if desired.Processor.CentralizedInformers.TLS != nil {
+		tlsType = desired.Processor.CentralizedInformers.TLS.Type
+	}
+
+	if tlsType == flowslatest.TLSDisabled {
 		return
 	}
 
 	var serverCert *flowslatest.CertificateReference
 	var caFile *flowslatest.FileReference
 
-	if desired.Processor.Informers.TLS.Type == flowslatest.TLSProvided {
+	if tlsType == flowslatest.TLSProvided {
 		// Manual mode: user provides certificates
-		if desired.Processor.Informers.TLS.ProvidedCertificates != nil {
-			serverCert = desired.Processor.Informers.TLS.ProvidedCertificates.ServerCert
-			caFile = desired.Processor.Informers.TLS.ProvidedCertificates.CAFile
+		if desired.Processor.CentralizedInformers.TLS != nil && desired.Processor.CentralizedInformers.TLS.ProvidedCertificates != nil {
+			serverCert = desired.Processor.CentralizedInformers.TLS.ProvidedCertificates.ServerCert
+			caFile = desired.Processor.CentralizedInformers.TLS.ProvidedCertificates.CAFile
 		}
-	} else if desired.Processor.Informers.TLS.Type == flowslatest.TLSAuto || desired.Processor.Informers.TLS.Type == flowslatest.TLSAutoMTLS {
+	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
 		// Auto mode: use service-ca certificate for the k8scache service
 		serverCert = helper.DefaultCertificateReference(certSecretName, "")
-		if desired.Processor.Informers.TLS.Type == flowslatest.TLSAutoMTLS {
+		if tlsType == flowslatest.TLSAutoMTLS {
 			caFile = helper.DefaultCAReference("netobserv-ca", "")
 		}
 	}

@@ -456,6 +456,24 @@ spec:
         path: networkPolicy.additionalNamespaces
       - displayName: Enable
         path: networkPolicy.enable
+      - displayName: Centralized informers
+        path: processor.centralizedInformers
+      - displayName: Advanced
+        path: processor.centralizedInformers.advanced
+      - displayName: Batch size
+        path: processor.centralizedInformers.advanced.batchSize
+      - displayName: Processor port
+        path: processor.centralizedInformers.advanced.processorPort
+      - displayName: Resync interval
+        path: processor.centralizedInformers.advanced.resyncInterval
+      - displayName: Send timeout
+        path: processor.centralizedInformers.advanced.sendTimeout
+      - displayName: Update buffer size
+        path: processor.centralizedInformers.advanced.updateBufferSize
+      - displayName: Enabled
+        path: processor.centralizedInformers.enabled
+      - displayName: Replicas
+        path: processor.centralizedInformers.replicas
       - displayName: Consumer replicas
         path: processor.consumerReplicas
       - displayName: Deduper
@@ -466,24 +484,6 @@ spec:
         path: processor.deduper.sampling
       - displayName: Filters
         path: processor.filters
-      - displayName: Informers
-        path: processor.informers
-      - displayName: Advanced
-        path: processor.informers.advanced
-      - displayName: Batch size
-        path: processor.informers.advanced.batchSize
-      - displayName: Processor port
-        path: processor.informers.advanced.processorPort
-      - displayName: Resync interval
-        path: processor.informers.advanced.resyncInterval
-      - displayName: Send timeout
-        path: processor.informers.advanced.sendTimeout
-      - displayName: Update buffer size
-        path: processor.informers.advanced.updateBufferSize
-      - displayName: Enabled
-        path: processor.informers.enabled
-      - displayName: Replicas
-        path: processor.informers.replicas
       - displayName: Log types
         path: processor.logTypes
       - displayName: Additional include list

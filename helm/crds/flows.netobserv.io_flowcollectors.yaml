@@ -5043,78 +5043,11 @@ spec:
                             type: object
                           type: array
                       type: object
-                    clusterName:
-                      default: ""
-                      description: '`clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.'
-                      type: string
-                    consumerReplicas:
+                    centralizedInformers:
                       description: |-
-                        `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`, default is 3.
-                        This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.processor.unmanagedReplicas` is `true`.
-                      format: int32
-                      minimum: 0
-                      type: integer
-                    deduper:
-                      description: '`deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.'
-                      properties:
-                        mode:
-                          default: Disabled
-                          description: |-
-                            Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication, since the Agent cannot de-duplicate same flows reported from different nodes.<br>
-                            - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events.<br>
-                            - Use `Sample` to randomly keep only one flow on 50, which is the default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling values are `50`, the combined sampling is 1:2500.<br>
-                            - Use `Disabled` to turn off Processor-based de-duplication.<br>
-                          enum:
-                            - Disabled
-                            - Drop
-                            - Sample
-                          type: string
-                        sampling:
-                          default: 50
-                          description: '`sampling` is the sampling interval when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.'
-                          format: int32
-                          minimum: 0
-                          type: integer
-                      type: object
-                    filters:
-                      description: |-
-                        `filters` lets you define custom filters to limit the amount of generated flows.
-                        These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
-                        but with a lesser improvement in performance.
-                      items:
-                        description: '`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.'
-                        properties:
-                          outputTarget:
-                            description: 'If specified, these filters target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.'
-                            enum:
-                              - ""
-                              - Loki
-                              - Metrics
-                              - Exporters
-                            type: string
-                          query:
-                            description: A query that selects the network flows to keep. More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.
-                            type: string
-                          sampling:
-                            description: '`sampling` is an optional sampling interval to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.'
-                            format: int32
-                            minimum: 0
-                            type: integer
-                        type: object
-                      type: array
-                    imagePullPolicy:
-                      default: IfNotPresent
-                      description: '`imagePullPolicy` is the Kubernetes pull policy for the image defined above'
-                      enum:
-                        - IfNotPresent
-                        - Always
-                        - Never
-                      type: string
-                    informers:
-                      description: |-
-                        `informers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
-                        This reduces load on the Kubernetes API server by having a single component (flp-informers) query the API instead of N FLP processors.
-                        When enabled, a dedicated `flp-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+                        `centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
+                        This reduces load on the Kubernetes API server by having a single component (flowlogs-pipeline-informers) query the API instead of N FLP processors.
+                        When enabled, a dedicated `flowlogs-pipeline-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.
                       properties:
                         advanced:
                           description: '`advanced` allows setting some technical parameters of the informers component.'
@@ -5151,13 +5084,13 @@ spec:
                           default: false
                           description: |-
                             `enabled` controls whether to deploy centralized Kubernetes informers.
-                            When `true`, a dedicated `flp-informers` deployment watches K8s resources and pushes cache updates via gRPC to FLP processors.
+                            When `true`, a dedicated `flowlogs-pipeline-informers` deployment watches K8s resources and pushes cache updates via gRPC to FLP processors.
                             When `false`, each FLP processor uses local informers (previous behavior).
                           type: boolean
                         replicas:
                           default: 2
                           description: |-
-                            `replicas` defines the number of replicas for the flp-informers deployment.
+                            `replicas` defines the number of replicas for the flowlogs-pipeline-informers deployment.
                             For high availability, a minimum of 2 replicas is required when `enabled` is `true`.
                           format: int32
                           minimum: 1
@@ -5330,6 +5263,73 @@ spec:
                             - type
                           type: object
                       type: object
+                    clusterName:
+                      default: ""
+                      description: '`clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.'
+                      type: string
+                    consumerReplicas:
+                      description: |-
+                        `consumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline`, default is 3.
+                        This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.processor.unmanagedReplicas` is `true`.
+                      format: int32
+                      minimum: 0
+                      type: integer
+                    deduper:
+                      description: '`deduper` allows you to sample or drop flows identified as duplicates, in order to save on resource usage.'
+                      properties:
+                        mode:
+                          default: Disabled
+                          description: |-
+                            Set the Processor de-duplication mode. It comes in addition to the Agent-based deduplication, since the Agent cannot de-duplicate same flows reported from different nodes.<br>
+                            - Use `Drop` to drop every flow considered as duplicates, allowing saving more on resource usage but potentially losing some information such as the network interfaces used from peer, or network events.<br>
+                            - Use `Sample` to randomly keep only one flow on 50, which is the default, among the ones considered as duplicates. This is a compromise between dropping every duplicate or keeping every duplicate. This sampling action comes in addition to the Agent-based sampling. If both Agent and Processor sampling values are `50`, the combined sampling is 1:2500.<br>
+                            - Use `Disabled` to turn off Processor-based de-duplication.<br>
+                          enum:
+                            - Disabled
+                            - Drop
+                            - Sample
+                          type: string
+                        sampling:
+                          default: 50
+                          description: '`sampling` is the sampling interval when deduper `mode` is `Sample`. For example, a value of `50` means that 1 flow in 50 is sampled.'
+                          format: int32
+                          minimum: 0
+                          type: integer
+                      type: object
+                    filters:
+                      description: |-
+                        `filters` lets you define custom filters to limit the amount of generated flows.
+                        These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
+                        but with a lesser improvement in performance.
+                      items:
+                        description: '`FLPFilterSet` defines the desired configuration for FLP-based filtering satisfying all conditions.'
+                        properties:
+                          outputTarget:
+                            description: 'If specified, these filters target a single output: `Loki`, `Metrics` or `Exporters`. By default, all outputs are targeted.'
+                            enum:
+                              - ""
+                              - Loki
+                              - Metrics
+                              - Exporters
+                            type: string
+                          query:
+                            description: A query that selects the network flows to keep. More information about this query language in https://github.com/netobserv/flowlogs-pipeline/blob/main/docs/filtering.md.
+                            type: string
+                          sampling:
+                            description: '`sampling` is an optional sampling interval to apply to this filter. For example, a value of `50` means that 1 matching flow in 50 is sampled.'
+                            format: int32
+                            minimum: 0
+                            type: integer
+                        type: object
+                      type: array
+                    imagePullPolicy:
+                      default: IfNotPresent
+                      description: '`imagePullPolicy` is the Kubernetes pull policy for the image defined above'
+                      enum:
+                        - IfNotPresent
+                        - Always
+                        - Never
+                      type: string
                     kafkaConsumerAutoscaler:
                       description: |-
                         `kafkaConsumerAutoscaler` [deprecated (*)] is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.

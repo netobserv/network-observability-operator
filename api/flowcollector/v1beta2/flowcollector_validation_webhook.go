@@ -484,18 +484,18 @@ func (v *validator) validateFLPTLS() {
 }
 
 func (v *validator) validateInformers() {
-	if v.fc.Processor.Informers == nil {
+	if v.fc.Processor.CentralizedInformers == nil {
 		return
 	}
 
 	// Check if enabled
-	enabled := v.fc.Processor.Informers.Enabled != nil && *v.fc.Processor.Informers.Enabled
+	enabled := v.fc.Processor.CentralizedInformers.Enabled != nil && *v.fc.Processor.CentralizedInformers.Enabled
 
 	if enabled {
 		// When enabled, replicas must be at least 2 for high availability
 		replicas := int32(2) // default
-		if v.fc.Processor.Informers.Replicas != nil {
-			replicas = *v.fc.Processor.Informers.Replicas
+		if v.fc.Processor.CentralizedInformers.Replicas != nil {
+			replicas = *v.fc.Processor.CentralizedInformers.Replicas
 		}
 		if replicas < 2 {
 			v.errors = append(

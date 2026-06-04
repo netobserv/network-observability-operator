@@ -203,9 +203,9 @@ func (r *transformerReconciler) reconcileService(ctx context.Context, builder *t
 	defer report.LogIfNeeded(ctx)
 
 	// Only create k8scache service when centralized informers are enabled
-	informersEnabled := desired.Processor.Informers != nil &&
-		desired.Processor.Informers.Enabled != nil &&
-		*desired.Processor.Informers.Enabled
+	informersEnabled := desired.Processor.CentralizedInformers != nil &&
+		desired.Processor.CentralizedInformers.Enabled != nil &&
+		*desired.Processor.CentralizedInformers.Enabled
 
 	if informersEnabled {
 		if err := r.ReconcileService(ctx, r.service, builder.service(), &report); err != nil {
@@ -257,9 +257,9 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	}
 
 	// Informers - when centralized informers are disabled, flowlogs-pipeline needs direct K8s API access
-	informersEnabled := builder.desired.Processor.Informers != nil &&
-		builder.desired.Processor.Informers.Enabled != nil &&
-		*builder.desired.Processor.Informers.Enabled
+	informersEnabled := builder.desired.Processor.CentralizedInformers != nil &&
+		builder.desired.Processor.CentralizedInformers.Enabled != nil &&
+		*builder.desired.Processor.CentralizedInformers.Enabled
 	if !informersEnabled {
 		// Local informers mode - grant K8s API permissions to flowlogs-pipeline ServiceAccount
 		r.rbInformers = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPInformersRole)
@@ -267,7 +267,7 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 			return err
 		}
 	} else {
-		// Centralized informers mode - permissions handled by flp-informers ServiceAccount
+		// Centralized informers mode - permissions handled by flowlogs-pipeline-informers ServiceAccount
 		r.Managed.TryDelete(ctx, r.rbInformers)
 	}
 

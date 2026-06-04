@@ -753,11 +753,11 @@ type FlowCollectorFLP struct {
 	// +optional
 	Service *ProcessorServiceConfig `json:"service,omitempty"`
 
-	// `informers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
-	// This reduces load on the Kubernetes API server by having a single component (flp-informers) query the API instead of N FLP processors.
-	// When enabled, a dedicated `flp-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+	// `centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
+	// This reduces load on the Kubernetes API server by having a single component (flowlogs-pipeline-informers) query the API instead of N FLP processors.
+	// When enabled, a dedicated `flowlogs-pipeline-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.
 	// +optional
-	Informers *FlowCollectorInformers `json:"informers,omitempty"`
+	CentralizedInformers *FlowCollectorCentralizedInformers `json:"centralizedInformers,omitempty"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
@@ -766,15 +766,15 @@ type FlowCollectorFLP struct {
 	Advanced *AdvancedProcessorConfig `json:"advanced,omitempty"`
 }
 
-// `FlowCollectorInformers` defines the configuration for centralized Kubernetes informers
-type FlowCollectorInformers struct {
+// `FlowCollectorCentralizedInformers` defines the configuration for centralized Kubernetes informers
+type FlowCollectorCentralizedInformers struct {
 	// `enabled` controls whether to deploy centralized Kubernetes informers.
-	// When `true`, a dedicated `flp-informers` deployment watches K8s resources and pushes cache updates via gRPC to FLP processors.
+	// When `true`, a dedicated `flowlogs-pipeline-informers` deployment watches K8s resources and pushes cache updates via gRPC to FLP processors.
 	// When `false`, each FLP processor uses local informers (previous behavior).
 	// +kubebuilder:default:=false
 	Enabled *bool `json:"enabled,omitempty"`
 
-	// `replicas` defines the number of replicas for the flp-informers deployment.
+	// `replicas` defines the number of replicas for the flowlogs-pipeline-informers deployment.
 	// For high availability, a minimum of 2 replicas is required when `enabled` is `true`.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default:=2
@@ -788,15 +788,15 @@ type FlowCollectorInformers struct {
 
 	// `advanced` allows setting some technical parameters of the informers component.
 	// +optional
-	Advanced *AdvancedInformersConfig `json:"advanced,omitempty"`
+	Advanced *AdvancedCentralizedInformersConfig `json:"advanced,omitempty"`
 
 	// `tls` defines the TLS configuration for the gRPC communication between informers and processors.
 	// +optional
-	TLS *InformersTLSConfig `json:"tls,omitempty"`
+	TLS *CentralizedInformersTLSConfig `json:"tls,omitempty"`
 }
 
-// `AdvancedInformersConfig` defines advanced configuration for the informers component
-type AdvancedInformersConfig struct {
+// `AdvancedCentralizedInformersConfig` defines advanced configuration for the centralized informers component
+type AdvancedCentralizedInformersConfig struct {
 	// `resyncInterval` defines the interval in seconds to rediscover processors and sync state.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default:=60
@@ -1646,8 +1646,8 @@ type ProcessorServiceConfig struct {
 	ProvidedCertificates *ClientServerTLS `json:"providedCertificates,omitempty"`
 }
 
-// `InformersTLSConfig` defines the TLS configuration for gRPC communication between informers and processors
-type InformersTLSConfig struct {
+// `CentralizedInformersTLSConfig` defines the TLS configuration for gRPC communication between centralized informers and processors
+type CentralizedInformersTLSConfig struct {
 	// Select the type of TLS configuration:<br>
 	// - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
 	// - `Provided` to manually provide cert/key references for mTLS.<br>

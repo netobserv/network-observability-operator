@@ -30,9 +30,9 @@ func newInformerBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCol
 
 func (b *informerBuilder) deployment() (*appsv1.Deployment, error) {
 	// Get configuration from FlowCollector spec
-	config := b.desired.Processor.Informers
+	config := b.desired.Processor.CentralizedInformers
 	if config == nil {
-		config = &flowslatest.FlowCollectorInformers{}
+		config = &flowslatest.FlowCollectorCentralizedInformers{}
 	}
 
 	// Replicas: default 2 for HA
@@ -240,21 +240,27 @@ func (b *informerBuilder) serviceAccount() *corev1.ServiceAccount {
 }
 
 // addTLSArgs configures TLS arguments for informers client
-func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, config *flowslatest.FlowCollectorInformers) {
-	if config.TLS == nil || config.TLS.Type == flowslatest.TLSDisabled {
+func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, config *flowslatest.FlowCollectorCentralizedInformers) {
+	// Apply default TLS type if not specified
+	tlsType := flowslatest.TLSAuto
+	if config.TLS != nil {
+		tlsType = config.TLS.Type
+	}
+
+	if tlsType == flowslatest.TLSDisabled {
 		return
 	}
 
 	var clientCert *flowslatest.CertificateReference
 	var caFile *flowslatest.FileReference
 
-	if config.TLS.Type == flowslatest.TLSProvided {
+	if tlsType == flowslatest.TLSProvided {
 		// Manual mode: user provides certificates
-		if config.TLS.ProvidedCertificates != nil {
+		if config.TLS != nil && config.TLS.ProvidedCertificates != nil {
 			clientCert = config.TLS.ProvidedCertificates.ClientCert
 			caFile = config.TLS.ProvidedCertificates.CAFile
 		}
-	} else if config.TLS.Type == flowslatest.TLSAuto || config.TLS.Type == flowslatest.TLSAutoMTLS {
+	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
 		// Auto mode: use service-ca in OpenShift
 		caConfigMapName := "netobserv-ca"
 		if b.ClusterInfo.IsOpenShift() {
@@ -262,9 +268,9 @@ func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, conf
 		}
 		caFile = helper.DefaultCAReference(caConfigMapName, "")
 
-		if config.TLS.Type == flowslatest.TLSAutoMTLS {
+		if tlsType == flowslatest.TLSAutoMTLS {
 			// Auto-mTLS: use cert-manager generated client certificate
-			clientCert = helper.DefaultCertificateReference("flp-informers-k8scache-client-cert", "")
+			clientCert = helper.DefaultCertificateReference("flowlogs-pipeline-informers-k8scache-client-cert", "")
 		}
 	}
 

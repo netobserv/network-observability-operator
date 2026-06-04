@@ -106,7 +106,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 						Metrics: flowslatest.FLPMetrics{
 							IncludeList: &[]flowslatest.FLPMetric{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"},
 						},
-						Informers: &flowslatest.FlowCollectorInformers{
+						CentralizedInformers: &flowslatest.FlowCollectorCentralizedInformers{
 							Enabled: ptr.To(true),
 						},
 					},
@@ -128,7 +128,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 				return nil
 			}, timeout, interval).Should(Succeed())
 
-			By("Expecting to create the flp-informers Deployment")
+			By("Expecting to create the flowlogs-pipeline-informers Deployment")
 			Eventually(func() interface{} {
 				deploy := appsv1.Deployment{}
 				return k8sClient.Get(ctx, flpKeyInformer, &deploy)
@@ -169,7 +169,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 				return k8sClient.Get(ctx, rbKeyInformer, &rb3)
 			}, timeout, interval).Should(Succeed())
 			Expect(rb3.Subjects).Should(HaveLen(1))
-			Expect(rb3.Subjects[0].Name).Should(Equal("flp-informers"))
+			Expect(rb3.Subjects[0].Name).Should(Equal("flowlogs-pipeline-informers"))
 			Expect(rb3.RoleRef.Name).Should(Equal("netobserv-informers"))
 
 			By("Not expecting Loki role (requires LokiStack)")
@@ -303,7 +303,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 						},
 					},
 				}
-				fc.Spec.Processor.Informers = &flowslatest.FlowCollectorInformers{
+				fc.Spec.Processor.CentralizedInformers = &flowslatest.FlowCollectorCentralizedInformers{
 					Enabled: ptr.To(true),
 				}
 			})
@@ -339,7 +339,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 				return k8sClient.Get(ctx, rbKeyInformer, &rb2)
 			}, timeout, interval).Should(Succeed())
 			Expect(rb2.Subjects).Should(HaveLen(1))
-			Expect(rb2.Subjects[0].Name).Should(Equal("flp-informers"))
+			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline-informers"))
 			Expect(rb2.RoleRef.Name).Should(Equal("netobserv-informers"))
 
 			By("Not expecting hostnetwork role (not needed with Kafka)")

@@ -819,7 +819,7 @@ func TestPortConflictValidation(t *testing.T) {
 	// Test FLP port conflict (only when informers enabled)
 	cfg := getConfig()
 	cfg.Processor.Advanced.Port = ptr.To(int32(9090))
-	cfg.Processor.Informers = &flowslatest.FlowCollectorInformers{Enabled: ptr.To(true)}
+	cfg.Processor.CentralizedInformers = &flowslatest.FlowCollectorCentralizedInformers{Enabled: ptr.To(true)}
 	_, err := newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil, nil)
 	assert.Error(err)
 	assert.Contains(err.Error(), "flowlogs-pipeline port 9090 conflicts with reserved k8scache port")
@@ -827,7 +827,7 @@ func TestPortConflictValidation(t *testing.T) {
 	// Test health port conflict (only when informers enabled)
 	cfg = getConfig()
 	cfg.Processor.Advanced.HealthPort = ptr.To(int32(9090))
-	cfg.Processor.Informers = &flowslatest.FlowCollectorInformers{Enabled: ptr.To(true)}
+	cfg.Processor.CentralizedInformers = &flowslatest.FlowCollectorCentralizedInformers{Enabled: ptr.To(true)}
 	_, err = newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil, nil)
 	assert.Error(err)
 	assert.Contains(err.Error(), "flowlogs-pipeline health port 9090 conflicts with reserved k8scache port")
@@ -835,7 +835,7 @@ func TestPortConflictValidation(t *testing.T) {
 	// Test metrics port conflict (only when informers enabled)
 	cfg = getConfig()
 	cfg.Processor.Metrics.Server.Port = ptr.To(int32(9090))
-	cfg.Processor.Informers = &flowslatest.FlowCollectorInformers{Enabled: ptr.To(true)}
+	cfg.Processor.CentralizedInformers = &flowslatest.FlowCollectorCentralizedInformers{Enabled: ptr.To(true)}
 	_, err = newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil, nil)
 	assert.Error(err)
 	assert.Contains(err.Error(), "flowlogs-pipeline metrics port 9090 conflicts with reserved k8scache port")
@@ -843,7 +843,7 @@ func TestPortConflictValidation(t *testing.T) {
 	// Test profile port conflict (only when informers enabled)
 	cfg = getConfig()
 	cfg.Processor.Advanced.ProfilePort = ptr.To(int32(9090))
-	cfg.Processor.Informers = &flowslatest.FlowCollectorInformers{Enabled: ptr.To(true)}
+	cfg.Processor.CentralizedInformers = &flowslatest.FlowCollectorCentralizedInformers{Enabled: ptr.To(true)}
 	_, err = newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil, nil)
 	assert.Error(err)
 	assert.Contains(err.Error(), "flowlogs-pipeline profile port 9090 conflicts with reserved k8scache port")
@@ -851,7 +851,7 @@ func TestPortConflictValidation(t *testing.T) {
 	// Test port 9090 is allowed when informers disabled (no conflict)
 	cfg = getConfig()
 	cfg.Processor.Advanced.Port = ptr.To(int32(9090))
-	cfg.Processor.Informers = nil // or &FlowCollectorInformers{Enabled: false}
+	cfg.Processor.CentralizedInformers = nil // or &FlowCollectorCentralizedInformers{Enabled: false}
 	_, err = newMonolithBuilder(info.NewInstance(image, status.Instance{}), &cfg, &metricslatest.FlowMetricList{}, nil, nil)
 	assert.NoError(err)
 

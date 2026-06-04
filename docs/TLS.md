@@ -152,7 +152,7 @@ When `spec.processor.informers.tls.type` is "Auto":
       <td>Reuses the same certificate as the main gRPC service.</td>
     </tr>
     <tr>
-      <td>flp-informers</td>
+      <td>flowlogs-pipeline-informers</td>
       <td>ConfigMap</td>
       <td>openshift-service-ca.crt</td>
       <td>service-ca.crt</td>
@@ -191,14 +191,14 @@ When `spec.processor.informers.tls.type` is "Auto-mTLS":
       <td></td>
     </tr>
     <tr>
-      <td>flp-informers</td>
+      <td>flowlogs-pipeline-informers</td>
       <td>Secret</td>
-      <td>flp-informers-k8scache-client-cert</td>
+      <td>flowlogs-pipeline-informers-k8scache-client-cert</td>
       <td>tls.crt, tls.key</td>
       <td></td>
     </tr>
     <tr>
-      <td>flp-informers</td>
+      <td>flowlogs-pipeline-informers</td>
       <td>ConfigMap</td>
       <td>netobserv-ca</td>
       <td>service-ca.crt</td>
