@@ -52,46 +52,14 @@ cd helm && helm dependency update --skip-refresh ; cd ..
 When all component drafts are ready, you can test the helm chart on your cluster:
 
 ```bash
-helm repo add cert-manager https://charts.jetstack.io
-helm install cert-manager -n cert-manager --create-namespace cert-manager/cert-manager --set crds.enabled=true
-helm upgrade trust-manager oci://quay.io/jetstack/charts/trust-manager --install --namespace cert-manager --wait
+make helm-install
+make helm-configure-flowcollector
 
-helm install netobserv -n netobserv --create-namespace --set install.loki=true --set install.prom-stack=true ./helm
-
-cat <<EOF | kubectl apply -f -
-apiVersion: flows.netobserv.io/v1beta2
-kind: FlowCollector
-metadata:
-  name: cluster
-spec:
-  networkPolicy:
-    enable: false
-  consolePlugin:
-    standalone: true
-  processor:
-    consumerReplicas: 1
-    service:
-      tlsType: Auto-mTLS
-  loki:
-    mode: Monolithic
-    monolithic:
-      url: 'http://netobserv-loki.netobserv.svc.cluster.local.:3100/'
-  prometheus:
-    querier:
-      mode: Manual
-      manual:
-        url: http://netobserv-prom-stack-prometheus.netobserv.svc.cluster.local.:9090/
-        alertManager:
-          url: http://netobserv-prom-stack-alertmanager.netobserv.svc.cluster.local.:9093/
-EOF
-
-# Check components image:
-kubectl config set-context --current --namespace=netobserv
+# Check component images:
 kubectl get pods -oyaml | grep image:
 kubectl get pods -n netobserv-privileged -oyaml | grep image:
 
-kubectl wait -n netobserv --timeout=60s --for condition=Available=True deployment netobserv-plugin
-kubectl port-forward svc/netobserv-plugin 9001:9001 -n netobserv
+make helm-expose-console
 ```
 
 Then open http://localhost:9001/ in your browser, and do some manual smoke tests.
@@ -99,7 +67,7 @@ Then open http://localhost:9001/ in your browser, and do some manual smoke tests
 To clean up:
 
 ```bash
-helm delete netobserv -n netobserv
+make helm-cleanup
 ```
 
 ### Commit operator changes

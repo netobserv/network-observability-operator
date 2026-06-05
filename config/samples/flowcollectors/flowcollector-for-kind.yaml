@@ -1,0 +1,29 @@
+apiVersion: flows.netobserv.io/v1beta2
+kind: FlowCollector
+metadata:
+  name: cluster
+spec:
+  networkPolicy:
+    enable: false
+  agent:
+    ebpf:
+      imagePullPolicy: Always
+  consolePlugin:
+    standalone: true
+    imagePullPolicy: Always
+  processor:
+    consumerReplicas: 1
+    service:
+      tlsType: Auto-mTLS
+    imagePullPolicy: Always
+  loki:
+    mode: Monolithic
+    monolithic:
+      url: 'http://netobserv-loki.netobserv.svc.cluster.local.:3100/'
+  prometheus:
+    querier:
+      mode: Manual
+      manual:
+        url: http://netobserv-prom-stack-prometheus.netobserv.svc.cluster.local.:9090/
+        alertManager:
+          url: http://netobserv-prom-stack-alertmanager.netobserv.svc.cluster.local.:9093/
