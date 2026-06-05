@@ -1,3 +1,4 @@
+# Auto-generated from helm-update.sh
 apiVersion: v1
 data:
   controller_manager_config.yaml: |

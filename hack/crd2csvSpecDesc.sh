@@ -8,7 +8,7 @@ if [[ $version == "" ]]; then
 fi
 
 crd="./config/crd/bases/flows.netobserv.io_flowcollectors.yaml"
-csv="./config/csv/bases/netobserv-operator.clusterserviceversion.yaml"
+csv="./config/csv/bases/transformed-csv.yaml"
 
 crdRoot=".spec.versions[] | select(.name==\"$version\").schema.openAPIV3Schema.properties.spec.properties"
 csvRoot=".spec.customresourcedefinitions.owned[] | select(.version==\"$version\").specDescriptors"

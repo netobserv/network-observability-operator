@@ -163,7 +163,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	var cpImage string
 	if desired.Spec.NeedsConsolePluginDeployment(r.mgr.ClusterInfo.HasConsolePlugin()) {
 		var err error
-		cpImage, err = r.mgr.Config.ResolveConsolePluginImage(r.mgr.ClusterInfo)
+		cpImage, err = r.mgr.Config.ResolveWebConsoleImage(r.mgr.ClusterInfo)
 		if err != nil {
 			return r.status.Error("ConsolePluginImageError", err)
 		}
@@ -226,11 +226,11 @@ func (r *FlowCollectorReconciler) checkFinalizer(ctx context.Context, desired *f
 
 func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns string, loki *helper.LokiConfig) reconcilers.Common {
 	return reconcilers.Common{
-		Client:       *clh,
-		Namespace:    ns,
-		ClusterInfo:  r.mgr.ClusterInfo,
-		Watcher:      r.watcher,
-		Loki:         loki,
-		IsDownstream: r.mgr.Config.DownstreamDeployment,
+		Client:      *clh,
+		Namespace:   ns,
+		ClusterInfo: r.mgr.ClusterInfo,
+		Watcher:     r.watcher,
+		Loki:        loki,
+		Vendor:      r.mgr.Config.Vendor,
 	}
 }

@@ -77,3 +77,10 @@ var EnvNoHTTP2 = corev1.EnvVar{
 	Name:  "GODEBUG",
 	Value: "http2server=0",
 }
+
+type Vendor string
+
+const (
+	VendorOpenShift           Vendor = "OpenShift"
+	VendorOpenShiftDownstream Vendor = "OpenShift_Downstream"
+)

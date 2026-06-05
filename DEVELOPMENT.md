@@ -139,94 +139,18 @@ make vendors
 
 ## Understanding the config / kustomize structure
 
-The [config](./config/) directory contains assets required for creating the Operator bundle (which comes in two flavours: for OpenShift and for "vanilla" Kubernetes), as well as other assets used in `make` scripts that are helpful to set up development environments.
+The [config](./config/) directory contains assets required for creating the Operator bundle, which comes in two flavours: for vanilla Kubernetes and for OpenShift. Their entry points are `config/k8s/olm` and `config/openshift/olm` respectively. There is a third possibility that is not used for OLM bundling, but is used for development purpose to deploy directly on cluster with `make deploy`: it's `config/openshift` (a non-OLM variant). Subdirectories in `config/` that are not in `k8s/` or `openshift/`, such as `crd/` and `csv/`, are typically common for both bundles.
 
-Let's see the `kustomize` dependency tree for OpenShift bundle, which entry point is `config/openshift-olm`:
+The vanilla bundle is not distributed as is, but is used to derive helm charts.
 
-```
-openshift-olm
-|
-|===> ../csv
-|     |
-|     |===> ../samples
-|     |     |
-|     |     |===> FlowCollector samples
-|     |
-|     |===> CSV base file
-|
-|===> ./default
-      |
-      |===> Various patches and ServiceMonitor
-      |
-      |===> ../../crd
-      |     |
-      |     |===> CRD base file
-      |     |
-      |     |===> Various patches and configuration
-      |
-      |===> ../../rbac
-      |     |
-      |     |===> All RBAC-related resources
-      |
-      |===> ../../manager
-      |     |
-      |     |===> Operator deployment and various patches
-      |
-      |===> ../../webhook
-            |
-            |===> Webhook service and configuration
-       
-```
-
-For "vanilla" Kubernetes, the dependency tree is very similar, but includes CertManager and doesn't include the ServiceMonitor. Its entry point is `config/k8s-olm`:
-
-```
-k8s-olm
-|
-|===> ../csv
-|     |
-|     |===> ../samples
-|     |     |
-|     |     |===> FlowCollector samples
-|     |
-|     |===> CSV base file
-|
-|===> ./default
-      |
-      |===> Various patches
-      |
-      |===> ../../crd
-      |     |
-      |     |===> CRD base file
-      |     |
-      |     |===> Various patches and configuration
-      |
-      |===> ../../rbac
-      |     |
-      |     |===> All RBAC-related resources
-      |
-      |===> ../../manager
-      |     |
-      |     |===> Operator deployment and various patches
-      |
-      |===> ../../webhook
-      |     |
-      |     |===> Webhook service and configuration
-      |
-      |===> ../../certmanager
-            |
-            |===> Configuration for CertManager
-       
-```
-
-On top of that, there is also `config/openshift` which is used in developers environment to generate all the operator related assets without going through the bundle generation (e.g. there is no CSV), in order to be deployed directly on a running cluster. This is used in the `make deploy` script. Its content is very similar to `config/olm-openshift` apart from a few tweaks.
+Running `make update-bundle` updates the two OLM bundles and the derived helm chart.
 
 ## Simulating an OpenShift downstream deployment
 
 To configure the operator to run as a downstream deployment run this command:
 
 ```bash
-make set-release-kind-downstream
+VENDOR=OpenShift_Downstream make set-vendor
 ```
 
 Most notably change will concern the monitoring part which will use the platform monitoring stack instead of the user workload monitoring stack.

@@ -48,7 +48,7 @@ After CRD/CSV changes: `make update-bundle`
 Never hardcode. Use env vars:
 - `RELATED_IMAGE_EBPF_AGENT`
 - `RELATED_IMAGE_FLOWLOGS_PIPELINE`
-- `RELATED_IMAGE_CONSOLE_PLUGIN`
+- `RELATED_IMAGE_WEB_CONSOLE`
 
 ### 🚨 Multi-Architecture
 Support: amd64, arm64, ppc64le, s390x

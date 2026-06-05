@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
+	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/stretchr/testify/assert"
@@ -319,7 +320,7 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 	clusterInfo.Mock("4.14.0", flowslatest.OVNKubernetes) // Mock as OpenShift 4.14 with OVN
 	mgr := &manager.Manager{
 		ClusterInfo: clusterInfo,
-		Config:      &manager.Config{DownstreamDeployment: false},
+		Config:      &manager.Config{Vendor: constants.VendorOpenShift},
 	}
 
 	// Test with specific API server IPs (HyperShift scenario)

@@ -1,3 +1,4 @@
+# static file: this is NOT auto-generated. Keep aligned with config/manager/manager.yaml (TODO: manage through kustomize).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,13 +26,6 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=:8443
             - --leader-elect
-            - --ebpf-agent-image=$(RELATED_IMAGE_EBPF_AGENT)
-            - --flowlogs-pipeline-image=$(RELATED_IMAGE_FLOWLOGS_PIPELINE)
-            - --console-plugin-images=$(RELATED_IMAGE_CONSOLE_PLUGIN)
-            - --demo-loki-image=$(RELATED_IMAGE_DEMO_LOKI)
-            - --namespace=$(NAMESPACE)
-            - --downstream-deployment=$(DOWNSTREAM_DEPLOYMENT)
-            - --profiling-bind-address=$(PROFILING_BIND_ADDRESS)
             - --metrics-cert-file=/etc/tls/private/tls.crt
             - --metrics-cert-key-file=/etc/tls/private/tls.key
           command:
@@ -41,13 +35,10 @@ spec:
               value: '{{ .Values.ebpfAgent.image }}:{{ .Values.ebpfAgent.version }}'
             - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
               value: '{{ .Values.flowlogsPipeline.image }}:{{ .Values.flowlogsPipeline.version }}'
-            - name: RELATED_IMAGE_CONSOLE_PLUGIN
+            - name: RELATED_IMAGE_WEB_CONSOLE
               value: '{{ if .Values.standaloneConsole.enable }}{{ .Values.standaloneConsole.image }}:{{ .Values.standaloneConsole.version }}{{ else }}{{ .Values.consolePlugin.image }}:{{ .Values.consolePlugin.version }}{{ end }}'
             - name: RELATED_IMAGE_DEMO_LOKI
               value: grafana/loki:3.5.0
-            - name: DOWNSTREAM_DEPLOYMENT
-              value: "false"
-            - name: PROFILING_BIND_ADDRESS
             - name: NAMESPACE
               valueFrom:
                 fieldRef:

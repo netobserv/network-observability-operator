@@ -165,12 +165,12 @@ endif
 .PHONY: set-plugin-image
 set-plugin-image:
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN_PF5=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_WEB_CONSOLE=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_WEB_CONSOLE_PF5=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
 	kubectl set image deployment/netobserv-plugin-static netobserv-plugin-static=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION) -n $(NAMESPACE)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin-pf5 RELATED_IMAGE_CONSOLE_PLUGIN_PF5 $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_WEB_CONSOLE $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin-pf5 RELATED_IMAGE_WEB_CONSOLE_PF5 $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -178,12 +178,12 @@ endif
 	@echo -e "\n==> Wait a moment before plugin pod is fully redeployed"
 
 .PHONY: set-release-kind-downstream
-set-release-kind-downstream:
-ifeq ("", "$(CSV)")
-	kubectl  -n $(NAMESPACE) set env deployment netobserv-controller-manager -c "manager" DOWNSTREAM_DEPLOYMENT=true
-else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) "" DOWNSTREAM_DEPLOYMENT true
-endif
+set-release-kind-downstream: VENDOR=OpenShift_Downstream
+set-release-kind-downstream: set-vendor
+
+.PHONY: set-vendor
+set-vendor:
+	kubectl -n $(NAMESPACE) set env deployment netobserv-controller-manager -c "manager" VENDOR=$(VENDOR)
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
 	kubectl wait -n $(OPERATOR_NS) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager
@@ -208,9 +208,9 @@ pprof-pf:
 use-test-console:
 	@echo -e "\n==> Enabling the test console..."
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=$(IMAGE_REGISTRY)/$(USER)/network-observability-standalone-frontend:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_WEB_CONSOLE=$(IMAGE_REGISTRY)/$(USER)/network-observability-standalone-frontend:$(VERSION)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN $(IMAGE_REGISTRY)/$(USER)/network-observability-standalone-frontend:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_WEB_CONSOLE $(IMAGE_REGISTRY)/$(USER)/network-observability-standalone-frontend:$(VERSION)
 endif
 	@echo -e "\n==> Waiting for operator redeployed..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager

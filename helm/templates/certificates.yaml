@@ -1,3 +1,4 @@
+# static file: this is NOT auto-generated (TODO: manage through kustomize).
 {{ if .Values.certManager.enable }}
 # NetObserv CA, based either on self-signed, or on provided issuer
 apiVersion: cert-manager.io/v1

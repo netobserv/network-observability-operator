@@ -217,12 +217,12 @@ func (r *Reconciler) updateExporterStatuses(fc *flowslatest.FlowCollector) {
 
 func (r *Reconciler) newCommonInfo(clh *helper.Client, ns string, loki *helper.LokiConfig) reconcilers.Common {
 	return reconcilers.Common{
-		Client:       *clh,
-		Namespace:    ns,
-		ClusterInfo:  r.mgr.ClusterInfo,
-		Watcher:      r.watcher,
-		Loki:         loki,
-		IsDownstream: r.mgr.Config.DownstreamDeployment,
+		Client:      *clh,
+		Namespace:   ns,
+		ClusterInfo: r.mgr.ClusterInfo,
+		Watcher:     r.watcher,
+		Loki:        loki,
+		Vendor:      r.mgr.Config.Vendor,
 	}
 }
 

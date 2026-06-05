@@ -105,7 +105,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	if mgr.ClusterInfo.IsOpenShift() {
 		allowedNamespacesOut = append(allowedNamespacesOut, constants.DNSNamespace)
 		allowedNamespacesOut = append(allowedNamespacesOut, constants.MonitoringNamespace)
-		if mgr.Config.DownstreamDeployment {
+		if mgr.Config.Vendor == constants.VendorOpenShiftDownstream {
 			allowedNamespacesIn = append(allowedNamespacesIn, constants.MonitoringNamespace)
 		} else {
 			allowedNamespacesIn = append(allowedNamespacesIn, constants.UWMonitoringNamespace)
@@ -243,7 +243,7 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 	allowedNamespacesIn := []string{}
 
 	if mgr.ClusterInfo.IsOpenShift() {
-		if mgr.Config.DownstreamDeployment {
+		if mgr.Config.Vendor == constants.VendorOpenShiftDownstream {
 			allowedNamespacesIn = append(allowedNamespacesIn, constants.MonitoringNamespace)
 		} else {
 			allowedNamespacesIn = append(allowedNamespacesIn, constants.UWMonitoringNamespace)

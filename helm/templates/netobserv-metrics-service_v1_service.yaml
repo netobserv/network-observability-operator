@@ -1,3 +1,4 @@
+# Auto-generated from helm-update.sh
 apiVersion: v1
 kind: Service
 metadata:
@@ -9,10 +10,10 @@ metadata:
   name: netobserv-metrics-service
 spec:
   ports:
-    - name: https
-      port: 8443
-      protocol: TCP
-      targetPort: 8443
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
   selector:
     app: netobserv-operator
     control-plane: controller-manager

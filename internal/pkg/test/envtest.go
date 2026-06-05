@@ -43,6 +43,7 @@ import (
 	flowsv1beta2 "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	slicesv1alpha1 "github.com/netobserv/netobserv-operator/api/flowcollectorslice/v1alpha1"
 	metricsv1alpha1 "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
+	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
@@ -171,15 +172,15 @@ func PrepareEnvTest(env Environment, controllers []manager.Registerer, opNamespa
 	}
 
 	managerConfig := manager.Config{
-		EBPFAgentImage:        "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-ebpf-agent@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
-		FlowlogsPipelineImage: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
-		ConsolePluginImageVariants: []manager.ConsolePluginImageVariant{
-			{Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e", MinVersion: "4.14.0"},
-		},
-		DownstreamDeployment: false,
-		Namespace:            opNamespace,
+		EBPFAgentImage:        "quay.io/netobserv/netobserv-ebpf-agent:test",
+		FlowlogsPipelineImage: "quay.io/netobserv/flowlogs-pipeline:test",
+		WebConsoleImage:       "quay.io/netobserv/network-observability-console-plugin:test",
+		WebConsolePF4Image:    "quay.io/netobserv/network-observability-console-plugin:test-pf4",
+		WebConsolePF5Image:    "quay.io/netobserv/network-observability-console-plugin:test-pf5",
+		Namespace:             opNamespace,
 	}
 	if env == EnvOpenShift {
+		managerConfig.Vendor = constants.VendorOpenShift
 		managerConfig.StaticPluginConfig = manager.StaticPluginConfig{
 			InheritTolerationFromSubscription: "netobserv-operator",
 		}

@@ -102,28 +102,13 @@ func main() {
 	var enableHTTP2 bool
 	var versionFlag bool
 
-	config := manager.Config{}
-	var pluginImages string
-
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&metricsCertFile, "metrics-cert-file", "", "The path to the TLS certificate for metrics.")
 	flag.StringVar(&metricsCertKeyFile, "metrics-cert-key-file", "", "The path to the TLS certificate key for metrics.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&pprofAddr, "profiling-bind-address", "", "The address the profiling endpoint binds to, such as ':6060'. Leave unset to disable profiling.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.StringVar(&config.EBPFAgentImage, "ebpf-agent-image", "quay.io/netobserv/netobserv-ebpf-agent:main", "The image of the eBPF agent")
-	flag.StringVar(&config.FlowlogsPipelineImage, "flowlogs-pipeline-image", "quay.io/netobserv/flowlogs-pipeline:main", "The image of Flowlogs Pipeline")
-	flag.StringVar(&pluginImages, "console-plugin-images",
-		"quay.io/netobserv/network-observability-console-plugin:main",
-		"Console plugin image(s). A single image can be set directly (e.g., registry/img:tag). "+
-			"For version-specific variants, use semicolon-separated minVersion=image entries with an optional "+
-			"default= fallback (e.g., default=img:pf4;4.15.0=img:pf5;4.22.0=img:pf6).")
-	flag.StringVar(&config.EBPFByteCodeImage, "ebpf-bytecode-image", "quay.io/netobserv/ebpf-bytecode:main", "The EBPF bytecode for the eBPF agent")
-	flag.StringVar(&config.Namespace, "namespace", "netobserv", "Current controller namespace")
-	flag.StringVar(&config.DemoLokiImage, "demo-loki-image", "grafana/loki:3.5.0", "The image of the zero click loki deployment")
-	flag.BoolVar(&config.DownstreamDeployment, "downstream-deployment", false, "Either this deployment is a downstream deployment ot not")
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&enableHTTP2, "enable-http2", enableHTTP2, "If HTTP/2 should be enabled for the metrics and webhook servers.")
 	flag.BoolVar(&versionFlag, "v", false, "print version")
 	opts := zap.Options{
@@ -135,11 +120,6 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	if err := config.ParseConsolePluginImages(pluginImages); err != nil {
-		setupLog.Error(err, "unable to parse console plugin images")
-		os.Exit(1)
-	}
-
 	appVersion := fmt.Sprintf("%s [build version: %s, build date: %s]", app, buildVersion, buildDate)
 	if versionFlag {
 		fmt.Println(appVersion)
@@ -147,7 +127,7 @@ func main() {
 	}
 	setupLog.Info("Starting " + appVersion)
 
-	readConfigFromEnv(&config)
+	config := readConfigFromEnv()
 	if err := config.Validate(); err != nil {
 		setupLog.Error(err, "unable to start the manager")
 		os.Exit(1)
@@ -167,7 +147,7 @@ func main() {
 	}
 
 	var metricsCertWatcher *certwatcher.CertWatcher
-	cfg := ctrl.GetConfigOrDie()
+	k8sCfg := ctrl.GetConfigOrDie()
 	metricsOptions := server.Options{
 		BindAddress:    metricsAddr,
 		TLSOpts:        []func(*tls.Config){disableHTTP2},
@@ -192,7 +172,7 @@ func main() {
 		setupLog.Info("Warning: metrics server does not use TLS")
 	}
 
-	mgr, err := manager.NewManager(context.Background(), cfg, &config, &ctrl.Options{
+	mgr, err := manager.NewManager(context.Background(), k8sCfg, config, &ctrl.Options{
 		Scheme:  scheme,
 		Metrics: metricsOptions,
 		WebhookServer: webhook.NewServer(webhook.Options{
@@ -241,9 +221,26 @@ func main() {
 		os.Exit(1)
 	}
 }
+func defaultStringEnv(env, def string) string {
+	if v := os.Getenv(env); v != "" {
+		return v
+	}
+	return def
+}
 
-func readConfigFromEnv(c *manager.Config) {
-	c.StaticPluginConfig = manager.StaticPluginConfig{
-		InheritTolerationFromSubscription: os.Getenv("STATIC_PLUGIN_INHERIT_TOLERATION_SUBSCRIPTION"),
+func readConfigFromEnv() *manager.Config {
+	return &manager.Config{
+		Vendor:                constants.Vendor(os.Getenv("VENDOR")),
+		EBPFAgentImage:        defaultStringEnv("RELATED_IMAGE_EBPF_AGENT", "quay.io/netobserv/netobserv-ebpf-agent:main"),
+		EBPFByteCodeImage:     defaultStringEnv("RELATED_IMAGE_EBPF_BYTECODE", "quay.io/netobserv/ebpf-bytecode:main"),
+		FlowlogsPipelineImage: defaultStringEnv("RELATED_IMAGE_FLOWLOGS_PIPELINE", "quay.io/netobserv/flowlogs-pipeline:main"),
+		WebConsoleImage:       defaultStringEnv("RELATED_IMAGE_WEB_CONSOLE", "quay.io/netobserv/network-observability-console-plugin:main"),
+		WebConsolePF4Image:    defaultStringEnv("RELATED_IMAGE_WEB_CONSOLE_PF4", "quay.io/netobserv/network-observability-console-plugin:main-pf4"),
+		WebConsolePF5Image:    defaultStringEnv("RELATED_IMAGE_WEB_CONSOLE_PF5", "quay.io/netobserv/network-observability-console-plugin:main-pf5"),
+		DemoLokiImage:         defaultStringEnv("RELATED_IMAGE_DEMO_LOKI", "grafana/loki:3.5.0"),
+		Namespace:             defaultStringEnv("NAMESPACE", "netobserv"),
+		StaticPluginConfig: manager.StaticPluginConfig{
+			InheritTolerationFromSubscription: os.Getenv("STATIC_PLUGIN_INHERIT_TOLERATION_SUBSCRIPTION"),
+		},
 	}
 }

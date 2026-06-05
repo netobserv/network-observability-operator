@@ -14,11 +14,11 @@ import (
 
 type Common struct {
 	helper.Client
-	Watcher      *watchers.Watcher
-	Namespace    string
-	ClusterInfo  *cluster.Info
-	Loki         *helper.LokiConfig
-	IsDownstream bool
+	Watcher     *watchers.Watcher
+	Namespace   string
+	ClusterInfo *cluster.Info
+	Loki        *helper.LokiConfig
+	Vendor      constants.Vendor
 }
 
 func (c *Common) PrivilegedNamespace() string {

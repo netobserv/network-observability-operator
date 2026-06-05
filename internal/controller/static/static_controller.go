@@ -127,14 +127,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 func (r *Reconciler) newDefaultReconcilerInstance(clh *helper.Client) (*reconcilers.Instance, error) {
 	// force default namespace
 	reconcilersInfo := reconcilers.Common{
-		Client:       *clh,
-		Namespace:    r.mgr.Config.Namespace,
-		ClusterInfo:  r.mgr.ClusterInfo,
-		Watcher:      nil,
-		Loki:         &helper.LokiConfig{},
-		IsDownstream: r.mgr.Config.DownstreamDeployment,
+		Client:      *clh,
+		Namespace:   r.mgr.Config.Namespace,
+		ClusterInfo: r.mgr.ClusterInfo,
+		Watcher:     nil,
+		Loki:        &helper.LokiConfig{},
+		Vendor:      r.mgr.Config.Vendor,
 	}
-	cpImage, err := r.mgr.Config.ResolveConsolePluginImage(r.mgr.ClusterInfo)
+	cpImage, err := r.mgr.Config.ResolveWebConsoleImage(r.mgr.ClusterInfo)
 	if err != nil {
 		return nil, err
 	}

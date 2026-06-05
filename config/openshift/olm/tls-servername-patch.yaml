@@ -1,0 +1,3 @@
+- op: replace
+  path: /spec/endpoints/0/tlsConfig/serverName
+  value: netobserv-metrics-service.openshift-netobserv-operator.svc

@@ -173,7 +173,7 @@ func (b *transfoBuilder) serviceMonitor() *monitoringv1.ServiceMonitor {
 		b.info.Namespace,
 		transfoName,
 		b.version,
-		b.info.IsDownstream,
+		b.info.Vendor,
 		b.info.ClusterInfo.HasPromServiceDiscoveryRole(),
 	)
 }

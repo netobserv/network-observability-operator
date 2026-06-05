@@ -60,7 +60,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	desired := &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   ns,
-			Labels: namespaceLabels(true, c.IsDownstream),
+			Labels: namespaceLabels(true, c.Vendor),
 		},
 	}
 	if actual == nil {
@@ -76,7 +76,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	// We noticed that audit labels are automatically removed
 	// in some configurations of K8s, so to avoid an infinite update loop, we just ignore
 	// it (if the user removes it manually, it's at their own risk)
-	if !helper.IsSubSet(actual.ObjectMeta.Labels, namespaceLabels(false, c.IsDownstream)) {
+	if !helper.IsSubSet(actual.ObjectMeta.Labels, namespaceLabels(false, c.Vendor)) {
 		rlog.Info("updating namespace")
 		return c.UpdateIfOwned(ctx, actual, desired)
 	}
@@ -85,7 +85,7 @@ func (c *Reconciler) reconcileNamespace(ctx context.Context) error {
 	return nil
 }
 
-func namespaceLabels(includeAudit, isDownstream bool) map[string]string {
+func namespaceLabels(includeAudit bool, vendor constants.Vendor) map[string]string {
 	l := map[string]string{
 		"app":                                constants.OperatorName,
 		"pod-security.kubernetes.io/enforce": "privileged",
@@ -93,7 +93,7 @@ func namespaceLabels(includeAudit, isDownstream bool) map[string]string {
 	if includeAudit {
 		l["pod-security.kubernetes.io/audit"] = "privileged"
 	}
-	if isDownstream {
+	if vendor == constants.VendorOpenShiftDownstream {
 		l["openshift.io/cluster-monitoring"] = "true"
 	}
 	return l

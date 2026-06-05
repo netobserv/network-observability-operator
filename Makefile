@@ -65,12 +65,17 @@ IMAGE_TAG_BASE ?= $(REPO)/network-observability-operator
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMAGE=<some-registry>/<project-name-bundle>:<tag>)
 BUNDLE_IMAGE ?= $(IMAGE_TAG_BASE)-bundle:v$(BUNDLE_VERSION)
 
-# BUNDLE_CONFIG is the config sources to use for OLM bundle - "config/openshift-olm" for OpenShift, or "config/k8s-olm" for upstream Kubernetes.
-BUNDLE_CONFIG ?= config/openshift-olm
+ifeq ("$(BUNDLE_TARGET)", "OpenShift")
+	BUNDLE_CONFIG = config/openshift/olm
+	BUNDLE_OUT = bundles/openshift
+else
+	BUNDLE_CONFIG = config/k8s/olm
+	BUNDLE_OUT = bundles/k8s
+endif
 
 # If we don't want to set bundle date (upon bundle update call), store current date
 ifneq ("$(BUNDLE_SET_DATE)", "true")
-	BUNDLE_STORED_DATE = $(shell grep "createdAt:" bundle/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r 's/^.*createdAt:[ ]*(.*)/\1/')
+	BUNDLE_STORED_DATE = $(shell grep "createdAt:" $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r 's/^.*createdAt:[ ]*(.*)/\1/')
 endif
 
 # Image URL to use all building/pushing image targets
@@ -112,13 +117,6 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 NAMESPACE ?= netobserv
-
-# Local paths from preparing upstream release to OperatorHub
-ifeq ("$(BUNDLE_CONFIG)", "config/openshift-olm")
-	OPERATORHUB_PATH ?= "../community-operators-prod"
-else
-	OPERATORHUB_PATH ?= "../community-operators"
-endif
 
 all: help
 
@@ -406,9 +404,9 @@ set-manager-images: kustomize ## Update image references
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMAGE}
 	$(SED) -i -r '/RELATED_IMAGE_EBPF_AGENT$$/{ n; s~value:.+$$~value: quay.io/netobserv/netobserv-ebpf-agent:$(BPF_VERSION)~}' ./config/manager/manager.yaml
 	$(SED) -i -r '/RELATED_IMAGE_FLOWLOGS_PIPELINE$$/{ n; s~value:.+$$~value: quay.io/netobserv/flowlogs-pipeline:$(FLP_VERSION)~}' ./config/manager/manager.yaml
-	$(SED) -i -r '/RELATED_IMAGE_CONSOLE_PLUGIN$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)~}' ./config/manager/manager.yaml
-	$(SED) -i -r '/RELATED_IMAGE_CONSOLE_PLUGIN_PF4$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf4~}' ./config/manager/manager.yaml
-	$(SED) -i -r '/RELATED_IMAGE_CONSOLE_PLUGIN_PF5$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf5~}' ./config/manager/manager.yaml
+	$(SED) -i -r '/RELATED_IMAGE_WEB_CONSOLE$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)~}' ./config/manager/manager.yaml
+	$(SED) -i -r '/RELATED_IMAGE_WEB_CONSOLE_PF4$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf4~}' ./config/manager/manager.yaml
+	$(SED) -i -r '/RELATED_IMAGE_WEB_CONSOLE_PF5$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf5~}' ./config/manager/manager.yaml
 
 deploy: BPF_VERSION=main
 deploy: FLP_VERSION=main
@@ -416,11 +414,11 @@ deploy: PLG_VERSION=main
 deploy: kustomize set-manager-images ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | sed -r "s/openshift-netobserv-operator\.svc/${NAMESPACE}.svc/" | kubectl apply --server-side --force-conflicts -f -
 	kubectl get ns openshift-netobserv-operator || kubectl create ns openshift-netobserv-operator
-	cat bundle/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl apply --server-side --force-conflicts -f -
+	cat $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl apply --server-side --force-conflicts -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | kubectl --ignore-not-found=true delete -f - || true
-	cat bundle/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl --ignore-not-found=true delete -f - || true
+	cat $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl --ignore-not-found=true delete -f - || true
 
 run: fmt lint ## Run a controller from your host.
 	go run ./main.go
@@ -429,27 +427,24 @@ run: fmt lint ## Run a controller from your host.
 
 .PHONY: bundle-nogen
 bundle-nogen: OPSDK kustomize set-manager-images ## Generate final bundle files, without prior code/doc generation.
-	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(VERSION)/~g' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
-	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(VERSION)/~g' ./config/descriptions/upstream.md
-	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(VERSION)/~g' ./config/descriptions/ocp.md
-	rm -r bundle/manifests || true
-	rm -r bundle/metadata || true
-	cp ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml tmp-csv
-	hack/crd2csvSpecDesc.sh v1beta2
-	$(SED) -e 's/^/    /' config/descriptions/upstream.md > tmp-desc
-	$(KUSTOMIZE) build $(BUNDLE_CONFIG) \
-		| $(SED) -e 's~:container-image:~$(IMAGE)~' \
-		| $(SED) -e "/':full-description:'/r tmp-desc" \
-		| $(SED) -e "s/':full-description:'/|\-/" \
-		| $(OPSDK) generate bundle -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
+	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(VERSION)/~g' $(BUNDLE_CONFIG)/description.md
+	rm -r $(BUNDLE_OUT)/manifests || true
+	rm -r $(BUNDLE_OUT)/metadata || true
+# Dissociate kustomize builds csv, samples and the rest, because they don't share exactly the same properties (like namespace injection)
+	( \
+		($(KUSTOMIZE) build config/csv \
+			| $(YQ) '.metadata.annotations.containerImage = "$(IMAGE)"' \
+			| yq '.spec.description = load_str("$(BUNDLE_CONFIG)/description.md")' \
+		); \
+		echo "---"; $(KUSTOMIZE) build config/samples; \
+		echo "---"; $(KUSTOMIZE) build $(BUNDLE_CONFIG) \
+	) | $(OPSDK) generate bundle --output-dir $(BUNDLE_OUT) -q --overwrite --version $(BUNDLE_VERSION) $(BUNDLE_METADATA_OPTS)
 # Restore previous date?
 ifneq ("$(BUNDLE_SET_DATE)", "true")
-	$(SED) -i 's/createdAt:.*/createdAt: ${BUNDLE_STORED_DATE}/' bundle/manifests/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i 's/createdAt:.*/createdAt: ${BUNDLE_STORED_DATE}/' $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml
 endif
-	mv tmp-csv ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
-	rm tmp-desc
 	sh -c '\
-	VALIDATION_OUTPUT=$$($(OPSDK) bundle validate ./bundle --select-optional suite=operatorframework); \
+	VALIDATION_OUTPUT=$$($(OPSDK) bundle validate $(BUNDLE_OUT) --select-optional suite=operatorframework); \
 	echo $${VALIDATION_OUTPUT}; \
 	if [ $$(echo $${VALIDATION_OUTPUT} | grep -i 'warning' | wc -c) -gt 0 ]; then echo "please correct warnings and errors first"; exit -1 ; fi \
 	'
@@ -458,16 +453,17 @@ endif
 bundle: generate bundle-nogen ## Generate final bundle files, including prior code/doc generation.
 
 .PHONY: update-bundle
-update-bundle: VERSION=$(BUNDLE_VERSION)
-update-bundle: IMAGE_ORG=netobserv
-update-bundle: bundle ## Prepare a clean bundle to be commited
+update-bundle: ## Prepare clean bundles to be commited
+	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(BUNDLE_VERSION)/~g' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
+	cp ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml ./config/csv/bases/transformed-csv.yaml
+	hack/crd2csvSpecDesc.sh v1beta2
+	$(MAKE) bundle VERSION=$(BUNDLE_VERSION) IMAGE_ORG=netobserv
+	$(MAKE) bundle VERSION=$(BUNDLE_VERSION) IMAGE_ORG=netobserv BUNDLE_TARGET=OpenShift
 	$(MAKE) helm-update
 
 .PHONY: bundle-build
 bundle-build: ## Build the bundle image.
-	cp ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml tmp-bundle
 	-$(OCI_BIN) build $(OCI_BUILD_OPTS) --label version=${BUNDLE_VERSION} --label vcs-ref=${BUILD_SHA} -f bundle.Dockerfile -t $(BUNDLE_IMAGE) .
-	mv tmp-bundle ./bundle/manifests/netobserv-operator.clusterserviceversion.yaml
 
 .PHONY: bundle-push
 bundle-push: ## Push the bundle image.

@@ -84,7 +84,7 @@ func (c *AgentController) promService(target *flowslatest.FlowCollectorEBPF) *co
 
 func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollectorEBPF, useEndpointSlices bool) *monitoringv1.ServiceMonitor {
 	serverName := fmt.Sprintf("%s.%s.svc", constants.EBPFAgentMetricsSvcName, c.PrivilegedNamespace())
-	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&target.Metrics.Server.TLS, serverName, c.IsDownstream)
+	scheme, smTLS := helper.GetServiceMonitorTLSConfig(&target.Metrics.Server.TLS, serverName, c.Vendor)
 	var sdRole *monitoringv1.ServiceDiscoveryRole
 	if useEndpointSlices {
 		sdRole = ptr.To(monitoringv1.EndpointSliceRole)

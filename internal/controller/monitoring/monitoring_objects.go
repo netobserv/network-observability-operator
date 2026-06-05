@@ -5,14 +5,13 @@ import (
 	"strings"
 
 	metricslatest "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
+	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/pkg/dashboards"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	downstreamLabelKey    = "openshift.io/cluster-monitoring"
-	downstreamLabelValue  = "true"
 	dashboardCMNamespace  = "openshift-config-managed"
 	dashboardCMAnnotation = "console.openshift.io/dashboard"
 
@@ -24,10 +23,10 @@ const (
 
 var k8sInvalidChar = regexp.MustCompile(`[^a-z0-9\-]`)
 
-func buildNamespace(ns string, isDownstream bool) *corev1.Namespace {
+func buildNamespace(ns string, vendor constants.Vendor) *corev1.Namespace {
 	labels := map[string]string{}
-	if isDownstream {
-		labels[downstreamLabelKey] = downstreamLabelValue
+	if vendor == constants.VendorOpenShiftDownstream {
+		labels["openshift.io/cluster-monitoring"] = "true"
 	}
 	return &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
