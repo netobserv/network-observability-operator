@@ -337,21 +337,9 @@ spec:
   - name: Discussion board
     url: https://github.com/netobserv/netobserv-operator/discussions
   maintainers:
-  - email: jpinsonn@redhat.com
-    name: Julien Pinsonneau
-  - email: jtakvori@redhat.com
-    name: Joel Takvorian
-  - email: lberetta@redhat.com
-    name: Leandro Beretta
-  - email: ljira@redhat.com
-    name: Luis Jira
-  - email: mmahmoud2201@gmail.com
-    name: Mohamed S. Mahmoud
-  - email: ocazade@redhat.com
-    name: Olivier Cazade
-  - email: stlee@redhat.com
-    name: Steven Lee
-  maturity: alpha
+  - email: support@redhat.com
+    name: Red Hat Support
+  maturity: stable
   minKubeVersion: 1.23.0
   provider:
     name: Red Hat
