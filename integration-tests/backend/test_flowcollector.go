@@ -1693,7 +1693,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				Template:       flowFixturePath,
 			}
 
-			defer func() { _ = flow.DeleteFlowcollector(oc) }()
+			defer flow.DeleteFlowcollector(oc)
 			flow.CreateFlowcollector(oc)
 
 			g.By("Wait for 4 mins before logs gets collected and written to loki")
@@ -1821,7 +1821,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				Template:      flowFixturePath,
 			}
 
-			defer func() { _ = flow.DeleteFlowcollector(oc) }()
+			defer flow.DeleteFlowcollector(oc)
 			flow.CreateFlowcollector(oc)
 
 			g.By("Wait for 2 mins before logs gets collected and written to loki")
