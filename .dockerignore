@@ -10,6 +10,7 @@ manager
 
 # Test files and directories
 **/*_test.go
+!integration-tests/backend/*_test.go
 cover*.out
 test.out
 **/e2e/

@@ -1,5 +1,3 @@
-ARG TARGETARCH
-
 FROM docker.io/library/golang:1.25 AS builder
 
 ARG TARGETARCH=amd64
@@ -19,7 +17,7 @@ COPY testdata/ testdata/
 RUN GOGC=50 GOMAXPROCS=4 GOOS=linux GOARCH=$TARGETARCH \
     ginkgo build --ldflags="-s -w" -o e2e-tests.test
 
-FROM --platform=linux/$TARGETARCH registry.access.redhat.com/ubi9/ubi-minimal:9.8-1777460003
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1777460003
 
 WORKDIR /tests
 

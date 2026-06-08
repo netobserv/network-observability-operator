@@ -1,65 +1,22 @@
-The NetObserv Operator is meant to run in a Kubernetes cluster like OpenShift or [Kind](https://kind.sigs.k8s.io/). These are the two options most used by the development team.
+# Development
 
-[Architecture description](./docs/Architecture.md).
+The NetObserv Operator is meant to run in a Kubernetes cluster. Local development can be tested on [Kind](https://kind.sigs.k8s.io/). No specific configuration is needed, you may start kind with `kind create cluster`.
+
+> For `podman` users: rootless mode is not possible, since the eBPF agent requires elevated permissions to observe the traffic. It is necessary that the Kubernetes cluster has root permissions on your machine. You may still run `kind` as root with podman, and set the resulting kube config file accessible to `kubectl`. This is not a recommended way of running `kind` though.
+
+## Architecture
+
+See [Architecture doc](./docs/Architecture.md).
 
 ## Build / format / lint the code, run unit tests
+
+To build, reformat, run linter and unit-tests after editing the code:
 
 ```bash
 make build test
 ```
 
-## Build and deploy a Docker image
-
-A way to test code changes is to build a Docker image from local sources, push it to your own Docker repository, and deploy it to an existing cluster. Do the following, but replace IMAGE value with your own registry and account:
-
-```bash
-IMAGE="quay.io/youraccount/network-observability-operator:test" make image-build image-push deploy
-```
-
-After the operator is deployed, set up Loki, which is used to store flows, install a `FlowCollector` custom resource to collect network flows, and optionally install Grafana to provide a user interface and dashboards.
-
-This provides a quick and easy way to deploy Loki, Grafana and a `FlowCollector` with default values. Note this Loki setup is not for production use.
-
-```bash
-make deploy-loki deploy-grafana deploy-sample-cr
-```
-
-It will run Loki and Grafana locally, and set up a local port-forward to them. To avoid this, add `PORT_FWD=false` to the command above.
-
-Creating a `FlowCollector` triggers the operator deploying the monitoring pipeline:
-
-- Configures IPFIX exports
-- Deploys the flow collector pods, `flowlogs-pipeline`
-- Deploys the `netobserv-plugin` if using OpenShift Console
-
-You should be able to see flows in OpenShift Console and Grafana. If not, wait up to 10 minutes. See the [FAQ on troubleshooting](./README.md#faq--troubleshooting) for more information.
-
-### Test another one's pull request
-
-To test a pull request opened by someone else, you just need to pull it locally. Using [GitHub CLI](https://cli.github.com/) is an easy way to do it. Then repeat the steps mentioned above to build, push an image, then deploy the operator and its custom resource.
-
-## Deploy a specific image
-
-Images are built and pushed through CI to [quay.io](https://quay.io/repository/netobserv/network-observability-operator?tab=tags).
-
-You can refer to existing commits using their short-SHA as the image tag, or refer to existing releases. E.g:
-
-```bash
-# By commit SHA
-VERSION="960766c" make deploy
-# By release
-VERSION="0.1.2" make deploy
-```
-
-It is recommended to switch to the corresponding release Git tag before deploying an old version to make sure the underlying components refer to the correct versions.
-
-When `VERSION` is not provided, it defaults to the latest build on `main` branch.
-
-You can also provide any custom `IMAGE` to `make deploy`.
-
-## Before commiting, make sure bundle is correct
-
-The github CI will fail if it finds the bundle isn't in a clean state. To update the bundle, simply run:
+You also need to make sure the bundle is up to date, in case your changes affected the generated resources. The github CI will fail if it finds the bundle isn't in a clean state. To update the bundle, simply run:
 
 ```bash
 make update-bundle
@@ -67,15 +24,98 @@ make update-bundle
 
 This is necessary when the changes you did end up affecting the bundle manifests or metadata (e.g. adding new fields in the CRD, updating some documentation, etc.). When unsure, just run the command mentioned above.
 
+If you changed `go.mod`, make sure to generate clean vendors with:
+
+```bash
+make vendors
+```
+
+## Build image and deploy using Helm
+
+A way to test code changes is to build a container image from local sources and push it to a Docker / OCI repository that you own. Run the following command, replacing IMAGE with one matching your container registry and account:
+
+```bash
+IMAGE="quay.io/youraccount/network-observability-operator:test" make images
+```
+
+Deploying can be done with Helm. Make sure you have the [helm CLI installed](https://helm.sh/docs/intro/install/) on your machine. Make also sure the Helm chart is up to date after your local changes, by running:
+
+```bash
+make update-bundle
+```
+
+Then, install the operator and its pre-requisites (it will add cert-manager / https://charts.jetstack.io to your helm known repos) by running:
+
+```bash
+IMAGE="quay.io/youraccount/network-observability-operator:test" make helm-install
+```
+
+At this point, the operator should be up and running, but no `FlowCollector` is configured yet, meaning that none of the related components are deployed. To start collecting flows with the default configuration for local testing, run:
+
+```bash
+make helm-configure-flowcollector
+```
+
+This is going to start pods from the related components, so that flow collection begins. The configuration is opinionated for small cluster (such as Kind) with minimal features enabled, but you can edit the `FlowCollector` resource as you want.
+
+To access the Web Console, run in another terminal session (port-forwarding):
+
+```bash
+make helm-expose-console
+```
+
+Then open http://localhost:9001/.
+
+## Cleaning up
+
+To remove NetObserv:
+
+```bash
+make helm-cleanup
+```
+
+To remove NetObserv and its dependencies (cert-manager):
+
+```bash
+make helm-cleanup-all
+```
+
+## Testing related components
+
+If you want to test changes from other related repositories, such as the Web Console, the eBPF Agent or Flowlogs-pipeline, you need to build an image of that component (refer to the corresponding documentation) and configure the operator to use that image.
+
+If you haven't installed the operator yet, you can change the [Helm values](./helm/values.yaml) with the desired images. For example:
+
+```yaml
+ebpfAgent:
+  image: quay.io/youraccount/netobserv-ebpf-agent
+  version: test
+```
+
+Or if the operator is already installed, you can use dedicated `make` targets to update the desired components (under the cover, it will edit the operator `Deployment` to change the component related image):
+
+```bash
+# For the eBPF agent, tagged 'test':
+VERSION=test make set-agent-image
+# For flowlogs-pipeline, tagged 'test':
+VERSION=test make set-flp-image
+# For the web console, tagged 'test':
+VERSION=test make set-plugin-image
+```
+
+Note that these targets default to using `quay.io` as the container registry, and your current user name as the registry account name. You can override that with `$IMAGE_REGISTRY` and `$USER` respectively.
+
 ## Installing Kafka
 
-Kafka can be used to separate flow ingestion from flow transformation. The operator does not manage kafka deployment and topic creation. We provide a quick setup for Kafka using the [strimzi operator](https://strimzi.io/).
+Kafka can be used as a intermediate layer between the eBPF agents and flowlogs-pipeline. The operator does not manage kafka deployment and topic creation. We provide a quick setup for Kafka using the [strimzi operator](https://strimzi.io/).
 
 ```bash
 make deploy-kafka
+# or: (and that's actually mTLS)
+make deploy-kafka-tls
 ```
 
-Kafka can then be enabled in the `FlowCollector` resource by setting `spec.deploymentModel` to `KAFKA`. If you use your own Kafka setup, make sure to configure `spec.kafka.address` and `spec.kafka.topic` accordingly.
+Kafka can then be enabled in the `FlowCollector` resource by setting `spec.deploymentModel` to `Kafka`. If you use your own Kafka setup, make sure to configure `spec.kafka.address` and `spec.kafka.topic` accordingly.
 
 ## Linking with API changes in flowlogs-pipeline
 
@@ -96,128 +136,6 @@ Then run:
 ```bash
 make vendors
 ```
-
-## Deploy as bundle
-
-For more details, refer to the [Operator Lifecycle Manager (OLM) bundle quickstart documentation](https://sdk.operatorframework.io/docs/olm-integration/quickstart-bundle/).
-
-This task should be automatically done by the CI/CD pipeline. However, if you want to deploy as
-bundle for local testing, you should execute the following commands:
-
-```bash
-export USER=<container-registry-username>
-export IMAGE=quay.io/$USER/network-observability-operator:test
-export BUNDLE_IMAGE=quay.io/$USER/network-observability-operator-bundle:v0.0.0-test
-make images
-make bundle bundle-build bundle-push
-
-# or, alternatively:
-BUNDLE_VERSION=0.0.0-test VERSION=test make images bundle bundle-build bundle-push
-```
-
-Optionally, you might validate the bundle:
-
-```bash
-bin/operator-sdk bundle validate $BUNDLE_IMAGE
-# or for podman
-bin/operator-sdk bundle validate -b podman $BUNDLE_IMAGE
-```
-
-> Note: the base64 logo can be generated with: `base64 -w 0 <image file>`, then manually pasted in the [CSV manifest file](./config/csv/bases/netobserv-operator.clusterserviceversion.yaml) under `spec.icon`.
-
-### Deploy as bundle from command line
-
-This mode is recommended to quickly test the operator during its development:
-
-```bash
-bin/operator-sdk run bundle $BUNDLE_IMAGE
-```
-
-To cleanup:
-
-```bash
-bin/operator-sdk cleanup netobserv-operator
-```
-
-#### Testing an upgrade
-
-First, deploy the previous version, e.g:
-
-```bash
-bin/operator-sdk  run bundle quay.io/netobserv/network-observability-operator-bundle:v1.0.3 --timeout 5m
-```
-
-Then, build your new bundle, e.g:
-
-```bash
-VERSION=test BUNDLE_VERSION=0.0.0-test make images bundle bundle-build bundle-push
-```
-
-Finally, run the upgrade:
-
-```bash
-bin/operator-sdk run bundle-upgrade quay.io/$USER/network-observability-operator-bundle:v0.0.0-test --timeout 5m
-```
-
-### Deploy as bundle from the Console's OperatorHub page
-
-This mode is recommended when you want to test the customer experience of navigating through the
-operators' catalog and installing/configuring it manually through the UI.
-
-First, create and push a catalog image:
-
-```bash
-export CATALOG_IMAGE=quay.io/$USER/network-observability-operator-catalog:v$VERSION
-make catalog-build catalog-push catalog-deploy
-```
-
-The NetObserv Operator is available in OperatorHub: https://operatorhub.io/operator/netobserv-operator
-
-## Publish on central OperatorHub
-
-See [RELEASE.md](./RELEASE.md#publishing-on-operatorhub).
-
-## Using custom operand image
-
-### With operator unmanaged deployment
-
-This section is relevant when the operator was deployed directly as a Deployment, e.g. using `make deploy`. If it was deployed via OLM, refer to the next section.
-
-In the `manager` container of the `netobserv-controller-manager` Deployment, set any of the
-following the environment variables with your custom operand image with `kubectl set env` or
-`oc set env`:
-
-* `RELATED_IMAGE_EBPF_AGENT`
-* `RELATED_IMAGE_FLOWLOGS_PIPELINE`
-* `RELATED_IMAGE_CONSOLE_PLUGIN`
-
-Examples:
-
-```bash
-oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT="quay.io/netobserv/netobserv-ebpf-agent:main"
-oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE="quay.io/netobserv/flowlogs-pipeline:main"
-oc -n netobserv set env deployment/netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN="quay.io/netobserv/network-observability-console-plugin:main"
-```
-
-Alternatively you can use helper make targets for the same purpose:
-
-```bash
-USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
-```
-
-### With operator managed via OLM
-
-When the operator was deployed via OLM, hence is managed through its CSV, the "related images" are defined in the CSV. The same `make` targets can be used to modify them, with an additional `CSV` argument to target a CSV file. It is assumed to be deployed in namespace `openshift-netobserv-operator`.
-
-E.g:
-
-```bash
-CSV=network-observability-operator.v1.2.0 USER=myself VERSION=test make set-agent-image set-flp-image set-plugin-image
-```
-
-You can also do this by editing the CSV via the console by changing the image defined under `RELATED_IMAGE_EBPF_AGENT`, `RELATED_IMAGE_FLOWLOGS_PIPELINE`, and/or `RELATED_IMAGE_CONSOLE_PLUGIN`. If you are using this method, ensure that you are in the `openshift-netobserv-operator` namespace before updating the image value. If you are in a different namespace, then it reverts it back.
-
-![Alt text](./docs/assets/console-csv.png)
 
 ## Understanding the config / kustomize structure
 
@@ -303,29 +221,34 @@ k8s-olm
 
 On top of that, there is also `config/openshift` which is used in developers environment to generate all the operator related assets without going through the bundle generation (e.g. there is no CSV), in order to be deployed directly on a running cluster. This is used in the `make deploy` script. Its content is very similar to `config/olm-openshift` apart from a few tweaks.
 
-## View flowlogs-pipeline metrics in console
-
-To view the generated flowlogs-pipeline metrics in the Openshift console, perform the following:
-
-```
-cd hack
-./enable-metrics.sh
-```
-
-The metrics will be visible in the Openshift console under the tab `Observe -> Metrics.`
-Look for the metrics that begin with `netobserv_.`
-
-## Simulating a downstream deployment
+## Simulating an OpenShift downstream deployment
 
 To configure the operator to run as a downstream deployment run this command:
 
-```
+```bash
 make set-release-kind-downstream
 ```
 
-Most notably change will concern the monitoring part which will use the platoform monitoring stack instead of the user workload monitoring stack.
+Most notably change will concern the monitoring part which will use the platform monitoring stack instead of the user workload monitoring stack.
+
+## Profiling
+
+You can use `pprof` for profiling. Run `pprof` make target to start listening and port-forward on 6060: 
+
+```bash
+make pprof
+```
+
+In another terminal, run for instance:
+
+```bash
+curl "http://localhost:6060/debug/pprof/heap?gc" -o /tmp/heap
+go tool pprof -http localhost:3435 /tmp/heap
+```
 
 ## Testing the github workflow
+
+> This section is for maintainers, with permission to write on the `workflow-test` branch.
 
 You should test the workflows when you modify files in `.github/workflows` or the `Makefile` targets used in these workflows. Be aware that the `Makefile` is used not only by developers or QEs on their local machines, but also in this github workflows files.
 
@@ -390,19 +313,4 @@ Remove the tag after you tested:
 ```bash
 git tag -d "0.0.0-rc0"
 git push --delete upstream 0.0.0-rc0
-```
-
-## Profiling
-
-You can use `pprof` for profiling. Run `pprof` make target to start listening and port-forward on 6060: 
-
-```bash
-make pprof
-```
-
-In another terminal, run for instance:
-
-```bash
-curl "http://localhost:6060/debug/pprof/heap?gc" -o /tmp/heap
-go tool pprof -http localhost:3435 /tmp/heap
 ```

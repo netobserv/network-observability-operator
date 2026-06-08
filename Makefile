@@ -561,5 +561,4 @@ helm-update: YQ ## Update helm template
 include .mk/sample.mk
 include .mk/development.mk
 include .mk/local.mk
-include .mk/ocp.mk
 include .mk/shortcuts.mk

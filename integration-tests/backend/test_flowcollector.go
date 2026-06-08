@@ -892,7 +892,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				LokiNamespace: lokiStackNS,
 			}
 
-			defer flow.DeleteFlowcollector(oc)
+			defer func() { _ = flow.DeleteFlowcollector(oc) }()
 			flow.CreateFlowcollector(oc)
 
 			g.By("Get NetObserv and components versions")
@@ -1687,7 +1687,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				DstK8SNamespace: testClientTemplate.ServerNS,
 				SrcK8SNamespace: testClientTemplate.ClientNS,
 			}
-			lokiParams = []string{"ZoneId>0"}
+			lokiParams = []string{"ZoneId>=0"}
 
 			g.By("Verify PacketTranslation flows")
 			flowRecords, err = lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
@@ -1751,7 +1751,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				DstK8SNamespace: testClientTemplate.ServerNS,
 				SrcK8SNamespace: testClientTemplate.ClientNS,
 			}
-			lokiParams := []string{"ZoneId>0"}
+			lokiParams := []string{"ZoneId>=0"}
 
 			g.By("Verify PacketTranslation flows")
 			flowRecords, err := lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
@@ -2691,7 +2691,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				Template:      flowFixturePath,
 			}
 
-			defer flow.DeleteFlowcollector(oc)
+			defer func() { _ = flow.DeleteFlowcollector(oc) }()
 			flow.CreateFlowcollector(oc)
 
 			g.By("Wait for a min before logs gets collected and written to loki")

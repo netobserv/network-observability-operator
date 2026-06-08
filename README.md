@@ -107,7 +107,7 @@ Then open http://localhost:9001/ in your browser.
 
 ### Install from repository
 
-A couple of `make` targets are provided in this repository to allow installing without OLM:
+A couple of `make` targets are provided in this repository to allow installing without Helm or OLM:
 
 ```bash
 git clone https://github.com/netobserv/netobserv-operator.git && cd network-observability-operator
@@ -136,7 +136,7 @@ Refer to the [Configuration section](#configuration) of this document.
 
 ### With or without Loki?
 
-Historically, Grafana Loki was a strict dependency but it isn't anymore. If you don't want to install it, you can still get the Prometheus metrics, and/or export raw flows to a custom collector. But be aware that some of the Console plugin features will be disabled. For instance, you will not be able to view raw flows there, and the metrics / topology will have a more limited level of details, missing information such as pods or IPs.
+Historically, Grafana Loki was a strict dependency but it isn't anymore. If you don't want to install it, you can still get the Prometheus metrics, and/or export raw flows to a custom collector. But be aware that some of the Web Console features will be disabled. For instance, you will not be able to view raw flows there, and the metrics / topology will have a more limited level of details, missing information such as pods or IPs.
 
 ### Web Console
 
