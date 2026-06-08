@@ -1,3 +1,5 @@
+# Development
+
 The NetObserv Operator is meant to run in a Kubernetes cluster. Local development can be tested on [Kind](https://kind.sigs.k8s.io/). No specific configuration is needed, you may start kind with `kind create cluster`.
 
 > For `podman` users: rootless mode is not possible, since the eBPF agent requires elevated permissions to observe the traffic. It is necessary that the Kubernetes cluster has root permissions on your machine. You may still run `kind` as root with podman, and set the resulting kube config file accessible to `kubectl`. This is not a recommended way of running `kind` though.
