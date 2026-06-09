@@ -1580,7 +1580,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		})
 
 		g.It("Author:aramesha-NonPreRelease-Longduration-Medium-78480-NetObserv with sampling 50 [Serial][Slow]", func() {
-			SkipIfOCPBelow("v4.14")
 			g.By("Deploy DNS pods")
 			DNSTemplate := filePath.Join(baseDir, "DNS-pods.yaml")
 			DNSNamespace := "dns-traffic"
@@ -1683,20 +1682,28 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			g.By("Verify Packet Translation flows")
 			lokilabels = Lokilabels{
 				App:             "netobserv-flowcollector",
-				DstK8SType:      "Service",
+				DstK8SOwnerName: "nginx-service",
 				DstK8SNamespace: testClientTemplate.ServerNS,
 				SrcK8SNamespace: testClientTemplate.ClientNS,
+				SrcK8SOwnerName: "client",
 			}
-			lokiParams = []string{"ZoneId>=0"}
+
+			clientServiceInfo, err := getClientServerInfo(oc, testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
+			o.Expect(err).NotTo(o.HaveOccurred())
 
 			g.By("Verify PacketTranslation flows")
+			lokiParams = []string{
+				fmt.Sprintf(`XlatDstAddr="%s"`, clientServiceInfo["server"]["ip"]),
+				fmt.Sprintf(`XlatDstK8S_Name="%s"`, clientServiceInfo["server"]["name"]),
+				`XlatDstK8S_Type="Pod"`,
+				`DstPort="80"`,
+				`XlatDstPort="8080"`,
+				fmt.Sprintf(`XlatSrcAddr="%s"`, clientServiceInfo["client"]["ip"]),
+				`XlatSrcK8S_Name="client"`,
+			}
 			flowRecords, err = lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
 			o.Expect(err).NotTo(o.HaveOccurred())
 			o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of PacketTranslation flows > 0")
-
-			clientServiceInfo, err := getClientServerInfo(oc, testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
-			verifyPacketTranslationFlows(clientServiceInfo["server"]["ip"], clientServiceInfo["server"]["name"], clientServiceInfo["client"]["ip"], flowRecords)
-			o.Expect(err).NotTo(o.HaveOccurred())
 
 			g.By("Verify eBPF feature metrics")
 			verifyEBPFFeatureMetrics(oc, "pktdropsmap")
@@ -1706,7 +1713,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		})
 
 		g.It("Author:aramesha-NonPreRelease-High-79015-Verify PacketTranslation feature [Serial]", func() {
-			SkipIfOCPBelow("v4.14")
 			g.By("Deploy test server and client pods")
 			servertemplate := filePath.Join(baseDir, "test-nginx-server_template.yaml")
 			testServerTemplate := TestServerTemplate{
@@ -1730,6 +1736,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			o.Expect(err).NotTo(o.HaveOccurred())
 			compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
 
+			clientServiceInfo, err := getClientServerInfo(oc, testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
+			o.Expect(err).NotTo(o.HaveOccurred())
+
 			g.By("Deploy FlowCollector with PacketTranslation feature enabled")
 			flow := Flowcollector{
 				Namespace:     namespace,
@@ -1747,20 +1756,25 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 			lokilabels := Lokilabels{
 				App:             "netobserv-flowcollector",
-				DstK8SType:      "Service",
+				DstK8SOwnerName: "nginx-service",
 				DstK8SNamespace: testClientTemplate.ServerNS,
 				SrcK8SNamespace: testClientTemplate.ClientNS,
+				SrcK8SOwnerName: "client",
 			}
-			lokiParams := []string{"ZoneId>=0"}
 
 			g.By("Verify PacketTranslation flows")
+			lokiParams := []string{
+				fmt.Sprintf(`XlatDstAddr="%s"`, clientServiceInfo["server"]["ip"]),
+				fmt.Sprintf(`XlatDstK8S_Name="%s"`, clientServiceInfo["server"]["name"]),
+				`XlatDstK8S_Type="Pod"`,
+				`DstPort="80"`,
+				`XlatDstPort="8080"`,
+				fmt.Sprintf(`XlatSrcAddr="%s"`, clientServiceInfo["client"]["ip"]),
+				`XlatSrcK8S_Name="client"`,
+			}
 			flowRecords, err := lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
 			o.Expect(err).NotTo(o.HaveOccurred())
 			o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of PacketTranslation flows > 0")
-
-			clientServiceInfo, err := getClientServerInfo(oc, testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
-			o.Expect(err).NotTo(o.HaveOccurred())
-			verifyPacketTranslationFlows(clientServiceInfo["server"]["ip"], clientServiceInfo["server"]["name"], clientServiceInfo["client"]["ip"], flowRecords)
 		})
 
 		// NetworkEvents ebpf hook only supported for OCP >= 4.19

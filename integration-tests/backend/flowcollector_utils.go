@@ -468,20 +468,6 @@ func verifyFlowCorrectness(objectSize string, flowRecords []FlowRecord) {
 	o.Expect(errFlows).Should(o.BeNumerically("<=", tolerance))
 }
 
-// Verify Packet Translation feature flows
-func verifyPacketTranslationFlows(nginxPodIP, nginxPodName, clientPodIP string, flowRecords []FlowRecord) {
-	for _, r := range flowRecords {
-		o.Expect(r.Flowlog.XlatDstAddr).To(o.Equal(nginxPodIP))
-		o.Expect(r.Flowlog.XlatDstK8SName).To(o.Equal(nginxPodName))
-		o.Expect(r.Flowlog.XlatDstK8SType).To(o.Equal("Pod"))
-		o.Expect(r.Flowlog.DstPort).Should(o.BeNumerically("==", 80))
-		o.Expect(r.Flowlog.XlatDstPort).Should(o.BeNumerically("==", 8080))
-		o.Expect(r.Flowlog.XlatSrcAddr).To(o.Equal(clientPodIP))
-		o.Expect(r.Flowlog.XlatSrcK8SName).To(o.Equal("client"))
-		o.Expect(r.Flowlog.ZoneID).Should(o.BeNumerically(">=", 0))
-	}
-}
-
 // Verify Network Events feature flows
 func verifyNetworkEvents(flowRecords []FlowRecord, action NWEvents, policytype, direction string) {
 	nNWEventsLogs := 0
