@@ -50,12 +50,12 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("flp").
-		Owns(&appsv1.Deployment{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&appsv1.DaemonSet{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&ascv2.HorizontalPodAutoscaler{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&corev1.Service{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&corev1.ServiceAccount{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&appsv1.Deployment{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&appsv1.DaemonSet{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&ascv2.HorizontalPodAutoscaler{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&corev1.Service{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&corev1.ServiceAccount{}, reconcilers.UpdateOrDeleteFCOwned).
 		Watches(
 			&metricslatest.FlowMetric{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {

@@ -19,12 +19,19 @@ import (
 type Client struct {
 	client.Client
 	SetOwnerReference func(client.Object) error
+	IsOwned           func(client.Object) bool
+	IsDeleting        bool
+	AddFinalizer      func(context.Context, string) error
+	RemoveFinalizer   func(context.Context, string) error
 }
 
 func UnmanagedClient(cl client.Client) Client {
 	return Client{
 		Client:            cl,
 		SetOwnerReference: func(_ client.Object) error { return nil },
+		IsOwned:           func(_ client.Object) bool { return false },
+		AddFinalizer:      func(context.Context, string) error { return nil },
+		RemoveFinalizer:   func(context.Context, string) error { return nil },
 	}
 }
 
@@ -33,6 +40,7 @@ func NewControllerClientHelper(ctx context.Context, ns string, c client.Client) 
 	if err != nil {
 		return nil, err
 	}
+
 	return &Client{
 		Client: c,
 		SetOwnerReference: func(obj client.Object) error {
@@ -41,6 +49,22 @@ func NewControllerClientHelper(ctx context.Context, ns string, c client.Client) 
 				return nil
 			}
 			return controllerutil.SetControllerReference(dpl, obj, c.Scheme(), controllerutil.WithBlockOwnerDeletion(false))
+		},
+		IsOwned:    isOwnedByController,
+		IsDeleting: !dpl.ObjectMeta.DeletionTimestamp.IsZero(),
+		AddFinalizer: func(ctx context.Context, finalizer string) error {
+			if !controllerutil.ContainsFinalizer(dpl, finalizer) {
+				controllerutil.AddFinalizer(dpl, finalizer)
+				return c.Update(ctx, dpl)
+			}
+			return nil
+		},
+		RemoveFinalizer: func(ctx context.Context, finalizer string) error {
+			if controllerutil.ContainsFinalizer(dpl, finalizer) {
+				controllerutil.RemoveFinalizer(dpl, finalizer)
+				return c.Update(ctx, dpl)
+			}
+			return nil
 		},
 	}, nil
 }
@@ -54,6 +78,22 @@ func NewFlowCollectorClientHelper(ctx context.Context, c client.Client) (*Client
 		Client: c,
 		SetOwnerReference: func(obj client.Object) error {
 			return controllerutil.SetControllerReference(fc, obj, c.Scheme())
+		},
+		IsOwned:    IsOwned,
+		IsDeleting: !fc.ObjectMeta.DeletionTimestamp.IsZero(),
+		AddFinalizer: func(ctx context.Context, finalizer string) error {
+			if !controllerutil.ContainsFinalizer(fc, finalizer) {
+				controllerutil.AddFinalizer(fc, finalizer)
+				return c.Update(ctx, fc)
+			}
+			return nil
+		},
+		RemoveFinalizer: func(ctx context.Context, finalizer string) error {
+			if controllerutil.ContainsFinalizer(fc, finalizer) {
+				controllerutil.RemoveFinalizer(fc, finalizer)
+				return c.Update(ctx, fc)
+			}
+			return nil
 		},
 	}, fc, nil
 }
@@ -111,7 +151,7 @@ func (c *Client) UpdateOwned(ctx context.Context, old, obj client.Object) error 
 func (c *Client) UpdateIfOwned(ctx context.Context, old, obj client.Object) error {
 	log := log.FromContext(ctx)
 
-	if old != nil && !IsOwned(old) {
+	if old != nil && !c.IsOwned(old) {
 		kind := reflect.TypeOf(obj).String()
 		log.Info("SKIP "+kind+" update since not owned", "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 		return nil
@@ -128,7 +168,7 @@ func (c *Client) DeleteIfOwned(ctx context.Context, obj client.Object) error {
 		return nil
 	}
 
-	if !IsOwned(obj) {
+	if !c.IsOwned(obj) {
 		log.Info("SKIP "+kind+" deletion since not owned", "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 		return nil
 	}
@@ -168,4 +208,14 @@ func getControllerDeployment(ctx context.Context, ns string, c client.Client) (*
 		return nil, err
 	}
 	return dpl, nil
+}
+
+func isOwnedByController(obj client.Object) bool {
+	// ownership is forced if netobserv-managed label is explicitly set to true
+	if IsManaged(obj) {
+		return true
+	}
+	// else we check for owner references
+	refs := obj.GetOwnerReferences()
+	return len(refs) > 0 && refs[0].Name == constants.ControllerName
 }

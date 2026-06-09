@@ -5,14 +5,20 @@ import (
 	"fmt"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/consoleplugin"
+	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
@@ -48,6 +54,21 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	return r.initReconcile, ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("staticPlugin").
+		Watches(
+			// This watcher aims to trigger the cleanup logic on delete for cluster-scope resources, since those resources aren't "owned" via owner reference
+			&appsv1.Deployment{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(predicate.Funcs{
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					return e.ObjectNew.GetNamespace() == mgr.Config.Namespace &&
+						e.ObjectNew.GetName() == constants.ControllerName &&
+						!e.ObjectNew.GetDeletionTimestamp().IsZero()
+				},
+				CreateFunc:  func(_ event.CreateEvent) bool { return false },
+				DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
+				GenericFunc: func(_ event.GenericEvent) bool { return false },
+			}),
+		).
 		Complete(&r)
 }
 
@@ -84,6 +105,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		} else if !supported {
 			clog.Info("Skipping static plugin reconciler (OpenShift version < 4.15)")
 		} else {
+			clog.Info("Running static plugin reconciler")
 			scp, err := helper.NewControllerClientHelper(ctx, r.mgr.Config.Namespace, r.Client)
 			if err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to get controller deployment: %w", err)

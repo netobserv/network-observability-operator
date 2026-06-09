@@ -34,7 +34,7 @@ var (
 		DeleteFunc:  func(_ event.DeleteEvent) bool { return true },
 		GenericFunc: func(_ event.GenericEvent) bool { return false },
 	})
-	UpdateOrDeleteOnlyPred = builder.WithPredicates(predicate.Funcs{
+	UpdateOrDeleteFCOwned = builder.WithPredicates(predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			// Update only if new object is owned - we want to watch for status changes as well (e.g. to know when a deployment is ready)
 			return helper.IsOwned(e.ObjectNew)

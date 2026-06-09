@@ -44,7 +44,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	return nil, ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("monitoring").
-		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteFCOwned).
 		Watches(
 			&metricslatest.FlowMetric{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {

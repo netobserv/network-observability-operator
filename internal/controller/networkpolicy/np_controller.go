@@ -34,7 +34,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	return nil, ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
 		Named("networkPolicy").
-		Owns(&networkingv1.NetworkPolicy{}, reconcilers.UpdateOrDeleteOnlyPred).
+		Owns(&networkingv1.NetworkPolicy{}, reconcilers.UpdateOrDeleteFCOwned).
 		Complete(&r)
 }
 

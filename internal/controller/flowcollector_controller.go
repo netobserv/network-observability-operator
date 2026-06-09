@@ -59,18 +59,18 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 	builder := ctrl.NewControllerManagedBy(mgr.Manager).
 		Named("legacy").
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
-		Owns(&appsv1.Deployment{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&appsv1.DaemonSet{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&ascv2.HorizontalPodAutoscaler{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&corev1.Service{}, reconcilers.UpdateOrDeleteOnlyPred).
-		Owns(&corev1.ServiceAccount{}, reconcilers.UpdateOrDeleteOnlyPred)
+		Owns(&appsv1.Deployment{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&appsv1.DaemonSet{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&ascv2.HorizontalPodAutoscaler{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&corev1.Namespace{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&corev1.Service{}, reconcilers.UpdateOrDeleteFCOwned).
+		Owns(&corev1.ServiceAccount{}, reconcilers.UpdateOrDeleteFCOwned)
 
 	if mgr.ClusterInfo.IsOpenShift() {
-		builder.Owns(&securityv1.SecurityContextConstraints{}, reconcilers.UpdateOrDeleteOnlyPred)
+		builder.Owns(&securityv1.SecurityContextConstraints{}, reconcilers.UpdateOrDeleteFCOwned)
 	}
 	if mgr.ClusterInfo.HasConsolePlugin() {
-		builder.Owns(&osv1.ConsolePlugin{}, reconcilers.UpdateOrDeleteOnlyPred)
+		builder.Owns(&osv1.ConsolePlugin{}, reconcilers.UpdateOrDeleteFCOwned)
 	}
 
 	r.lokistackWatcher = lokistack.Start(ctx, mgr, builder, func() controller.Controller { return r.ctrl })
