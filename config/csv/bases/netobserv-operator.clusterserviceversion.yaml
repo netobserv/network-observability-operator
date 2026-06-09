@@ -5,7 +5,7 @@ metadata:
     alm-examples: '[]'
     capabilities: Seamless Upgrades
     categories: Monitoring, Networking, Observability
-    console.openshift.io/plugins: '["netobserv-plugin"]'
+    console.openshift.io/plugins: '["netobserv-plugin", "netobserv-plugin-static"]'
     containerImage: ':container-image:'
     createdAt: ''
     description: Network flows collector and monitoring solution
