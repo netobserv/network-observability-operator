@@ -3,6 +3,8 @@ package e2etests
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strconv"
 	"testing"
 
 	g "github.com/onsi/ginkgo/v2"
@@ -22,13 +24,21 @@ var _ = g.BeforeSuite(func() {
 	flag.Parse()
 
 	// Set up provider config after parsing flags
-	e2eframework.AfterReadingAllFlags(exutil.TestContext)
+	e2eframework.AfterReadingAllFlags(&e2eframework.TestContext)
+
+	// Control verbose event dumping on test failures via DUMP_EVENTS_ON_FAILURE env variable
+	// Default: disabled (false)
+	// Set DUMP_EVENTS_ON_FAILURE=true to enable verbose cluster-wide event dumps for debugging
+	dumpEvents, err := strconv.ParseBool(os.Getenv("DUMP_EVENTS_ON_FAILURE"))
+	if err != nil {
+		dumpEvents = false
+	}
+	e2eframework.TestContext.DumpLogsOnFailure = dumpEvents
 
 	// Initialize test
 	gomega.Expect(exutil.InitTest(false)).NotTo(gomega.HaveOccurred())
 
 	oc := exutil.NewCLIForMonitorTest("netobserv")
-	var err error
 	_, err = GetOCPVersion(oc)
 	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 })
@@ -106,9 +116,9 @@ var _ = g.ReportAfterEach(func(report g.SpecReport) {
 })
 
 var _ = g.ReportAfterSuite("NetObserv Summary", func(report g.Report) {
-	passed := 0
-	failed := 0
-	skipped := 0
+	var passedSpecs []g.SpecReport
+	var failedSpecs []g.SpecReport
+	var skippedSpecs []g.SpecReport
 	ranTests := 0
 
 	// Get only the test specs (not setup/teardown)
@@ -117,33 +127,71 @@ var _ = g.ReportAfterSuite("NetObserv Summary", func(report g.Report) {
 	for _, specReport := range specs {
 		switch specReport.State {
 		case types.SpecStatePassed:
-			passed++
+			passedSpecs = append(passedSpecs, specReport)
 			ranTests++
 		case types.SpecStateFailed, types.SpecStatePanicked, types.SpecStateInvalid, types.SpecStateAborted, types.SpecStateInterrupted, types.SpecStatePending, types.SpecStateTimedout:
-			failed++
+			failedSpecs = append(failedSpecs, specReport)
 			ranTests++
 		case types.SpecStateSkipped:
 			// Skip filtered-out specs: they have State==Skipped but RunTime==0 and no failure info
 			// Explicitly skipped specs (via Skip()) have State==Skipped but were actually evaluated
 			if specReport.Failure.Message != "" || specReport.RunTime > 0 {
 				// Explicitly skipped - test body was evaluated
-				skipped++
+				skippedSpecs = append(skippedSpecs, specReport)
 			}
 		}
 	}
 
 	// Total specs evaluated (passed + failed + explicitly skipped)
-	totalEvaluated := ranTests + skipped
+	totalEvaluated := ranTests + len(skippedSpecs)
 
-	fmt.Printf("------------------------------\n")
+	fmt.Printf("==========================================================================================================\n")
 	if report.SuiteSucceeded {
-		fmt.Printf("\nBackend Suite - %d/%d specs • SUCCESS! [%.3f seconds]\n",
-			totalEvaluated, totalEvaluated, report.RunTime.Seconds())
+		fmt.Printf("Backend Suite - %d/%d specs • SUCCESS! [%.3f seconds]\n",
+			len(passedSpecs), totalEvaluated, report.RunTime.Seconds())
 	} else {
-		fmt.Printf("\nBackend Suite - %d/%d specs • FAILURE! [%.3f seconds]\n",
-			totalEvaluated, totalEvaluated, report.RunTime.Seconds())
+		fmt.Printf("Backend Suite - %d/%d specs • FAILURE! [%.3f seconds]\n",
+			len(passedSpecs), totalEvaluated, report.RunTime.Seconds())
 	}
 
 	fmt.Printf("\nRan %d tests\n", ranTests)
-	fmt.Printf("Passed: %d, Failed: %d, Skipped: %d\n", passed, failed, skipped)
+	fmt.Printf("Passed: %d, Failed: %d, Skipped: %d\n", len(passedSpecs), len(failedSpecs), len(skippedSpecs))
+	fmt.Printf("==========================================================================================================\n\n")
+
+	// Print failed tests section
+	if len(failedSpecs) > 0 {
+		fmt.Printf("FAILED TESTS (%d):\n", len(failedSpecs))
+		fmt.Printf("----------------------------------------------------------------------------------------------------------\n")
+		for i, spec := range failedSpecs {
+			fmt.Printf("%d. %s\n", i+1, spec.FullText())
+			fmt.Printf("   %s [%.3f seconds]\n", spec.LeafNodeLocation.String(), spec.RunTime.Seconds())
+			if spec.Failure.Message != "" {
+				fmt.Printf("   Error: %s\n", spec.Failure.Message)
+			}
+		}
+		fmt.Printf("\n")
+	}
+
+	// Print passed tests section
+	if len(passedSpecs) > 0 {
+		fmt.Printf("PASSED TESTS (%d):\n", len(passedSpecs))
+		fmt.Printf("----------------------------------------------------------------------------------------------------------\n")
+		for i, spec := range passedSpecs {
+			fmt.Printf("%d. %s [%.3f seconds]\n", i+1, spec.FullText(), spec.RunTime.Seconds())
+		}
+		fmt.Printf("\n")
+	}
+
+	// Print skipped tests section
+	if len(skippedSpecs) > 0 {
+		fmt.Printf("SKIPPED TESTS (%d):\n", len(skippedSpecs))
+		fmt.Printf("----------------------------------------------------------------------------------------------------------\n")
+		for i, spec := range skippedSpecs {
+			fmt.Printf("%d. %s [%.3f seconds]\n", i+1, spec.FullText(), spec.RunTime.Seconds())
+			if spec.Failure.Message != "" {
+				fmt.Printf("   Reason: %s\n", spec.Failure.Message)
+			}
+		}
+		fmt.Printf("\n")
+	}
 })

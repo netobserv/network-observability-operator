@@ -851,9 +851,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		})
 
 		g.It("Author:aramesha-NonPreRelease-Critical-59746-NetObserv upgrade testing [Serial]", func() {
-			SkipIfOCPBelow("v4.10")
-
-			// Defer cleanup - ensures operator is uninstalled if test fails/passes
+			// Uninstall operator even if test fails/passes
 			g.DeferCleanup(func() {
 				NO.uninstallOperator(oc)
 				oc.DeleteSpecifiedNamespaceAsAdmin(netobservNS)
@@ -866,14 +864,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			o.Expect(err).NotTo(o.HaveOccurred())
 
 			g.By("Deploy older version of netobserv operator")
-			NOcatSrc = Resource{"catsrc", "redhat-operators", "openshift-marketplace"}
-			NOSource = CatalogSourceObjects{"stable", NOcatSrc.Name, NOcatSrc.Namespace}
+			NOReleasedcatSrc := Resource{"catsrc", "redhat-operators", "openshift-marketplace"}
+			NOReleasedSource := CatalogSourceObjects{"stable", NOReleasedcatSrc.Name, NOReleasedcatSrc.Namespace}
 
-			NO.CatalogSource = &NOSource
+			// Use local copy instead of modifying global NO
+			NOReleased := NO
+			NOReleased.CatalogSource = &NOReleasedSource
 
-			g.By(fmt.Sprintf("Subscribe operators to %s channel", NOSource.Channel))
+			g.By(fmt.Sprintf("Subscribe operators to %s channel", NOReleasedSource.Channel))
 			OperatorNS.DeployOperatorNamespace(oc)
-			NO.SubscribeOperator(oc)
+			NOReleased.SubscribeOperator(oc)
 			// check if NO operator is deployed
 			WaitForPodsReadyWithLabel(oc, netobservNS, "app="+NO.OperatorName)
 			NOStatus, err := CheckOperatorStatus(oc, netobservNS, NOPackageName)
@@ -911,8 +911,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			preUpgradePluginVersion = strings.Split(preUpgradePluginVersion, ":")[1]
 
 			g.By("Deploy latest catalog and upgrade to latest version")
-			NOcatSrc.Name = "netobserv-konflux-fbc"
-			NOcatSrc.Namespace = OperatorNS.Name
 			var catsrcErr error
 			if catalogSource != "" {
 				e2e.Logf("Using %s catalog", catalogSource)
