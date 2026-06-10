@@ -21,6 +21,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -42,6 +43,7 @@ import (
 	flowsv1beta2 "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	slicesv1alpha1 "github.com/netobserv/netobserv-operator/api/flowcollectorslice/v1alpha1"
 	metricsv1alpha1 "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
+	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
@@ -266,6 +268,16 @@ func CreateFakeController(ctx context.Context, k8sClient client.Client) {
 
 	// Create
 	Eventually(k8sClient.Create(ctx, created)).Should(Succeed())
+
+	// ClusterRole as a cluster-scope owner proxy
+	prox := &rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: string(constants.FLPInformersRole),
+		},
+	}
+
+	// Create
+	Eventually(k8sClient.Create(ctx, prox)).Should(Succeed())
 }
 
 func GetCR(ctx context.Context, k8sClient client.Client, key types.NamespacedName) *flowsv1beta2.FlowCollector {
