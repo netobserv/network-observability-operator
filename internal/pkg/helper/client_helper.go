@@ -183,9 +183,14 @@ func getControllerDeployment(ctx context.Context, ns string, c client.Client) (*
 	return dpl, nil
 }
 
+const (
+	proxyRoleName = string(constants.FLPInformersRole)
+)
+
 func getControllerClusterScopeProxy(ctx context.Context, c client.Client) (client.Object, error) {
+	// Pick any bundled ClusterRole as a proxy; do not use a CSV-defined role because their name is not guaranteed to be stable across cluster/OLM versions
 	cr := &rbacv1.ClusterRole{}
-	if err := c.Get(ctx, types.NamespacedName{Name: string(constants.ManagerRole)}, cr); err != nil {
+	if err := c.Get(ctx, types.NamespacedName{Name: proxyRoleName}, cr); err != nil {
 		return nil, err
 	}
 	return cr, nil
@@ -198,5 +203,5 @@ func isOwnedByController(obj client.Object) bool {
 	}
 	// else we check for owner references
 	refs := obj.GetOwnerReferences()
-	return len(refs) > 0 && (refs[0].Name == constants.ControllerName || refs[0].Name == string(constants.ManagerRole))
+	return len(refs) > 0 && (refs[0].Name == constants.ControllerName || refs[0].Name == proxyRoleName)
 }
