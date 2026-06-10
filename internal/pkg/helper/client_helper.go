@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -20,9 +21,6 @@ type Client struct {
 	client.Client
 	SetOwnerReference func(client.Object) error
 	IsOwned           func(client.Object) bool
-	IsDeleting        bool
-	AddFinalizer      func(context.Context, string) error
-	RemoveFinalizer   func(context.Context, string) error
 }
 
 func UnmanagedClient(cl client.Client) Client {
@@ -30,8 +28,6 @@ func UnmanagedClient(cl client.Client) Client {
 		Client:            cl,
 		SetOwnerReference: func(_ client.Object) error { return nil },
 		IsOwned:           func(_ client.Object) bool { return false },
-		AddFinalizer:      func(context.Context, string) error { return nil },
-		RemoveFinalizer:   func(context.Context, string) error { return nil },
 	}
 }
 
@@ -40,32 +36,24 @@ func NewControllerClientHelper(ctx context.Context, ns string, c client.Client) 
 	if err != nil {
 		return nil, err
 	}
+	// Hack: use a controller proxy for cluster-scope resources owner references.
+	// Because the controller deployment is namespace-scoped, it cannot be defined as the owner of a cluster-scope resource.
+	// So we'll use something else instead, that is part of the installed bundle, and that will allow cascading deletion down to statically created
+	// cluster scope resources during uninstallation. Any bundled ClusterRole resource, for instance, can be used as such proxy.
+	clusterProxy, err := getControllerClusterScopeProxy(ctx, c)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Client{
 		Client: c,
 		SetOwnerReference: func(obj client.Object) error {
-			// can't apply ownership on cluster wide objects such as ClusterRole
 			if obj.GetNamespace() == "" {
-				return nil
+				return controllerutil.SetControllerReference(clusterProxy, obj, c.Scheme(), controllerutil.WithBlockOwnerDeletion(false))
 			}
 			return controllerutil.SetControllerReference(dpl, obj, c.Scheme(), controllerutil.WithBlockOwnerDeletion(false))
 		},
-		IsOwned:    isOwnedByController,
-		IsDeleting: !dpl.ObjectMeta.DeletionTimestamp.IsZero(),
-		AddFinalizer: func(ctx context.Context, finalizer string) error {
-			if !controllerutil.ContainsFinalizer(dpl, finalizer) {
-				controllerutil.AddFinalizer(dpl, finalizer)
-				return c.Update(ctx, dpl)
-			}
-			return nil
-		},
-		RemoveFinalizer: func(ctx context.Context, finalizer string) error {
-			if controllerutil.ContainsFinalizer(dpl, finalizer) {
-				controllerutil.RemoveFinalizer(dpl, finalizer)
-				return c.Update(ctx, dpl)
-			}
-			return nil
-		},
+		IsOwned: isOwnedByController,
 	}, nil
 }
 
@@ -79,22 +67,7 @@ func NewFlowCollectorClientHelper(ctx context.Context, c client.Client) (*Client
 		SetOwnerReference: func(obj client.Object) error {
 			return controllerutil.SetControllerReference(fc, obj, c.Scheme())
 		},
-		IsOwned:    IsOwned,
-		IsDeleting: !fc.ObjectMeta.DeletionTimestamp.IsZero(),
-		AddFinalizer: func(ctx context.Context, finalizer string) error {
-			if !controllerutil.ContainsFinalizer(fc, finalizer) {
-				controllerutil.AddFinalizer(fc, finalizer)
-				return c.Update(ctx, fc)
-			}
-			return nil
-		},
-		RemoveFinalizer: func(ctx context.Context, finalizer string) error {
-			if controllerutil.ContainsFinalizer(fc, finalizer) {
-				controllerutil.RemoveFinalizer(fc, finalizer)
-				return c.Update(ctx, fc)
-			}
-			return nil
-		},
+		IsOwned: IsOwned,
 	}, fc, nil
 }
 
@@ -210,6 +183,14 @@ func getControllerDeployment(ctx context.Context, ns string, c client.Client) (*
 	return dpl, nil
 }
 
+func getControllerClusterScopeProxy(ctx context.Context, c client.Client) (client.Object, error) {
+	cr := &rbacv1.ClusterRole{}
+	if err := c.Get(ctx, types.NamespacedName{Name: string(constants.ManagerRole)}, cr); err != nil {
+		return nil, err
+	}
+	return cr, nil
+}
+
 func isOwnedByController(obj client.Object) bool {
 	// ownership is forced if netobserv-managed label is explicitly set to true
 	if IsManaged(obj) {
@@ -217,5 +198,5 @@ func isOwnedByController(obj client.Object) bool {
 	}
 	// else we check for owner references
 	refs := obj.GetOwnerReferences()
-	return len(refs) > 0 && refs[0].Name == constants.ControllerName
+	return len(refs) > 0 && (refs[0].Name == constants.ControllerName || refs[0].Name == string(constants.ManagerRole))
 }

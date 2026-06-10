@@ -3,20 +3,12 @@ package consoleplugin
 import (
 	"context"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
-	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
-	osv1 "github.com/openshift/api/console/v1"
-)
-
-const (
-	staticPluginFinalizer = "staticplugin.netobserv.io/finalizer"
 )
 
 func NewStaticReconciler(cmn *reconcilers.Instance) CPReconciler {
@@ -52,17 +44,6 @@ func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest
 	}
 
 	if r.ClusterInfo.HasConsolePlugin() {
-		if r.IsDeleting {
-			// Process cluster-scope resources cleanup
-			if err := r.cleanupClusterScope(ctx); err != nil {
-				return err
-			}
-			// Ignore delete request for namespace-scope resources, as it is managed via owner reference
-			return nil
-		} else if err := r.AddFinalizer(ctx, staticPluginFinalizer); err != nil {
-			return err
-		}
-
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.StaticPluginName)
 
@@ -83,18 +64,4 @@ func (r *CPReconciler) reconcileStatic(ctx context.Context, desired *flowslatest
 	}
 
 	return nil
-}
-
-func (r *CPReconciler) cleanupClusterScope(ctx context.Context) error {
-	plg := osv1.ConsolePlugin{}
-	if err := r.Get(ctx, types.NamespacedName{Name: constants.StaticPluginName}, &plg); err != nil {
-		if !apierrors.IsNotFound(err) {
-			return err
-		}
-	} else if helper.IsManaged(&plg) {
-		if err := r.Client.Delete(ctx, &plg); err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-	}
-	return r.RemoveFinalizer(ctx, staticPluginFinalizer)
 }
