@@ -230,5 +230,16 @@ var (
 				},
 			},
 		},
+		{
+			Template: HealthRuleTLSInsecureVersion,
+			Variants: []HealthRuleVariant{
+				{
+					Thresholds: HealthRuleThresholds{
+						Warning: "5",
+					},
+					GroupBy: GroupByNamespace,
+				},
+			},
+		},
 	}
 )

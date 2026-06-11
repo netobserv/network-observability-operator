@@ -2730,17 +2730,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				o.Expect(r.Flowlog.TLSVersion).Should(o.BeEmpty(), "expected TLS version to be empty for HTTP")
 			}
 
-			g.By("Verify HTTPS flows with TLSVersion 1.2")
-			lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.2\""}
-			flowRecords, err = lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
-			o.Expect(err).NotTo(o.HaveOccurred())
-			o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.2 > 0")
-			// Verify TLS 1.2 fields
-			for _, r := range flowRecords {
-				o.Expect(r.Flowlog.TLSTypes).Should(o.ContainElement("ServerHello"), "expected TLS Types to contain ServerHello")
-				o.Expect(r.Flowlog.TLSCipherSuite).NotTo(o.BeEmpty())
-			}
-
 			g.By("Verify HTTPS flows with TLSVersion 1.3")
 			lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.3\""}
 			flowRecords, err = lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
@@ -2753,10 +2742,43 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				o.Expect(r.Flowlog.TLSCipherSuite).NotTo(o.BeEmpty())
 			}
 
+			g.By("Verify HTTPS flows with TLSVersion 1.2")
+			lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.2\""}
+			flowRecords, err = lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
+			o.Expect(err).NotTo(o.HaveOccurred())
+			o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.2 > 0")
+			// Verify TLS 1.2 fields
+			for _, r := range flowRecords {
+				o.Expect(r.Flowlog.TLSTypes).Should(o.ContainElement("ServerHello"), "expected TLS Types to contain ServerHello")
+				o.Expect(r.Flowlog.TLSCipherSuite).NotTo(o.BeEmpty())
+			}
+
+			g.By("Verify HTTPS flows with TLSVersion 1.1")
+			lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.1\""}
+			flowRecords, err = lokilabels.getLokiFlowLogs(kubeadminToken, ls.Route, startTime, lokiParams...)
+			o.Expect(err).NotTo(o.HaveOccurred())
+			o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.1 > 0")
+			// Verify TLS 1.1 fields
+			for _, r := range flowRecords {
+				o.Expect(r.Flowlog.TLSTypes).Should(o.ContainElement("ServerHello"), "expected TLS Types to contain ServerHello")
+				o.Expect(r.Flowlog.TLSTypes).Should(o.BeEmpty(), "expected TLS Types to be empty for TLS 1.1")
+				o.Expect(r.Flowlog.TLSCipherSuite).Should(o.BeEmpty(), "expected TLS CipherSuite to be empty for TLS 1.1")
+			}
+
 			g.By("Verify TLS metrics")
 			verifyTLSMetrics(oc, "TLSVersion")
 			verifyTLSMetrics(oc, "TLSCipherSuite")
 			verifyTLSMetrics(oc, "TLSGroup")
+
+			g.By("Wait for TLSInsecureVersion alert to be active")
+			waitForAlertToBeActive(oc, "TLSInsecureVersion_PerSrcNamespaceWarning")
+
+			g.By("Verify TLS alert has expected labels and annotations")
+			alertStatus, err := getAlertStatus(oc, "TLSInsecureVersion_PerSrcNamespaceWarning")
+			o.Expect(err).NotTo(o.HaveOccurred())
+			o.Expect(alertStatus["labels"]).To(o.HaveKey("severity"))
+			o.Expect(alertStatus["labels"].(map[string]any)["severity"]).To(o.Equal("warning"))
+			o.Expect(alertStatus["labels"].(map[string]any)["netobserv"]).To(o.Equal("true"))
 		})
 
 		g.It("Author:kapjain-Medium-88683-Secure communications between Agent and FLP [Serial]", func() {

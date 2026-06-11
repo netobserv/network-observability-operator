@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: tls-security-alerts
+  namespace: netobserv
+spec:
+  groups:
+  - name: TLSSecurityAlerts
+    rules:
+    # Alert on insecure TLS versions (< 1.2)
+    # This alert detects workloads using deprecated TLS versions that should be upgraded.
+    # TLS 1.0 and 1.1 are deprecated and considered insecure. SSL variants are also flagged.
+    - alert: InsecureTLSVersionDetected
+      annotations:
+        description: |-
+          NetObserv is detecting traffic using insecure TLS version {{ $labels.TLSVersion }}
+          from workload {{ $labels.SrcK8S_OwnerName }} ({{ $labels.SrcK8S_OwnerType }})
+          in namespace {{ $labels.SrcK8S_Namespace }}.
+
+          TLS versions below 1.2 are deprecated and should not be used.
+          Consider upgrading to TLS 1.2 or TLS 1.3.
+        summary: Insecure TLS version {{ $labels.TLSVersion }} detected
+        # This annotation makes the alert visible in the NetObserv console plugin health dashboard
+        netobserv_io_network_health: '{"namespaceLabels":["SrcK8S_Namespace","SrcK8S_OwnerName","SrcK8S_OwnerType","TLSVersion"],"unit":"flows/s"}'
+      expr: |-
+        sum(rate(netobserv_workload_tls_flows_total{TLSVersion=~"TLS 1\\.0|TLS 1\\.1|SSL.*"}[5m]))
+        by (SrcK8S_Namespace, SrcK8S_OwnerName, SrcK8S_OwnerType, TLSVersion) > 0
+      for: 5m
+      labels:
+        netobserv: "true"
+        severity: warning
+
+    # Alert on TLS 1.2 usage (informational)
+    # Track TLS 1.2 usage to plan migration to TLS 1.3
+    - alert: TLS12InUse
+      annotations:
+        description: |-
+          NetObserv is detecting TLS 1.2 traffic from workload {{ $labels.SrcK8S_OwnerName }}
+          in namespace {{ $labels.SrcK8S_Namespace }}.
+
+          While TLS 1.2 is still secure, consider migrating to TLS 1.3 for improved security and performance.
+        summary: TLS 1.2 in use - consider upgrading to TLS 1.3
+        netobserv_io_network_health: '{"namespaceLabels":["SrcK8S_Namespace","SrcK8S_OwnerName","SrcK8S_OwnerType"],"unit":"flows/s"}'
+      expr: |-
+        sum(rate(netobserv_workload_tls_flows_total{TLSVersion="TLS 1.2"}[5m]))
+        by (SrcK8S_Namespace, SrcK8S_OwnerName, SrcK8S_OwnerType) > 0
+      for: 5m
+      labels:
+        netobserv: "true"
+        severity: info

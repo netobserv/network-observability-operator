@@ -33,6 +33,8 @@ objects:
             sleep 5
             curl -sk --tlsv1.2 --tls-max 1.2 https://tls-server-service.${SERVER_NS}.svc:443/ 2>&1 > /dev/null
             sleep 5
+            curl -sk --tlsv1.1 --tls-max 1.1 https://tls-server-service.${SERVER_NS}.svc:443/ 2>&1 > /dev/null
+            sleep 5
             curl -s http://tls-server-service.${SERVER_NS}.svc:80/ 2>&1 > /dev/null
             sleep 5
           done

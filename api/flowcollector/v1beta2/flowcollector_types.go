@@ -630,7 +630,7 @@ type FLPMetrics struct {
 
 	// `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
 	// Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`.
+	// `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`, `TLSInsecureVersion`.
 	// More information on alerts: https://github.com/netobserv/netobserv-operator/blob/main/docs/HealthRules.md
 	// +optional
 	DisableAlerts []HealthRuleTemplate `json:"disableAlerts"`

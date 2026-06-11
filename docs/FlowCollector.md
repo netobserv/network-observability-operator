@@ -11644,7 +11644,7 @@ More information, with full list of available metrics: https://github.com/netobs
         <td>
           `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
 Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-`LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`.
+`LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`, `TLSInsecureVersion`.
 More information on alerts: https://github.com/netobserv/netobserv-operator/blob/main/docs/HealthRules.md<br/>
         </td>
         <td>false</td>
@@ -11708,11 +11708,11 @@ More information, with full list of available metrics: https://github.com/netobs
         <td>
           Health rule template name.
 Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-`LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`.
+`LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`, `TLSInsecureVersion`.
 Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
 More information on health rules: https://github.com/netobserv/netobserv-operator/blob/main/docs/HealthRules.md<br/>
           <br/>
-            <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, DNSNxDomain, ExternalEgressHighTrend, ExternalIngressHighTrend, Ingress5xxErrors, IngressHTTPLatencyTrend<br/>
+            <i>Enum</i>: PacketDropsByKernel, PacketDropsByDevice, IPsecErrors, NetpolDenied, LatencyHighTrend, DNSErrors, DNSNxDomain, ExternalEgressHighTrend, ExternalIngressHighTrend, Ingress5xxErrors, IngressHTTPLatencyTrend, TLSInsecureVersion<br/>
         </td>
         <td>true</td>
       </tr><tr>

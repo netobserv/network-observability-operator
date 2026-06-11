@@ -31,7 +31,8 @@ objects:
               listen 8443 ssl;
               ssl_certificate /etc/nginx/ssl/tls.crt;
               ssl_certificate_key /etc/nginx/ssl/tls.key;
-              ssl_protocols TLSv1.2 TLSv1.3;
+              # Allow TLS 1.1 (insecure), 1.2, and 1.3 for testing
+              ssl_protocols TLSv1.1 TLSv1.2 TLSv1.3;
               ssl_ecdh_curve X25519:P-256;
               location / {
                   return 200 'HTTPS OK - TLS Enabled\n';

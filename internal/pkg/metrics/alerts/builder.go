@@ -172,6 +172,8 @@ func (ctx *ruleContext) toRule() HealthRule {
 		return newIngressErrors(ctx)
 	case flowslatest.HealthRuleIngressHTTPLatencyTrend:
 		return newIngressHTTPLatencyTrend(ctx)
+	case flowslatest.HealthRuleTLSInsecureVersion:
+		return newTLSInsecureVersion(ctx)
 	case flowslatest.AlertLokiError, flowslatest.AlertNoFlows:
 		// ?
 	}

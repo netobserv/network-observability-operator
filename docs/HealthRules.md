@@ -24,6 +24,7 @@ These rules are installed by default:
 - `ExternalIngressHighTrend`
 - `Ingress5xxErrors`
 - `IngressHTTPLatencyTrend`
+- `TLSInsecureVersion`
 
 On top of that, there are also some operational alerts that relate to NetObserv's self health:
 

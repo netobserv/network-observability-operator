@@ -5508,7 +5508,7 @@ spec:
                           description: |-
                             `disableAlerts` is a list of alert groups that should be disabled from the default set of alerts.
                             Possible values are: `NetObservNoFlows`, `NetObservLokiError`, `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-                            `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`.
+                            `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`, `TLSInsecureVersion`.
                             More information on alerts: https://github.com/netobserv/netobserv-operator/blob/main/docs/HealthRules.md
                           items:
                             type: string
@@ -5536,7 +5536,7 @@ spec:
                                 description: |-
                                   Health rule template name.
                                   Possible values are: `PacketDropsByKernel`, `PacketDropsByDevice`, `IPsecErrors`, `NetpolDenied`,
-                                  `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`.
+                                  `LatencyHighTrend`, `DNSErrors`, `DNSNxDomain`, `ExternalEgressHighTrend`, `ExternalIngressHighTrend`, `Ingress5xxErrors`, `IngressHTTPLatencyTrend`, `TLSInsecureVersion`.
                                   Note: `NetObservNoFlows` and `NetObservLokiError` are alert-only and cannot be used as health rules.
                                   More information on health rules: https://github.com/netobserv/netobserv-operator/blob/main/docs/HealthRules.md
                                 enum:
@@ -5551,6 +5551,7 @@ spec:
                                   - ExternalIngressHighTrend
                                   - Ingress5xxErrors
                                   - IngressHTTPLatencyTrend
+                                  - TLSInsecureVersion
                                 type: string
                               variants:
                                 description: A list of variants for this template
