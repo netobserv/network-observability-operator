@@ -78,7 +78,7 @@ func (r *Report) GetDetails() string {
 	for _, lvl := range []Warn{WarnAvoid, WarnUnknown, WarnCareful, WarnFine} {
 		labels := r.perLevel[lvl]
 		if len(labels) > 0 {
-			sb.WriteString(fmt.Sprintf("Cardinality level '%s': %d labels (%s); ", lvl, len(labels), strings.Join(labels, ", ")))
+			fmt.Fprintf(&sb, "Cardinality level '%s': %d labels (%s); ", lvl, len(labels), strings.Join(labels, ", "))
 		}
 	}
 	return sb.String()
