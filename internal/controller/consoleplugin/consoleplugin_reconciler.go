@@ -124,10 +124,10 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 			// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 			// because certificate is always reloaded from file
 			if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
-				return err
+				r.Status.SetDegraded("LokiCACertMissing", err.Error())
 			}
 			if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &r.Loki.StatusTLS, r.Namespace); err != nil {
-				return err
+				r.Status.SetDegraded("LokiMTLSCertMissing", err.Error())
 			}
 		}
 	} else {

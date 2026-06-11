@@ -4,6 +4,7 @@ package controllers
 import (
 	"time"
 
+	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -138,6 +139,17 @@ func flowCollectorCertificatesSpecs() {
 			Eventually(func() interface{} { return k8sClient.Create(ctx, &kafka2Cert) }, timeout, interval).Should(Succeed())
 			By("Creating Kafka-export SASL key")
 			Eventually(func() interface{} { return k8sClient.Create(ctx, &kafka2Sasl) }, timeout, interval).Should(Succeed())
+		})
+
+		It("Should create LokiStack", func() {
+			Eventually(func() interface{} {
+				return k8sClient.Create(ctx, &lokiv1.LokiStack{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "loki",
+						Namespace: "loki-namespace",
+					},
+				})
+			}, timeout, interval).Should(Succeed())
 		})
 
 		flowSpec := flowslatest.FlowCollectorSpec{

@@ -145,8 +145,6 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
 	ns := desired.Spec.GetNamespace()
 	previousNamespace := r.status.GetDeployedNamespace(desired)
-	lokiConfig := helper.NewLokiConfig(&desired.Spec.Loki, ns)
-	reconcilersInfo := r.newCommonInfo(clh, ns, &lokiConfig)
 
 	if err := r.checkFinalizer(ctx, desired); err != nil {
 		return err
@@ -158,6 +156,8 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 	r.watcher.Reset(ns)
 
 	lokiStatus := r.lokistackWatcher.Reconcile(ctx, desired)
+	lokiConfig := helper.NewLokiConfig(&desired.Spec.Loki, ns, &lokiStatus)
+	reconcilersInfo := r.newCommonInfo(clh, ns, &lokiConfig)
 
 	var cpImage string
 	if desired.Spec.NeedsConsolePluginDeployment(r.mgr.ClusterInfo.HasConsolePlugin()) {

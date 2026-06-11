@@ -274,6 +274,10 @@ func TestConfigMapUpdateCheck(t *testing.T) {
 	assert.NotEqual(old.Data, nEw.Data)
 }
 
+func newLokiConfig(spec *flowslatest.FlowCollectorLoki) helper.LokiConfig {
+	return helper.NewLokiConfig(spec, "any", nil)
+}
+
 func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 	assert := assert.New(t)
 
@@ -283,7 +287,7 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	loki := newLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder := getBuilder(&spec, &loki)
 	old, _, _ := builder.configMap(context.Background(), nil, &lokiStatusUnused)
@@ -292,7 +296,7 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 
 	// update lokistack name
 	lokiSpec.LokiStack.Name = "lokistack-updated"
-	loki = helper.NewLokiConfig(&lokiSpec, "any")
+	loki = newLokiConfig(&lokiSpec)
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = getBuilder(&spec, &loki)
@@ -302,7 +306,7 @@ func TestConfigMapUpdateWithLokistackMode(t *testing.T) {
 
 	// update lokistack namespace
 	lokiSpec.LokiStack.Namespace = "ls-namespace-updated"
-	loki = helper.NewLokiConfig(&lokiSpec, "any")
+	loki = newLokiConfig(&lokiSpec)
 
 	spec = flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder = getBuilder(&spec, &loki)
@@ -323,7 +327,7 @@ func TestConfigMapContent(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	loki := newLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{
 		Agent:         agentSpec,
 		ConsolePlugin: getPluginConfig(),
@@ -359,7 +363,7 @@ func TestConfigMapExternalRecordingAnnotations(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	loki := newLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
@@ -521,7 +525,7 @@ func TestLokiStackStatusEmbedding(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "lokistack", Namespace: "ls-namespace"},
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	loki := newLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder := getBuilder(&spec, &loki)
 
@@ -577,7 +581,7 @@ func TestLokiStackNamespaceDefaulting(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "my-lokistack", Namespace: "custom-namespace"},
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "default-namespace")
+	loki := helper.NewLokiConfig(&lokiSpec, "default-namespace", nil)
 
 	// Verify URLs use the explicitly set namespace
 	assert.Contains(loki.QuerierURL, "custom-namespace")
@@ -589,7 +593,7 @@ func TestLokiStackNamespaceDefaulting(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "my-lokistack", Namespace: ""},
 	}
-	lokiDefault := helper.NewLokiConfig(&lokiSpecDefault, "flowcollector-namespace")
+	lokiDefault := helper.NewLokiConfig(&lokiSpecDefault, "flowcollector-namespace", nil)
 
 	// Verify URLs use the defaulted namespace
 	assert.Contains(lokiDefault.QuerierURL, "flowcollector-namespace")
@@ -611,7 +615,7 @@ func TestLokiStackNotFoundBehavior(t *testing.T) {
 		Mode:      flowslatest.LokiModeLokiStack,
 		LokiStack: flowslatest.LokiStackRef{Name: "missing-lokistack", Namespace: "test-namespace"},
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	loki := newLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{ConsolePlugin: plugin, Loki: lokiSpec}
 	builder := getBuilder(&spec, &loki)
 
@@ -656,7 +660,7 @@ func TestScopeFilteringWithLoki(t *testing.T) {
 	lokiSpec := flowslatest.FlowCollectorLoki{
 		Enable: ptr.To(true),
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	loki := newLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{
 		Agent: flowslatest.FlowCollectorAgent{
 			EBPF: flowslatest.FlowCollectorEBPF{
@@ -696,7 +700,7 @@ func TestScopeFilteringNoLoki(t *testing.T) {
 	lokiSpec := flowslatest.FlowCollectorLoki{
 		Enable: ptr.To(false),
 	}
-	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	loki := newLokiConfig(&lokiSpec)
 	spec := flowslatest.FlowCollectorSpec{
 		Agent: flowslatest.FlowCollectorAgent{
 			EBPF: flowslatest.FlowCollectorEBPF{
