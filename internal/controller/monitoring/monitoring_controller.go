@@ -73,7 +73,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		return ctrl.Result{}, nil
 	}
 
-	r.status.SetUnknown()
+	r.status.Reset()
 	defer r.status.Commit(ctx, r.Client)
 
 	err = r.reconcile(ctx, clh, desired)

@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -64,36 +63,38 @@ func (s *Manager) getStatus(cpnt ComponentName) *ComponentStatus {
 }
 
 func (s *Manager) setInProgress(cpnt ComponentName, reason, message string) {
-	cs := s.preserveReplicas(cpnt)
-	cs.Status = StatusInProgress
-	cs.Reason = reason
-	cs.Message = message
-	s.statuses.Store(cpnt, cs)
+	s.updateComponentStatus(&ComponentStatus{
+		Name:     cpnt,
+		Status:   StatusInProgress,
+		Reason:   reason,
+		Messages: []string{message},
+	})
 }
 
 func (s *Manager) setFailure(cpnt ComponentName, reason, message string) {
-	cs := s.preserveReplicas(cpnt)
-	cs.Status = StatusFailure
-	cs.Reason = reason
-	cs.Message = message
-	s.statuses.Store(cpnt, cs)
+	s.updateComponentStatus(&ComponentStatus{
+		Name:     cpnt,
+		Status:   StatusFailure,
+		Reason:   reason,
+		Messages: []string{message},
+	})
 }
 
 func (s *Manager) setDegraded(cpnt ComponentName, reason, message string) {
-	cs := s.preserveReplicas(cpnt)
-	cs.Status = StatusDegraded
-	cs.Reason = reason
-	cs.Message = message
-	s.statuses.Store(cpnt, cs)
+	s.updateComponentStatus(&ComponentStatus{
+		Name:     cpnt,
+		Status:   StatusDegraded,
+		Reason:   reason,
+		Messages: []string{message},
+	})
 }
 
-func (s *Manager) preserveReplicas(cpnt ComponentName) ComponentStatus {
-	cs := ComponentStatus{Name: cpnt}
-	if existing := s.getStatus(cpnt); existing != nil {
-		cs.DesiredReplicas = existing.DesiredReplicas
-		cs.ReadyReplicas = existing.ReadyReplicas
+func (s *Manager) updateComponentStatus(other *ComponentStatus) {
+	merged := other
+	if existing := s.getStatus(other.Name); existing != nil {
+		merged = existing.merge(other)
 	}
-	return cs
+	s.statuses.Store(other.Name, *merged)
 }
 
 func (s *Manager) hasFailure(cpnt ComponentName) bool {
@@ -101,32 +102,26 @@ func (s *Manager) hasFailure(cpnt ComponentName) bool {
 	return v != nil && v.(ComponentStatus).Status == StatusFailure
 }
 
-func (s *Manager) setReady(cpnt ComponentName) {
-	existing := s.getStatus(cpnt)
-	cs := ComponentStatus{
-		Name:   cpnt,
-		Status: StatusReady,
-	}
-	if existing != nil {
-		cs.DesiredReplicas = existing.DesiredReplicas
-		cs.ReadyReplicas = existing.ReadyReplicas
-	}
-	s.statuses.Store(cpnt, cs)
-}
-
-func (s *Manager) setUnknown(cpnt ComponentName) {
+func (s *Manager) reset(cpnt ComponentName) {
 	s.statuses.Store(cpnt, ComponentStatus{
 		Name:   cpnt,
 		Status: StatusUnknown,
 	})
 }
 
+func (s *Manager) setReady(cpnt ComponentName) {
+	s.updateComponentStatus(&ComponentStatus{
+		Name:   cpnt,
+		Status: StatusReady,
+	})
+}
+
 func (s *Manager) setUnused(cpnt ComponentName, message string) {
-	s.statuses.Store(cpnt, ComponentStatus{
-		Name:    cpnt,
-		Status:  StatusUnused,
-		Reason:  "ComponentUnused",
-		Message: message,
+	s.updateComponentStatus(&ComponentStatus{
+		Name:     cpnt,
+		Status:   StatusUnused,
+		Reason:   "ComponentUnused",
+		Messages: []string{message},
 	})
 }
 
@@ -281,11 +276,11 @@ func (s *Manager) emitStateTransitionEvents(ctx context.Context, fc *flowslatest
 
 		switch {
 		case current.Status == StatusFailure:
-			msg := fmt.Sprintf("Component %s entered failure state: %s - %s", cpnt, current.Reason, current.Message)
+			msg := fmt.Sprintf("Component %s entered failure state: %s - %s", cpnt, current.Reason, current.Message())
 			s.eventRecorder.Event(fc, "Warning", "ComponentFailure", msg)
 			rlog.Info("Event emitted", "type", "ComponentFailure", "component", cpnt)
 		case current.Status == StatusDegraded:
-			msg := fmt.Sprintf("Component %s degraded: %s - %s", cpnt, current.Reason, current.Message)
+			msg := fmt.Sprintf("Component %s degraded: %s - %s", cpnt, current.Reason, current.Message())
 			s.eventRecorder.Event(fc, "Warning", "ComponentDegraded", msg)
 		case prevStatus.Status == StatusFailure && (current.Status == StatusReady || current.Status == StatusInProgress):
 			msg := fmt.Sprintf("Component %s recovered from failure", cpnt)
@@ -374,19 +369,19 @@ func (s *Manager) GetKafkaCondition() *metav1.Condition {
 	if ts := s.getStatus(FLPTransformer); ts != nil && ts.Status != StatusUnknown && ts.Status != StatusUnused {
 		if ts.Status == StatusFailure || ts.Status == StatusDegraded {
 			hasKafkaIssue = true
-			messages = append(messages, fmt.Sprintf("Transformer: %s", ts.Message))
+			messages = append(messages, fmt.Sprintf("Transformer: %s", ts.Message()))
 		}
-		if ts.PodHealth.UnhealthyCount > 0 {
+		if ts.podHealth.unhealthyCount > 0 {
 			hasKafkaIssue = true
-			messages = append(messages, fmt.Sprintf("Transformer pods: %s", ts.PodHealth.Issues))
+			messages = append(messages, fmt.Sprintf("Transformer pods: %s", ts.podHealth.issues))
 		}
 	}
 
 	// Check agent for Kafka-related pod issues
 	if as := s.getStatus(EBPFAgents); as != nil {
-		if as.PodHealth.UnhealthyCount > 0 && strings.Contains(strings.ToLower(as.PodHealth.Issues), "kafka") {
+		if as.podHealth.unhealthyCount > 0 && strings.Contains(strings.ToLower(as.podHealth.issues), "kafka") {
 			hasKafkaIssue = true
-			messages = append(messages, fmt.Sprintf("Agent pods: %s", as.PodHealth.Issues))
+			messages = append(messages, fmt.Sprintf("Agent pods: %s", as.podHealth.issues))
 		}
 	}
 
@@ -454,7 +449,7 @@ func (s *Manager) NeedsRequeue() bool {
 	needsRequeue := false
 	s.statuses.Range(func(_, v any) bool {
 		cs := v.(ComponentStatus)
-		if cs.Status == StatusInProgress || cs.PodHealth.UnhealthyCount > 0 {
+		if cs.Status == StatusInProgress || cs.podHealth.unhealthyCount > 0 {
 			needsRequeue = true
 			return false
 		}
@@ -472,7 +467,7 @@ func (s *Manager) ClearExporters() {
 }
 
 func (s *Manager) ForComponent(cpnt ComponentName) Instance {
-	s.setUnknown(cpnt)
+	s.reset(cpnt)
 	return Instance{cpnt: cpnt, s: s}
 }
 
@@ -493,8 +488,8 @@ func (i *Instance) SetReady() {
 	i.s.setReady(i.cpnt)
 }
 
-func (i *Instance) SetUnknown() {
-	i.s.setUnknown(i.cpnt)
+func (i *Instance) Reset() {
+	i.s.reset(i.cpnt)
 }
 
 func (i *Instance) SetUnused(message string) {
@@ -533,8 +528,8 @@ func (i *Instance) setDeploymentReplicas(d *appsv1.Deployment) {
 		if d.Spec.Replicas != nil {
 			desired = *d.Spec.Replicas
 		}
-		cs.DesiredReplicas = ptr.To(desired)
-		cs.ReadyReplicas = ptr.To(d.Status.ReadyReplicas)
+		cs.DesiredReplicas = desired
+		cs.ReadyReplicas = d.Status.ReadyReplicas
 		i.s.statuses.Store(i.cpnt, *cs)
 	}
 }
@@ -559,8 +554,8 @@ func (i *Instance) CheckDaemonSetProgress(ds *appsv1.DaemonSet) {
 func (i *Instance) setDaemonSetReplicas(ds *appsv1.DaemonSet) {
 	cs := i.s.getStatus(i.cpnt)
 	if cs != nil {
-		cs.DesiredReplicas = ptr.To(ds.Status.DesiredNumberScheduled)
-		cs.ReadyReplicas = ptr.To(ds.Status.NumberReady)
+		cs.DesiredReplicas = ds.Status.DesiredNumberScheduled
+		cs.ReadyReplicas = ds.Status.NumberReady
 		i.s.statuses.Store(i.cpnt, *cs)
 	}
 }
@@ -573,7 +568,7 @@ func (i *Instance) CheckDeploymentHealth(ctx context.Context, c client.Client, d
 		return
 	}
 	if d.Status.ReadyReplicas < d.Status.Replicas || d.Status.UnavailableReplicas > 0 {
-		health := CheckPodHealth(ctx, c, d.Namespace, d.Spec.Selector.MatchLabels)
+		health := checkPodHealth(ctx, c, d.Namespace, d.Spec.Selector.MatchLabels)
 		i.setPodHealth(health)
 	}
 }
@@ -586,22 +581,19 @@ func (i *Instance) CheckDaemonSetHealth(ctx context.Context, c client.Client, ds
 		return
 	}
 	if ds.Status.NumberReady < ds.Status.DesiredNumberScheduled || ds.Status.NumberUnavailable > 0 {
-		health := CheckPodHealth(ctx, c, ds.Namespace, ds.Spec.Selector.MatchLabels)
+		health := checkPodHealth(ctx, c, ds.Namespace, ds.Spec.Selector.MatchLabels)
 		i.setPodHealth(health)
 	}
 }
 
-func (i *Instance) setPodHealth(health PodHealthSummary) {
-	cs := i.s.getStatus(i.cpnt)
-	if cs != nil {
-		cs.PodHealth = health
-		if health.UnhealthyCount > 0 && (cs.Status == StatusReady || cs.Status == StatusInProgress) {
-			cs.Status = StatusDegraded
-			cs.Reason = "UnhealthyPods"
-			cs.Message = health.Issues
-		}
-		i.s.statuses.Store(i.cpnt, *cs)
-	}
+func (i *Instance) setPodHealth(health podHealthSummary) {
+	i.s.updateComponentStatus(&ComponentStatus{
+		Name:      i.cpnt,
+		Status:    StatusDegraded,
+		Reason:    "UnhealthyPods",
+		Messages:  []string{health.issues},
+		podHealth: health,
+	})
 }
 
 func (i *Instance) SetCreatingDeployment(d *appsv1.Deployment) {

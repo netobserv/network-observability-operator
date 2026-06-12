@@ -8,7 +8,6 @@ import (
 	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
-	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -21,6 +20,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+)
+
+const (
+	LokiStackAPIMissing    = "LokiStackAPIMissing"
+	LokiCantFetchLokiStack = "CantFetchLokiStack"
 )
 
 type Watcher struct {
@@ -63,7 +67,7 @@ func (lsw *Watcher) Reconcile(ctx context.Context, fc *flowslatest.FlowCollector
 	defer func() {
 		ret = lsw.status.Get()
 	}()
-	lsw.status.SetUnknown()
+	lsw.status.Reset()
 
 	if !fc.Spec.UseLoki() {
 		lsw.status.SetUnused("Loki is disabled")
@@ -76,7 +80,7 @@ func (lsw *Watcher) Reconcile(ctx context.Context, fc *flowslatest.FlowCollector
 	}
 
 	if !lsw.mgr.ClusterInfo.HasLokiStack(ctx) {
-		lsw.status.SetFailure(helper.LokiStackAPIMissing, "Loki is configured in LokiStack mode, but LokiStack API is missing; check that the Loki Operator is correctly installed.")
+		lsw.status.SetFailure(LokiStackAPIMissing, "Loki is configured in LokiStack mode, but LokiStack API is missing; check that the Loki Operator is correctly installed.")
 		return
 	}
 
@@ -126,7 +130,7 @@ func (lsw *Watcher) checkStatus(ctx context.Context, fc *flowslatest.FlowCollect
 	}
 	err := lsw.cl.Get(ctx, nsname, lokiStack)
 	if err != nil {
-		lsw.status.SetFailure(helper.LokiCantFetchLokiStack, err.Error())
+		lsw.status.SetFailure(LokiCantFetchLokiStack, err.Error())
 		return err
 	}
 

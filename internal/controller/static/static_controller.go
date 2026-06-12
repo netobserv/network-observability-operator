@@ -72,7 +72,7 @@ func (r *Reconciler) initReconcile(ctx context.Context) error {
 func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	ctx = log.IntoContext(ctx, clog)
 
-	r.status.SetUnknown()
+	r.status.Reset()
 	defer r.status.Commit(ctx, r.Client)
 
 	if r.mgr.ClusterInfo.HasConsolePlugin() {

@@ -17,6 +17,7 @@ import (
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
+	"github.com/netobserv/netobserv-operator/internal/controller/lokistack"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
@@ -90,6 +91,17 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	if desired.Spec.NeedsConsolePluginDeployment(hasPluginAPI) {
+		if lokiStatus != nil && lokiStatus.Status == status.StatusFailure &&
+			(lokiStatus.Reason == lokistack.LokiStackAPIMissing || lokiStatus.Reason == lokistack.LokiCantFetchLokiStack) {
+			// If LokiStack is missing, turn off TLS config; queries will fail anyway, but we don't want to try mounting
+			// the missing certificates, as it prevents the console plugin pod to start.
+			lokiCopy := *r.Loki
+			lokiCopy.LokiManualParams.TLS.Enable = false
+			lokiCopy.LokiManualParams.StatusTLS.Enable = false
+			r.Loki = &lokiCopy
+			r.Status.SetDegraded("LokiStackMissing", "LokiStack is missing, can't mount certificates")
+		}
+
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.PluginName)
 

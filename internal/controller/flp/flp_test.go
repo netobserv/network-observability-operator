@@ -159,14 +159,14 @@ func monoBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) monolithBuilder 
 }
 
 func monoBuilderWithMetrics(ns string, cfg *flowslatest.FlowCollectorSpec, metrics *metricslatest.FlowMetricList) monolithBuilder {
-	loki := helper.NewLokiConfig(&cfg.Loki, "any", nil)
+	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
 	b, _ := newMonolithBuilder(info.NewInstance(image, status.Instance{}), cfg, metrics, nil, nil)
 	return b
 }
 
 func transfBuilder(ns string, cfg *flowslatest.FlowCollectorSpec) transfoBuilder {
-	loki := helper.NewLokiConfig(&cfg.Loki, "any", nil)
+	loki := helper.NewLokiConfig(&cfg.Loki, "any")
 	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
 	b, _ := newTransfoBuilder(info.NewInstance(image, status.Instance{}), cfg, &metricslatest.FlowMetricList{}, nil, nil)
 	return b

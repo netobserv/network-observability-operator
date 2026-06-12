@@ -4,19 +4,13 @@ import (
 	"fmt"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
-	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
-)
-
-const (
-	LokiStackAPIMissing    = "LokiStackAPIMissing"
-	LokiCantFetchLokiStack = "CantFetchLokiStack"
 )
 
 type LokiConfig struct {
 	flowslatest.LokiManualParams
 }
 
-func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string, lokiStatus *status.ComponentStatus) LokiConfig {
+func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiConfig {
 	loki := LokiConfig{}
 	switch spec.Mode {
 	case flowslatest.LokiModeLokiStack:
@@ -57,12 +51,6 @@ func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string, lokiSt
 					CertKey:   "tls.key",
 				},
 			},
-		}
-		if lokiStatus != nil && (lokiStatus.Reason == LokiStackAPIMissing || lokiStatus.Reason == LokiCantFetchLokiStack) {
-			// If LokiStack is missing, turn off TLS config; queries will fail anyway, but we don't want to try mounting
-			// the missing certificates, as it prevents the console plugin pod to start.
-			loki.LokiManualParams.TLS.Enable = false
-			loki.LokiManualParams.StatusTLS.Enable = false
 		}
 
 	case flowslatest.LokiModeMonolithic:

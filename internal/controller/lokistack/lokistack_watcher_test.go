@@ -57,10 +57,10 @@ func TestCheckLoki_Disabled(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusUnused,
-		Reason:  "ComponentUnused",
-		Message: "Loki is disabled",
+		Name:     status.LokiStack,
+		Status:   status.StatusUnused,
+		Reason:   "ComponentUnused",
+		Messages: []string{"Loki is disabled"},
 	}, st)
 }
 
@@ -78,10 +78,10 @@ func TestCheckLoki_NotLokiStackMode(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusUnused,
-		Reason:  "ComponentUnused",
-		Message: "Loki is not configured in LokiStack mode",
+		Name:     status.LokiStack,
+		Status:   status.StatusUnused,
+		Reason:   "ComponentUnused",
+		Messages: []string{"Loki is not configured in LokiStack mode"},
 	}, st)
 }
 
@@ -110,10 +110,10 @@ func TestCheckLoki_LokiStackNotFound(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusFailure,
-		Reason:  "CantFetchLokiStack",
-		Message: ` "loki" not found`,
+		Name:     status.LokiStack,
+		Status:   status.StatusFailure,
+		Reason:   "CantFetchLokiStack",
+		Messages: []string{` "loki" not found`},
 	}, st)
 }
 
@@ -161,10 +161,10 @@ func TestCheckLoki_LokiStackNotReady(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusInProgress,
-		Reason:  "LokiStackNotReady",
-		Message: `LokiStack is not ready [name: loki, namespace: netobserv]: PendingComponents - Some components are still starting`,
+		Name:     status.LokiStack,
+		Status:   status.StatusInProgress,
+		Reason:   "LokiStackNotReady",
+		Messages: []string{`LokiStack is not ready [name: loki, namespace: netobserv]: PendingComponents - Some components are still starting`},
 	}, st)
 }
 
@@ -218,10 +218,10 @@ func TestCheckLoki_LokiStackWithErrorCondition(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusFailure,
-		Reason:  "LokiStackIssues",
-		Message: `LokiStack has issues [name: loki, namespace: netobserv]: StorageError: Cannot connect to S3 backend`,
+		Name:     status.LokiStack,
+		Status:   status.StatusFailure,
+		Reason:   "LokiStackIssues",
+		Messages: []string{`LokiStack has issues [name: loki, namespace: netobserv]: StorageError: Cannot connect to S3 backend`},
 	}, st)
 }
 
@@ -294,8 +294,8 @@ func TestCheckLoki_LokiStackWithWarningAndDegradedConditions(t *testing.T) {
 
 	assert.Equal(t, status.StatusFailure, st.Status)
 	assert.Equal(t, "LokiStackIssues", st.Reason)
-	assert.Contains(t, st.Message, "Missing object storage secret")
-	assert.Contains(t, st.Message, "The schema configuration does not contain the most recent schema version and needs an update")
+	assert.Contains(t, st.Message(), "Missing object storage secret")
+	assert.Contains(t, st.Message(), "The schema configuration does not contain the most recent schema version and needs an update")
 }
 
 func TestCheckLoki_LokiStackWithJustWarnings(t *testing.T) {
@@ -348,10 +348,10 @@ func TestCheckLoki_LokiStackWithJustWarnings(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusDegraded,
-		Reason:  "LokiStackWarnings",
-		Message: `LokiStack has warnings [name: loki, namespace: netobserv]: Warning: The schema configuration does not contain the most recent schema version`,
+		Name:     status.LokiStack,
+		Status:   status.StatusDegraded,
+		Reason:   "LokiStackWarnings",
+		Messages: []string{`LokiStack has warnings [name: loki, namespace: netobserv]: Warning: The schema configuration does not contain the most recent schema version`},
 	}, st)
 }
 
@@ -407,10 +407,10 @@ func TestCheckLoki_LokiStackComponentsWithFailedPods(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusInProgress,
-		Reason:  "LokiStackComponentIssues",
-		Message: `LokiStack components have issues [name: loki, namespace: netobserv]: Ingester has 2 failed pod(s): ingester-0, ingester-1; Querier has 1 pending pod(s): querier-0`,
+		Name:     status.LokiStack,
+		Status:   status.StatusInProgress,
+		Reason:   "LokiStackComponentIssues",
+		Messages: []string{`LokiStack components have issues [name: loki, namespace: netobserv]: Ingester has 2 failed pod(s): ingester-0, ingester-1; Querier has 1 pending pod(s): querier-0`},
 	}, st)
 }
 
@@ -469,10 +469,9 @@ func TestCheckLoki_LokiStackHealthy(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusReady,
-		Reason:  "",
-		Message: "",
+		Name:   status.LokiStack,
+		Status: status.StatusReady,
+		Reason: "",
 	}, st)
 }
 
@@ -521,10 +520,9 @@ func TestCheckLoki_CustomNamespace(t *testing.T) {
 	st := lsw.Reconcile(context.Background(), fc)
 
 	assert.Equal(t, status.ComponentStatus{
-		Name:    status.LokiStack,
-		Status:  status.StatusReady,
-		Reason:  "",
-		Message: "",
+		Name:   status.LokiStack,
+		Status: status.StatusReady,
+		Reason: "",
 	}, st)
 }
 

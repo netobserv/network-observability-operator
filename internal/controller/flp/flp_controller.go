@@ -102,7 +102,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		return ctrl.Result{}, nil
 	}
 
-	r.status.SetUnknown()
+	r.status.Reset()
 	defer r.status.Commit(ctx, r.Client)
 
 	err = r.reconcile(ctx, clh, fc)
@@ -136,7 +136,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 	ns := fc.Spec.GetNamespace()
 	r.currentNamespace = ns
 	previousNamespace := r.status.GetDeployedNamespace(fc)
-	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns, nil)
+	loki := helper.NewLokiConfig(&fc.Spec.Loki, ns)
 	cmn := r.newCommonInfo(clh, ns, &loki)
 
 	r.watcher.Reset(ns)
