@@ -198,8 +198,8 @@ func TestReplicaCounts(t *testing.T) {
 	assert.Equal(t, StatusReady, cs.Status)
 	assert.NotNil(t, cs.DesiredReplicas)
 	assert.NotNil(t, cs.ReadyReplicas)
-	assert.Equal(t, int32(5), cs.DesiredReplicas)
-	assert.Equal(t, int32(5), cs.ReadyReplicas)
+	assert.Equal(t, int32(5), *cs.DesiredReplicas)
+	assert.Equal(t, int32(5), *cs.ReadyReplicas)
 }
 
 func TestReplicaPreservationAcrossTransitions(t *testing.T) {
@@ -215,35 +215,35 @@ func TestReplicaPreservationAcrossTransitions(t *testing.T) {
 		},
 	})
 	cs := agent.Get()
-	require.Equal(t, int32(5), cs.DesiredReplicas)
+	require.Equal(t, int32(5), *cs.DesiredReplicas)
 
 	// Transition to failure: replicas should be preserved
 	agent.SetFailure("AgentKafkaError", "cannot connect to Kafka")
 	cs = agent.Get()
 	assert.Equal(t, StatusFailure, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas, "DesiredReplicas should survive failure transition")
-	assert.Equal(t, int32(5), cs.DesiredReplicas)
+	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 
 	// Transition to degraded: failure takes priority, replicas should still be preserved
 	agent.SetDegraded("SomeWarning", "non-critical issue")
 	cs = agent.Get()
 	assert.Equal(t, StatusFailure, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas, "DesiredReplicas should survive degraded transition")
-	assert.Equal(t, int32(5), cs.DesiredReplicas)
+	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 
 	// Transition to in-progress: failure takes priority, replicas should still be preserved
 	agent.SetNotReady("Updating", "rolling update in progress")
 	cs = agent.Get()
 	assert.Equal(t, StatusFailure, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas, "DesiredReplicas should survive in-progress transition")
-	assert.Equal(t, int32(5), cs.DesiredReplicas)
+	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 
 	// Transition back to ready: failure takes priority, replicas should still be preserved
 	agent.SetReady()
 	cs = agent.Get()
 	assert.Equal(t, StatusFailure, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas)
-	assert.Equal(t, int32(5), cs.DesiredReplicas)
+	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 }
 
 func TestDeploymentReplicaCounts(t *testing.T) {
@@ -267,8 +267,8 @@ func TestDeploymentReplicaCounts(t *testing.T) {
 	cs := plugin.Get()
 	assert.Equal(t, StatusReady, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas)
-	assert.Equal(t, int32(1), cs.DesiredReplicas)
-	assert.Equal(t, int32(1), cs.ReadyReplicas)
+	assert.Equal(t, int32(1), *cs.DesiredReplicas)
+	assert.Equal(t, int32(1), *cs.ReadyReplicas)
 }
 
 func TestDeploymentNotAvailable(t *testing.T) {
@@ -293,8 +293,8 @@ func TestDeploymentNotAvailable(t *testing.T) {
 	assert.Equal(t, StatusInProgress, cs.Status)
 	assert.Contains(t, cs.Message(), "not ready: 1/2")
 	require.NotNil(t, cs.DesiredReplicas)
-	assert.Equal(t, int32(2), cs.DesiredReplicas)
-	assert.Equal(t, int32(1), cs.ReadyReplicas)
+	assert.Equal(t, int32(2), *cs.DesiredReplicas)
+	assert.Equal(t, int32(1), *cs.ReadyReplicas)
 }
 
 func TestDeploymentNilSetsInProgress(t *testing.T) {
@@ -448,8 +448,8 @@ func TestToCRDStatusWithPodHealth(t *testing.T) {
 		Status:          StatusDegraded,
 		Reason:          "UnhealthyPods",
 		Messages:        []string{"2 CrashLoopBackOff (pod-a, pod-b)"},
-		DesiredReplicas: int32(5),
-		ReadyReplicas:   int32(3),
+		DesiredReplicas: ptr.To(int32(5)),
+		ReadyReplicas:   ptr.To(int32(3)),
 		podHealth: podHealthSummary{
 			unhealthyCount: 2,
 			issues:         "2 CrashLoopBackOff (pod-a, pod-b)",

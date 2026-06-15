@@ -36,8 +36,8 @@ type ComponentStatus struct {
 	Status          Status
 	Reason          string
 	Messages        []string
-	DesiredReplicas int32
-	ReadyReplicas   int32
+	DesiredReplicas *int32
+	ReadyReplicas   *int32
 	podHealth       podHealthSummary
 }
 
@@ -53,9 +53,11 @@ func (s *ComponentStatus) merge(other *ComponentStatus) *ComponentStatus {
 		merged.Reason = other.Reason
 	}
 	merged.Messages = append(merged.Messages, other.Messages...)
-	if other.DesiredReplicas > 0 {
-		merged.DesiredReplicas = other.DesiredReplicas
-		merged.ReadyReplicas = other.ReadyReplicas
+	if other.DesiredReplicas != nil {
+		merged.DesiredReplicas = ptr.To(*other.DesiredReplicas)
+	}
+	if other.ReadyReplicas != nil {
+		merged.ReadyReplicas = ptr.To(*other.ReadyReplicas)
 	}
 	if other.podHealth.unhealthyCount > 0 {
 		merged.podHealth = other.podHealth
@@ -106,9 +108,11 @@ func (s *ComponentStatus) toCRDStatus() *flowslatest.FlowCollectorComponentStatu
 		Reason:  s.Reason,
 		Message: s.Message(),
 	}
-	if s.DesiredReplicas > 0 {
-		cs.DesiredReplicas = ptr.To(s.DesiredReplicas)
-		cs.ReadyReplicas = ptr.To(s.ReadyReplicas)
+	if s.DesiredReplicas != nil {
+		cs.DesiredReplicas = ptr.To(*s.DesiredReplicas)
+	}
+	if s.ReadyReplicas != nil {
+		cs.ReadyReplicas = ptr.To(*s.ReadyReplicas)
 	}
 	cs.UnhealthyPodCount = s.podHealth.unhealthyCount
 	cs.PodIssues = s.podHealth.issues

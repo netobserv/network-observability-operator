@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -528,8 +529,8 @@ func (i *Instance) setDeploymentReplicas(d *appsv1.Deployment) {
 		if d.Spec.Replicas != nil {
 			desired = *d.Spec.Replicas
 		}
-		cs.DesiredReplicas = desired
-		cs.ReadyReplicas = d.Status.ReadyReplicas
+		cs.DesiredReplicas = ptr.To(desired)
+		cs.ReadyReplicas = ptr.To(d.Status.ReadyReplicas)
 		i.s.statuses.Store(i.cpnt, *cs)
 	}
 }
@@ -554,8 +555,8 @@ func (i *Instance) CheckDaemonSetProgress(ds *appsv1.DaemonSet) {
 func (i *Instance) setDaemonSetReplicas(ds *appsv1.DaemonSet) {
 	cs := i.s.getStatus(i.cpnt)
 	if cs != nil {
-		cs.DesiredReplicas = ds.Status.DesiredNumberScheduled
-		cs.ReadyReplicas = ds.Status.NumberReady
+		cs.DesiredReplicas = ptr.To(ds.Status.DesiredNumberScheduled)
+		cs.ReadyReplicas = ptr.To(ds.Status.NumberReady)
 		i.s.statuses.Store(i.cpnt, *cs)
 	}
 }
