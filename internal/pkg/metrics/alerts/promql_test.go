@@ -56,10 +56,10 @@ func TestPercentagePromQL(t *testing.T) {
 	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10", pql)
 
 	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "")
-	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10 < 20", pql)
+	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10 and 100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) < 20", pql)
 
 	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "10", "20", "2")
-	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])) > 2) > 10 < 20", pql)
+	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) > 10 and 100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m]))) < 20 and (sum(rate(my_total[1m]))) * avg(netobserv_agent_sampling_rate > 0) > 2", pql)
 
 	// Test recording mode (isRecording = true) - no threshold comparisons
 	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "", "", "")
@@ -72,7 +72,6 @@ func TestPercentagePromQL(t *testing.T) {
 	assert.NotContains(t, pql, "<", "recording rules should not have threshold comparisons")
 
 	pql = percentagePromQL("sum(rate(my_metric[1m]))", "sum(rate(my_total[1m]))", "", "20", "2")
-	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])) > 2)", pql)
-	assert.Contains(t, pql, "> 2", "recording rules should keep lowVolumeThreshold filter")
-	assert.NotContains(t, pql, "> 10", "recording rules should not have threshold comparison")
+	assert.Equal(t, "100 * (sum(rate(my_metric[1m]))) / (sum(rate(my_total[1m])))", pql)
+	assert.NotContains(t, pql, ">", "recording rules should not have threshold comparisons")
 }

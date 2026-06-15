@@ -55,35 +55,30 @@ func histogramQuantile(promQL promQLRate, groupBy flowslatest.HealthRuleGroupBy,
 }
 
 func percentagePromQL(promQLMetricSum, promQLTotalSum string, threshold, upperThreshold, lowVolumeThreshold string) string {
-	var lowVolumeThresholdPart string
-	if lowVolumeThreshold != "" {
-		lowVolumeThresholdPart = " > " + lowVolumeThreshold
-	}
+	percentageCalc := fmt.Sprintf("100 * (%s) / (%s)", promQLMetricSum, promQLTotalSum)
 
 	// For recording rules, return only the calculation without comparison
 	if threshold == "" {
-		return fmt.Sprintf(
-			"100 * (%s) / (%s%s)",
-			promQLMetricSum,
-			promQLTotalSum,
-			lowVolumeThresholdPart,
-		)
+		return percentageCalc
 	}
 
-	var upperThresholdPart string
+	var conditions []string
+	thresholdCondition := fmt.Sprintf("%s > %s", percentageCalc, threshold)
+	conditions = append(conditions, thresholdCondition)
+
 	if upperThreshold != "" {
-		upperThresholdPart = " < " + upperThreshold
+		upperCondition := fmt.Sprintf("%s < %s", percentageCalc, upperThreshold)
+		conditions = append(conditions, upperCondition)
 	}
 
-	// For alert rules, include the threshold comparison
-	return fmt.Sprintf(
-		"100 * (%s) / (%s%s) > %s%s",
-		promQLMetricSum,
-		promQLTotalSum,
-		lowVolumeThresholdPart,
-		threshold,
-		upperThresholdPart,
-	)
+	if lowVolumeThreshold != "" {
+		// Normalize sampled metric by multiplying with sampling rate to estimate real traffic
+		normalizedMetric := fmt.Sprintf("(%s) * avg(netobserv_agent_sampling_rate > 0)", promQLTotalSum)
+		volumeCondition := fmt.Sprintf("%s > %s", normalizedMetric, lowVolumeThreshold)
+		conditions = append(conditions, volumeCondition)
+	}
+
+	return strings.Join(conditions, " and ")
 }
 
 func baselineIncreasePromQL(promQLMetric, promQLBaseline string, threshold, upperThreshold string) string {
