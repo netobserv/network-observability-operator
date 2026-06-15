@@ -31,8 +31,8 @@ github.com/evanphx/json-patch/v5 v5.9.11 h1:/8HVnzMq13/3x9TPvjG08wUGqBTmZBsCWzjT
 github.com/evanphx/json-patch/v5 v5.9.11/go.mod h1:3j+LviiESTElxA4p3EMKAB9HXj3/XEtnUf6OZxqIQTM=
 github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2Wg=
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
-github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
-github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
+github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
+github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 github.com/fxamacker/cbor/v2 v2.9.0 h1:NpKPmjDBgUfBms6tr6JZkTHtfFGcMKsw3eGcmD/sapM=
 github.com/fxamacker/cbor/v2 v2.9.0/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/gkampitakis/ciinfo v0.3.2 h1:JcuOPk8ZU7nZQjdUhctuhQofk7BGHuIy0c9Ez8BNhXs=
@@ -147,8 +147,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f h1:KUppIJq7/+
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/netobserv/flowlogs-pipeline v1.11.4-community.0.20260521155724-7ee2fbbc7651 h1:tnreTWG+d9ojmczyhdX9gpzRThAKiu63UBdY+oMJFyk=
 github.com/netobserv/flowlogs-pipeline v1.11.4-community.0.20260521155724-7ee2fbbc7651/go.mod h1:iZYYJIMSaPd24fjZ+mcXH0NPt+ueDA797POWNOaiN2M=
-github.com/netobserv/netobserv-ebpf-agent v1.11.3-community.0.20260505134559-24f8cbea14ad h1:7yx3IMcPtcVyOvMcBhazFyLwdGx62Y73DzmNfYbIwZ4=
-github.com/netobserv/netobserv-ebpf-agent v1.11.3-community.0.20260505134559-24f8cbea14ad/go.mod h1:kWzhlhwQ5nPdgYwWmOisXZuxsA5f5qWt27hiCQfrH0s=
+github.com/netobserv/netobserv-ebpf-agent v1.11.4-community h1:797Q7UBYWL/5jl6eInvM8cD7ZKUzuRLHnkymTXsFqCQ=
+github.com/netobserv/netobserv-ebpf-agent v1.11.4-community/go.mod h1:ZEl39hOZywAQJaQWRGutchuU3T59gfBrEqUz6nfywI4=
 github.com/onsi/ginkgo/v2 v2.31.0 h1:GtuJos5DFUV9EerYJo8RhYxosYNGvOdDE5haKq6Grfs=
 github.com/onsi/ginkgo/v2 v2.31.0/go.mod h1:+aXOY+vzZ5mu2iI2HpTZUPmM//oQfsNFX6gU9kNcA44=
 github.com/onsi/gomega v1.41.0 h1:OwKp4pXNgVxf6sCplzYo794OFNuoL2q2SBMU5NSWOjA=
