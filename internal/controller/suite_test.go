@@ -34,11 +34,11 @@ var (
 	suiteContext *test.SuiteContext
 )
 
-func TestAPIs(t *testing.T) {
+func TestAPIsOCP(t *testing.T) {
 	// Uncomment and edit next line to run/debug from IDE (get the path by running: `bin/setup-envtest use 1.23 -p path`); you may need to override the test timeout in your settings.
 	// os.Setenv("KUBEBUILDER_ASSETS", "/home/jotak/.local/share/kubebuilder-envtest/k8s/1.23.5-linux-amd64")
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Controller Suite")
+	RunSpecs(t, "Controller Suite - OCP")
 }
 
 // go test ./... runs always Ginkgo test suites in parallel and they would interfere
@@ -54,7 +54,7 @@ var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 })
 
 var _ = BeforeSuite(func() {
-	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
+	ctx, k8sClient, suiteContext = test.PrepareOCPEnvTest(
 		Registerers,
 		"main-namespace",
 		[]string{

@@ -53,8 +53,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		return ctrl.Result{}, nil
 	}
 
-	r.status.Reset()
-	defer r.status.Commit(ctx, r.Client)
+	commit := r.status.Reset()
+	defer commit(ctx, r.Client)
 
 	hasNP, err := r.reconcile(ctx, clh, desired)
 	if err != nil {

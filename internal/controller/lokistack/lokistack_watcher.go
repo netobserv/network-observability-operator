@@ -67,7 +67,7 @@ func (lsw *Watcher) Reconcile(ctx context.Context, fc *flowslatest.FlowCollector
 	defer func() {
 		ret = lsw.status.Get()
 	}()
-	lsw.status.Reset()
+	_ = lsw.status.Reset()
 
 	if !fc.Spec.UseLoki() {
 		lsw.status.SetUnused("Loki is disabled")

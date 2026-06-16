@@ -489,8 +489,11 @@ func (i *Instance) SetReady() {
 	i.s.setReady(i.cpnt)
 }
 
-func (i *Instance) Reset() {
+func (i *Instance) Reset() func(ctx context.Context, c client.Client) {
 	i.s.reset(i.cpnt)
+	return func(ctx context.Context, c client.Client) {
+		i.s.Sync(ctx, c)
+	}
 }
 
 func (i *Instance) SetUnused(message string) {
@@ -624,8 +627,4 @@ func (i *Instance) Error(reason string, err error) error {
 
 func (i *Instance) HasFailure() bool {
 	return i.s.hasFailure(i.cpnt)
-}
-
-func (i *Instance) Commit(ctx context.Context, c client.Client) {
-	i.s.Sync(ctx, c)
 }

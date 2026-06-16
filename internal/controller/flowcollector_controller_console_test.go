@@ -423,7 +423,7 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should delete fake controller", func() {
 			dp := appsv1.Deployment{}
-			By("Retreive controller deployment")
+			By("Retrieve controller deployment")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, types.NamespacedName{
 					Name:      "netobserv-controller-manager",

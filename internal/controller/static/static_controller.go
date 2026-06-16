@@ -72,8 +72,8 @@ func (r *Reconciler) initReconcile(ctx context.Context) error {
 func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	ctx = log.IntoContext(ctx, clog)
 
-	r.status.Reset()
-	defer r.status.Commit(ctx, r.Client)
+	commit := r.status.Reset()
+	defer commit(ctx, r.Client)
 
 	if r.mgr.ClusterInfo.HasConsolePlugin() {
 		// Only deploy static plugin on OpenShift 4.15+

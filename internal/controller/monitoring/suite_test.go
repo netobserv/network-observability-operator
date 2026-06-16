@@ -33,7 +33,7 @@ var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 })
 
 var _ = BeforeSuite(func() {
-	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
+	ctx, k8sClient, suiteContext = test.PrepareOCPEnvTest(
 		[]manager.Registerer{Start},
 		"main-namespace",
 		[]string{"openshift-config-managed"},

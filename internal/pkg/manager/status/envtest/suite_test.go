@@ -1,5 +1,5 @@
 //nolint:revive
-package networkpolicy
+package envtest
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
+	controllers "github.com/netobserv/netobserv-operator/internal/controller"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
 
@@ -21,23 +21,29 @@ var (
 
 func TestAPIs(t *testing.T) {
 	// Uncomment and edit next line to run/debug from IDE (get the path by running: `bin/setup-envtest use 1.23 -p path`); you may need to override the test timeout in your settings.
-	// os.Setenv("KUBEBUILDER_ASSETS", "/home/jotak/.local/share/kubebuilder-envtest/k8s/1.23.5-linux-amd64")
+	//	os.Setenv("KUBEBUILDER_ASSETS", "/home/jotak/.local/share/kubebuilder-envtest/k8s/1.23.5-linux-amd64")
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Networkpolicy Controller Suite")
+	RunSpecs(t, "FlowCollector Status Test Suite")
 }
 
 // go test ./... runs always Ginkgo test suites in parallel and they would interfere
 // this way we make sure that both test sub-suites are executed serially
-var _ = Describe("Networkpolicy Controller", Ordered, Serial, func() {
-	ControllerSpecs()
+var _ = Describe("FlowCollector Status", Ordered, Serial, func() {
+	flowCollectorStatusSpecs()
 })
 
 var _ = BeforeSuite(func() {
-	ctx, k8sClient, suiteContext = test.PrepareOCPEnvTest(
-		[]manager.Registerer{Start},
-		"main-namespace",
-		[]string{"other-namespace"},
-		"..",
+	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
+		controllers.Registerers,
+		[]string{
+			// "openshift-network-operator",
+			// "openshift-config-managed",
+			// "loki-namespace",
+			// "kafka-exporter-namespace",
+			// "main-namespace",
+			// "main-namespace-privileged",
+		},
+		"../../..",
 	)
 })
 

@@ -61,7 +61,8 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	l := log.FromContext(ctx).WithName("web-console")
 	ctx = log.IntoContext(ctx, l)
 
-	defer r.Status.Commit(ctx, r.Client)
+	commit := r.Status.Reset()
+	defer commit(ctx, r.Client)
 
 	err := r.reconcile(ctx, desired, lokiStatus)
 	if err != nil {
