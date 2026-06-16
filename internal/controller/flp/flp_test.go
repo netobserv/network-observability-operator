@@ -39,6 +39,7 @@ var pullPolicy = corev1.PullIfNotPresent
 var minReplicas = int32(1)
 var maxReplicas = int32(5)
 var targetCPU = int32(75)
+var outputRecordTypes = flowslatest.LogTypeAll
 
 const testNamespace = "flp"
 

@@ -1,7 +1,8 @@
-//nolint:revive
-package controllers
+//nolint:revive,staticcheck
+package envtest
 
 import (
+	"context"
 	"time"
 
 	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
@@ -12,10 +13,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
-	. "github.com/netobserv/netobserv-operator/internal/controller/controllerstest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 	"github.com/netobserv/netobserv-operator/internal/pkg/watchers"
 )
@@ -28,7 +29,13 @@ var (
 )
 
 // nolint:cyclop
-func flowCollectorCertificatesSpecs() {
+func FlowCollectorCertificatesSpecs(env test.Environment, ctxGetter test.ContextGetter) {
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
+
 	const operatorNamespace = "main-namespace"
 	crKey := types.NamespacedName{
 		Name: "cluster",
@@ -102,14 +109,6 @@ func flowCollectorCertificatesSpecs() {
 	}
 	expectedKafkaSaslHash1, _ := sw.GetDigest(&kafka2Sasl, []string{"username"}) // hlEvyw==
 	expectedKafkaSaslHash2, _ := sw.GetDigest(&kafka2Sasl, []string{"password"}) // FOs6Rg==
-
-	BeforeEach(func() {
-		// Add any setup steps that needs to be executed before each test
-	})
-
-	AfterEach(func() {
-		// Add any teardown steps that needs to be executed after each test
-	})
 
 	agent := appsv1.DaemonSet{}
 	flp := appsv1.Deployment{}
@@ -283,19 +282,22 @@ func flowCollectorCertificatesSpecs() {
 				"flows.netobserv.io/watched-kafka-user="+expectedKafkaUserHash,
 			))
 
+			expectedVolumes := []string{
+				"config-volume",
+				"loki-certs-ca",
+				"loki-status-certs-ca",
+				"loki-status-certs-user",
+			}
+			if env == test.EnvOpenShift {
+				expectedVolumes = append(expectedVolumes, "netobserv-plugin-cert")
+			}
 			By("Expecting Loki certificate for Plugin mounted")
 			Eventually(func() interface{} {
 				if err := k8sClient.Get(ctx, pluginKey, &plugin); err != nil {
 					return err
 				}
 				return test.VolumeNames(plugin.Spec.Template.Spec.Volumes)
-			}, timeout, interval).Should(ContainElements(
-				"netobserv-plugin-cert",
-				"config-volume",
-				"loki-certs-ca",
-				"loki-status-certs-ca",
-				"loki-status-certs-user",
-			))
+			}, timeout, interval).Should(ContainElements(expectedVolumes))
 			Expect(plugin.Spec.Template.Annotations).To(HaveLen(1))
 
 			By("Expecting Loki and Kafka certificates for FLP mounted")
@@ -479,7 +481,7 @@ func flowCollectorCertificatesSpecs() {
 		It("Should be garbage collected", func() {
 			// Retrieve CR to get its UID
 			By("Getting the CR")
-			flowCR := getCR(crKey)
+			flowCR := test.GetCR(ctx, k8sClient, crKey)
 
 			By("Expecting flowlogs-pipeline deployment to be garbage collected")
 			Eventually(func() interface{} {
@@ -506,7 +508,7 @@ func flowCollectorCertificatesSpecs() {
 
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
-			cleanupCR(crKey)
+			test.CleanupCR(ctx, k8sClient, crKey)
 		})
 	})
 }

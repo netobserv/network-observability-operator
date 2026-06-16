@@ -34,15 +34,10 @@ var _ = Describe("FlowCollector Status", Ordered, Serial, func() {
 
 var _ = BeforeSuite(func() {
 	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
+		test.EnvVanillaNaked,
 		controllers.Registerers,
-		[]string{
-			// "openshift-network-operator",
-			// "openshift-config-managed",
-			// "loki-namespace",
-			// "kafka-exporter-namespace",
-			// "main-namespace",
-			// "main-namespace-privileged",
-		},
+		"main-namespace",
+		nil,
 		"../../..",
 	)
 })

@@ -1,7 +1,8 @@
-//nolint:revive
-package controllers
+//nolint:revive,staticcheck
+package envtest
 
 import (
+	"context"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -11,25 +12,24 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
 
 // nolint:cyclop
-func flowCollectorIsoSpecs() {
+func FlowCollectorIsoSpecs(ctxGetter test.ContextGetter) {
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
+
 	const operatorNamespace = "main-namespace"
 	crKey := types.NamespacedName{
 		Name: "cluster",
 	}
-
-	BeforeEach(func() {
-		// Add any setup steps that needs to be executed before each test
-	})
-
-	AfterEach(func() {
-		// Add any teardown steps that needs to be executed after each test
-	})
 
 	// This aims to verify that the CRD is preserved / unchanged upon successive serialization/deserialization
 	// A typical pitfall is go's empty values messing up with CRD-defined default values, e.g:
@@ -256,7 +256,7 @@ func flowCollectorIsoSpecs() {
 
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
-			cleanupCR(crKey)
+			test.CleanupCR(ctx, k8sClient, crKey)
 		})
 	})
 }

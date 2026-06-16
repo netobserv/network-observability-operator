@@ -1,4 +1,4 @@
-package controllerstest
+package envtest
 
 import (
 	"fmt"

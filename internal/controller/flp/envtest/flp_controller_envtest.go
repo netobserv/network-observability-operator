@@ -1,7 +1,8 @@
-//nolint:revive
-package flp
+//nolint:revive,staticcheck
+package envtest
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
-	. "github.com/netobserv/netobserv-operator/internal/controller/controllerstest"
+	. "github.com/netobserv/netobserv-operator/internal/controller/envtest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/resources"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
@@ -30,23 +31,21 @@ const (
 	conntrackEndTimeout         = 10 * time.Second
 	conntrackTerminatingTimeout = 5 * time.Second
 	conntrackHeartbeatInterval  = 30 * time.Second
+	transfoShortName            = constants.FLPShortName + "transfo"
 )
 
 var (
 	outputRecordTypes = flowslatest.LogTypeAll
-	updateCR          = func(key types.NamespacedName, updater func(*flowslatest.FlowCollector)) {
-		test.UpdateCR(ctx, k8sClient, key, updater)
-	}
-	getCR = func(key types.NamespacedName) *flowslatest.FlowCollector {
-		return test.GetCR(ctx, k8sClient, key)
-	}
-	cleanupCR = func(key types.NamespacedName) {
-		test.CleanupCR(ctx, k8sClient, key)
-	}
 )
 
 // nolint:cyclop
-func ControllerSpecs() {
+func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
+
 	const operatorNamespace = "main-namespace"
 	crKey := types.NamespacedName{
 		Name: "cluster",
@@ -56,13 +55,13 @@ func ControllerSpecs() {
 		Namespace: operatorNamespace,
 	}
 	flpKeyKafkaTransformer := types.NamespacedName{
-		Name:      transfoName,
+		Name:      constants.FLPTransfoName,
 		Namespace: operatorNamespace,
 	}
-	rbKeyConfigWatcherMono := types.NamespacedName{Name: resources.GetRoleBindingName(monoShortName, constants.ConfigWatcherRole), Namespace: operatorNamespace}
-	rbKeyHostNetworkMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(monoShortName, constants.HostNetworkRole)}
-	rbKeyLokiWriterMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(monoShortName, constants.LokiWriterRole)}
-	rbKeyInformerMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(monoShortName, constants.FLPInformersRole)}
+	rbKeyConfigWatcherMono := types.NamespacedName{Name: resources.GetRoleBindingName(constants.FLPShortName, constants.ConfigWatcherRole), Namespace: operatorNamespace}
+	rbKeyHostNetworkMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(constants.FLPShortName, constants.HostNetworkRole)}
+	rbKeyLokiWriterMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(constants.FLPShortName, constants.LokiWriterRole)}
+	rbKeyInformerMono := types.NamespacedName{Name: resources.GetClusterRoleBindingName(constants.FLPShortName, constants.FLPInformersRole)}
 	rbKeyConfigWatcherTransfo := types.NamespacedName{Name: resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole), Namespace: operatorNamespace}
 	rbKeyHostNetworkTransfo := types.NamespacedName{Name: resources.GetClusterRoleBindingName(transfoShortName, constants.HostNetworkRole)}
 	rbKeyLokiWriterTransfo := types.NamespacedName{Name: resources.GetClusterRoleBindingName(transfoShortName, constants.LokiWriterRole)}
@@ -70,14 +69,6 @@ func ControllerSpecs() {
 
 	// Created objects to cleanup
 	cleanupList := []client.Object{}
-
-	BeforeEach(func() {
-		// Add any setup steps that needs to be executed before each test
-	})
-
-	AfterEach(func() {
-		// Add any teardown steps that needs to be executed after each test
-	})
 
 	Context("Deploying as DaemonSet", func() {
 		var digest string
@@ -148,13 +139,15 @@ func ControllerSpecs() {
 			Expect(rb1.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
 			Expect(rb1.RoleRef.Name).Should(Equal("netobserv-config-watcher"))
 
-			rb2 := rbacv1.ClusterRoleBinding{}
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyHostNetworkMono, &rb2)
-			}, timeout, interval).Should(Succeed())
-			Expect(rb2.Subjects).Should(HaveLen(1))
-			Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
-			Expect(rb2.RoleRef.Name).Should(Equal("netobserv-hostnetwork"))
+			if env == test.EnvOpenShift {
+				rb2 := rbacv1.ClusterRoleBinding{}
+				Eventually(func() interface{} {
+					return k8sClient.Get(ctx, rbKeyHostNetworkMono, &rb2)
+				}, timeout, interval).Should(Succeed())
+				Expect(rb2.Subjects).Should(HaveLen(1))
+				Expect(rb2.Subjects[0].Name).Should(Equal("flowlogs-pipeline"))
+				Expect(rb2.RoleRef.Name).Should(Equal("netobserv-hostnetwork"))
+			}
 
 			rb3 := rbacv1.ClusterRoleBinding{}
 			Eventually(func() interface{} {
@@ -194,7 +187,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should update successfully", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
@@ -267,7 +260,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Advanced = &flowslatest.AdvancedLokiConfig{
 					WriteMaxRetries: ptr.To(int32(7)),
 				}
@@ -285,7 +278,7 @@ func ControllerSpecs() {
 
 	Context("With Kafka", func() {
 		It("Should update kafka config successfully", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.DeploymentModel = flowslatest.DeploymentModelKafka
 				fc.Spec.Kafka = flowslatest.FlowCollectorKafka{
 					Address: "localhost:9092",
@@ -365,7 +358,7 @@ func ControllerSpecs() {
 	Context("Adding auto-scaling", func() {
 		hpa := ascv2.HorizontalPodAutoscaler{}
 		It("Should update with HPA", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.KafkaConsumerAutoscaler = flowslatest.FlowCollectorHPA{
 					Status:      flowslatest.HPAStatusEnabled,
 					MinReplicas: ptr.To(int32(1)),
@@ -395,7 +388,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should autoscale when the HPA options change", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Processor.KafkaConsumerAutoscaler.MinReplicas = ptr.To(int32(2))
 				fc.Spec.Processor.KafkaConsumerAutoscaler.MaxReplicas = 2
 			})
@@ -418,7 +411,7 @@ func ControllerSpecs() {
 
 	Context("Back without Kafka", func() {
 		It("Should remove kafka config successfully", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.DeploymentModel = flowslatest.DeploymentModelDirect
 			})
 		})
@@ -441,8 +434,6 @@ func ControllerSpecs() {
 	Context("Checking monitoring resources", func() {
 		It("Should create desired objects when they're not found (e.g. case of an operator upgrade)", func() {
 			psvc := v1.Service{}
-			sm := monitoringv1.ServiceMonitor{}
-			pr := monitoringv1.PrometheusRule{}
 			By("Expecting prometheus service to exist")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, types.NamespacedName{
@@ -451,59 +442,64 @@ func ControllerSpecs() {
 				}, &psvc)
 			}, timeout, interval).Should(Succeed())
 
-			By("Expecting ServiceMonitor to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-monitor",
-					Namespace: operatorNamespace,
-				}, &sm)
-			}, timeout, interval).Should(Succeed())
+			if env != test.EnvVanillaNaked {
+				sm := monitoringv1.ServiceMonitor{}
+				pr := monitoringv1.PrometheusRule{}
 
-			By("Expecting PrometheusRule to exist and be updated")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-alert",
-					Namespace: operatorNamespace,
-				}, &pr)
-			}, timeout, interval).Should(Succeed())
-			Expect(pr.Spec.Groups).Should(HaveLen(1))
-			Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(9))
+				By("Expecting ServiceMonitor to exist")
+				Eventually(func() interface{} {
+					return k8sClient.Get(ctx, types.NamespacedName{
+						Name:      "flowlogs-pipeline-monitor",
+						Namespace: operatorNamespace,
+					}, &sm)
+				}, timeout, interval).Should(Succeed())
 
-			// Manually delete ServiceMonitor
-			By("Deleting ServiceMonitor")
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &sm)
-			}, timeout, interval).Should(Succeed())
+				By("Expecting PrometheusRule to exist and be updated")
+				Eventually(func() interface{} {
+					return k8sClient.Get(ctx, types.NamespacedName{
+						Name:      "flowlogs-pipeline-alert",
+						Namespace: operatorNamespace,
+					}, &pr)
+				}, timeout, interval).Should(Succeed())
+				Expect(pr.Spec.Groups).Should(HaveLen(1))
+				Expect(pr.Spec.Groups[0].Rules).Should(HaveLen(9))
 
-			// Do a dummy change that will trigger reconcile, and make sure SM is created again
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.LogLevel = "trace"
-			})
-			By("Expecting ServiceMonitor to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-monitor",
-					Namespace: operatorNamespace,
-				}, &sm)
-			}, timeout, interval).Should(Succeed())
+				// Manually delete ServiceMonitor
+				By("Deleting ServiceMonitor")
+				Eventually(func() error {
+					return k8sClient.Delete(ctx, &sm)
+				}, timeout, interval).Should(Succeed())
 
-			// Manually delete Rule
-			By("Deleting prom rule")
-			Eventually(func() error {
-				return k8sClient.Delete(ctx, &pr)
-			}, timeout, interval).Should(Succeed())
+				// Do a dummy change that will trigger reconcile, and make sure SM is created again
+				test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
+					fc.Spec.Processor.LogLevel = "trace"
+				})
+				By("Expecting ServiceMonitor to exist")
+				Eventually(func() interface{} {
+					return k8sClient.Get(ctx, types.NamespacedName{
+						Name:      "flowlogs-pipeline-monitor",
+						Namespace: operatorNamespace,
+					}, &sm)
+				}, timeout, interval).Should(Succeed())
 
-			// Do a dummy change that will trigger reconcile, and make sure Rule is created again
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.LogLevel = "debug"
-			})
-			By("Expecting PrometheusRule to exist")
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, types.NamespacedName{
-					Name:      "flowlogs-pipeline-alert",
-					Namespace: operatorNamespace,
-				}, &pr)
-			}, timeout, interval).Should(Succeed())
+				// Manually delete Rule
+				By("Deleting prom rule")
+				Eventually(func() error {
+					return k8sClient.Delete(ctx, &pr)
+				}, timeout, interval).Should(Succeed())
+
+				// Do a dummy change that will trigger reconcile, and make sure Rule is created again
+				test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
+					fc.Spec.Processor.LogLevel = "debug"
+				})
+				By("Expecting PrometheusRule to exist")
+				Eventually(func() interface{} {
+					return k8sClient.Get(ctx, types.NamespacedName{
+						Name:      "flowlogs-pipeline-alert",
+						Namespace: operatorNamespace,
+					}, &pr)
+				}, timeout, interval).Should(Succeed())
+			}
 		})
 	})
 
@@ -520,7 +516,7 @@ func ControllerSpecs() {
 			}
 			cleanupList = append(cleanupList, cm)
 			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
 				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: true,
@@ -546,7 +542,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should restore no TLS config", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
@@ -574,7 +570,7 @@ func ControllerSpecs() {
 			}
 			cleanupList = append(cleanupList, cm)
 			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeMicroservices
 				fc.Spec.Loki.Microservices = flowslatest.LokiMicroservicesParams{
 					IngesterURL: "http://loki-ingested:3100/",
@@ -604,7 +600,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should restore no TLS config", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Microservices.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
@@ -632,7 +628,7 @@ func ControllerSpecs() {
 			}
 			cleanupList = append(cleanupList, cm)
 			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeMonolithic
 				fc.Spec.Loki.Monolithic = flowslatest.LokiMonolithParams{
 					InstallDemoLoki: ptr.To(false),
@@ -662,7 +658,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should restore no TLS config", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Monolithic.TLS = flowslatest.ClientTLS{
 					Enable: false,
 				}
@@ -690,7 +686,7 @@ func ControllerSpecs() {
 			}
 			cleanupList = append(cleanupList, cm)
 			Expect(k8sClient.Create(ctx, cm)).Should(Succeed())
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeLokiStack
 				fc.Spec.Loki.LokiStack = flowslatest.LokiStackRef{
 					Name:      "lokistack",
@@ -721,7 +717,7 @@ func ControllerSpecs() {
 		})
 
 		It("Should restore no TLS config in manual mode", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Loki.Mode = flowslatest.LokiModeManual
 				fc.Spec.Loki.Manual.TLS = flowslatest.ClientTLS{
 					Enable: false,
@@ -741,7 +737,7 @@ func ControllerSpecs() {
 		It("Should be garbage collected", func() {
 			// Retrieve CR to get its UID
 			By("Getting the CR")
-			flowCR := getCR(crKey)
+			flowCR := test.GetCR(ctx, k8sClient, crKey)
 
 			By("Expecting flowlogs-pipeline daemonset to be garbage collected")
 			Eventually(func() interface{} {
@@ -771,7 +767,7 @@ func ControllerSpecs() {
 
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
-			cleanupCR(crKey)
+			test.CleanupCR(ctx, k8sClient, crKey)
 		})
 
 		It("Should cleanup other data", func() {

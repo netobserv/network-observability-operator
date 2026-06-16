@@ -1,7 +1,12 @@
-//nolint:revive
-package flp
+//nolint:revive,staticcheck
+package envtest
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
+	"sort"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
@@ -10,18 +15,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/strings/slices"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
+	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/flp/fmstatus"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper/cardinality"
+	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
 
 // nolint:cyclop
-func ControllerFlowMetricsSpecs() {
+func ControllerFlowMetricsSpecs(ctxGetter test.ContextGetter) {
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
+
 	const operatorNamespace = "main-namespace"
 	const otherNamespace = "other-namespace"
 	crKey := types.NamespacedName{
@@ -81,14 +95,6 @@ func ControllerFlowMetricsSpecs() {
 			Type:       metricslatest.CounterMetric,
 		},
 	}
-
-	BeforeEach(func() {
-		// Add any setup steps that needs to be executed before each test
-	})
-
-	AfterEach(func() {
-		// Add any teardown steps that needs to be executed after each test
-	})
 
 	Context("Deploying default FLP", func() {
 		ds := appsv1.DaemonSet{}
@@ -233,7 +239,30 @@ func ControllerFlowMetricsSpecs() {
 
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
-			cleanupCR(crKey)
+			test.CleanupCR(ctx, k8sClient, crKey)
 		})
 	})
+}
+
+func getConfiguredMetrics(cm *v1.ConfigMap) (api.MetricsItems, error) {
+	var cfs config.Root
+	err := json.Unmarshal([]byte(cm.Data["config.json"]), &cfs)
+	if err != nil {
+		return nil, err
+	}
+	for _, stage := range cfs.Parameters {
+		if stage.Encode != nil && stage.Encode.Type == "prom" {
+			return stage.Encode.Prom.Metrics, nil
+		}
+	}
+	return nil, errors.New("prom encode stage not found")
+}
+
+func getSortedMetricsNames(m []api.MetricsItem) []string {
+	ret := []string{}
+	for i := range m {
+		ret = append(ret, m[i].Name)
+	}
+	sort.Strings(ret)
+	return ret
 }

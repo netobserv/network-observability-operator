@@ -1,5 +1,5 @@
 //nolint:revive
-package monitoring
+package vanillafs
 
 import (
 	"context"
@@ -9,8 +9,14 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/netobserv/netobserv-operator/internal/controller/networkpolicy"
+	"github.com/netobserv/netobserv-operator/internal/controller/networkpolicy/envtest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
+)
+
+const (
+	env = test.EnvVanillaFullStack
 )
 
 var (
@@ -19,26 +25,27 @@ var (
 	suiteContext *test.SuiteContext
 )
 
-func TestAPIs(t *testing.T) {
+func TestAPIsVanillaFullStack(t *testing.T) {
 	// Uncomment and edit next line to run/debug from IDE (get the path by running: `bin/setup-envtest use 1.23 -p path`); you may need to override the test timeout in your settings.
 	// os.Setenv("KUBEBUILDER_ASSETS", "/home/jotak/.local/share/kubebuilder-envtest/k8s/1.23.5-linux-amd64")
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Monitoring Controller Suite")
+	RunSpecs(t, "Networkpolicy Controller Suite - Vanilla Full Stack")
 }
 
 // go test ./... runs always Ginkgo test suites in parallel and they would interfere
 // this way we make sure that both test sub-suites are executed serially
-var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
-	ControllerSpecs()
+var _ = Describe("Networkpolicy Controller - Vanilla Full Stack", Ordered, Serial, func() {
+	ctxGetter := func() (context.Context, client.Client) { return ctx, k8sClient }
+	envtest.ControllerSpecs(ctxGetter)
 })
 
 var _ = BeforeSuite(func() {
 	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
-		test.EnvOpenShift,
-		[]manager.Registerer{Start},
+		env,
+		[]manager.Registerer{networkpolicy.Start},
 		"main-namespace",
-		[]string{"openshift-config-managed"},
-		"..",
+		[]string{"other-namespace"},
+		"../../..",
 	)
 })
 

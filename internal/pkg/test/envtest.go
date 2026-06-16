@@ -52,17 +52,27 @@ const (
 	Interval = 1 * time.Second
 )
 
+type Environment int
+
+const (
+	EnvVanillaNaked Environment = iota
+	EnvVanillaFullStack
+	EnvOpenShift
+)
+
 type SuiteContext struct {
 	testEnv    *envtest.Environment
 	cancel     context.CancelFunc
 	kubeConfig string
 }
 
-func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, basePath string) (context.Context, client.Client, *SuiteContext) {
+type ContextGetter func() (context.Context, client.Client)
+
+func PrepareEnvTest(env Environment, controllers []manager.Registerer, opNamespace string, namespaces []string, basePath string) (context.Context, client.Client, *SuiteContext) {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel := context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment (vanilla)")
+	By("bootstrapping test environment")
 	testEnv := &envtest.Environment{
 		Scheme: scheme.Scheme,
 		CRDInstallOptions: envtest.CRDInstallOptions{
@@ -70,7 +80,6 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 				// Hack to reintroduce when the API stored version != latest version: comment-out config/crd/bases and use hack instead; see also Makefile "hack-crd-for-test"
 				filepath.Join(basePath, "..", "..", "config", "crd", "bases"),
 				// filepath.Join(basePath, "..", "hack"),
-				filepath.Join(basePath, "..", "..", "test-assets"),
 			},
 			CleanUpAfterUse: true,
 			WebhookOptions: envtest.WebhookInstallOptions{
@@ -81,114 +90,20 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 		},
 		ErrorIfCRDPathMissing: true,
 	}
-
-	cfg, err := testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(cfg).NotTo(BeNil())
-
-	kubeConfig, err := writeKubeConfig(testEnv)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = flowsv1beta2.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = metricsv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = slicesv1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = corev1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = apiregv1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = monitoringv1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = lokiv1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(k8sClient).NotTo(BeNil())
-
-	for _, ns := range namespaces {
-		err := k8sClient.Create(ctx, &corev1.Namespace{
-			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: ns},
-		})
-		Expect(err).NotTo(HaveOccurred())
-	}
-
-	k8sManager, err := manager.NewManager(
-		ctx,
-		cfg,
-		&manager.Config{
-			EBPFAgentImage:        "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-ebpf-agent@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
-			FlowlogsPipelineImage: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
-			ConsolePluginImageVariants: []manager.ConsolePluginImageVariant{
-				{Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e", MinVersion: "4.14.0"},
-			},
-			DownstreamDeployment: false,
-			Namespace:            "main-namespace",
-		},
-		&ctrl.Options{
-			Scheme: scheme.Scheme,
-			Metrics: server.Options{
-				BindAddress: "0", // disable
-			},
-		},
-		controllers,
-	)
-
-	Expect(err).ToNot(HaveOccurred())
-	Expect(k8sManager).NotTo(BeNil())
-
-	err = helper.SetCRDForTests(filepath.Join(basePath, "..", ".."))
-	Expect(err).NotTo(HaveOccurred())
-
-	go func() {
-		defer GinkgoRecover()
-		err = k8sManager.Start(ctx)
-		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
-	}()
-
-	return ctx, k8sClient, &SuiteContext{
-		testEnv:    testEnv,
-		cancel:     cancel,
-		kubeConfig: kubeConfig,
-	}
-}
-
-func PrepareOCPEnvTest(controllers []manager.Registerer, opNamespace string, namespaces []string, basePath string) (context.Context, client.Client, *SuiteContext) {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-	ctx, cancel := context.WithCancel(context.TODO())
-
-	By("bootstrapping test environment (OCP)")
-	testEnv := &envtest.Environment{
-		Scheme: scheme.Scheme,
-		CRDInstallOptions: envtest.CRDInstallOptions{
-			Paths: []string{
-				// Hack to reintroduce when the API stored version != latest version: comment-out config/crd/bases and use hack instead; see also Makefile "hack-crd-for-test"
-				filepath.Join(basePath, "..", "..", "config", "crd", "bases"),
-				// filepath.Join(basePath, "..", "hack"),
-				// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
-				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "console", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "config", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "operator", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "security", "v1", "zz_generated.crd-manifests"),
-				filepath.Join(basePath, "..", "..", "test-assets"),
-			},
-			CleanUpAfterUse: true,
-			WebhookOptions: envtest.WebhookInstallOptions{
-				Paths: []string{
-					filepath.Join(basePath, "..", "..", "config", "webhook"),
-				},
-			},
-		},
-		ErrorIfCRDPathMissing: true,
+	switch env {
+	case EnvOpenShift:
+		// We need to install the ConsolePlugin CRD to test setup of our Network Console Plugin
+		testEnv.CRDInstallOptions.Paths = append(testEnv.CRDInstallOptions.Paths,
+			filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "console", "v1", "zz_generated.crd-manifests"),
+			filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "config", "v1", "zz_generated.crd-manifests"),
+			filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "operator", "v1", "zz_generated.crd-manifests"),
+			filepath.Join(basePath, "..", "..", "vendor", "github.com", "openshift", "api", "security", "v1", "zz_generated.crd-manifests"),
+			filepath.Join(basePath, "..", "..", "test-assets"),
+		)
+	case EnvVanillaFullStack:
+		testEnv.CRDInstallOptions.Paths = append(testEnv.CRDInstallOptions.Paths, filepath.Join(basePath, "..", "..", "test-assets"))
+	case EnvVanillaNaked:
+		// nothing more
 	}
 
 	cfg, err := testEnv.Start()
@@ -247,31 +162,9 @@ func PrepareOCPEnvTest(controllers []manager.Registerer, opNamespace string, nam
 		Expect(err).NotTo(HaveOccurred())
 	}
 
-	cv := &configv1.ClusterVersion{
-		ObjectMeta: metav1.ObjectMeta{Name: "version"},
-		Spec:       configv1.ClusterVersionSpec{ClusterID: "test-id"},
+	if env == EnvOpenShift {
+		setupOpenShiftClusterResources(ctx, k8sClient)
 	}
-	err = k8sClient.Create(ctx, cv)
-	Expect(err).NotTo(HaveOccurred())
-	cv.Status = configv1.ClusterVersionStatus{
-		History: []configv1.UpdateHistory{
-			{
-				State:       configv1.CompletedUpdate,
-				Version:     "4.20.0",
-				StartedTime: metav1.Now(),
-			},
-		},
-	}
-	err = k8sClient.Status().Update(ctx, cv)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = k8sClient.Create(ctx, &configv1.Network{
-		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
-		Spec: configv1.NetworkSpec{
-			NetworkType: "OVNKubernetes",
-		},
-	})
-	Expect(err).NotTo(HaveOccurred())
 
 	k8sManager, err := manager.NewManager(
 		ctx,
@@ -313,6 +206,34 @@ func PrepareOCPEnvTest(controllers []manager.Registerer, opNamespace string, nam
 		cancel:     cancel,
 		kubeConfig: kubeConfig,
 	}
+}
+
+func setupOpenShiftClusterResources(ctx context.Context, k8sClient client.Client) {
+	cv := &configv1.ClusterVersion{
+		ObjectMeta: metav1.ObjectMeta{Name: "version"},
+		Spec:       configv1.ClusterVersionSpec{ClusterID: "test-id"},
+	}
+	err := k8sClient.Create(ctx, cv)
+	Expect(err).NotTo(HaveOccurred())
+	cv.Status = configv1.ClusterVersionStatus{
+		History: []configv1.UpdateHistory{
+			{
+				State:       configv1.CompletedUpdate,
+				Version:     "4.20.0",
+				StartedTime: metav1.Now(),
+			},
+		},
+	}
+	err = k8sClient.Status().Update(ctx, cv)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = k8sClient.Create(ctx, &configv1.Network{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Spec: configv1.NetworkSpec{
+			NetworkType: "OVNKubernetes",
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
 }
 
 func writeKubeConfig(testEnv *envtest.Environment) (string, error) {

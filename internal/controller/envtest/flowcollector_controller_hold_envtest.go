@@ -1,21 +1,25 @@
-//nolint:revive
-package controllers
+//nolint:revive,staticcheck
+package envtest
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	sliceslatest "github.com/netobserv/netobserv-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
+	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
 
-func flowCollectorHoldModeSpecs() {
+func FlowCollectorHoldModeSpecs(ctxGetter test.ContextGetter) {
 	operatorNamespace := "namespace-hold-mode"
 	crKey := types.NamespacedName{Name: "cluster"}
 	agentKey := types.NamespacedName{
@@ -32,6 +36,12 @@ func flowCollectorHoldModeSpecs() {
 	}
 	nsKey := types.NamespacedName{Name: operatorNamespace}
 	privilegedNsKey := types.NamespacedName{Name: operatorNamespace + "-privileged"}
+
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
 
 	Context("Hold Mode", func() {
 		It("Should create resources when FlowCollector is deployed", func() {
@@ -118,7 +128,7 @@ func flowCollectorHoldModeSpecs() {
 		})
 
 		It("Should delete managed resources but preserve CRDs when hold mode is enabled", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				fc.Spec.Agent.EBPF.Privileged = true
 				fc.Spec.Execution.Mode = flowslatest.OnHold
 			})
@@ -183,7 +193,7 @@ func flowCollectorHoldModeSpecs() {
 			}
 
 			// Clean up FlowCollector
-			cleanupCR(crKey)
+			test.CleanupCR(ctx, k8sClient, crKey)
 		})
 	})
 }

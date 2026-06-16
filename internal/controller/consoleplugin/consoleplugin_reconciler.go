@@ -235,9 +235,13 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, de
 }
 
 func (r *CPReconciler) reconcileConfigMap(ctx context.Context, builder *builder, lokiStatus *status.ComponentStatus) (string, error) {
-	externalRecordingAnnotations, err := getExternalRecordingAnnotations(ctx, r.Client)
-	if err != nil {
-		return "", err
+	var externalRecordingAnnotations map[string]map[string]string
+	var err error
+	if r.ClusterInfo.HasPromRule() {
+		externalRecordingAnnotations, err = getExternalRecordingAnnotations(ctx, r.Client)
+		if err != nil {
+			return "", err
+		}
 	}
 	newCM, configDigest, err := builder.configMap(ctx, externalRecordingAnnotations, lokiStatus)
 	if err != nil {

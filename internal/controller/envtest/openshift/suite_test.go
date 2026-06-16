@@ -1,21 +1,5 @@
-/*
-Copyright 2021.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 //nolint:revive
-package controllers
+package openshift
 
 import (
 	"context"
@@ -25,7 +9,13 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	controllers "github.com/netobserv/netobserv-operator/internal/controller"
+	"github.com/netobserv/netobserv-operator/internal/controller/envtest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
+)
+
+const (
+	env = test.EnvOpenShift
 )
 
 var (
@@ -34,28 +24,30 @@ var (
 	suiteContext *test.SuiteContext
 )
 
-func TestAPIsOCP(t *testing.T) {
+func TestAPIsOpenShift(t *testing.T) {
 	// Uncomment and edit next line to run/debug from IDE (get the path by running: `bin/setup-envtest use 1.23 -p path`); you may need to override the test timeout in your settings.
 	// os.Setenv("KUBEBUILDER_ASSETS", "/home/jotak/.local/share/kubebuilder-envtest/k8s/1.23.5-linux-amd64")
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Controller Suite - OCP")
+	RunSpecs(t, "Controller Suite - OpenShift")
 }
 
 // go test ./... runs always Ginkgo test suites in parallel and they would interfere
 // this way we make sure that both test sub-suites are executed serially
-var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
-	flowCollectorConsolePluginSpecs()
-	flowCollectorEBPFSpecs()
-	flowCollectorEBPFKafkaSpecs()
-	flowCollectorMinimalSpecs()
-	flowCollectorIsoSpecs()
-	flowCollectorCertificatesSpecs()
-	flowCollectorHoldModeSpecs()
+var _ = Describe("FlowCollector Controller - OpenShift", Ordered, Serial, func() {
+	ctxGetter := func() (context.Context, client.Client) { return ctx, k8sClient }
+	envtest.FlowCollectorConsolePluginSpecs(env, ctxGetter)
+	envtest.FlowCollectorEBPFSpecs(ctxGetter)
+	envtest.FlowCollectorEBPFKafkaSpecs(ctxGetter)
+	envtest.FlowCollectorMinimalSpecs(ctxGetter)
+	envtest.FlowCollectorIsoSpecs(ctxGetter)
+	envtest.FlowCollectorCertificatesSpecs(env, ctxGetter)
+	envtest.FlowCollectorHoldModeSpecs(ctxGetter)
 })
 
 var _ = BeforeSuite(func() {
-	ctx, k8sClient, suiteContext = test.PrepareOCPEnvTest(
-		Registerers,
+	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
+		env,
+		controllers.Registerers,
 		"main-namespace",
 		[]string{
 			"openshift-network-operator",
@@ -64,7 +56,7 @@ var _ = BeforeSuite(func() {
 			"kafka-exporter-namespace",
 			"main-namespace-privileged",
 		},
-		".",
+		"../..",
 	)
 })
 
