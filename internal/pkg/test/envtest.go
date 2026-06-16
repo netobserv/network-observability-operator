@@ -58,7 +58,7 @@ type SuiteContext struct {
 	kubeConfig string
 }
 
-func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, basePath string) (context.Context, client.Client, *SuiteContext) {
+func PrepareEnvTest(controllers []manager.Registerer, opNamespace string, namespaces []string, basePath string) (context.Context, client.Client, *SuiteContext) {
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel := context.WithCancel(context.TODO())
 
@@ -134,6 +134,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	namespaces = append(namespaces, opNamespace)
 	for _, ns := range namespaces {
 		err := k8sClient.Create(ctx, &corev1.Namespace{
 			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
@@ -195,6 +196,8 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	err = helper.SetCRDForTests(filepath.Join(basePath, "..", ".."))
 	Expect(err).NotTo(HaveOccurred())
 
+	createFakeController(ctx, k8sClient, opNamespace)
+
 	go func() {
 		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
@@ -234,11 +237,11 @@ func TeardownEnvTest(suiteContext *SuiteContext) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func CreateFakeController(ctx context.Context, k8sClient client.Client) {
+func createFakeController(ctx context.Context, k8sClient client.Client, opNamespace string) {
 	created := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "netobserv-controller-manager",
-			Namespace: "main-namespace",
+			Namespace: opNamespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{

@@ -13,13 +13,12 @@ import (
 type NarrowSource struct {
 	source.Source
 	handler handler.EventHandler
-	onStart func(ctx context.Context, q workqueue.TypedRateLimitingInterface[reconcile.Request])
+	onStart func(ctx context.Context, q workqueue.TypedRateLimitingInterface[reconcile.Request]) error
 }
 
 func (s *NarrowSource) Start(ctx context.Context, q workqueue.TypedRateLimitingInterface[reconcile.Request]) error {
 	if s.handler == nil {
 		return errors.New("must specify NarrowSource.handler")
 	}
-	s.onStart(ctx, q)
-	return nil
+	return s.onStart(ctx, q)
 }

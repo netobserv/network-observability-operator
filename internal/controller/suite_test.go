@@ -29,10 +29,9 @@ import (
 )
 
 var (
-	namespacesToPrepare = []string{"openshift-network-operator", "openshift-config-managed", "loki-namespace", "kafka-exporter-namespace", "main-namespace", "main-namespace-privileged"}
-	ctx                 context.Context
-	k8sClient           client.Client
-	suiteContext        *test.SuiteContext
+	ctx          context.Context
+	k8sClient    client.Client
+	suiteContext *test.SuiteContext
 )
 
 func TestAPIs(t *testing.T) {
@@ -55,7 +54,18 @@ var _ = Describe("FlowCollector Controller", Ordered, Serial, func() {
 })
 
 var _ = BeforeSuite(func() {
-	ctx, k8sClient, suiteContext = test.PrepareEnvTest(Registerers, namespacesToPrepare, ".")
+	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
+		Registerers,
+		"main-namespace",
+		[]string{
+			"openshift-network-operator",
+			"openshift-config-managed",
+			"loki-namespace",
+			"kafka-exporter-namespace",
+			"main-namespace-privileged",
+		},
+		".",
+	)
 })
 
 var _ = AfterSuite(func() {
