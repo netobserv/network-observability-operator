@@ -322,7 +322,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 			}, timeout, interval).Should(Succeed())
 			Expect(svc.Spec.Ports).Should(HaveLen(1))
 			Expect(svc.Spec.Ports[0].Name).Should(Equal("k8scache"))
-			Expect(svc.Spec.Ports[0].Port).Should(Equal(int32(9090)))
+			Expect(svc.Spec.Ports[0].Port).Should(Equal(int32(9402)))
 
 			By("Expecting to create transformer flowlogs-pipeline role bindings")
 			rb1 := rbacv1.RoleBinding{}
