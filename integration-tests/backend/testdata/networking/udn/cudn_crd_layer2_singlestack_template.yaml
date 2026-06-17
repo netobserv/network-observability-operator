@@ -17,9 +17,8 @@ objects:
           role: "${ROLE}"
           subnets: ["${CIDR}"]
 parameters:
-- name: CRDNAME
-- name: LABELVALUE
-- name: LABELKEY
-- name: CIDR
-- name: ROLE
-
+  - name: CRDNAME
+  - name: LABELVALUE
+  - name: LABELKEY
+  - name: CIDR
+  - name: ROLE

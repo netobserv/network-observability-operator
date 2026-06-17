@@ -19,10 +19,9 @@ objects:
             - cidr: "${CIDR}"
               hostSubnet: ${{PREFIX}}
 parameters:
-- name: CRDNAME
-- name: LABELVALUE
-- name: LABELKEY
-- name: CIDR
-- name: PREFIX
-- name: ROLE
-
+  - name: CRDNAME
+  - name: LABELVALUE
+  - name: LABELKEY
+  - name: CIDR
+  - name: PREFIX
+  - name: ROLE

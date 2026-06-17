@@ -42,8 +42,8 @@ objects:
     spec:
       secretName: prov-flowlogs-pipeline-cert
       dnsNames:
-      - flowlogs-pipeline.${Namespace}.svc
-      - flowlogs-pipeline.${Namespace}.svc.cluster.local
+        - flowlogs-pipeline.${Namespace}.svc
+        - flowlogs-pipeline.${Namespace}.svc.cluster.local
       issuerRef:
         name: netobserv-issuer
         kind: Issuer

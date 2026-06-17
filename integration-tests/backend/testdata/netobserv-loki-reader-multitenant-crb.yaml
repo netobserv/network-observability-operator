@@ -12,9 +12,9 @@ objects:
       kind: ClusterRole
       name: netobserv-loki-reader
     subjects:
-    - kind: User
-      apiGroup: rbac.authorization.k8s.io
-      name: "${USERNAME}"
+      - kind: User
+        apiGroup: rbac.authorization.k8s.io
+        name: "${USERNAME}"
 parameters:
   - name: USERNAME
     required: true

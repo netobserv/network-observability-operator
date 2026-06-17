@@ -17,7 +17,7 @@ objects:
           sampling: ${{Sampling}}
           cacheActiveTimeout: ${EBPFCacheActiveTimeout}
           cacheMaxFlows: ${{CacheMaxFlows}}
-          interfaces: [ ]
+          interfaces: []
           excludeInterfaces: ["lo"]
           features: "${{EBPFeatures}}"
           logLevel: info
