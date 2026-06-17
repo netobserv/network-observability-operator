@@ -1,5 +1,5 @@
 //nolint:revive
-package vanillafs
+package vanilla
 
 import (
 	"context"

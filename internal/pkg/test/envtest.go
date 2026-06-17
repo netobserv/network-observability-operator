@@ -176,7 +176,7 @@ func PrepareEnvTest(env Environment, controllers []manager.Registerer, opNamespa
 				{Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e", MinVersion: "4.14.0"},
 			},
 			DownstreamDeployment: false,
-			Namespace:            "main-namespace",
+			Namespace:            opNamespace,
 		},
 		&ctrl.Options{
 			Scheme: scheme.Scheme,
