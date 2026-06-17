@@ -241,11 +241,7 @@ func (b *informerBuilder) serviceAccount() *corev1.ServiceAccount {
 
 // addTLSArgs configures TLS arguments for informers client
 func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, config *flowslatest.FlowCollectorCentralizedInformers) {
-	// Apply default TLS type if not specified
-	tlsType := flowslatest.TLSAuto
-	if config.TLS != nil {
-		tlsType = config.TLS.Type
-	}
+	tlsType := config.GetTLSType()
 
 	if tlsType == flowslatest.TLSDisabled {
 		return

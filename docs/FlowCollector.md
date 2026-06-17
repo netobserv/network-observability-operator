@@ -8515,8 +8515,11 @@ such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your 
         <td>object</td>
         <td>
           `centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
-This reduces load on the Kubernetes API server by having a single component (flowlogs-pipeline-informers) query the API instead of N FLP processors.
-When enabled, a dedicated `flowlogs-pipeline-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.<br/>
+This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
+When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+Benefits: Reduced API server load on large clusters with many FLP replicas.
+Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
+Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10606,8 +10609,11 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 
 
 `centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
-This reduces load on the Kubernetes API server by having a single component (flowlogs-pipeline-informers) query the API instead of N FLP processors.
-When enabled, a dedicated `flowlogs-pipeline-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
+When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+Benefits: Reduced API server load on large clusters with many FLP replicas.
+Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
+Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.
 
 <table>
     <thead>
@@ -10630,8 +10636,9 @@ When enabled, a dedicated `flowlogs-pipeline-informers` deployment is created th
         <td>boolean</td>
         <td>
           `enabled` controls whether to deploy centralized Kubernetes informers.
-When `true`, a dedicated `flowlogs-pipeline-informers` deployment watches K8s resources and pushes cache updates via gRPC to FLP processors.
-When `false`, each FLP processor uses local informers (previous behavior).<br/>
+When `true`, a dedicated deployment watches K8s resources and pushes cache updates via gRPC to FLP processors, reducing API server load.
+When `false` (default), each FLP processor uses local informers.
+Enable only on large clusters or when API server load is a concern, as it adds deployment complexity.<br/>
           <br/>
             <i>Default</i>: false<br/>
         </td>
@@ -10645,7 +10652,7 @@ For high availability, a minimum of 2 replicas is required when `enabled` is `tr
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 2<br/>
-            <i>Minimum</i>: 1<br/>
+            <i>Minimum</i>: 2<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10702,7 +10709,7 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
           `processorPort` defines the gRPC port where flowlogs-pipeline processors listen for k8s cache updates.<br/>
           <br/>
             <i>Format</i>: int32<br/>
-            <i>Default</i>: 9090<br/>
+            <i>Default</i>: 9402<br/>
             <i>Minimum</i>: 1<br/>
             <i>Maximum</i>: 65535<br/>
         </td>

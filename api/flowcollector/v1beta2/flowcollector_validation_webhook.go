@@ -278,7 +278,7 @@ func (v *validator) validateFLP() {
 	v.validateFLPMetricsForAlerts()
 	v.validateFLPMetricsIncludeLists()
 	v.validateFLPTLS()
-	v.validateInformers()
+	v.validatePortConflicts()
 }
 
 func (v *validator) validateScheduling() {
@@ -483,26 +483,55 @@ func (v *validator) validateFLPTLS() {
 	}
 }
 
-func (v *validator) validateInformers() {
-	if v.fc.Processor.CentralizedInformers == nil {
+func (v *validator) validatePortConflicts() {
+	// Only check port conflicts when centralized informers are enabled (when k8scache port is actually used)
+	if !v.fc.Processor.IsCentralizedInformersEnabled() {
 		return
 	}
 
-	// Check if enabled
-	enabled := v.fc.Processor.CentralizedInformers.Enabled != nil && *v.fc.Processor.CentralizedInformers.Enabled
+	// k8scache port is hardcoded to 9402 when centralized informers are enabled
+	const k8scachePort = 9402
 
-	if enabled {
-		// When enabled, replicas must be at least 2 for high availability
-		replicas := int32(2) // default
-		if v.fc.Processor.CentralizedInformers.Replicas != nil {
-			replicas = *v.fc.Processor.CentralizedInformers.Replicas
-		}
-		if replicas < 2 {
-			v.errors = append(
-				v.errors,
-				fmt.Errorf("spec.processor.informers.replicas must be at least 2 when informers are enabled (got %d). Centralized informers require high availability to avoid losing the entire flow collection pipeline in case of failure", replicas),
-			)
-		}
+	// Get advanced processor config with defaults
+	var port, healthPort, profilePort *int32
+	metricsPort := v.fc.Processor.GetMetricsPort()
+
+	if v.fc.Processor.Advanced != nil {
+		port = v.fc.Processor.Advanced.Port
+		healthPort = v.fc.Processor.Advanced.HealthPort
+		profilePort = v.fc.Processor.Advanced.ProfilePort
+	}
+
+	// Check FLP port
+	if port != nil && *port == k8scachePort {
+		v.errors = append(
+			v.errors,
+			fmt.Errorf("spec.processor.advanced.port %d conflicts with reserved k8scache port %d used by centralized informers", *port, k8scachePort),
+		)
+	}
+
+	// Check health port
+	if healthPort != nil && *healthPort == k8scachePort {
+		v.errors = append(
+			v.errors,
+			fmt.Errorf("spec.processor.advanced.healthPort %d conflicts with reserved k8scache port %d used by centralized informers", *healthPort, k8scachePort),
+		)
+	}
+
+	// Check metrics port
+	if metricsPort == k8scachePort {
+		v.errors = append(
+			v.errors,
+			fmt.Errorf("spec.processor.metrics.server.port %d conflicts with reserved k8scache port %d used by centralized informers", metricsPort, k8scachePort),
+		)
+	}
+
+	// Check profile port (optional)
+	if profilePort != nil && *profilePort == k8scachePort {
+		v.errors = append(
+			v.errors,
+			fmt.Errorf("spec.processor.advanced.profilePort %d conflicts with reserved k8scache port %d used by centralized informers", *profilePort, k8scachePort),
+		)
 	}
 }
 

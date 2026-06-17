@@ -754,8 +754,11 @@ type FlowCollectorFLP struct {
 	Service *ProcessorServiceConfig `json:"service,omitempty"`
 
 	// `centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
-	// This reduces load on the Kubernetes API server by having a single component (flowlogs-pipeline-informers) query the API instead of N FLP processors.
-	// When enabled, a dedicated `flowlogs-pipeline-informers` deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+	// This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
+	// When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+	// Benefits: Reduced API server load on large clusters with many FLP replicas.
+	// Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
+	// Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.
 	// +optional
 	CentralizedInformers *FlowCollectorCentralizedInformers `json:"centralizedInformers,omitempty"`
 
@@ -769,14 +772,15 @@ type FlowCollectorFLP struct {
 // `FlowCollectorCentralizedInformers` defines the configuration for centralized Kubernetes informers
 type FlowCollectorCentralizedInformers struct {
 	// `enabled` controls whether to deploy centralized Kubernetes informers.
-	// When `true`, a dedicated `flowlogs-pipeline-informers` deployment watches K8s resources and pushes cache updates via gRPC to FLP processors.
-	// When `false`, each FLP processor uses local informers (previous behavior).
+	// When `true`, a dedicated deployment watches K8s resources and pushes cache updates via gRPC to FLP processors, reducing API server load.
+	// When `false` (default), each FLP processor uses local informers.
+	// Enable only on large clusters or when API server load is a concern, as it adds deployment complexity.
 	// +kubebuilder:default:=false
 	Enabled *bool `json:"enabled,omitempty"`
 
 	// `replicas` defines the number of replicas for the flowlogs-pipeline-informers deployment.
 	// For high availability, a minimum of 2 replicas is required when `enabled` is `true`.
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=2
 	// +kubebuilder:default:=2
 	Replicas *int32 `json:"replicas,omitempty"`
 
@@ -824,7 +828,7 @@ type AdvancedCentralizedInformersConfig struct {
 	// `processorPort` defines the gRPC port where flowlogs-pipeline processors listen for k8s cache updates.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	// +kubebuilder:default:=9090
+	// +kubebuilder:default:=9402
 	// +optional
 	ProcessorPort *int32 `json:"processorPort,omitempty"`
 }

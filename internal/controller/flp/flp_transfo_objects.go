@@ -39,11 +39,6 @@ type transfoBuilder struct {
 }
 
 func newTransfoBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCollectorSpec, flowMetrics *metricslatest.FlowMetricList, fcSlices []sliceslatest.FlowCollectorSlice, detectedSubnets []flowslatest.SubnetLabel) (transfoBuilder, error) {
-	// Validate port conflicts early
-	if err := validatePortConflicts(desired); err != nil {
-		return transfoBuilder{}, err
-	}
-
 	version := helper.ExtractVersion(info.Images[reconcilers.MainImage])
 	promTLS, err := getPromTLS(desired, constants.FLPTransfoMetricsSvcName)
 	if err != nil {
@@ -220,15 +215,11 @@ func (b *transfoBuilder) service() *corev1.Service {
 	}
 	// In OpenShift with TLS Auto mode, request service-ca to generate certificate
 	// This certificate will be used by the k8scache gRPC server
-	if b.info.ClusterInfo.IsOpenShift() {
-		if b.desired.Processor.CentralizedInformers != nil && b.desired.Processor.CentralizedInformers.TLS != nil {
-			if b.desired.Processor.CentralizedInformers.TLS.Type == flowslatest.TLSAuto || b.desired.Processor.CentralizedInformers.TLS.Type == flowslatest.TLSAutoMTLS {
-				if svc.Annotations == nil {
-					svc.Annotations = make(map[string]string)
-				}
-				svc.Annotations[constants.OpenShiftCertificateAnnotation] = transfoCertSecretName
-			}
+	if b.desired.Processor.CentralizedInformers.UsesOpenShiftServiceCA(b.info.ClusterInfo.IsOpenShift()) {
+		if svc.Annotations == nil {
+			svc.Annotations = make(map[string]string)
 		}
+		svc.Annotations[constants.OpenShiftCertificateAnnotation] = transfoCertSecretName
 	}
 	// Note: k8scache TLS Auto mode generates a service-ca certificate (transfoCertSecretName)
 	// for the transformer service DNS name

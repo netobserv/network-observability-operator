@@ -237,6 +237,25 @@ func (spec *FlowCollectorFLP) IsUnmanagedFLPReplicas() bool {
 	return spec.KafkaConsumerAutoscaler.IsHPAEnabled()
 }
 
+func (spec *FlowCollectorFLP) IsCentralizedInformersEnabled() bool {
+	return spec.CentralizedInformers != nil && spec.CentralizedInformers.Enabled != nil && *spec.CentralizedInformers.Enabled
+}
+
+func (spec *FlowCollectorCentralizedInformers) GetTLSType() TLSConfigType {
+	if spec == nil || spec.TLS == nil {
+		return TLSAuto
+	}
+	return spec.TLS.Type
+}
+
+func (spec *FlowCollectorCentralizedInformers) UsesOpenShiftServiceCA(isOpenShift bool) bool {
+	if !isOpenShift {
+		return false
+	}
+	tlsType := spec.GetTLSType()
+	return tlsType == TLSAuto
+}
+
 func (spec *FlowCollectorConsolePlugin) IsUnmanagedConsolePluginReplicas() bool {
 	if spec.UnmanagedReplicas {
 		return true

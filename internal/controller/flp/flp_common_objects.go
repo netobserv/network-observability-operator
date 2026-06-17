@@ -27,7 +27,7 @@ const (
 	healthPortName          = "health"
 	prometheusPortName      = "prometheus"
 	profilePortName         = "pprof"
-	k8scachePort            = 9090
+	k8scachePort            = 9402 // gRPC port for k8s cache updates
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
 	startupFailureThreshold = 5
@@ -95,40 +95,6 @@ const (
 	pull
 )
 
-// validatePortConflicts checks if any user-configured ports conflict with the hardcoded k8scache port
-// Only validates when centralized informers are enabled (when k8scache port is actually used)
-func validatePortConflicts(desired *flowslatest.FlowCollectorSpec) error {
-	// Only check port conflicts when centralized informers are enabled
-	if desired.Processor.CentralizedInformers == nil || desired.Processor.CentralizedInformers.Enabled == nil || !*desired.Processor.CentralizedInformers.Enabled {
-		return nil
-	}
-
-	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
-
-	// Check FLP port
-	if advancedConfig.Port != nil && *advancedConfig.Port == k8scachePort {
-		return fmt.Errorf("flowlogs-pipeline port %d conflicts with reserved k8scache port %d", *advancedConfig.Port, k8scachePort)
-	}
-
-	// Check health port
-	if advancedConfig.HealthPort != nil && *advancedConfig.HealthPort == k8scachePort {
-		return fmt.Errorf("flowlogs-pipeline health port %d conflicts with reserved k8scache port %d", *advancedConfig.HealthPort, k8scachePort)
-	}
-
-	// Check metrics port
-	metricsPort := desired.Processor.GetMetricsPort()
-	if metricsPort == k8scachePort {
-		return fmt.Errorf("flowlogs-pipeline metrics port %d conflicts with reserved k8scache port %d", metricsPort, k8scachePort)
-	}
-
-	// Check profile port (optional)
-	if advancedConfig.ProfilePort != nil && *advancedConfig.ProfilePort == k8scachePort {
-		return fmt.Errorf("flowlogs-pipeline profile port %d conflicts with reserved k8scache port %d", *advancedConfig.ProfilePort, k8scachePort)
-	}
-
-	return nil
-}
-
 func podTemplate(
 	appName, version, imageName, cmName string,
 	desired *flowslatest.FlowCollectorSpec,
@@ -167,7 +133,7 @@ func podTemplate(
 		ContainerPort: desired.Processor.GetMetricsPort(),
 	})
 	// Only expose k8scache port when centralized informers are enabled
-	if desired.Processor.CentralizedInformers != nil && desired.Processor.CentralizedInformers.Enabled != nil && *desired.Processor.CentralizedInformers.Enabled {
+	if desired.Processor.IsCentralizedInformersEnabled() {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          "k8scache",
 			ContainerPort: k8scachePort,
@@ -330,11 +296,7 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 		"--k8scache.address=0.0.0.0",
 	)
 
-	// Apply default TLS type if not specified
-	tlsType := flowslatest.TLSAuto
-	if desired.Processor.CentralizedInformers.TLS != nil {
-		tlsType = desired.Processor.CentralizedInformers.TLS.Type
-	}
+	tlsType := desired.Processor.CentralizedInformers.GetTLSType()
 
 	if tlsType == flowslatest.TLSDisabled {
 		return
