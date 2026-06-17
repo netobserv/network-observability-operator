@@ -15,16 +15,16 @@ import (
 const maxPodNamesInSummary = 5
 
 // PodHealthSummary holds aggregated pod health information for a workload.
-type PodHealthSummary struct {
-	UnhealthyCount int32
-	Issues         string
+type podHealthSummary struct {
+	unhealthyCount int32
+	issues         string
 }
 
 // CheckPodHealth lists pods matching the given label selector in the given namespace,
 // inspects container statuses, and returns a summary of unhealthy pods.
 // This is intended to be called only when a workload reports not-ready replicas,
 // to avoid unnecessary API calls when everything is healthy.
-func CheckPodHealth(ctx context.Context, c client.Client, namespace string, matchLabels map[string]string) PodHealthSummary {
+func checkPodHealth(ctx context.Context, c client.Client, namespace string, matchLabels map[string]string) podHealthSummary {
 	rlog := log.FromContext(ctx)
 
 	podList := corev1.PodList{}
@@ -33,7 +33,7 @@ func CheckPodHealth(ctx context.Context, c client.Client, namespace string, matc
 		LabelSelector: labels.SelectorFromSet(matchLabels),
 	}); err != nil {
 		rlog.Error(err, "Failed to list pods for health check")
-		return PodHealthSummary{}
+		return podHealthSummary{}
 	}
 
 	type issueGroup struct {
@@ -63,7 +63,7 @@ func CheckPodHealth(ctx context.Context, c client.Client, namespace string, matc
 	}
 
 	if unhealthyCount == 0 {
-		return PodHealthSummary{}
+		return podHealthSummary{}
 	}
 
 	sortedReasons := make([]string, 0, len(groups))
@@ -90,9 +90,9 @@ func CheckPodHealth(ctx context.Context, c client.Client, namespace string, matc
 		parts = append(parts, part)
 	}
 
-	return PodHealthSummary{
-		UnhealthyCount: unhealthyCount,
-		Issues:         strings.Join(parts, "; "),
+	return podHealthSummary{
+		unhealthyCount: unhealthyCount,
+		issues:         strings.Join(parts, "; "),
 	}
 }
 

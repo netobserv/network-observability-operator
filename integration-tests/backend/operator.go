@@ -233,28 +233,46 @@ func checkOperatorChannel(oc *exutil.CLI, operatorNamespace string, operatorName
 
 func CheckOperatorStatus(oc *exutil.CLI, operatorNamespace string, operatorName string) (bool, error) {
 	err := oc.AsAdmin().WithoutNamespace().Run("get").Args("namespace", operatorNamespace).Execute()
-	if err == nil {
-		err1 := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", operatorName, "-n", operatorNamespace).Execute()
-		if err1 == nil {
-			csvName, err2 := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", operatorName, "-n", operatorNamespace, "-o=jsonpath={.status.installedCSV}").Output()
-			o.Expect(err2).NotTo(o.HaveOccurred())
-			o.Expect(csvName).NotTo(o.BeEmpty())
-			err = wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(context.Context) (bool, error) {
-				csvState, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("csv", csvName, "-n", operatorNamespace, "-o=jsonpath={.status.phase}").Output()
-				if err != nil {
-					return false, err
-				}
-				e2e.Logf("CSV %s state: %s", csvName, csvState)
-				return csvState == "Succeeded", nil
-			})
-			if err != nil {
-				return false, err
-			}
-			return true, nil
+	if err != nil {
+		e2e.Logf("%s operator will be created by tests", operatorName)
+		return false, nil
+	}
+
+	// Check for subscription by exact name first, then fall back to finding any
+	// subscription for this package (e.g. operator-sdk run bundle creates subs
+	// with a different naming convention like <name>-v1-11-4-community-sub).
+	csvName := ""
+	err1 := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", operatorName, "-n", operatorNamespace).Execute()
+	if err1 == nil {
+		csvName, _ = oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", operatorName, "-n", operatorNamespace, "-o=jsonpath={.status.installedCSV}").Output()
+	}
+	if csvName == "" {
+		// Look for any CSV owned by a subscription for this package in the namespace
+		// operator-sdk run bundle creates subs with names like <name>-v0-0-0-sha-main-sub
+		allSubs, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", "-n", operatorNamespace,
+			"-o=jsonpath={range .items[?(@.spec.name==\""+operatorName+"\")]}{.status.installedCSV}{end}").Output()
+		if allSubs != "" {
+			csvName = allSubs
 		}
 	}
-	e2e.Logf("%s operator will be created by tests", operatorName)
-	return false, nil
+	if csvName == "" {
+		e2e.Logf("%s operator will be created by tests", operatorName)
+		return false, nil
+	}
+
+	e2e.Logf("Found CSV %s for operator %s", csvName, operatorName)
+	err = wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(context.Context) (bool, error) {
+		csvState, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("csv", csvName, "-n", operatorNamespace, "-o=jsonpath={.status.phase}").Output()
+		if err != nil {
+			return false, err
+		}
+		e2e.Logf("CSV %s state: %s", csvName, csvState)
+		return csvState == "Succeeded", nil
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (ns *OperatorNamespace) DeployOperatorNamespace(oc *exutil.CLI) {

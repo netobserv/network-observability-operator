@@ -50,13 +50,19 @@ func kindToWatchable(kind flowslatest.MountableType) Watchable {
 }
 
 func (w *Watcher) Reset(namespace string) {
+	w.wmut.Lock()
 	w.defaultNamespace = namespace
 	// Reset all registered watches as inactive
-	w.wmut.Lock()
 	for k := range w.watches {
 		w.watches[k] = false
 	}
 	w.wmut.Unlock()
+}
+
+func (w *Watcher) getDefaultNamespace() string {
+	w.wmut.RLock()
+	defer w.wmut.RUnlock()
+	return w.defaultNamespace
 }
 
 func key(kind flowslatest.MountableType, name, namespace string) string {
@@ -101,11 +107,7 @@ func (w *Watcher) watch(ctx context.Context, cl *narrowcache.Client, kind flowsl
 	// Note that currently, watches are never removed (they can't - cf https://github.com/kubernetes-sigs/controller-runtime/issues/1884)
 	// This isn't a big deal here, as the number of watches that we set is very limited and not meant to grow over and over
 	// (unless user keeps reconfiguring cert references endlessly)
-	err = w.ctrl.Watch(s)
-	if err != nil {
-		return err
-	}
-	return nil
+	return w.ctrl.Watch(s)
 }
 
 func (w *Watcher) ProcessMTLSCerts(ctx context.Context, cl helper.Client, tls *flowslatest.ClientTLS, targetNamespace string) (caDigest string, userDigest string, err error) {

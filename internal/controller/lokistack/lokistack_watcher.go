@@ -22,6 +22,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const (
+	LokiStackAPIMissing    = "LokiStackAPIMissing"
+	LokiCantFetchLokiStack = "CantFetchLokiStack"
+)
+
 type Watcher struct {
 	cl                 client.Client
 	mgr                *manager.Manager
@@ -62,7 +67,7 @@ func (lsw *Watcher) Reconcile(ctx context.Context, fc *flowslatest.FlowCollector
 	defer func() {
 		ret = lsw.status.Get()
 	}()
-	lsw.status.SetUnknown()
+	_ = lsw.status.Reset()
 
 	if !fc.Spec.UseLoki() {
 		lsw.status.SetUnused("Loki is disabled")
@@ -75,7 +80,7 @@ func (lsw *Watcher) Reconcile(ctx context.Context, fc *flowslatest.FlowCollector
 	}
 
 	if !lsw.mgr.ClusterInfo.HasLokiStack(ctx) {
-		lsw.status.SetFailure("LokiStackAPIMissing", "Loki is configured in LokiStack mode, but LokiStack API is missing; check that the Loki Operator is correctly installed.")
+		lsw.status.SetFailure(LokiStackAPIMissing, "Loki is configured in LokiStack mode, but LokiStack API is missing; check that the Loki Operator is correctly installed.")
 		return
 	}
 
@@ -125,7 +130,7 @@ func (lsw *Watcher) checkStatus(ctx context.Context, fc *flowslatest.FlowCollect
 	}
 	err := lsw.cl.Get(ctx, nsname, lokiStack)
 	if err != nil {
-		lsw.status.SetFailure("CantFetchLokiStack", err.Error())
+		lsw.status.SetFailure(LokiCantFetchLokiStack, err.Error())
 		return err
 	}
 

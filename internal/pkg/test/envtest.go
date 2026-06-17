@@ -62,7 +62,111 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 	ctx, cancel := context.WithCancel(context.TODO())
 
-	By("bootstrapping test environment")
+	By("bootstrapping test environment (vanilla)")
+	testEnv := &envtest.Environment{
+		Scheme: scheme.Scheme,
+		CRDInstallOptions: envtest.CRDInstallOptions{
+			Paths: []string{
+				// Hack to reintroduce when the API stored version != latest version: comment-out config/crd/bases and use hack instead; see also Makefile "hack-crd-for-test"
+				filepath.Join(basePath, "..", "..", "config", "crd", "bases"),
+				// filepath.Join(basePath, "..", "hack"),
+				filepath.Join(basePath, "..", "..", "test-assets"),
+			},
+			CleanUpAfterUse: true,
+			WebhookOptions: envtest.WebhookInstallOptions{
+				Paths: []string{
+					filepath.Join(basePath, "..", "..", "config", "webhook"),
+				},
+			},
+		},
+		ErrorIfCRDPathMissing: true,
+	}
+
+	cfg, err := testEnv.Start()
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cfg).NotTo(BeNil())
+
+	kubeConfig, err := writeKubeConfig(testEnv)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = flowsv1beta2.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = metricsv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = slicesv1alpha1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = corev1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = apiregv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = monitoringv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = lokiv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	k8sClient, err := client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	Expect(err).NotTo(HaveOccurred())
+	Expect(k8sClient).NotTo(BeNil())
+
+	for _, ns := range namespaces {
+		err := k8sClient.Create(ctx, &corev1.Namespace{
+			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+			ObjectMeta: metav1.ObjectMeta{Name: ns},
+		})
+		Expect(err).NotTo(HaveOccurred())
+	}
+
+	k8sManager, err := manager.NewManager(
+		ctx,
+		cfg,
+		&manager.Config{
+			EBPFAgentImage:        "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-ebpf-agent@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
+			FlowlogsPipelineImage: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-flowlogs-pipeline@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e",
+			ConsolePluginImageVariants: []manager.ConsolePluginImageVariant{
+				{Image: "registry-proxy.engineering.redhat.com/rh-osbs/network-observability-console-plugin@sha256:6481481ba23375107233f8d0a4f839436e34e50c2ec550ead0a16c361ae6654e", MinVersion: "4.14.0"},
+			},
+			DownstreamDeployment: false,
+			Namespace:            "main-namespace",
+		},
+		&ctrl.Options{
+			Scheme: scheme.Scheme,
+			Metrics: server.Options{
+				BindAddress: "0", // disable
+			},
+		},
+		controllers,
+	)
+
+	Expect(err).ToNot(HaveOccurred())
+	Expect(k8sManager).NotTo(BeNil())
+
+	err = helper.SetCRDForTests(filepath.Join(basePath, "..", ".."))
+	Expect(err).NotTo(HaveOccurred())
+
+	go func() {
+		defer GinkgoRecover()
+		err = k8sManager.Start(ctx)
+		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
+	}()
+
+	return ctx, k8sClient, &SuiteContext{
+		testEnv:    testEnv,
+		cancel:     cancel,
+		kubeConfig: kubeConfig,
+	}
+}
+
+func PrepareOCPEnvTest(controllers []manager.Registerer, opNamespace string, namespaces []string, basePath string) (context.Context, client.Client, *SuiteContext) {
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	ctx, cancel := context.WithCancel(context.TODO())
+
+	By("bootstrapping test environment (OCP)")
 	testEnv := &envtest.Environment{
 		Scheme: scheme.Scheme,
 		CRDInstallOptions: envtest.CRDInstallOptions{
@@ -134,6 +238,7 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	namespaces = append(namespaces, opNamespace)
 	for _, ns := range namespaces {
 		err := k8sClient.Create(ctx, &corev1.Namespace{
 			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
@@ -195,6 +300,8 @@ func PrepareEnvTest(controllers []manager.Registerer, namespaces []string, baseP
 	err = helper.SetCRDForTests(filepath.Join(basePath, "..", ".."))
 	Expect(err).NotTo(HaveOccurred())
 
+	createFakeController(ctx, k8sClient, opNamespace)
+
 	go func() {
 		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
@@ -234,11 +341,11 @@ func TeardownEnvTest(suiteContext *SuiteContext) {
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func CreateFakeController(ctx context.Context, k8sClient client.Client) {
+func createFakeController(ctx context.Context, k8sClient client.Client, opNamespace string) {
 	created := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "netobserv-controller-manager",
-			Namespace: "main-namespace",
+			Namespace: opNamespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{

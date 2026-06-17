@@ -123,7 +123,8 @@ func (r *FlowCollectorReconciler) Reconcile(ctx context.Context, _ ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	defer r.status.Commit(ctx, r.Client)
+	commit := r.status.Reset()
+	defer commit(ctx, r.Client)
 
 	err = r.reconcile(ctx, clh, desired)
 	if err != nil {

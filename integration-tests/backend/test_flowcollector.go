@@ -323,6 +323,82 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 	})
 
+	g.It("Author:osmakal-High-89198-Verify processor metrics configuration with includeList and additionalIncludeList [Serial]", func() {
+		namespace := oc.Namespace()
+
+		g.By(fmt.Sprintf("Deploy initial FlowCollector without additionalIncludeList"))
+		flow := Flowcollector{
+			Namespace:  namespace,
+			Template:   flowFixturePath,
+			LokiEnable: "false",
+		}
+		defer func() { _ = flow.DeleteFlowcollector(oc) }()
+		flow.CreateFlowcollector(oc)
+
+		g.By(fmt.Sprintf("Wait for FlowCollector to reconcile"))
+		flow.WaitForFlowcollectorReady(oc)
+
+		g.By(fmt.Sprintf("Wait for baseline metrics to be available"))
+		time.Sleep(90 * time.Second)
+
+		// Capture baseline metrics (defaults only)
+		g.By(fmt.Sprintf("Query Prometheus for baseline netobserv_* metrics"))
+		baselineMetrics, err := getAllNetobservMetricNames(oc)
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("failed to query Prometheus for baseline"))
+
+		e2e.Logf("Found %d baseline netobserv metrics in Prometheus", len(baselineMetrics))
+
+		baselineSet := make(map[string]bool)
+		for _, m := range baselineMetrics {
+			baselineSet[m] = true
+		}
+
+		// Apply patch to add additional metrics
+		g.By(fmt.Sprintf("Patch FlowCollector with additionalIncludeList"))
+		additionalIncludeList := []string{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
+		patch := `[{"op": "add", "path": "/spec/processor/metrics/additionalIncludeList", "value": ["namespace_egress_bytes_total", "namespace_ingress_bytes_total"]}]`
+		out, err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=json", "-p", patch).Output()
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("failed to patch FlowCollector"))
+		o.Expect(out).To(o.ContainSubstring("patched"))
+
+		g.By(fmt.Sprintf("Wait for FlowCollector to reconcile after patch"))
+		flow.WaitForFlowcollectorReady(oc)
+
+		g.By(fmt.Sprintf("Wait for updated metrics to be available"))
+		time.Sleep(90 * time.Second)
+
+		// Get all metrics after patch
+		g.By(fmt.Sprintf("Query Prometheus for all netobserv_* metrics after patch"))
+		allMetrics, err := getAllNetobservMetricNames(oc)
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("failed to query Prometheus after patch"))
+
+		e2e.Logf("Found %d netobserv metrics in Prometheus after patch", len(allMetrics))
+
+		actualSet := make(map[string]bool)
+		for _, m := range allMetrics {
+			actualSet[m] = true
+		}
+
+		// Verify all baseline metrics are still present (superset check)
+		for _, metric := range baselineMetrics {
+			o.Expect(actualSet[metric]).To(o.BeTrue(),
+				fmt.Sprintf("baseline metric %s should still exist in %v", metric, allMetrics))
+		}
+
+		// Verify the additional metrics are now present
+		for _, metric := range additionalIncludeList {
+			fullMetricName := "netobserv_" + metric
+			o.Expect(actualSet[fullMetricName]).To(o.BeTrue(),
+				fmt.Sprintf("additional metric %s should exist in %v", fullMetricName, allMetrics))
+		}
+
+		// Verify the total count increased by exactly len(additionalIncludeList)
+		expectedCount := len(baselineMetrics) + len(additionalIncludeList)
+		o.Expect(len(allMetrics)).To(o.Equal(expectedCount),
+			fmt.Sprintf("expected %d metrics (baseline: %d + additional: %d) but found %d: %v",
+				expectedCount, len(baselineMetrics), len(additionalIncludeList), len(allMetrics), allMetrics))
+	})
+
 	g.Context("with Loki", func() {
 		var (
 			lokiDir, _ = filePath.Abs("testdata/loki")

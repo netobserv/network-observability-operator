@@ -167,7 +167,7 @@ set-plugin-image:
 ifeq ("", "$(CSV)")
 	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
 	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_CONSOLE_PLUGIN_PF5=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
-	kubectl set image deployment/netobserv-plugin-static netobserv-plugin-static=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
+	kubectl set image deployment/netobserv-plugin-static netobserv-plugin-static=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION) -n $(NAMESPACE)
 else
 	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_CONSOLE_PLUGIN $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
 	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin-pf5 RELATED_IMAGE_CONSOLE_PLUGIN_PF5 $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)

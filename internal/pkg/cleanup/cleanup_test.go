@@ -32,7 +32,12 @@ func TestCleanup(t *testing.T) {
 var _ = BeforeSuite(func() {
 	// Base path is ".." because we're in internal/pkg/cleanup (3 levels deep)
 	// The test framework adds "../.." to basePath, so this resolves to ../../../ from our location
-	ctx, k8sClient, suiteContext = test.PrepareEnvTest(nil, []string{}, "..")
+	ctx, k8sClient, suiteContext = test.PrepareOCPEnvTest(
+		nil,
+		"main-namespace",
+		nil,
+		"..",
+	)
 })
 
 var _ = AfterSuite(func() {

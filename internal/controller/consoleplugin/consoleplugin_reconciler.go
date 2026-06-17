@@ -17,6 +17,7 @@ import (
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
+	"github.com/netobserv/netobserv-operator/internal/controller/lokistack"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
@@ -60,7 +61,8 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 	l := log.FromContext(ctx).WithName("web-console")
 	ctx = log.IntoContext(ctx, l)
 
-	defer r.Status.Commit(ctx, r.Client)
+	commit := r.Status.Reset()
+	defer commit(ctx, r.Client)
 
 	err := r.reconcile(ctx, desired, lokiStatus)
 	if err != nil {
@@ -90,6 +92,17 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 	}
 
 	if desired.Spec.NeedsConsolePluginDeployment(hasPluginAPI) {
+		if lokiStatus != nil && lokiStatus.Status == status.StatusFailure &&
+			(lokiStatus.Reason == lokistack.LokiStackAPIMissing || lokiStatus.Reason == lokistack.LokiCantFetchLokiStack) {
+			// If LokiStack is missing, turn off TLS config; queries will fail anyway, but we don't want to try mounting
+			// the missing certificates, as it prevents the console plugin pod to start.
+			lokiCopy := *r.Loki
+			lokiCopy.LokiManualParams.TLS.Enable = false
+			lokiCopy.LokiManualParams.StatusTLS.Enable = false
+			r.Loki = &lokiCopy
+			r.Status.SetDegraded("LokiStackMissing", "LokiStack is missing, can't mount certificates")
+		}
+
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.PluginName)
 
@@ -124,10 +137,10 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 			// Watch for Loki certificates if necessary; we'll ignore in that case the returned digest, as we don't need to restart pods on cert rotation
 			// because certificate is always reloaded from file
 			if _, err = r.Watcher.ProcessCACert(ctx, r.Client, &r.Loki.TLS, r.Namespace); err != nil {
-				return err
+				r.Status.SetDegraded("LokiCACertMissing", err.Error())
 			}
 			if _, _, err = r.Watcher.ProcessMTLSCerts(ctx, r.Client, &r.Loki.StatusTLS, r.Namespace); err != nil {
-				return err
+				r.Status.SetDegraded("LokiMTLSCertMissing", err.Error())
 			}
 		}
 	} else {
@@ -174,7 +187,24 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 		name,
 		constants.ConsoleTokenReviewRole,
 	)
-	return r.ReconcileClusterRoleBinding(ctx, binding)
+	if err := r.ReconcileClusterRoleBinding(ctx, binding); err != nil {
+		return err
+	}
+	if builder.useStandalone {
+		// Currently, standalone mode uses service account token, not user token, for permissions.
+		// Add FlowCollector viewer role so that it can display the FC status icon.
+		binding := resources.GetClusterRoleBinding(
+			r.Namespace,
+			constants.PluginShortName,
+			name,
+			name,
+			constants.FlowCollectorViewerRole,
+		)
+		if err := r.ReconcileClusterRoleBinding(ctx, binding); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, desired *flowslatest.FlowCollectorSpec, name, displayName string) error {

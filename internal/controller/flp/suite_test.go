@@ -14,10 +14,9 @@ import (
 )
 
 var (
-	namespacesToPrepare = []string{"main-namespace", "other-namespace"}
-	ctx                 context.Context
-	k8sClient           client.Client
-	suiteContext        *test.SuiteContext
+	ctx          context.Context
+	k8sClient    client.Client
+	suiteContext *test.SuiteContext
 )
 
 func TestAPIs(t *testing.T) {
@@ -35,7 +34,12 @@ var _ = Describe("FLP Controller", Ordered, Serial, func() {
 })
 
 var _ = BeforeSuite(func() {
-	ctx, k8sClient, suiteContext = test.PrepareEnvTest([]manager.Registerer{Start}, namespacesToPrepare, "..")
+	ctx, k8sClient, suiteContext = test.PrepareOCPEnvTest(
+		[]manager.Registerer{Start},
+		"main-namespace",
+		[]string{"other-namespace"},
+		"..",
+	)
 })
 
 var _ = AfterSuite(func() {

@@ -56,10 +56,6 @@ func flowCollectorConsolePluginSpecs() {
 	})
 
 	Context("Console plugin test init", func() {
-		It("Should create controller pod owner", func() {
-			createFakeController()
-		})
-
 		It("Should create Console CR", func() {
 			created := &operatorsv1.Console{
 				ObjectMeta: metav1.ObjectMeta{
@@ -427,7 +423,7 @@ func flowCollectorConsolePluginSpecs() {
 
 		It("Should delete fake controller", func() {
 			dp := appsv1.Deployment{}
-			By("Retreive controller deployment")
+			By("Retrieve controller deployment")
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, types.NamespacedName{
 					Name:      "netobserv-controller-manager",
