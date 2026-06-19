@@ -1395,18 +1395,20 @@ type AdvancedProcessorConfig struct {
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=8080
 	//+optional
-	// `healthPort` is a collector HTTP port in the Pod that exposes the health check API
+	// `healthPort` is a collector HTTP port in the Pod that exposes the health check API.
 	HealthPort *int32 `json:"healthPort,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:validation:Maximum=65535
 	//+optional
-	// `profilePort` allows setting up a Go pprof profiler listening to this port
+	// `profilePort` allows setting up a Go pprof profiler listening to this port.
+	// This is for debugging purpose only. This port should not be exposed, you can
+	// access it through local port-forwarding.
 	ProfilePort *int32 `json:"profilePort,omitempty"`
 
 	//+kubebuilder:default:=true
 	//+optional
-	// `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes
+	// `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes.
 	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
@@ -1416,7 +1418,7 @@ type AdvancedProcessorConfig struct {
 
 	//+kubebuilder:default:="30s"
 	//+optional
-	// `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation
+	// `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation.
 	ConversationHeartbeatInterval *metav1.Duration `json:"conversationHeartbeatInterval,omitempty"`
 
 	//+kubebuilder:default:="10s"

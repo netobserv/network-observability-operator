@@ -4033,7 +4033,7 @@ spec:
                           type: string
                         conversationHeartbeatInterval:
                           default: 30s
-                          description: '`conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation'
+                          description: '`conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation.'
                           type: string
                         conversationTerminatingTimeout:
                           default: 5s
@@ -4045,7 +4045,7 @@ spec:
                           type: boolean
                         enableKubeProbes:
                           default: true
-                          description: '`enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes'
+                          description: '`enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes.'
                           type: boolean
                         env:
                           additionalProperties:
@@ -4058,7 +4058,7 @@ spec:
                           type: object
                         healthPort:
                           default: 8080
-                          description: '`healthPort` is a collector HTTP port in the Pod that exposes the health check API'
+                          description: '`healthPort` is a collector HTTP port in the Pod that exposes the health check API.'
                           format: int32
                           maximum: 65535
                           minimum: 1
@@ -4074,7 +4074,10 @@ spec:
                           minimum: 1025
                           type: integer
                         profilePort:
-                          description: '`profilePort` allows setting up a Go pprof profiler listening to this port'
+                          description: |-
+                            `profilePort` allows setting up a Go pprof profiler listening to this port.
+                            This is for debugging purpose only. This port should not be exposed, you can
+                            access it through local port-forwarding.
                           format: int32
                           maximum: 65535
                           minimum: 0

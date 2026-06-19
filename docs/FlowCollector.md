@@ -8711,7 +8711,7 @@ This delay is ignored when a FIN packet is collected for TCP flows (see `convers
         <td><b>conversationHeartbeatInterval</b></td>
         <td>string</td>
         <td>
-          `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation<br/>
+          `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation.<br/>
           <br/>
             <i>Default</i>: 30s<br/>
         </td>
@@ -8738,7 +8738,7 @@ This delay is ignored when a FIN packet is collected for TCP flows (see `convers
         <td><b>enableKubeProbes</b></td>
         <td>boolean</td>
         <td>
-          `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes<br/>
+          `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -8757,7 +8757,7 @@ in edge debug or support scenarios.<br/>
         <td><b>healthPort</b></td>
         <td>integer</td>
         <td>
-          `healthPort` is a collector HTTP port in the Pod that exposes the health check API<br/>
+          `healthPort` is a collector HTTP port in the Pod that exposes the health check API.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Default</i>: 8080<br/>
@@ -8783,7 +8783,9 @@ By convention, some values are forbidden. It must be greater than 1024 and diffe
         <td><b>profilePort</b></td>
         <td>integer</td>
         <td>
-          `profilePort` allows setting up a Go pprof profiler listening to this port<br/>
+          `profilePort` allows setting up a Go pprof profiler listening to this port.
+This is for debugging purpose only. This port should not be exposed, you can
+access it through local port-forwarding.<br/>
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 0<br/>

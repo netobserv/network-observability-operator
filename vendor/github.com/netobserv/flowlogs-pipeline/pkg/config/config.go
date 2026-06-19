@@ -31,8 +31,8 @@ type Options struct {
 	Parameters        string
 	DynamicParameters string
 	MetricsSettings   string
-	Health            Health
-	Profile           Profile
+	HealthAddr        string
+	PprofAddr         string
 }
 
 type Root struct {
@@ -53,15 +53,6 @@ type DynamicParameters struct {
 
 type HotReloadStruct struct {
 	Parameters []StageParam `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-}
-
-type Health struct {
-	Address string
-	Port    int
-}
-
-type Profile struct {
-	Port int
 }
 
 // MetricsSettings is similar to api.PromEncode, but is global to the application, ie. it also works with operational metrics.

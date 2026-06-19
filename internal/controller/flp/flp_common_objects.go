@@ -120,16 +120,18 @@ func podTemplate(
 	case pull:
 		// does not listen for flows => no port
 	}
-	ports = append(ports, corev1.ContainerPort{
-		Name:          healthPortName,
-		ContainerPort: *advancedConfig.HealthPort,
-	})
+	if advancedConfig.HealthPort != nil && *advancedConfig.HealthPort > 0 {
+		ports = append(ports, corev1.ContainerPort{
+			Name:          healthPortName,
+			ContainerPort: *advancedConfig.HealthPort,
+		})
+	}
 	ports = append(ports, corev1.ContainerPort{
 		Name:          prometheusPortName,
 		ContainerPort: desired.Processor.GetMetricsPort(),
 	})
 
-	if advancedConfig.ProfilePort != nil {
+	if advancedConfig.ProfilePort != nil && *advancedConfig.ProfilePort > 0 {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          profilePortName,
 			ContainerPort: *advancedConfig.ProfilePort,
@@ -272,10 +274,7 @@ func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
 	static, dynamic := pipeline.GetSplitStageParams()
 	config := map[string]interface{}{
-		"log-level": desired.Processor.LogLevel,
-		"health": map[string]interface{}{
-			"port": *advancedConfig.HealthPort,
-		},
+		"log-level":       desired.Processor.LogLevel,
 		"pipeline":        pipeline.GetStages(),
 		"parameters":      static,
 		"metricsSettings": metricsSettings,
@@ -285,10 +284,12 @@ func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder
 			FileName:  configFile,
 		},
 	}
-	if advancedConfig.ProfilePort != nil {
-		config["profile"] = map[string]interface{}{
-			"port": *advancedConfig.ProfilePort,
-		}
+	if advancedConfig.HealthPort != nil && *advancedConfig.HealthPort != 0 {
+		config["healthAddr"] = fmt.Sprintf(":%d", *advancedConfig.HealthPort)
+	}
+	if advancedConfig.ProfilePort != nil && *advancedConfig.ProfilePort != 0 {
+		// Use "localhost" for ipv4+ipv6 cases, restricted to the local loop
+		config["pprofAddr"] = fmt.Sprintf("localhost:%d", *advancedConfig.ProfilePort)
 	}
 	jsonStatic, err := json.Marshal(config)
 	if err != nil {

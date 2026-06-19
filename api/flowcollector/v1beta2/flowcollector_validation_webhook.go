@@ -68,6 +68,7 @@ func (r *FlowCollector) Validate(_ context.Context, fc *FlowCollector) (admissio
 	v.validateAgent()
 	v.validateFLP()
 	v.warnLogLevels()
+	v.warnProfiling()
 	v.warnLokiDemo()
 	return v.warnings, errors.Join(v.errors...)
 }
@@ -84,6 +85,21 @@ func (v *validator) warnLogLevels() {
 	}
 	if v.fc.Processor.LogLevel == "debug" || v.fc.Processor.LogLevel == "trace" {
 		v.warnings = append(v.warnings, fmt.Sprintf("The log level for the processor (flowlogs-pipeline) is %s, which impacts performance and resource footprint.", v.fc.Processor.LogLevel))
+	}
+}
+
+func (v *validator) warnProfiling() {
+	warning := "This is for debugging purpose only. The profiling port should not be exposed, you can access it through local port-forwarding."
+	if v.fc.Agent.EBPF.Advanced != nil {
+		if env, ok := v.fc.Agent.EBPF.Advanced.Env["PPROF_ADDR"]; ok && env != "" {
+			v.warnings = append(v.warnings, "Profiling is enabled on the eBPF agent. "+warning)
+			if strings.HasPrefix(env, ":") || strings.HasPrefix(env, "0.0.0.0:") {
+				v.warnings = append(v.warnings, "Profiling is enabled for all network interfaces, make sure access is restricted e.g. with a network policy.")
+			}
+		}
+	}
+	if v.fc.Processor.Advanced != nil && v.fc.Processor.Advanced.ProfilePort != nil && *v.fc.Processor.Advanced.ProfilePort > 0 {
+		v.warnings = append(v.warnings, "Profiling is enabled on flowlogs-pipeline. "+warning)
 	}
 }
 

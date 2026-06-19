@@ -153,10 +153,10 @@ func GetAdvancedProcessorConfig(spec *flowslatest.FlowCollectorSpec) flowslatest
 		if specConfig.Port != nil && *specConfig.Port > 0 {
 			cfg.Port = specConfig.Port
 		}
-		if specConfig.HealthPort != nil && *specConfig.HealthPort > 0 {
+		if specConfig.HealthPort != nil {
 			cfg.HealthPort = specConfig.HealthPort
 		}
-		if specConfig.ProfilePort != nil && *specConfig.ProfilePort > 0 {
+		if specConfig.ProfilePort != nil {
 			cfg.ProfilePort = specConfig.ProfilePort
 		}
 		if specConfig.EnableKubeProbes != nil {

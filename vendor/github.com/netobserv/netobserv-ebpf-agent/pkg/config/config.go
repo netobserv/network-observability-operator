@@ -218,8 +218,8 @@ type Agent struct {
 	KafkaSASLClientIDPath string `env:"KAFKA_SASL_CLIENT_ID_PATH"`
 	// KafkaSASLClientSecretPath is the path to the client secret (password) for SASL auth
 	KafkaSASLClientSecretPath string `env:"KAFKA_SASL_CLIENT_SECRET_PATH"`
-	// ProfilePort sets the listening port for Go's Pprof tool. If it is not set, profile is disabled
-	ProfilePort int `env:"PROFILE_PORT"`
+	// PPROF_ADDR sets the listening address (such as 127.0.0.1:6060) for Go's Pprof tool. Do not expose publicly. If it is not set, profiling is disabled.
+	PprofAddr string `env:"PPROF_ADDR"`
 	// Flowlogs-pipeline configuration as YAML or JSON, used when export is "direct-flp". Cf https://github.com/netobserv/flowlogs-pipeline
 	// The "ingest" stage must be omitted from this configuration, since it is handled internally by the agent. The first stage should follow "preset-ingester".
 	// E.g: {"pipeline":[{"name": "writer","follows": "preset-ingester"}],"parameters":[{"name": "writer","write": {"type": "stdout"}}]}.
@@ -288,6 +288,12 @@ type Agent struct {
 	EnableFlowsRingbufFallback bool `env:"ENABLE_FLOWS_RINGBUF_FALLBACK" envDefault:"false"`
 	// EnableTLSTracking allow tracking TLS usage per flow (version, cipher suite, ...)
 	EnableTLSTracking bool `env:"ENABLE_TLS_TRACKING" envDefault:"false"`
+
+	// QUICTrackingMode configures QUIC parsing in eBPF:
+	// -  0: disabled
+	// -  1: enabled (UDP/443 only)
+	// -  2: enabled (any UDP port)
+	QUICTrackingMode int `env:"QUIC_TRACKING_MODE" envDefault:"0"`
 
 	/* Deprecated configs are listed below this line
 	 * See manageDeprecatedConfigs function for details

@@ -7,6 +7,7 @@ IMAGE_FOR_HELM := $(word 1,$(subst :, ,${IMAGE}))
 VERSION_FOR_HELM := $(word 2,$(subst :, ,${IMAGE}))
 .PHONY: helm-install
 helm-install: prereqs-helm ## Install the operator and its pre-requisites to a running cluster, using Helm
+	cd helm && helm dependency update --skip-refresh ; cd ..
 	helm repo add cert-manager https://charts.jetstack.io
 	helm upgrade --install cert-manager -n cert-manager --create-namespace cert-manager/cert-manager --set crds.enabled=true
 	helm upgrade --install trust-manager -n cert-manager oci://quay.io/jetstack/charts/trust-manager --wait
