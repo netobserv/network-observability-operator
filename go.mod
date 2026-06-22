@@ -13,7 +13,7 @@ require (
 	github.com/onsi/gomega v1.41.0
 	github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.87.0
-	github.com/prometheus/common v0.68.1
+	github.com/prometheus/common v0.69.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.28.0
