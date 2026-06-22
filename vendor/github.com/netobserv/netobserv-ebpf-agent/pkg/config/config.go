@@ -289,6 +289,12 @@ type Agent struct {
 	// EnableTLSTracking allow tracking TLS usage per flow (version, cipher suite, ...)
 	EnableTLSTracking bool `env:"ENABLE_TLS_TRACKING" envDefault:"false"`
 
+	// QUICTrackingMode configures QUIC parsing in eBPF:
+	// -  0: disabled
+	// -  1: enabled (UDP/443 only)
+	// -  2: enabled (any UDP port)
+	QUICTrackingMode int `env:"QUIC_TRACKING_MODE" envDefault:"0"`
+
 	/* Deprecated configs are listed below this line
 	 * See manageDeprecatedConfigs function for details
 	 */
