@@ -6219,7 +6219,10 @@ Accepted values are: `none` (default), `gzip`, `snappy`, `lz4`, `zstd`.<br/>
         <td>object</td>
         <td>
           TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
-We recommend the use of mTLS for higher security standards.<br/>
+We recommend the use of mTLS for higher security standards.
+When configuring TLS, the operator watches the certificate secret and copies it to both the netobserv and netobserv-privileged namespaces.
+In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+Refer to the Kafka configuration documentation for more information.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6383,6 +6386,9 @@ If the namespace is different, the config map or the secret is copied so that it
 
 TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 We recommend the use of mTLS for higher security standards.
+When configuring TLS, the operator watches the certificate secret and copies it to both the netobserv and netobserv-privileged namespaces.
+In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+Refer to the Kafka configuration documentation for more information.
 
 <table>
     <thead>
@@ -6972,7 +6978,10 @@ Accepted values are: `none` (default), `gzip`, `snappy`, `lz4`, `zstd`.<br/>
         <td>object</td>
         <td>
           TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
-We recommend the use of mTLS for higher security standards.<br/>
+We recommend the use of mTLS for higher security standards.
+When configuring TLS, the operator watches the certificate secret and copies it to both the netobserv and netobserv-privileged namespaces.
+In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+Refer to the Kafka configuration documentation for more information.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -7136,6 +7145,9 @@ If the namespace is different, the config map or the secret is copied so that it
 
 TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
 We recommend the use of mTLS for higher security standards.
+When configuring TLS, the operator watches the certificate secret and copies it to both the netobserv and netobserv-privileged namespaces.
+In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+Refer to the Kafka configuration documentation for more information.
 
 <table>
     <thead>
@@ -7529,7 +7541,10 @@ It is ignored for other modes.
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where this `LokiStack` resource is located. If omitted, it is assumed to be the same as `spec.namespace`.<br/>
+          Namespace where this `LokiStack` resource is located. If omitted, it is assumed to be the same as `spec.namespace`.
+When configuring a different namespace, the operator watches certificate secret and copies it to the netobserv main namespaces.
+In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+Refer to the Loki configuration documentation for more information.<br/>
         </td>
         <td>false</td>
       </tr></tbody>

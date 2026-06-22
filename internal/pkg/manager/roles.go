@@ -11,8 +11,8 @@ package manager
 // Operator reads ClusterVersions for cluster info, and Network config for configured CIDRs (cluster-scope resources)
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions;networks,verbs=get;list;watch
 
-// Operator needs to create namespaces, services, service accounts, CM, secrets, PVC in a user-defined namespace
-//+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps;persistentvolumeclaims;secrets,verbs=get;list;watch;create;update;patch;delete
+// Operator needs to create namespaces, services, service accounts, CM, PVC in a user-defined namespace
+//+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 
 // Operator reads Endpoint and EndpointSlices for APIServer IP (for netpol and subnet config), default namespace
 //+kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch

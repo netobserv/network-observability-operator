@@ -3175,6 +3175,9 @@ spec:
                             description: |-
                               TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
                               We recommend the use of mTLS for higher security standards.
+                              When configuring TLS, the operator watches the certificate secret and copies it to both the netobserv and netobserv-privileged namespaces.
+                              In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+                              Refer to the Kafka configuration documentation for more information.
                             properties:
                               caCert:
                                 description: '`caCert` defines the reference of the certificate for the Certificate Authority.'
@@ -3460,6 +3463,9 @@ spec:
                       description: |-
                         TLS and mTLS client configuration. When using TLS, verify that the address matches the Kafka port used for TLS, generally 9093.
                         We recommend the use of mTLS for higher security standards.
+                        When configuring TLS, the operator watches the certificate secret and copies it to both the netobserv and netobserv-privileged namespaces.
+                        In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+                        Refer to the Kafka configuration documentation for more information.
                       properties:
                         caCert:
                           description: '`caCert` defines the reference of the certificate for the Certificate Authority.'
@@ -3585,7 +3591,11 @@ spec:
                           description: Name of an existing LokiStack resource to use.
                           type: string
                         namespace:
-                          description: Namespace where this `LokiStack` resource is located. If omitted, it is assumed to be the same as `spec.namespace`.
+                          description: |-
+                            Namespace where this `LokiStack` resource is located. If omitted, it is assumed to be the same as `spec.namespace`.
+                            When configuring a different namespace, the operator watches certificate secret and copies it to the netobserv main namespaces.
+                            In order to do so, you must grant it permissions to the `netobserv-secret-watcher` and `netobserv-secret-creator` roles in the corresponding namespaces.
+                            Refer to the Loki configuration documentation for more information.
                           type: string
                       required:
                         - name
