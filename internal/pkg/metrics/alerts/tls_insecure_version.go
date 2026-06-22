@@ -21,7 +21,7 @@ func (r *tlsInsecureVersion) RecordingName() string {
 func (r *tlsInsecureVersion) GetAnnotations() (map[string]string, error) {
 	healthAnnot := newHealthAnnotation(r.ctx)
 	healthAnnot.TrafficLink = &trafficLink{
-		BackAndForth:      false,
+		BackAndForth:      true,
 		ExtraFilter:       `tls_version=~"TLS 1.0|TLS 1.1|SSL.*"`,
 		FilterDestination: false,
 	}
@@ -39,15 +39,10 @@ func (r *tlsInsecureVersion) GetAnnotations() (map[string]string, error) {
 }
 
 func (r *tlsInsecureVersion) Build() (*monitoringv1.Rule, error) {
-	// TLS egress traffic monitoring
-	if r.ctx.side == asDest {
-		return nil, nil
-	}
-
 	metric, totalMetric := getMetricsForRule(r.ctx)
 	// Filter for insecure TLS versions: TLS 1.0, TLS 1.1, or SSL variants
 	filter := getPromQLFilters(r.ctx, `TLSVersion=~"TLS 1\\.0|TLS 1\\.1|SSL.*"`)
-	totalFilter := getPromQLFilters(r.ctx, "")
+	totalFilter := getPromQLFilters(r.ctx, `TLSVersion!=""`)
 	metricsRate := promQLRateFromMetric(metric, "", filter, "2m", "")
 	totalRate := promQLRateFromMetric(totalMetric, "", totalFilter, "2m", "")
 	metricsSumBy := sumBy(metricsRate, r.ctx.healthRule.GroupBy, r.ctx.side, "")
