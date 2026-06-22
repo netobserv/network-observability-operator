@@ -52,6 +52,7 @@ func NewLokiConfig(spec *flowslatest.FlowCollectorLoki, namespace string) LokiCo
 				},
 			},
 		}
+
 	case flowslatest.LokiModeMonolithic:
 		if spec.Monolithic.InstallDemoLoki != nil && *spec.Monolithic.InstallDemoLoki {
 			loki.LokiManualParams = flowslatest.LokiManualParams{

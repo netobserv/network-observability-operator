@@ -90,8 +90,8 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
-    containerImage: quay.io/netobserv/network-observability-operator:1.11.4-community
-    createdAt: "2026-05-20T15:37:51Z"
+    containerImage: quay.io/netobserv/network-observability-operator:1.11.5-community
+    createdAt: "2026-06-18T12:05:00Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -106,7 +106,7 @@ metadata:
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
     operatorframework.io/os.linux: supported
-  name: netobserv-operator.v1.11.4-community
+  name: netobserv-operator.v1.11.5-community
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -626,7 +626,7 @@ spec:
 
     ## Configuration
 
-    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/netobserv-operator/blob/1.11.4-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/netobserv-operator/blob/1.11.4-community/config/samples/flows_v1beta2_flowcollector.yaml).
+    The `FlowCollector` resource is used to configure the operator and its managed components. A comprehensive documentation is [available here](https://github.com/netobserv/netobserv-operator/blob/1.11.5-community/docs/FlowCollector.md), and a full sample file [there](https://github.com/netobserv/netobserv-operator/blob/1.11.5-community/config/samples/flows_v1beta2_flowcollector.yaml).
 
     To edit configuration in cluster, run:
 
@@ -679,7 +679,7 @@ spec:
     This documentation includes:
 
     - An [overview](https://github.com/netobserv/netobserv-operator#openshift-console) of the features, with screenshots
-    - More information on [configuring metrics](https://github.com/netobserv/netobserv-operator/blob/1.11.4-community/docs/Metrics.md).
+    - More information on [configuring metrics](https://github.com/netobserv/netobserv-operator/blob/1.11.5-community/docs/Metrics.md).
     - A [performance](https://github.com/netobserv/netobserv-operator#performance-fine-tuning) section, for fine-tuning
     - A [security](https://github.com/netobserv/netobserv-operator#securing-data-and-communications) section
     - An [F.A.Q.](https://github.com/netobserv/netobserv-operator#faq--troubleshooting) section
@@ -1012,15 +1012,15 @@ spec:
                 - /manager
                 env:
                 - name: RELATED_IMAGE_EBPF_AGENT
-                  value: quay.io/netobserv/netobserv-ebpf-agent:v1.11.4-community
+                  value: quay.io/netobserv/netobserv-ebpf-agent:v1.11.5-community
                 - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
-                  value: quay.io/netobserv/flowlogs-pipeline:v1.11.4-community
+                  value: quay.io/netobserv/flowlogs-pipeline:v1.11.5-community
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN
-                  value: quay.io/netobserv/network-observability-console-plugin:v1.11.4-community
+                  value: quay.io/netobserv/network-observability-console-plugin:v1.11.5-community
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN_PF4
-                  value: quay.io/netobserv/network-observability-console-plugin:v1.11.4-community-pf4
+                  value: quay.io/netobserv/network-observability-console-plugin:v1.11.5-community-pf4
                 - name: RELATED_IMAGE_CONSOLE_PLUGIN_PF5
-                  value: quay.io/netobserv/network-observability-console-plugin:v1.11.4-community-pf5
+                  value: quay.io/netobserv/network-observability-console-plugin:v1.11.5-community-pf5
                 - name: RELATED_IMAGE_DEMO_LOKI
                   value: grafana/loki:3.5.0
                 - name: DOWNSTREAM_DEPLOYMENT
@@ -1030,7 +1030,7 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-                image: quay.io/netobserv/network-observability-operator:1.11.4-community
+                image: quay.io/netobserv/network-observability-operator:1.11.5-community
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -1142,39 +1142,27 @@ spec:
   - name: Discussion board
     url: https://github.com/netobserv/netobserv-operator/discussions
   maintainers:
-  - email: jpinsonn@redhat.com
-    name: Julien Pinsonneau
-  - email: jtakvori@redhat.com
-    name: Joel Takvorian
-  - email: lberetta@redhat.com
-    name: Leandro Beretta
-  - email: ljira@redhat.com
-    name: Luis Jira
-  - email: mmahmoud2201@gmail.com
-    name: Mohamed S. Mahmoud
-  - email: ocazade@redhat.com
-    name: Olivier Cazade
-  - email: stlee@redhat.com
-    name: Steven Lee
-  maturity: alpha
+  - email: support@redhat.com
+    name: Red Hat Support
+  maturity: stable
   minKubeVersion: 1.23.0
   provider:
     name: Red Hat
     url: https://www.redhat.com
   relatedImages:
-  - image: quay.io/netobserv/netobserv-ebpf-agent:v1.11.4-community
+  - image: quay.io/netobserv/netobserv-ebpf-agent:v1.11.5-community
     name: ebpf-agent
-  - image: quay.io/netobserv/flowlogs-pipeline:v1.11.4-community
+  - image: quay.io/netobserv/flowlogs-pipeline:v1.11.5-community
     name: flowlogs-pipeline
-  - image: quay.io/netobserv/network-observability-console-plugin:v1.11.4-community
+  - image: quay.io/netobserv/network-observability-console-plugin:v1.11.5-community
     name: console-plugin
-  - image: quay.io/netobserv/network-observability-console-plugin:v1.11.4-community-pf4
+  - image: quay.io/netobserv/network-observability-console-plugin:v1.11.5-community-pf4
     name: console-plugin-pf4
-  - image: quay.io/netobserv/network-observability-console-plugin:v1.11.4-community-pf5
+  - image: quay.io/netobserv/network-observability-console-plugin:v1.11.5-community-pf5
     name: console-plugin-pf5
   - image: grafana/loki:3.5.0
     name: demo-loki
-  version: 1.11.4-community
+  version: 1.11.5-community
   webhookdefinitions:
   - admissionReviewVersions:
     - v1

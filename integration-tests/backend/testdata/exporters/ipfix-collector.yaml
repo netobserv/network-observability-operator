@@ -19,9 +19,9 @@ spec:
         - name: ipfix-collector
           image: antrea/ipfix-collector:latest
           args:
-          - "--ipfix.addr=0.0.0.0"
-          - "--ipfix.port=2055"
-          - "--ipfix.transport=tcp"
+            - "--ipfix.addr=0.0.0.0"
+            - "--ipfix.port=2055"
+            - "--ipfix.transport=tcp"
           ports:
             - containerPort: 2055
               protocol: TCP

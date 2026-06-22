@@ -1,7 +1,9 @@
-//nolint:revive
-package networkpolicy
+//nolint:revive,staticcheck
+package envtest
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -11,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
-	. "github.com/netobserv/netobserv-operator/internal/controller/controllerstest"
+	. "github.com/netobserv/netobserv-operator/internal/controller/envtest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
 
@@ -20,36 +22,25 @@ const (
 	interval = test.Interval
 )
 
-var (
-	getCR = func(key types.NamespacedName) *flowslatest.FlowCollector {
-		return test.GetCR(ctx, k8sClient, key)
-	}
-	cleanupCR = func(key types.NamespacedName) {
-		test.CleanupCR(ctx, k8sClient, key)
-	}
-)
-
 // nolint:cyclop
-func ControllerSpecs() {
+func ControllerSpecs(ctxGetter test.ContextGetter) {
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
+
 	const operatorNamespace = "main-namespace"
 	crKey := types.NamespacedName{
 		Name: "cluster",
 	}
 	npKey1 := types.NamespacedName{
-		Name:      netpolName,
+		Name:      "netobserv",
 		Namespace: operatorNamespace,
 	}
 
 	// Created objects to cleanup
 	cleanupList := []client.Object{}
-
-	BeforeEach(func() {
-		// Add any setup steps that needs to be executed before each test
-	})
-
-	AfterEach(func() {
-		// Add any teardown steps that needs to be executed after each test
-	})
 
 	Context("Deploying as DaemonSet", func() {
 		np1 := networkingv1.NetworkPolicy{}
@@ -62,7 +53,6 @@ func ControllerSpecs() {
 					Processor: flowslatest.FlowCollectorFLP{
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						LogTypes:        &outputRecordTypes,
 						Metrics: flowslatest.FLPMetrics{
 							IncludeList: &[]flowslatest.FLPMetric{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"},
 						},
@@ -89,7 +79,7 @@ func ControllerSpecs() {
 		It("Should be garbage collected", func() {
 			// Retrieve CR to get its UID
 			By("Getting the CR")
-			flowCR := getCR(crKey)
+			flowCR := test.GetCR(ctx, k8sClient, crKey)
 
 			By("Expecting flowlogs-pipeline daemonset to be garbage collected")
 			Eventually(func() interface{} {
@@ -102,7 +92,7 @@ func ControllerSpecs() {
 
 	Context("Cleanup", func() {
 		It("Should delete CR", func() {
-			cleanupCR(crKey)
+			test.CleanupCR(ctx, k8sClient, crKey)
 		})
 
 		It("Should cleanup other data", func() {

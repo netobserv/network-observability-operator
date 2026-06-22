@@ -5,8 +5,13 @@ on:
     types:
       - completed
 
+permissions:
+  pull-requests: write
+
 env:
   WF_REGISTRY_USER: netobserv+github_ci
+  WF_REGISTRY: quay.io/netobserv
+  WF_IMAGE: network-observability-operator
 
 jobs:
   push-pr-image:
@@ -16,6 +21,27 @@ jobs:
     name: push PR image
     runs-on: ubuntu-latest
     steps:
+      - name: extract PR data
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr_json=$(gh api "repos/${{ github.repository }}/pulls?state=open&head=${{ github.event.workflow_run.head_repository.owner.login }}:${{ github.event.workflow_run.head_branch }}")
+          len=$(echo ${pr_json} | jq '. | length')
+          if [[ "$len" != "1" ]]; then
+            echo "::error::Could not get a unique PR, aborting"
+            exit 1
+          fi
+          has_label=$(echo ${pr_json} | jq '[.[0].labels[].name] | any(. == "ok-to-test")')
+          if [[ "$has_label" != "true" ]]; then
+            echo "::error::PR does not have the ok-to-test label, aborting"
+            exit 1
+          fi
+          echo "pr_id=$(echo ${pr_json} | jq '.[0].number')" >> $GITHUB_ENV
+          head_sha=$(echo ${pr_json} | jq -r '.[0].head.sha')
+          echo "short_sha=$(echo ${head_sha::8})" >> $GITHUB_ENV
+          echo "main_image=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${head_sha::8}" >> $GITHUB_ENV
+          echo "bundle_image=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-sha-${head_sha::8}" >> $GITHUB_ENV
+          echo "catalog_image=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-sha-${head_sha::8}" >> $GITHUB_ENV
       - name: download artifact
         uses: actions/download-artifact@v8
         with:
@@ -27,6 +53,9 @@ jobs:
           docker load --input ./operator.tar
           docker load --input ./bundle.tar
           docker load --input ./catalog.tar
+          docker image tag ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:tmp ${{ env.main_image }}
+          docker image tag ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-tmp ${{ env.bundle_image }}
+          docker image tag ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-tmp ${{ env.catalog_image }}
       - name: docker login to quay.io
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
@@ -35,28 +64,23 @@ jobs:
           registry: quay.io
       - name: push operator, bundle and catalog
         run: |
-          DOCKER_BUILDKIT=1 docker push $(cat ./operator-name)
-          DOCKER_BUILDKIT=1 docker push $(cat ./bundle-name)
-          DOCKER_BUILDKIT=1 docker push $(cat ./catalog-name)
+          DOCKER_BUILDKIT=1 docker push ${{ env.main_image }}
+          DOCKER_BUILDKIT=1 docker push ${{ env.bundle_image }}
+          DOCKER_BUILDKIT=1 docker push ${{ env.catalog_image }}
       - uses: actions/github-script@v9
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             var fs = require('fs');
-            var issueNumber = Number(fs.readFileSync('./pr-id'));
-            var shortSha = String(fs.readFileSync('./short-sha')).trim();
-            var operatorImage = String(fs.readFileSync('./operator-name')).trim();
-            var bundleImage = String(fs.readFileSync('./bundle-name')).trim();
-            var catalogImage = String(fs.readFileSync('./catalog-name')).trim();
             github.rest.issues.createComment({
-              issue_number: issueNumber,
+              issue_number: ${{ env.pr_id }},
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `New images:
             \`\`\`bash
-            ${operatorImage}
-            ${bundleImage}
-            ${catalogImage}
+            ${{ env.main_image }}
+            ${{ env.bundle_image }}
+            ${{ env.catalog_image }}
             \`\`\`
 
             They will expire in two weeks.
@@ -64,10 +88,10 @@ jobs:
             To deploy this build:
             \`\`\`bash
             # Direct deployment, from operator repo
-            IMAGE=${operatorImage} make deploy
+            IMAGE=${{ env.main_image }} make deploy
 
             # Or using operator-sdk
-            operator-sdk run bundle ${bundleImage}
+            operator-sdk run bundle ${{ env.bundle_image }}
             \`\`\`
 
             Or as a Catalog Source:
@@ -79,7 +103,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${catalogImage}
+              image: ${{ env.catalog_image }}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:

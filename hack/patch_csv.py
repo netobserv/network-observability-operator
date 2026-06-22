@@ -85,7 +85,6 @@ csv['spec']['description'] = file.read()
 file.close()
 
 csv['spec']['displayName'] = 'Network Observability'
-csv['spec']['maturity'] = 'stable'
 
 for relatedImage in csv['spec']['relatedImages']:
    if relatedImage["name"] == "ebpf-agent":

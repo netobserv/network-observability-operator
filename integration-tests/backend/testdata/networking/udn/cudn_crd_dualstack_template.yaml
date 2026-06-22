@@ -21,12 +21,11 @@ objects:
             - cidr: "${IPv6CIDR}"
               hostSubnet: ${{IPv6PREFIX}}
 parameters:
-- name: CRDNAME
-- name: LABELVALUE
-- name: LABELKEY
-- name: ROLE
-- name: IPv4CIDR
-- name: IPv4PREFIX
-- name: IPv6CIDR
-- name: IPv6PREFIX
-
+  - name: CRDNAME
+  - name: LABELVALUE
+  - name: LABELKEY
+  - name: ROLE
+  - name: IPv4CIDR
+  - name: IPv4PREFIX
+  - name: IPv6CIDR
+  - name: IPv6PREFIX

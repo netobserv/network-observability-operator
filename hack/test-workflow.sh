@@ -2,7 +2,7 @@
 
 test_out="test.out"
 bundle_csv="bundle/manifests/netobserv-operator.clusterserviceversion.yaml"
-short_sha=$(git rev-parse --short HEAD)
+short_sha=$(git rev-parse --short=8 HEAD)
 fake_tag="1.0.42"
 
 clean_up() {

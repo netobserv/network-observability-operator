@@ -17,10 +17,9 @@ objects:
           role: "${ROLE}"
           subnets: ["${IPv4CIDR}", "${IPv6CIDR}"]
 parameters:
-- name: CRDNAME
-- name: LABELVALUE
-- name: LABELKEY
-- name: ROLE
-- name: IPv4CIDR
-- name: IPv6CIDR
-
+  - name: CRDNAME
+  - name: LABELVALUE
+  - name: LABELKEY
+  - name: ROLE
+  - name: IPv4CIDR
+  - name: IPv6CIDR

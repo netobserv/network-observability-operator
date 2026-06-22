@@ -14,7 +14,7 @@ type objectRef struct {
 func (w *Watcher) refFromFile(fr *flowslatest.FileReference) objectRef {
 	ns := fr.Namespace
 	if ns == "" {
-		ns = w.defaultNamespace
+		ns = w.getDefaultNamespace()
 	}
 	return objectRef{
 		kind:      fr.Type,
@@ -27,7 +27,7 @@ func (w *Watcher) refFromFile(fr *flowslatest.FileReference) objectRef {
 func (w *Watcher) refFromCert(cert *flowslatest.CertificateReference) objectRef {
 	ns := cert.Namespace
 	if ns == "" {
-		ns = w.defaultNamespace
+		ns = w.getDefaultNamespace()
 	}
 	keys := []string{cert.CertFile}
 	if cert.CertKey != "" {

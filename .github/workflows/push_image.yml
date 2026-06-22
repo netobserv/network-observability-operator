@@ -32,7 +32,7 @@ jobs:
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: get short sha
-        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        run: echo "short_sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_ENV
       - name: build images
         run: |
           MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.WF_VERSION }} CLEAN_BUILD=1 make image-build

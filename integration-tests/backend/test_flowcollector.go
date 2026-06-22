@@ -323,6 +323,82 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 	})
 
+	g.It("Author:osmakal-High-89198-Verify processor metrics configuration with includeList and additionalIncludeList [Serial]", func() {
+		namespace := oc.Namespace()
+
+		g.By("Deploy initial FlowCollector without additionalIncludeList")
+		flow := Flowcollector{
+			Namespace:  namespace,
+			Template:   flowFixturePath,
+			LokiEnable: "false",
+		}
+		defer func() { _ = flow.DeleteFlowcollector(oc) }()
+		flow.CreateFlowcollector(oc)
+
+		g.By("Wait for FlowCollector to reconcile")
+		flow.WaitForFlowcollectorReady(oc)
+
+		g.By("Wait for baseline metrics to be available")
+		time.Sleep(90 * time.Second)
+
+		// Capture baseline metrics (defaults only)
+		g.By("Query Prometheus for baseline netobserv_* metrics")
+		baselineMetrics, err := getAllNetobservMetricNames(oc)
+		o.Expect(err).NotTo(o.HaveOccurred(), "failed to query Prometheus for baseline")
+
+		e2e.Logf("Found %d baseline netobserv metrics in Prometheus", len(baselineMetrics))
+
+		baselineSet := make(map[string]bool)
+		for _, m := range baselineMetrics {
+			baselineSet[m] = true
+		}
+
+		// Apply patch to add additional metrics
+		g.By("Patch FlowCollector with additionalIncludeList")
+		additionalIncludeList := []string{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
+		patch := `[{"op": "add", "path": "/spec/processor/metrics/additionalIncludeList", "value": ["namespace_egress_bytes_total", "namespace_ingress_bytes_total"]}]`
+		out, err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=json", "-p", patch).Output()
+		o.Expect(err).NotTo(o.HaveOccurred(), "failed to patch FlowCollector")
+		o.Expect(out).To(o.ContainSubstring("patched"))
+
+		g.By("Wait for FlowCollector to reconcile after patch")
+		flow.WaitForFlowcollectorReady(oc)
+
+		g.By("Wait for updated metrics to be available")
+		time.Sleep(90 * time.Second)
+
+		// Get all metrics after patch
+		g.By("Query Prometheus for all netobserv_* metrics after patch")
+		allMetrics, err := getAllNetobservMetricNames(oc)
+		o.Expect(err).NotTo(o.HaveOccurred(), "failed to query Prometheus after patch")
+
+		e2e.Logf("Found %d netobserv metrics in Prometheus after patch", len(allMetrics))
+
+		actualSet := make(map[string]bool)
+		for _, m := range allMetrics {
+			actualSet[m] = true
+		}
+
+		// Verify all baseline metrics are still present (superset check)
+		for _, metric := range baselineMetrics {
+			o.Expect(actualSet[metric]).To(o.BeTrue(),
+				fmt.Sprintf("baseline metric %s should still exist in %v", metric, allMetrics))
+		}
+
+		// Verify the additional metrics are now present
+		for _, metric := range additionalIncludeList {
+			fullMetricName := "netobserv_" + metric
+			o.Expect(actualSet[fullMetricName]).To(o.BeTrue(),
+				fmt.Sprintf("additional metric %s should exist in %v", fullMetricName, allMetrics))
+		}
+
+		// Verify the total count increased by exactly len(additionalIncludeList)
+		expectedCount := len(baselineMetrics) + len(additionalIncludeList)
+		o.Expect(len(allMetrics)).To(o.Equal(expectedCount),
+			fmt.Sprintf("expected %d metrics (baseline: %d + additional: %d) but found %d: %v",
+				expectedCount, len(baselineMetrics), len(additionalIncludeList), len(allMetrics), allMetrics))
+	})
+
 	g.Context("with Loki", func() {
 		var (
 			lokiDir, _ = filePath.Abs("testdata/loki")
@@ -851,9 +927,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		})
 
 		g.It("Author:aramesha-NonPreRelease-Critical-59746-NetObserv upgrade testing [Serial]", func() {
-			SkipIfOCPBelow("v4.10")
-
-			// Defer cleanup - ensures operator is uninstalled if test fails/passes
+			// Uninstall operator even if test fails/passes
 			g.DeferCleanup(func() {
 				NO.uninstallOperator(oc)
 				oc.DeleteSpecifiedNamespaceAsAdmin(netobservNS)
@@ -866,14 +940,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			o.Expect(err).NotTo(o.HaveOccurred())
 
 			g.By("Deploy older version of netobserv operator")
-			NOcatSrc = Resource{"catsrc", "redhat-operators", "openshift-marketplace"}
-			NOSource = CatalogSourceObjects{"stable", NOcatSrc.Name, NOcatSrc.Namespace}
+			NOReleasedcatSrc := Resource{"catsrc", "redhat-operators", "openshift-marketplace"}
+			NOReleasedSource := CatalogSourceObjects{"stable", NOReleasedcatSrc.Name, NOReleasedcatSrc.Namespace}
 
-			NO.CatalogSource = &NOSource
+			// Use local copy instead of modifying global NO
+			NOReleased := NO
+			NOReleased.CatalogSource = &NOReleasedSource
 
-			g.By(fmt.Sprintf("Subscribe operators to %s channel", NOSource.Channel))
+			g.By(fmt.Sprintf("Subscribe operators to %s channel", NOReleasedSource.Channel))
 			OperatorNS.DeployOperatorNamespace(oc)
-			NO.SubscribeOperator(oc)
+			NOReleased.SubscribeOperator(oc)
 			// check if NO operator is deployed
 			WaitForPodsReadyWithLabel(oc, netobservNS, "app="+NO.OperatorName)
 			NOStatus, err := CheckOperatorStatus(oc, netobservNS, NOPackageName)
@@ -911,8 +987,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			preUpgradePluginVersion = strings.Split(preUpgradePluginVersion, ":")[1]
 
 			g.By("Deploy latest catalog and upgrade to latest version")
-			NOcatSrc.Name = "netobserv-konflux-fbc"
-			NOcatSrc.Namespace = OperatorNS.Name
 			var catsrcErr error
 			if catalogSource != "" {
 				e2e.Logf("Using %s catalog", catalogSource)
@@ -2750,6 +2824,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			// Verify TLS 1.2 fields
 			for _, r := range flowRecords {
 				o.Expect(r.Flowlog.TLSTypes).Should(o.ContainElement("ServerHello"), "expected TLS Types to contain ServerHello")
+				o.Expect(r.Flowlog.TLSGroup).Should(o.BeEmpty(), "expected TLS Group to be empty for TLS 1.2")
 				o.Expect(r.Flowlog.TLSCipherSuite).NotTo(o.BeEmpty())
 			}
 
@@ -2761,7 +2836,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			// Verify TLS 1.1 fields
 			for _, r := range flowRecords {
 				o.Expect(r.Flowlog.TLSTypes).Should(o.ContainElement("ServerHello"), "expected TLS Types to contain ServerHello")
-				o.Expect(r.Flowlog.TLSTypes).Should(o.BeEmpty(), "expected TLS Types to be empty for TLS 1.1")
+				o.Expect(r.Flowlog.TLSGroup).Should(o.BeEmpty(), "expected TLS Group to be empty for TLS 1.1")
 				o.Expect(r.Flowlog.TLSCipherSuite).Should(o.BeEmpty(), "expected TLS CipherSuite to be empty for TLS 1.1")
 			}
 

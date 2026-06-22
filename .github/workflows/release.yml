@@ -3,6 +3,9 @@ on:
   push:
     tags: ['*']
 
+permissions:
+  contents: write
+
 env:
   WF_REGISTRY_USER: netobserv+github_ci
   WF_REGISTRY: quay.io/netobserv

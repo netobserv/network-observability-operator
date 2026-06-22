@@ -40,7 +40,8 @@ func (r *LReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowCo
 	l := log.FromContext(ctx).WithName("demo-loki")
 	ctx = log.IntoContext(ctx, l)
 
-	defer r.Status.Commit(ctx, r.Client)
+	commit := r.Status.Reset()
+	defer commit(ctx, r.Client)
 
 	err := r.reconcile(ctx, desired)
 	if err != nil {

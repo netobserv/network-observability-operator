@@ -34,7 +34,7 @@ func TestStatusWorkflow(t *testing.T) {
 		DesiredNumberScheduled: 3,
 		NumberReady:            1,
 	}})
-	sm.SetUnknown()
+	sm.Reset()
 
 	conds = s.getConditions()
 	assertHasConditionTypes(t, conds, []string{"Ready", "WaitingFlowCollectorController", "WaitingMonitoring"})
@@ -42,6 +42,7 @@ func TestStatusWorkflow(t *testing.T) {
 	assertHasCondition(t, conds, "WaitingFlowCollectorController", "DaemonSetNotReady", metav1.ConditionTrue)
 	assertHasCondition(t, conds, "WaitingMonitoring", "Unknown", metav1.ConditionUnknown)
 
+	sl.Reset()
 	sl.CheckDaemonSetProgress(&appsv1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "test"}, Status: appsv1.DaemonSetStatus{
 		DesiredNumberScheduled: 3,
 		NumberReady:            3,
@@ -54,6 +55,8 @@ func TestStatusWorkflow(t *testing.T) {
 	assertHasCondition(t, conds, "WaitingFlowCollectorController", "Ready", metav1.ConditionFalse)
 	assertHasCondition(t, conds, "WaitingMonitoring", "ComponentUnused", metav1.ConditionUnknown)
 
+	sl.Reset()
+	sm.Reset()
 	sl.CheckDeploymentProgress(&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "test"}, Status: appsv1.DeploymentStatus{
 		ReadyReplicas: 2,
 		Replicas:      2,
@@ -65,6 +68,54 @@ func TestStatusWorkflow(t *testing.T) {
 	assertHasCondition(t, conds, "Ready", "Ready", metav1.ConditionTrue)
 	assertHasCondition(t, conds, "WaitingFlowCollectorController", "Ready", metav1.ConditionFalse)
 	assertHasCondition(t, conds, "WaitingMonitoring", "Ready", metav1.ConditionFalse)
+}
+
+func TestStatusAccumulation(t *testing.T) {
+	s := NewManager()
+	sl := s.ForComponent(FlowCollectorController)
+
+	// Start with a degraded status
+	sl.SetDegraded("NotGoingWell", "degraded message")
+
+	cpnt := sl.Get()
+	assert.Equal(t, "degraded message", cpnt.Message())
+	conds := s.getConditions()
+	assertHasConditionTypes(t, conds, []string{"Ready", "WaitingFlowCollectorController"})
+	assertHasCondition(t, conds, "Ready", "Ready,Degraded", metav1.ConditionTrue)
+	assertHasCondition(t, conds, "WaitingFlowCollectorController", "NotGoingWell", metav1.ConditionTrue)
+
+	// Add an "in progress" status: it takes priority over degraded
+	sl.CheckDaemonSetProgress(&appsv1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: "test"}, Status: appsv1.DaemonSetStatus{
+		DesiredNumberScheduled: 3,
+		NumberReady:            1,
+	}})
+
+	cpnt = sl.Get()
+	assert.Equal(t, "degraded message; DaemonSet test not ready: 1/3", cpnt.Message())
+	conds = s.getConditions()
+	assertHasConditionTypes(t, conds, []string{"Ready", "WaitingFlowCollectorController"})
+	assertHasCondition(t, conds, "Ready", "Pending", metav1.ConditionFalse)
+	assertHasCondition(t, conds, "WaitingFlowCollectorController", "DaemonSetNotReady", metav1.ConditionTrue)
+
+	// Add a ready status: it's ignored; any sort of issues take priority
+	sl.SetReady()
+
+	cpnt = sl.Get()
+	assert.Equal(t, "degraded message; DaemonSet test not ready: 1/3", cpnt.Message())
+	conds = s.getConditions()
+	assertHasConditionTypes(t, conds, []string{"Ready", "WaitingFlowCollectorController"})
+	assertHasCondition(t, conds, "Ready", "Pending", metav1.ConditionFalse)
+	assertHasCondition(t, conds, "WaitingFlowCollectorController", "DaemonSetNotReady", metav1.ConditionTrue)
+
+	// Add an error: it takes priority
+	sl.SetFailure("Oops", "error message")
+
+	cpnt = sl.Get()
+	assert.Equal(t, "degraded message; DaemonSet test not ready: 1/3; error message", cpnt.Message())
+	conds = s.getConditions()
+	assertHasConditionTypes(t, conds, []string{"Ready", "WaitingFlowCollectorController"})
+	assertHasCondition(t, conds, "Ready", "Failure", metav1.ConditionFalse)
+	assertHasCondition(t, conds, "WaitingFlowCollectorController", "Oops", metav1.ConditionTrue)
 }
 
 func TestDegradedStatus(t *testing.T) {
@@ -83,7 +134,7 @@ func TestDegradedStatus(t *testing.T) {
 	cs := plugin.Get()
 	assert.Equal(t, StatusDegraded, cs.Status)
 	assert.Equal(t, "PluginRegistrationFailed", cs.Reason)
-	assert.Equal(t, "console operator unreachable", cs.Message)
+	assert.Equal(t, "console operator unreachable", cs.Message())
 }
 
 func TestUnusedStatusInCRD(t *testing.T) {
@@ -173,24 +224,24 @@ func TestReplicaPreservationAcrossTransitions(t *testing.T) {
 	require.NotNil(t, cs.DesiredReplicas, "DesiredReplicas should survive failure transition")
 	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 
-	// Transition to degraded: replicas should still be preserved
+	// Transition to degraded: failure takes priority, replicas should still be preserved
 	agent.SetDegraded("SomeWarning", "non-critical issue")
 	cs = agent.Get()
-	assert.Equal(t, StatusDegraded, cs.Status)
+	assert.Equal(t, StatusFailure, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas, "DesiredReplicas should survive degraded transition")
 	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 
-	// Transition to in-progress: replicas should still be preserved
+	// Transition to in-progress: failure takes priority, replicas should still be preserved
 	agent.SetNotReady("Updating", "rolling update in progress")
 	cs = agent.Get()
-	assert.Equal(t, StatusInProgress, cs.Status)
+	assert.Equal(t, StatusFailure, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas, "DesiredReplicas should survive in-progress transition")
 	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 
-	// Transition back to ready: replicas should still be preserved
+	// Transition back to ready: failure takes priority, replicas should still be preserved
 	agent.SetReady()
 	cs = agent.Get()
-	assert.Equal(t, StatusReady, cs.Status)
+	assert.Equal(t, StatusFailure, cs.Status)
 	require.NotNil(t, cs.DesiredReplicas)
 	assert.Equal(t, int32(5), *cs.DesiredReplicas)
 }
@@ -240,7 +291,7 @@ func TestDeploymentNotAvailable(t *testing.T) {
 
 	cs := plugin.Get()
 	assert.Equal(t, StatusInProgress, cs.Status)
-	assert.Contains(t, cs.Message, "not ready: 1/2")
+	assert.Contains(t, cs.Message(), "not ready: 1/2")
 	require.NotNil(t, cs.DesiredReplicas)
 	assert.Equal(t, int32(2), *cs.DesiredReplicas)
 	assert.Equal(t, int32(1), *cs.ReadyReplicas)
@@ -284,8 +335,8 @@ func TestDaemonSetZeroDesiredScheduled(t *testing.T) {
 	cs := agent.Get()
 	assert.Equal(t, StatusDegraded, cs.Status)
 	assert.Equal(t, "NoPodsScheduled", cs.Reason)
-	assert.Contains(t, cs.Message, "netobserv-ebpf-agent")
-	assert.Contains(t, cs.Message, "nodeSelector")
+	assert.Contains(t, cs.Message(), "netobserv-ebpf-agent")
+	assert.Contains(t, cs.Message(), "nodeSelector")
 }
 
 func TestDaemonSetZeroDesiredScheduledHealth(t *testing.T) {
@@ -333,7 +384,7 @@ func TestDeploymentMissingConditionFallback(t *testing.T) {
 	})
 	cs = plugin2.Get()
 	assert.Equal(t, StatusInProgress, cs.Status)
-	assert.Contains(t, cs.Message, "missing condition")
+	assert.Contains(t, cs.Message(), "missing condition")
 }
 
 func TestSetPodHealthDegradation(t *testing.T) {
@@ -345,16 +396,16 @@ func TestSetPodHealthDegradation(t *testing.T) {
 	assert.Equal(t, StatusReady, agent.Get().Status)
 
 	// Inject pod health issues — should degrade to StatusDegraded
-	agent.setPodHealth(PodHealthSummary{
-		UnhealthyCount: 2,
-		Issues:         "2 CrashLoopBackOff (pod-a, pod-b): can't write messages into Kafka",
+	agent.setPodHealth(podHealthSummary{
+		unhealthyCount: 2,
+		issues:         "2 CrashLoopBackOff (pod-a, pod-b): can't write messages into Kafka",
 	})
 
 	cs := agent.Get()
 	assert.Equal(t, StatusDegraded, cs.Status)
 	assert.Equal(t, "UnhealthyPods", cs.Reason)
-	assert.Contains(t, cs.Message, "Kafka")
-	assert.Equal(t, int32(2), cs.PodHealth.UnhealthyCount)
+	assert.Contains(t, cs.Message(), "Kafka")
+	assert.Equal(t, int32(2), cs.podHealth.unhealthyCount)
 }
 
 func TestSetPodHealthFromInProgress(t *testing.T) {
@@ -364,15 +415,15 @@ func TestSetPodHealthFromInProgress(t *testing.T) {
 	agent.SetNotReady("DaemonSetNotReady", "DaemonSet not ready: 0/2")
 	assert.Equal(t, StatusInProgress, agent.Get().Status)
 
-	agent.setPodHealth(PodHealthSummary{
-		UnhealthyCount: 2,
-		Issues:         "2 CrashLoopBackOff (pod-a, pod-b): Error",
+	agent.setPodHealth(podHealthSummary{
+		unhealthyCount: 2,
+		issues:         "2 CrashLoopBackOff (pod-a, pod-b): Error",
 	})
 
 	cs := agent.Get()
 	assert.Equal(t, StatusDegraded, cs.Status, "InProgress + unhealthy pods should become Degraded")
 	assert.Equal(t, "UnhealthyPods", cs.Reason)
-	assert.Equal(t, int32(2), cs.PodHealth.UnhealthyCount)
+	assert.Equal(t, int32(2), cs.podHealth.unhealthyCount)
 }
 
 func TestSetPodHealthNoDowngradeFromFailure(t *testing.T) {
@@ -381,14 +432,14 @@ func TestSetPodHealthNoDowngradeFromFailure(t *testing.T) {
 
 	// Already in failure — pod health should not override to degraded
 	agent.SetFailure("CriticalError", "crash")
-	agent.setPodHealth(PodHealthSummary{
-		UnhealthyCount: 1,
-		Issues:         "1 CrashLoopBackOff (pod-x)",
+	agent.setPodHealth(podHealthSummary{
+		unhealthyCount: 1,
+		issues:         "1 CrashLoopBackOff (pod-x)",
 	})
 
 	cs := agent.Get()
 	assert.Equal(t, StatusFailure, cs.Status, "setPodHealth should not override Failure with Degraded")
-	assert.Equal(t, int32(1), cs.PodHealth.UnhealthyCount, "PodHealth should still be recorded")
+	assert.Equal(t, int32(1), cs.podHealth.unhealthyCount, "PodHealth should still be recorded")
 }
 
 func TestToCRDStatusWithPodHealth(t *testing.T) {
@@ -396,12 +447,12 @@ func TestToCRDStatusWithPodHealth(t *testing.T) {
 		Name:            EBPFAgents,
 		Status:          StatusDegraded,
 		Reason:          "UnhealthyPods",
-		Message:         "2 CrashLoopBackOff (pod-a, pod-b)",
+		Messages:        []string{"2 CrashLoopBackOff (pod-a, pod-b)"},
 		DesiredReplicas: ptr.To(int32(5)),
 		ReadyReplicas:   ptr.To(int32(3)),
-		PodHealth: PodHealthSummary{
-			UnhealthyCount: 2,
-			Issues:         "2 CrashLoopBackOff (pod-a, pod-b)",
+		podHealth: podHealthSummary{
+			unhealthyCount: 2,
+			issues:         "2 CrashLoopBackOff (pod-a, pod-b)",
 		},
 	}
 
@@ -680,9 +731,9 @@ func TestKafkaCondition(t *testing.T) {
 		s := NewManager()
 		transformer := s.ForComponent(FLPTransformer)
 		transformer.SetReady()
-		transformer.setPodHealth(PodHealthSummary{
-			UnhealthyCount: 1,
-			Issues:         "1 CrashLoopBackOff (flp-kafka-0)",
+		transformer.setPodHealth(podHealthSummary{
+			unhealthyCount: 1,
+			issues:         "1 CrashLoopBackOff (flp-kafka-0)",
 		})
 
 		cond := s.GetKafkaCondition()
@@ -697,9 +748,9 @@ func TestKafkaCondition(t *testing.T) {
 		transformer.SetReady()
 		agent := s.ForComponent(EBPFAgents)
 		agent.SetReady()
-		agent.setPodHealth(PodHealthSummary{
-			UnhealthyCount: 3,
-			Issues:         "3 CrashLoopBackOff (agent-a, agent-b, agent-c): can't write Kafka messages",
+		agent.setPodHealth(podHealthSummary{
+			unhealthyCount: 3,
+			issues:         "3 CrashLoopBackOff (agent-a, agent-b, agent-c): can't write Kafka messages",
 		})
 
 		cond := s.GetKafkaCondition()
@@ -714,9 +765,9 @@ func TestKafkaCondition(t *testing.T) {
 		transformer.SetReady()
 		agent := s.ForComponent(EBPFAgents)
 		agent.SetReady()
-		agent.setPodHealth(PodHealthSummary{
-			UnhealthyCount: 1,
-			Issues:         "1 OOMKilled (agent-x)",
+		agent.setPodHealth(podHealthSummary{
+			unhealthyCount: 1,
+			issues:         "1 OOMKilled (agent-x)",
 		})
 
 		cond := s.GetKafkaCondition()
@@ -780,6 +831,7 @@ func TestEmitStateTransitionEvents(t *testing.T) {
 	assert.Empty(t, rec.events, "First call should not emit events (no previous state)")
 
 	// Transition to failure
+	s.reset(agent.cpnt)
 	agent.SetFailure("KafkaError", "broker down")
 	s.emitStateTransitionEvents(ctx(), fc)
 	require.Len(t, rec.events, 1)
@@ -789,6 +841,7 @@ func TestEmitStateTransitionEvents(t *testing.T) {
 	assert.Contains(t, rec.events[0].message, "broker down")
 
 	// Transition to ready (recovery)
+	s.reset(agent.cpnt)
 	rec.events = nil
 	agent.SetReady()
 	s.emitStateTransitionEvents(ctx(), fc)
@@ -797,12 +850,14 @@ func TestEmitStateTransitionEvents(t *testing.T) {
 	assert.Equal(t, "ComponentRecovered", rec.events[0].reason)
 
 	// Same state again — no event
+	s.reset(agent.cpnt)
 	rec.events = nil
 	agent.SetReady()
 	s.emitStateTransitionEvents(ctx(), fc)
 	assert.Empty(t, rec.events, "Same state should not emit events")
 
 	// Transition to degraded
+	s.reset(agent.cpnt)
 	rec.events = nil
 	agent.SetDegraded("HighRestarts", "5 pods restarting")
 	s.emitStateTransitionEvents(ctx(), fc)
@@ -907,9 +962,9 @@ func TestNeedsRequeue(t *testing.T) {
 		s := NewManager()
 		agent := s.ForComponent(EBPFAgents)
 		agent.SetReady()
-		agent.setPodHealth(PodHealthSummary{
-			UnhealthyCount: 2,
-			Issues:         "2 CrashLoopBackOff (pod-a, pod-b)",
+		agent.setPodHealth(podHealthSummary{
+			unhealthyCount: 2,
+			issues:         "2 CrashLoopBackOff (pod-a, pod-b)",
 		})
 		assert.True(t, s.NeedsRequeue())
 	})
@@ -919,7 +974,7 @@ func TestNeedsRequeue(t *testing.T) {
 		a := s.ForComponent(EBPFAgents)
 		b := s.ForComponent(WebConsole)
 		a.SetUnused("disabled")
-		b.SetUnknown()
+		b.Reset()
 		assert.False(t, s.NeedsRequeue())
 	})
 

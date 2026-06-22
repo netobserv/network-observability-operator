@@ -53,10 +53,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		return ctrl.Result{}, nil
 	}
 
-	r.status.SetUnknown()
-	defer r.status.Commit(ctx, r.Client)
+	commit := r.status.Reset()
+	defer commit(ctx, r.Client)
 
-	err = r.reconcile(ctx, clh, desired)
+	hasNP, err := r.reconcile(ctx, clh, desired)
 	if err != nil {
 		l.Error(err, "Network policy reconcile failure")
 		// Set status failure unless it was already set
@@ -64,18 +64,22 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 			r.status.SetFailure("NetworkPolicyError", err.Error())
 		}
 		return ctrl.Result{}, err
+	} else if !hasNP {
+		r.status.SetUnused("Network policy is disabled")
+	} else {
+		r.status.SetReady()
 	}
 
-	r.status.SetReady()
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) error {
+// Returns true if policies are enabled
+func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) (bool, error) {
 	l := log.FromContext(ctx)
 
 	cni, err := r.mgr.ClusterInfo.GetCNI()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// Get API server endpoint IPs for network policy
@@ -84,15 +88,19 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 		apiServerIPs, err = cluster.GetAPIServerEndpointIPs(ctx, r.Client, r.mgr.ClusterInfo)
 		if err != nil {
 			l.Error(err, "Failed to get API server endpoint IPs")
-			return fmt.Errorf("cannot determine API server endpoint IPs: %w", err)
+			return false, fmt.Errorf("cannot determine API server endpoint IPs: %w", err)
 		}
 	}
 
 	npName, desiredNp := buildMainNetworkPolicy(desired, r.mgr, cni, apiServerIPs)
 	if err := reconcilers.ReconcileNetworkPolicy(ctx, clh, npName, desiredNp); err != nil {
-		return err
+		return false, err
 	}
 
 	privilegedNpName, desiredPrivilegedNp := buildPrivilegedNetworkPolicy(desired, r.mgr, cni)
-	return reconcilers.ReconcileNetworkPolicy(ctx, clh, privilegedNpName, desiredPrivilegedNp)
+	if err := reconcilers.ReconcileNetworkPolicy(ctx, clh, privilegedNpName, desiredPrivilegedNp); err != nil {
+		return false, err
+	}
+
+	return desiredNp != nil, nil
 }

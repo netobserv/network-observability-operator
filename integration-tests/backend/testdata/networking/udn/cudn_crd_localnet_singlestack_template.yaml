@@ -17,14 +17,14 @@ objects:
           role: "${ROLE}"
           physicalNetworkName: "${PHYSICALNETWORK}"
           subnets:
-          - ${{SUBNET}}
+            - ${{SUBNET}}
           excludeSubnets:
-          - ${{EXCLUDESUBNET}}
+            - ${{EXCLUDESUBNET}}
 parameters:
-- name: CRDNAME
-- name: LABELVALUE
-- name: LABELKEY
-- name: ROLE
-- name: PHYSICALNETWORK
-- name: SUBNET
-- name: EXCLUDESUBNET
+  - name: CRDNAME
+  - name: LABELVALUE
+  - name: LABELKEY
+  - name: ROLE
+  - name: PHYSICALNETWORK
+  - name: SUBNET
+  - name: EXCLUDESUBNET

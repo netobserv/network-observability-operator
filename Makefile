@@ -15,7 +15,7 @@ IMAGE_REGISTRY ?= quay.io
 REPO ?= $(IMAGE_REGISTRY)/$(IMAGE_ORG)
 
 # Component versions to use in bundle / release (do not use $VERSION for that)
-BUNDLE_VERSION ?= 1.11.4-community
+BUNDLE_VERSION ?= 1.11.5-community
 # console plugin
 export PLG_VERSION ?= v${BUNDLE_VERSION}
 # flowlogs-pipeline
@@ -99,7 +99,7 @@ endif
 
 ifneq ($(CLEAN_BUILD),)
 	BUILD_DATE := $(shell date +%Y-%m-%d\ %H:%M)
-	BUILD_SHA := $(shell git rev-parse --short HEAD)
+	BUILD_SHA := $(shell git rev-parse --short=8 HEAD)
 	LDFLAGS ?= -X 'main.buildVersion=${VERSION}-${BUILD_SHA}' -X 'main.buildDate=${BUILD_DATE}'
 endif
 
@@ -393,7 +393,6 @@ tar-image: image-build ## Build single arch (amd64) and save as a tar
 	$(OCI_BIN) tag $(IMAGE)-amd64 $(IMAGE)
 	mkdir -p ./out
 	$(OCI_BIN) save -o out/operator.tar $(IMAGE)
-	echo $(IMAGE) > ./out/operator-name
 
 ##@ Deployment
 
@@ -478,7 +477,6 @@ bundle-push: ## Push the bundle image.
 bundle-tar: bundle-build ## Build bundle image and save as a tar
 	mkdir -p ./out
 	$(OCI_BIN) save -o out/bundle.tar $(BUNDLE_IMAGE)
-	echo $(BUNDLE_IMAGE) > ./out/bundle-name
 
 # A comma-separated list of bundle images (e.g. make catalog-build BUNDLE_IMAGES=example.com/operator-bundle:v0.1.0,example.com/operator-bundle:v0.2.0).
 # These images MUST exist in a registry and be pull-able.
@@ -521,7 +519,6 @@ catalog-tar: ## Build catalog image and save as a tar
 	$(MAKE) catalog-build CATALOG_IMAGE=temp-catalog
 	echo "FROM temp-catalog" | $(OCI_BIN) build --label quay.expires-after=2w -t $(CATALOG_IMAGE) -
 	$(OCI_BIN) save -o out/catalog.tar $(CATALOG_IMAGE)
-	echo $(CATALOG_IMAGE) > ./out/catalog-name
 
 ##@ Misc
 

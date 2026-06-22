@@ -3,97 +3,94 @@ kind: Template
 metadata:
   name: otel-collector-tls-template
 objects:
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: ${NAME}-collector
-    annotations:
-      service.beta.openshift.io/serving-cert-secret-name: ${NAME}-tls
-  spec:
-    selector:
-      app.kubernetes.io/component: opentelemetry-collector
-      app.kubernetes.io/instance: ${NAME}
-    ports:
-    - name: otlp-grpc
-      port: ${{OTLP_GRPC_ENDPOINT}}
-      protocol: TCP
-      targetPort: ${{OTLP_GRPC_ENDPOINT}}
-    - name: otlp-http
-      port: 4318
-      protocol: TCP
-      targetPort: 4318
-    - name: prometheus
-      port: ${{OTLP_PROM_PORT}}
-      protocol: TCP
-      targetPort: ${{OTLP_PROM_PORT}}
-
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: service-ca
-    annotations:
-      service.beta.openshift.io/inject-cabundle: "true"
-  data: {}
-
-- apiVersion: opentelemetry.io/v1beta1
-  kind: OpenTelemetryCollector
-  metadata:
-    name: ${NAME}
-  spec:
-    config:
-      exporters:
-        debug:
-          verbosity: detailed
-        prometheus:
-          const_labels:
-            otel: otel
-          enable_open_metrics: true
-          endpoint: 0.0.0.0:${OTLP_PROM_PORT}
-      processors:
-        batch: {}
-        memory_limiter:
-          check_interval: 1s
-          limit_percentage: 50
-          spike_limit_percentage: 30
-      receivers:
-        otlp:
-          protocols:
-            grpc:
-              endpoint: 0.0.0.0:${OTLP_GRPC_ENDPOINT}
-              tls:
-                cert_file: /var/run/secrets/tls/tls.crt
-                key_file: /var/run/secrets/tls/tls.key
-            http:
-              endpoint: 0.0.0.0:4318
-      service:
-        pipelines:
-          logs:
-            exporters:
-              - debug
-            processors:
-              - batch
-            receivers:
-              - otlp
-          metrics:
-            exporters:
-              - debug
-              - prometheus
-            processors:
-              - batch
-            receivers:
-              - otlp
-    volumeMounts:
-      - name: tls-certs
-        mountPath: /var/run/secrets/tls
-    volumes:
-      - name: tls-certs
-        secret:
-          secretName: ${NAME}-tls
-
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ${NAME}-collector
+      annotations:
+        service.beta.openshift.io/serving-cert-secret-name: ${NAME}-tls
+    spec:
+      selector:
+        app.kubernetes.io/component: opentelemetry-collector
+        app.kubernetes.io/instance: ${NAME}
+      ports:
+        - name: otlp-grpc
+          port: ${{OTLP_GRPC_ENDPOINT}}
+          protocol: TCP
+          targetPort: ${{OTLP_GRPC_ENDPOINT}}
+        - name: otlp-http
+          port: 4318
+          protocol: TCP
+          targetPort: 4318
+        - name: prometheus
+          port: ${{OTLP_PROM_PORT}}
+          protocol: TCP
+          targetPort: ${{OTLP_PROM_PORT}}
+  - apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: service-ca
+      annotations:
+        service.beta.openshift.io/inject-cabundle: "true"
+    data: {}
+  - apiVersion: opentelemetry.io/v1beta1
+    kind: OpenTelemetryCollector
+    metadata:
+      name: ${NAME}
+    spec:
+      config:
+        exporters:
+          debug:
+            verbosity: detailed
+          prometheus:
+            const_labels:
+              otel: otel
+            enable_open_metrics: true
+            endpoint: 0.0.0.0:${OTLP_PROM_PORT}
+        processors:
+          batch: {}
+          memory_limiter:
+            check_interval: 1s
+            limit_percentage: 50
+            spike_limit_percentage: 30
+        receivers:
+          otlp:
+            protocols:
+              grpc:
+                endpoint: 0.0.0.0:${OTLP_GRPC_ENDPOINT}
+                tls:
+                  cert_file: /var/run/secrets/tls/tls.crt
+                  key_file: /var/run/secrets/tls/tls.key
+              http:
+                endpoint: 0.0.0.0:4318
+        service:
+          pipelines:
+            logs:
+              exporters:
+                - debug
+              processors:
+                - batch
+              receivers:
+                - otlp
+            metrics:
+              exporters:
+                - debug
+                - prometheus
+              processors:
+                - batch
+              receivers:
+                - otlp
+      volumeMounts:
+        - name: tls-certs
+          mountPath: /var/run/secrets/tls
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: ${NAME}-tls
 parameters:
-- name: NAME
-  value: "otel"
-- name: OTLP_GRPC_ENDPOINT
-  value: "4317"
-- name: OTLP_PROM_PORT
-  value: "8889"
+  - name: NAME
+    value: "otel"
+  - name: OTLP_GRPC_ENDPOINT
+    value: "4317"
+  - name: OTLP_PROM_PORT
+    value: "8889"

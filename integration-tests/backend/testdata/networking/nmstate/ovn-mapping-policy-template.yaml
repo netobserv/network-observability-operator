@@ -12,14 +12,13 @@ objects:
         "${NODELABEL}": "${LABELVALUE}"
       desiredState:
         interfaces:
-        - name: "${BRIDGE1}"
-          type: ovs-bridge
-          state: up
+          - name: "${BRIDGE1}"
+            type: ovs-bridge
+            state: up
         ovn:
           bridge-mappings:
-          - localnet: "${LOCALNET1}"
-            bridge: "${BRIDGE1}"
-
+            - localnet: "${LOCALNET1}"
+              bridge: "${BRIDGE1}"
 parameters:
   - name: NAME
   - name: NODELABEL

@@ -10,7 +10,7 @@ import (
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	metricslatest "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
-	. "github.com/netobserv/netobserv-operator/internal/controller/controllerstest"
+	. "github.com/netobserv/netobserv-operator/internal/controller/envtest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/dashboards"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )

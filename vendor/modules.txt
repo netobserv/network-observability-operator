@@ -202,7 +202,7 @@ github.com/netobserv/flowlogs-pipeline/pkg/utils/filters
 ## explicit; go 1.25.0
 github.com/netobserv/netobserv-ebpf-agent/pkg/config
 github.com/netobserv/netobserv-ebpf-agent/pkg/maps
-# github.com/onsi/ginkgo/v2 v2.29.0
+# github.com/onsi/ginkgo/v2 v2.31.0
 ## explicit; go 1.25.0
 github.com/onsi/ginkgo/v2
 github.com/onsi/ginkgo/v2/config
@@ -268,7 +268,7 @@ github.com/prometheus/client_golang/prometheus/promhttp/internal
 # github.com/prometheus/client_model v0.6.2
 ## explicit; go 1.22.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.68.1
+# github.com/prometheus/common v0.69.0
 ## explicit; go 1.25.0
 github.com/prometheus/common/config
 github.com/prometheus/common/expfmt

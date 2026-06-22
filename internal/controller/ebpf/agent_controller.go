@@ -140,7 +140,8 @@ func (c *AgentController) Reconcile(ctx context.Context, target *flowslatest.Flo
 	rlog := log.FromContext(ctx).WithName("ebpf")
 	ctx = log.IntoContext(ctx, rlog)
 
-	defer c.Status.Commit(ctx, c.Client)
+	commit := c.Status.Reset()
+	defer commit(ctx, c.Client)
 
 	err := c.reconcile(ctx, target)
 	if err != nil {

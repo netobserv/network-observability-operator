@@ -181,3 +181,31 @@ func getMetricsServerName(oc *exutil.CLI, servicemonitor string, namespace strin
 	out, err := oc.AsAdmin().Run("get").Args("servicemonitor", servicemonitor, "-n", namespace, "-o", "jsonpath='{.spec.endpoints[].tlsConfig.serverName}'").Output()
 	return out, err
 }
+
+// getAllNetobservMetricNames queries Prometheus for all netobserv flow metrics and returns their names
+// Flow metrics are those controlled by includeList/additionalIncludeList configuration
+// (node_*, workload_*, namespace_*), excluding operational metrics (agent_*, ingest_*, etc.)
+func getAllNetobservMetricNames(oc *exutil.CLI) ([]string, error) {
+	// Query for flow metrics only (node_, workload_, namespace_ prefixes)
+	query := `{__name__=~"netobserv_(node|workload|namespace)_.*"}`
+	metrics, err := getMetric(oc, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract unique metric names
+	metricNames := make(map[string]bool)
+	for _, m := range metrics {
+		if m.Metric.Name != "" {
+			metricNames[m.Metric.Name] = true
+		}
+	}
+
+	// Convert map to slice
+	result := make([]string, 0, len(metricNames))
+	for name := range metricNames {
+		result = append(result, name)
+	}
+
+	return result, nil
+}

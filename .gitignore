@@ -3,3 +3,4 @@ bin/
 tmp.Dockerfile
 _tmp/
 **/e2e-tests.test
+helm/charts/

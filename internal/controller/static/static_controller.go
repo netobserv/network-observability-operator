@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -17,6 +16,7 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
+	"github.com/netobserv/netobserv-operator/internal/pkg/retry"
 )
 
 var (
@@ -53,7 +53,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 
 func (r *Reconciler) initReconcile(ctx context.Context) error {
 	attempt := 0
-	err := retry.OnError(retryBackoff, func(error) bool { return true }, func() error {
+	err := retry.OnError(ctx, retryBackoff, func(error) bool { return true }, func() error {
 		attempt++
 		if _, err := r.Reconcile(ctx, ctrl.Request{}); err != nil {
 			clog.WithValues("attempt", attempt, "error", err).Info("Initial reconcile: attempt failed")
@@ -72,8 +72,8 @@ func (r *Reconciler) initReconcile(ctx context.Context) error {
 func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	ctx = log.IntoContext(ctx, clog)
 
-	r.status.SetUnknown()
-	defer r.status.Commit(ctx, r.Client)
+	commit := r.status.Reset()
+	defer commit(ctx, r.Client)
 
 	if r.mgr.ClusterInfo.HasConsolePlugin() {
 		// Only deploy static plugin on OpenShift 4.15+

@@ -3,14 +3,14 @@ apiVersion: template.openshift.io/v1
 metadata:
   name: kafka-og-template
 objects:
-- apiVersion: operators.coreos.com/v1
-  kind: OperatorGroup
-  metadata:
-    name: ${OG_NAME}
-    namespace: ${NAMESPACE}
-  spec:
-    targetNamespaces:
-    - ${NAMESPACE}
+  - apiVersion: operators.coreos.com/v1
+    kind: OperatorGroup
+    metadata:
+      name: ${OG_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      targetNamespaces:
+        - ${NAMESPACE}
 parameters:
   - name: OG_NAME
     value: "amq-streams"

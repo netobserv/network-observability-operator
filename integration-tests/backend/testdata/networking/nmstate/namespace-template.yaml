@@ -3,15 +3,15 @@ kind: Template
 metadata:
   name: namespace-template
 objects:
-- kind: Namespace
-  apiVersion: v1
-  metadata:
-    labels:
-      kubernetes.io/metadata.name: "${NAME}"
+  - kind: Namespace
+    apiVersion: v1
+    metadata:
+      labels:
+        kubernetes.io/metadata.name: "${NAME}"
+        name: "${NAME}"
       name: "${NAME}"
-    name: "${NAME}"
-  spec:
-    finalizers:
-    - kubernetes
+    spec:
+      finalizers:
+        - kubernetes
 parameters:
-- name: NAME
+  - name: NAME

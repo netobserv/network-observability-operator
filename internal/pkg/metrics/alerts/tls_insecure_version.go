@@ -22,7 +22,7 @@ func (r *tlsInsecureVersion) GetAnnotations() (map[string]string, error) {
 	healthAnnot := newHealthAnnotation(r.ctx)
 	healthAnnot.TrafficLink = &trafficLink{
 		BackAndForth:      true,
-		ExtraFilter:       `tls_version=~"TLS 1.0|TLS 1.1|SSL.*"`,
+		ExtraFilter:       `tls_version="TLS 1.0,TLS 1.1,SSL 2.0,SSL 3.0"`,
 		FilterDestination: false,
 	}
 

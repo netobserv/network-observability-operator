@@ -1,6 +1,9 @@
 package status
 
 import (
+	"slices"
+	"strings"
+
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -17,14 +20,54 @@ const (
 	StatusDegraded   Status = "Degraded"
 )
 
+var (
+	statusPriority = []Status{
+		StatusFailure,
+		StatusInProgress,
+		StatusDegraded,
+		StatusUnused,
+		StatusReady,
+		StatusUnknown,
+	}
+)
+
 type ComponentStatus struct {
 	Name            ComponentName
 	Status          Status
 	Reason          string
-	Message         string
+	Messages        []string
 	DesiredReplicas *int32
 	ReadyReplicas   *int32
-	PodHealth       PodHealthSummary
+	podHealth       podHealthSummary
+}
+
+func (s *ComponentStatus) Message() string {
+	return strings.Join(s.Messages, "; ")
+}
+
+// merge two component statuses, prioritizing the worst
+func (s *ComponentStatus) merge(other *ComponentStatus) *ComponentStatus {
+	merged := *s
+	if slices.Index(statusPriority, other.Status) <= slices.Index(statusPriority, merged.Status) {
+		merged.Status = other.Status
+		merged.Reason = other.Reason
+	}
+	merged.Messages = append(merged.Messages, other.Messages...)
+	if other.DesiredReplicas != nil {
+		merged.DesiredReplicas = ptr.To(*other.DesiredReplicas)
+	}
+	if other.ReadyReplicas != nil {
+		merged.ReadyReplicas = ptr.To(*other.ReadyReplicas)
+	}
+	if other.podHealth.unhealthyCount > 0 {
+		merged.podHealth = other.podHealth
+		if s.Status == StatusInProgress {
+			// Special priority case, Degraded > InProgress with unhealthy pods
+			merged.Status = other.Status
+			merged.Reason = other.Reason
+		}
+	}
+	return &merged
 }
 
 // toCondition returns a Kubernetes condition using "Waiting*" naming with negative polarity:
@@ -34,7 +77,7 @@ type ComponentStatus struct {
 func (s *ComponentStatus) toCondition() metav1.Condition {
 	c := metav1.Condition{
 		Type:    "Waiting" + string(s.Name),
-		Message: s.Message,
+		Message: s.Message(),
 	}
 	switch s.Status {
 	case StatusUnknown:
@@ -63,7 +106,7 @@ func (s *ComponentStatus) toCRDStatus() *flowslatest.FlowCollectorComponentStatu
 	cs := &flowslatest.FlowCollectorComponentStatus{
 		State:   string(s.Status),
 		Reason:  s.Reason,
-		Message: s.Message,
+		Message: s.Message(),
 	}
 	if s.DesiredReplicas != nil {
 		cs.DesiredReplicas = ptr.To(*s.DesiredReplicas)
@@ -71,7 +114,7 @@ func (s *ComponentStatus) toCRDStatus() *flowslatest.FlowCollectorComponentStatu
 	if s.ReadyReplicas != nil {
 		cs.ReadyReplicas = ptr.To(*s.ReadyReplicas)
 	}
-	cs.UnhealthyPodCount = s.PodHealth.UnhealthyCount
-	cs.PodIssues = s.PodHealth.Issues
+	cs.UnhealthyPodCount = s.podHealth.unhealthyCount
+	cs.PodIssues = s.podHealth.issues
 	return cs
 }

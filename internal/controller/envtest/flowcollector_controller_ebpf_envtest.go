@@ -1,7 +1,8 @@
-//nolint:revive
-package controllers
+//nolint:revive,staticcheck
+package envtest
 
 import (
+	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -12,14 +13,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
-	. "github.com/netobserv/netobserv-operator/internal/controller/controllerstest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
+	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
 
-func flowCollectorEBPFSpecs() {
+func FlowCollectorEBPFSpecs(ctxGetter test.ContextGetter) {
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
+
 	// Because the simulated Kube server doesn't manage automatic resource cleanup like an actual Kube would do,
 	// we need either to cleanup all created resources manually, or to use different namespaces between tests
 	// For simplicity, we'll use a different namespace
@@ -144,7 +152,7 @@ func flowCollectorEBPFSpecs() {
 		})
 
 		It("Should update fields that have changed", func() {
-			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
+			test.UpdateCR(ctx, k8sClient, crKey, func(fc *flowslatest.FlowCollector) {
 				Expect(*fc.Spec.Agent.EBPF.Sampling).To(Equal(int32(123)))
 				*fc.Spec.Agent.EBPF.Sampling = 4
 				fc.Spec.Agent.EBPF.Privileged = true
@@ -231,7 +239,13 @@ func flowCollectorEBPFSpecs() {
 	})
 }
 
-func flowCollectorEBPFKafkaSpecs() {
+func FlowCollectorEBPFKafkaSpecs(ctxGetter test.ContextGetter) {
+	var ctx context.Context
+	var k8sClient client.Client
+	BeforeEach(func() {
+		ctx, k8sClient = ctxGetter()
+	})
+
 	operatorNamespace := "ebpf-kafka-specs"
 	agentKey := types.NamespacedName{
 		Name:      "netobserv-ebpf-agent",

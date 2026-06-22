@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/netobserv/netobserv-operator/internal/pkg/retry"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -38,7 +39,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/pager"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -106,7 +106,7 @@ func (m *Migrator) migrateWithRetry(ctx context.Context, gr schema.GroupResource
 	// Retrying to allow time for the conversion webhooks to be ready
 	// There's no hurry to get this done, start with a duration > second
 	attempt := 0
-	return retry.OnError(retryBackoff, func(error) bool { return true }, func() error {
+	return retry.OnError(ctx, retryBackoff, func(error) bool { return true }, func() error {
 		log := log.FromContext(ctx)
 		log.WithValues("attempt", attempt).Info("try migrate")
 		attempt++

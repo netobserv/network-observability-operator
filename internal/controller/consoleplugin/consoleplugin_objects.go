@@ -631,10 +631,17 @@ func (b *builder) configMap(ctx context.Context, externalRecordingAnnotations ma
 		Server: cfg.ServerConfig{
 			Port: int(*b.advanced.Port),
 		},
+		Kubernetes: cfg.K8SConfig{
+			ForwardUserToken: true,
+		},
 	}
 	if b.useStandalone {
-		config.Server.AuthCheck = "none"
+		config.ConsoleMode = cfg.Standalone
+		// No access management yet in the standalone console
+		config.Kubernetes.ForwardUserToken = false
+		config.Kubernetes.TokenPath = b.volumes.AddToken(constants.PluginName)
 	} else {
+		config.ConsoleMode = cfg.OpenShiftPlugin
 		config.Server.CertPath = "/var/serving-cert/tls.crt"
 		config.Server.KeyPath = "/var/serving-cert/tls.key"
 	}
