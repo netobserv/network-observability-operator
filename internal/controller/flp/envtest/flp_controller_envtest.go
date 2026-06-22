@@ -106,7 +106,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 						Metrics: flowslatest.FLPMetrics{
 							IncludeList: &[]flowslatest.FLPMetric{"node_ingress_bytes_total", "namespace_ingress_bytes_total", "workload_ingress_bytes_total"},
 						},
-						CentralizedInformers: &flowslatest.FlowCollectorCentralizedInformers{
+						InformerCacheProxy: &flowslatest.FlowCollectorInformerCacheProxy{
 							Enabled: ptr.To(true),
 						},
 					},
@@ -303,7 +303,7 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 						},
 					},
 				}
-				fc.Spec.Processor.CentralizedInformers = &flowslatest.FlowCollectorCentralizedInformers{
+				fc.Spec.Processor.InformerCacheProxy = &flowslatest.FlowCollectorInformerCacheProxy{
 					Enabled: ptr.To(true),
 				}
 			})

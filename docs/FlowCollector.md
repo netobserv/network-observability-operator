@@ -8511,18 +8511,6 @@ such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your 
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformers">centralizedInformers</a></b></td>
-        <td>object</td>
-        <td>
-          `centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
-This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
-When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
-Benefits: Reduced API server load on large clusters with many FLP replicas.
-Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
-Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>clusterName</b></td>
         <td>string</td>
         <td>
@@ -8566,6 +8554,18 @@ but with a lesser improvement in performance.<br/>
           <br/>
             <i>Enum</i>: IfNotPresent, Always, Never<br/>
             <i>Default</i>: IfNotPresent<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxy">informerCacheProxy</a></b></td>
+        <td>object</td>
+        <td>
+          `informerCacheProxy` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
+This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
+When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+Benefits: Reduced API server load on large clusters with many FLP replicas.
+Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
+Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10603,499 +10603,6 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
 </table>
 
 
-### FlowCollector.spec.processor.centralizedInformers
-<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
-
-
-
-`centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
-This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
-When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
-Benefits: Reduced API server load on large clusters with many FLP replicas.
-Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
-Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformersadvanced">advanced</a></b></td>
-        <td>object</td>
-        <td>
-          `advanced` allows setting some technical parameters of the informers component.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>enabled</b></td>
-        <td>boolean</td>
-        <td>
-          `enabled` controls whether to deploy centralized Kubernetes informers.
-When `true`, a dedicated deployment watches K8s resources and pushes cache updates via gRPC to FLP processors, reducing API server load.
-When `false` (default), each FLP processor uses local informers.
-Enable only on large clusters or when API server load is a concern, as it adds deployment complexity.<br/>
-          <br/>
-            <i>Default</i>: false<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>replicas</b></td>
-        <td>integer</td>
-        <td>
-          `replicas` defines the number of replicas for the flowlogs-pipeline-informers deployment.
-For high availability, a minimum of 2 replicas is required when `enabled` is `true`.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 2<br/>
-            <i>Minimum</i>: 2<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformersresources">resources</a></b></td>
-        <td>object</td>
-        <td>
-          `resources` are the compute resources required by the informers container.
-For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-          <br/>
-            <i>Default</i>: map[limits:map[cpu:200m memory:256Mi] requests:map[cpu:50m memory:128Mi]]<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformerstls">tls</a></b></td>
-        <td>object</td>
-        <td>
-          `tls` defines the TLS configuration for the gRPC communication between informers and processors.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.advanced
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformers)</sup></sup>
-
-
-
-`advanced` allows setting some technical parameters of the informers component.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>batchSize</b></td>
-        <td>integer</td>
-        <td>
-          `batchSize` defines the maximum number of cache entries to send in a single update batch.<br/>
-          <br/>
-            <i>Default</i>: 100<br/>
-            <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>processorPort</b></td>
-        <td>integer</td>
-        <td>
-          `processorPort` defines the gRPC port where flowlogs-pipeline processors listen for k8s cache updates.<br/>
-          <br/>
-            <i>Format</i>: int32<br/>
-            <i>Default</i>: 9402<br/>
-            <i>Minimum</i>: 1<br/>
-            <i>Maximum</i>: 65535<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>resyncInterval</b></td>
-        <td>integer</td>
-        <td>
-          `resyncInterval` defines the interval in seconds to rediscover processors and sync state.<br/>
-          <br/>
-            <i>Default</i>: 60<br/>
-            <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>sendTimeout</b></td>
-        <td>integer</td>
-        <td>
-          `sendTimeout` defines the timeout in seconds for sending updates to processors.<br/>
-          <br/>
-            <i>Default</i>: 10<br/>
-            <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>updateBufferSize</b></td>
-        <td>integer</td>
-        <td>
-          `updateBufferSize` defines the size of the internal update channel buffer.<br/>
-          <br/>
-            <i>Default</i>: 100<br/>
-            <i>Minimum</i>: 1<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.resources
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformers)</sup></sup>
-
-
-
-`resources` are the compute resources required by the informers container.
-For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformersresourcesclaimsindex">claims</a></b></td>
-        <td>[]object</td>
-        <td>
-          Claims lists the names of resources, defined in spec.resourceClaims,
-that are used by this container.
-
-This field depends on the
-DynamicResourceAllocation feature gate.
-
-This field is immutable. It can only be set for containers.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>limits</b></td>
-        <td>map[string]int or string</td>
-        <td>
-          Limits describes the maximum amount of compute resources allowed.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>requests</b></td>
-        <td>map[string]int or string</td>
-        <td>
-          Requests describes the minimum amount of compute resources required.
-If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
-otherwise to an implementation-defined value. Requests cannot exceed Limits.
-More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.resources.claims[index]
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformersresources)</sup></sup>
-
-
-
-ResourceClaim references one entry in PodSpec.ResourceClaims.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name must match the name of one entry in pod.spec.resourceClaims of
-the Pod where this field is used. It makes that resource available
-inside a container.<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b>request</b></td>
-        <td>string</td>
-        <td>
-          Request is the name chosen for a request in the referenced claim.
-If empty, everything from the claim is made available, otherwise
-only the result of this request.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.tls
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformers)</sup></sup>
-
-
-
-`tls` defines the TLS configuration for the gRPC communication between informers and processors.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Select the type of TLS configuration:<br>
-- `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
-- `Provided` to manually provide cert/key references for mTLS.<br>
-- `Auto` (default) to use OpenShift service-ca for automatic server certificate generation (simple TLS, OpenShift only).<br>
-- `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
-See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.<br/>
-          <br/>
-            <i>Enum</i>: Disabled, Provided, Auto, Auto-mTLS<br/>
-            <i>Default</i>: Auto<br/>
-        </td>
-        <td>true</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformerstlsprovidedcertificates">providedCertificates</a></b></td>
-        <td>object</td>
-        <td>
-          mTLS configuration when `type` is set to `Provided`.
-`serverCert` is required. `clientCert` is optional; if provided, mTLS is enabled.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.tls.providedCertificates
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformerstls)</sup></sup>
-
-
-
-mTLS configuration when `type` is set to `Provided`.
-`serverCert` is required. `clientCert` is optional; if provided, mTLS is enabled.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformerstlsprovidedcertificatescafile">caFile</a></b></td>
-        <td>object</td>
-        <td>
-          Reference to the CA file.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformerstlsprovidedcertificatesclientcert">clientCert</a></b></td>
-        <td>object</td>
-        <td>
-          TLS client certificate reference, used for mTLS. Leave unset for simple TLS.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b><a href="#flowcollectorspecprocessorcentralizedinformerstlsprovidedcertificatesservercert">serverCert</a></b></td>
-        <td>object</td>
-        <td>
-          TLS server certificate reference.<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.tls.providedCertificates.caFile
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformerstlsprovidedcertificates)</sup></sup>
-
-
-
-Reference to the CA file.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>file</b></td>
-        <td>string</td>
-        <td>
-          File name within the config map or secret.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the config map or secret containing the file.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespace</b></td>
-        <td>string</td>
-        <td>
-          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed.
-If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
-          <br/>
-            <i>Default</i>: <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Type for the file reference: `configmap` or `secret`.<br/>
-          <br/>
-            <i>Enum</i>: configmap, secret<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.tls.providedCertificates.clientCert
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformerstlsprovidedcertificates)</sup></sup>
-
-
-
-TLS client certificate reference, used for mTLS. Leave unset for simple TLS.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>certFile</b></td>
-        <td>string</td>
-        <td>
-          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>certKey</b></td>
-        <td>string</td>
-        <td>
-          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the config map or secret containing certificates.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespace</b></td>
-        <td>string</td>
-        <td>
-          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
-If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
-          <br/>
-            <i>Default</i>: <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Type for the certificate reference: `configmap` or `secret`.<br/>
-          <br/>
-            <i>Enum</i>: configmap, secret<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
-### FlowCollector.spec.processor.centralizedInformers.tls.providedCertificates.serverCert
-<sup><sup>[↩ Parent](#flowcollectorspecprocessorcentralizedinformerstlsprovidedcertificates)</sup></sup>
-
-
-
-TLS server certificate reference.
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Description</th>
-            <th>Required</th>
-        </tr>
-    </thead>
-    <tbody><tr>
-        <td><b>certFile</b></td>
-        <td>string</td>
-        <td>
-          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>certKey</b></td>
-        <td>string</td>
-        <td>
-          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>name</b></td>
-        <td>string</td>
-        <td>
-          Name of the config map or secret containing certificates.<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>namespace</b></td>
-        <td>string</td>
-        <td>
-          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
-If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
-          <br/>
-            <i>Default</i>: <br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>type</b></td>
-        <td>enum</td>
-        <td>
-          Type for the certificate reference: `configmap` or `secret`.<br/>
-          <br/>
-            <i>Enum</i>: configmap, secret<br/>
-        </td>
-        <td>false</td>
-      </tr></tbody>
-</table>
-
-
 ### FlowCollector.spec.processor.deduper
 <sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
 
@@ -11180,6 +10687,499 @@ If the namespace is different, the config map or the secret is copied so that it
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+`informerCacheProxy` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
+This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
+When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+Benefits: Reduced API server load on large clusters with many FLP replicas.
+Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
+Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxyadvanced">advanced</a></b></td>
+        <td>object</td>
+        <td>
+          `advanced` allows setting some technical parameters of the informer cache proxy component.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enabled</b></td>
+        <td>boolean</td>
+        <td>
+          `enabled` controls whether to deploy the informer cache proxy.
+When `true`, a dedicated deployment watches K8s resources and pushes cache updates via gRPC to FLP processors, reducing API server load.
+When `false` (default), each FLP processor uses local informers.
+Enable only on large clusters or when API server load is a concern, as it adds deployment complexity.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>replicas</b></td>
+        <td>integer</td>
+        <td>
+          `replicas` defines the number of replicas for the flowlogs-pipeline-informers deployment.
+For high availability, a minimum of 2 replicas is required when `enabled` is `true`.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 2<br/>
+            <i>Minimum</i>: 2<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxyresources">resources</a></b></td>
+        <td>object</td>
+        <td>
+          `resources` are the compute resources required by the informer cache proxy container.
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+          <br/>
+            <i>Default</i>: map[limits:map[cpu:200m memory:256Mi] requests:map[cpu:50m memory:128Mi]]<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxytls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          `tls` defines the TLS configuration for the gRPC communication between the informer cache proxy and processors.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.advanced
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxy)</sup></sup>
+
+
+
+`advanced` allows setting some technical parameters of the informer cache proxy component.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>batchSize</b></td>
+        <td>integer</td>
+        <td>
+          `batchSize` defines the maximum number of cache entries to send in a single update batch.<br/>
+          <br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>processorPort</b></td>
+        <td>integer</td>
+        <td>
+          `processorPort` defines the gRPC port where flowlogs-pipeline processors listen for k8s cache updates.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 9402<br/>
+            <i>Minimum</i>: 1<br/>
+            <i>Maximum</i>: 65535<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>resyncInterval</b></td>
+        <td>integer</td>
+        <td>
+          `resyncInterval` defines the interval in seconds to rediscover processors and sync state.<br/>
+          <br/>
+            <i>Default</i>: 60<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>sendTimeout</b></td>
+        <td>integer</td>
+        <td>
+          `sendTimeout` defines the timeout in seconds for sending updates to processors.<br/>
+          <br/>
+            <i>Default</i>: 10<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>updateBufferSize</b></td>
+        <td>integer</td>
+        <td>
+          `updateBufferSize` defines the size of the internal update channel buffer.<br/>
+          <br/>
+            <i>Default</i>: 100<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.resources
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxy)</sup></sup>
+
+
+
+`resources` are the compute resources required by the informer cache proxy container.
+For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxyresourcesclaimsindex">claims</a></b></td>
+        <td>[]object</td>
+        <td>
+          Claims lists the names of resources, defined in spec.resourceClaims,
+that are used by this container.
+
+This field depends on the
+DynamicResourceAllocation feature gate.
+
+This field is immutable. It can only be set for containers.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>limits</b></td>
+        <td>map[string]int or string</td>
+        <td>
+          Limits describes the maximum amount of compute resources allowed.
+More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>requests</b></td>
+        <td>map[string]int or string</td>
+        <td>
+          Requests describes the minimum amount of compute resources required.
+If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+otherwise to an implementation-defined value. Requests cannot exceed Limits.
+More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.resources.claims[index]
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxyresources)</sup></sup>
+
+
+
+ResourceClaim references one entry in PodSpec.ResourceClaims.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name must match the name of one entry in pod.spec.resourceClaims of
+the Pod where this field is used. It makes that resource available
+inside a container.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>request</b></td>
+        <td>string</td>
+        <td>
+          Request is the name chosen for a request in the referenced claim.
+If empty, everything from the claim is made available, otherwise
+only the result of this request.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.tls
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxy)</sup></sup>
+
+
+
+`tls` defines the TLS configuration for the gRPC communication between the informer cache proxy and processors.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Select the type of TLS configuration:<br>
+- `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
+- `Provided` to manually provide cert/key references for mTLS.<br>
+- `Auto` (default) to use OpenShift service-ca for automatic server certificate generation (simple TLS, OpenShift only).<br>
+- `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
+See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.<br/>
+          <br/>
+            <i>Enum</i>: Disabled, Provided, Auto, Auto-mTLS<br/>
+            <i>Default</i>: Auto<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxytlsprovidedcertificates">providedCertificates</a></b></td>
+        <td>object</td>
+        <td>
+          mTLS configuration when `type` is set to `Provided`.
+`serverCert` is required. `clientCert` is optional; if provided, mTLS is enabled.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.tls.providedCertificates
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxytls)</sup></sup>
+
+
+
+mTLS configuration when `type` is set to `Provided`.
+`serverCert` is required. `clientCert` is optional; if provided, mTLS is enabled.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxytlsprovidedcertificatescafile">caFile</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to the CA file.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxytlsprovidedcertificatesclientcert">clientCert</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client certificate reference, used for mTLS. Leave unset for simple TLS.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorinformercacheproxytlsprovidedcertificatesservercert">serverCert</a></b></td>
+        <td>object</td>
+        <td>
+          TLS server certificate reference.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.tls.providedCertificates.caFile
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxytlsprovidedcertificates)</sup></sup>
+
+
+
+Reference to the CA file.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>file</b></td>
+        <td>string</td>
+        <td>
+          File name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing the file.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the file reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.tls.providedCertificates.clientCert
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxytlsprovidedcertificates)</sup></sup>
+
+
+
+TLS client certificate reference, used for mTLS. Leave unset for simple TLS.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.informerCacheProxy.tls.providedCertificates.serverCert
+<sup><sup>[↩ Parent](#flowcollectorspecprocessorinformercacheproxytlsprovidedcertificates)</sup></sup>
+
+
+
+TLS server certificate reference.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
         </td>
         <td>false</td>
       </tr></tbody>

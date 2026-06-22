@@ -811,4 +811,3 @@ func TestToleration(t *testing.T) {
 	assert.Len(ds.Spec.Template.Spec.Tolerations, 1)
 	assert.Equal(corev1.Toleration{Operator: "Exists"}, ds.Spec.Template.Spec.Tolerations[0])
 }
-

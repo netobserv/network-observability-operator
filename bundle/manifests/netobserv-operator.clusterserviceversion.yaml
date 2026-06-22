@@ -456,24 +456,6 @@ spec:
         path: networkPolicy.additionalNamespaces
       - displayName: Enable
         path: networkPolicy.enable
-      - displayName: Centralized informers
-        path: processor.centralizedInformers
-      - displayName: Advanced
-        path: processor.centralizedInformers.advanced
-      - displayName: Batch size
-        path: processor.centralizedInformers.advanced.batchSize
-      - displayName: Processor port
-        path: processor.centralizedInformers.advanced.processorPort
-      - displayName: Resync interval
-        path: processor.centralizedInformers.advanced.resyncInterval
-      - displayName: Send timeout
-        path: processor.centralizedInformers.advanced.sendTimeout
-      - displayName: Update buffer size
-        path: processor.centralizedInformers.advanced.updateBufferSize
-      - displayName: Enabled
-        path: processor.centralizedInformers.enabled
-      - displayName: Replicas
-        path: processor.centralizedInformers.replicas
       - displayName: Consumer replicas
         path: processor.consumerReplicas
       - displayName: Deduper
@@ -484,6 +466,24 @@ spec:
         path: processor.deduper.sampling
       - displayName: Filters
         path: processor.filters
+      - displayName: Informer cache proxy
+        path: processor.informerCacheProxy
+      - displayName: Advanced
+        path: processor.informerCacheProxy.advanced
+      - displayName: Batch size
+        path: processor.informerCacheProxy.advanced.batchSize
+      - displayName: Processor port
+        path: processor.informerCacheProxy.advanced.processorPort
+      - displayName: Resync interval
+        path: processor.informerCacheProxy.advanced.resyncInterval
+      - displayName: Send timeout
+        path: processor.informerCacheProxy.advanced.sendTimeout
+      - displayName: Update buffer size
+        path: processor.informerCacheProxy.advanced.updateBufferSize
+      - displayName: Enabled
+        path: processor.informerCacheProxy.enabled
+      - displayName: Replicas
+        path: processor.informerCacheProxy.replicas
       - displayName: Log types
         path: processor.logTypes
       - displayName: Additional include list

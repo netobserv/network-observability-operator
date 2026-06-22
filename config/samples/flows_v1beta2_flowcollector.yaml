@@ -91,7 +91,7 @@ spec:
     #   - cidrs: []
     #     name: ""
     # Centralized Kubernetes informers (enabled by default for reduced API server load)
-    # centralizedInformers:
+    # informerCacheProxy:
     #   enabled: true
     #   replicas: 2  # Minimum 2 for HA with leader election
     #   resources:

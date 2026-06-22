@@ -30,9 +30,9 @@ func newInformerBuilder(info *reconcilers.Instance, desired *flowslatest.FlowCol
 
 func (b *informerBuilder) deployment() (*appsv1.Deployment, error) {
 	// Get configuration from FlowCollector spec
-	config := b.desired.Processor.CentralizedInformers
+	config := b.desired.Processor.InformerCacheProxy
 	if config == nil {
-		config = &flowslatest.FlowCollectorCentralizedInformers{}
+		config = &flowslatest.FlowCollectorInformerCacheProxy{}
 	}
 
 	// Replicas: default 2 for HA
@@ -240,7 +240,7 @@ func (b *informerBuilder) serviceAccount() *corev1.ServiceAccount {
 }
 
 // addTLSArgs configures TLS arguments for informers client
-func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, config *flowslatest.FlowCollectorCentralizedInformers) {
+func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, config *flowslatest.FlowCollectorInformerCacheProxy) {
 	tlsType := config.GetTLSType()
 
 	if tlsType == flowslatest.TLSDisabled {

@@ -22,7 +22,7 @@ func TestPortConflictValidation(t *testing.T) {
 					Advanced: &AdvancedProcessorConfig{
 						Port: ptr.To(int32(9402)),
 					},
-					CentralizedInformers: &FlowCollectorCentralizedInformers{
+					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
 					},
 				},
@@ -37,7 +37,7 @@ func TestPortConflictValidation(t *testing.T) {
 					Advanced: &AdvancedProcessorConfig{
 						HealthPort: ptr.To(int32(9402)),
 					},
-					CentralizedInformers: &FlowCollectorCentralizedInformers{
+					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
 					},
 				},
@@ -54,7 +54,7 @@ func TestPortConflictValidation(t *testing.T) {
 							Port: ptr.To(int32(9402)),
 						},
 					},
-					CentralizedInformers: &FlowCollectorCentralizedInformers{
+					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
 					},
 				},
@@ -69,7 +69,7 @@ func TestPortConflictValidation(t *testing.T) {
 					Advanced: &AdvancedProcessorConfig{
 						ProfilePort: ptr.To(int32(9402)),
 					},
-					CentralizedInformers: &FlowCollectorCentralizedInformers{
+					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
 					},
 				},
@@ -84,7 +84,7 @@ func TestPortConflictValidation(t *testing.T) {
 					Advanced: &AdvancedProcessorConfig{
 						Port: ptr.To(int32(9402)),
 					},
-					CentralizedInformers: &FlowCollectorCentralizedInformers{
+					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(false),
 					},
 				},
@@ -98,7 +98,7 @@ func TestPortConflictValidation(t *testing.T) {
 					Advanced: &AdvancedProcessorConfig{
 						Port: ptr.To(int32(9402)),
 					},
-					CentralizedInformers: nil,
+					InformerCacheProxy: nil,
 				},
 			},
 			expectError: false,
@@ -117,7 +117,7 @@ func TestPortConflictValidation(t *testing.T) {
 							Port: ptr.To(int32(9102)),
 						},
 					},
-					CentralizedInformers: &FlowCollectorCentralizedInformers{
+					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
 					},
 				},

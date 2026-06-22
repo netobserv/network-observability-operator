@@ -203,7 +203,7 @@ func (r *transformerReconciler) reconcileService(ctx context.Context, builder *t
 	defer report.LogIfNeeded(ctx)
 
 	// Only create k8scache service when centralized informers are enabled
-	informersEnabled := desired.Processor.IsCentralizedInformersEnabled()
+	informersEnabled := desired.Processor.IsInformerCacheProxyEnabled()
 
 	if informersEnabled {
 		if err := r.ReconcileService(ctx, r.service, builder.service(), &report); err != nil {
@@ -255,7 +255,7 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	}
 
 	// Informers - when centralized informers are disabled, flowlogs-pipeline needs direct K8s API access
-	if !builder.desired.Processor.IsCentralizedInformersEnabled() {
+	if !builder.desired.Processor.IsInformerCacheProxyEnabled() {
 		// Local informers mode - grant K8s API permissions to flowlogs-pipeline ServiceAccount
 		r.rbInformers = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPInformersRole)
 		if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformers); err != nil {

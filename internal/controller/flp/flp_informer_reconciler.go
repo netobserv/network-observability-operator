@@ -64,7 +64,7 @@ func (r *informerReconciler) reconcile(ctx context.Context, desired *flowslatest
 	}
 
 	// Check if informers are enabled (default: false)
-	if !desired.Spec.Processor.IsCentralizedInformersEnabled() {
+	if !desired.Spec.Processor.IsInformerCacheProxyEnabled() {
 		// Informers disabled - cleanup resources and use local informers mode
 		r.Status.SetUnused("Centralized informers disabled - using local informers mode")
 		r.Managed.TryDeleteAll(ctx)

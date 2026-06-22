@@ -484,12 +484,12 @@ func (v *validator) validateFLPTLS() {
 }
 
 func (v *validator) validatePortConflicts() {
-	// Only check port conflicts when centralized informers are enabled (when k8scache port is actually used)
-	if !v.fc.Processor.IsCentralizedInformersEnabled() {
+	// Only check port conflicts when informer cache proxy is enabled (when k8scache port is actually used)
+	if !v.fc.Processor.IsInformerCacheProxyEnabled() {
 		return
 	}
 
-	// k8scache port is hardcoded to 9402 when centralized informers are enabled
+	// k8scache port is hardcoded to 9402 when informer cache proxy is enabled
 	const k8scachePort = 9402
 
 	// Get advanced processor config with defaults

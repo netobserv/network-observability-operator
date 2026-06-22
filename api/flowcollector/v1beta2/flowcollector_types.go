@@ -753,14 +753,14 @@ type FlowCollectorFLP struct {
 	// +optional
 	Service *ProcessorServiceConfig `json:"service,omitempty"`
 
-	// `centralizedInformers` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
+	// `informerCacheProxy` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
 	// This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
 	// When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
 	// Benefits: Reduced API server load on large clusters with many FLP replicas.
 	// Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
 	// Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.
 	// +optional
-	CentralizedInformers *FlowCollectorCentralizedInformers `json:"centralizedInformers,omitempty"`
+	InformerCacheProxy *FlowCollectorInformerCacheProxy `json:"informerCacheProxy,omitempty"`
 
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
@@ -769,9 +769,9 @@ type FlowCollectorFLP struct {
 	Advanced *AdvancedProcessorConfig `json:"advanced,omitempty"`
 }
 
-// `FlowCollectorCentralizedInformers` defines the configuration for centralized Kubernetes informers
-type FlowCollectorCentralizedInformers struct {
-	// `enabled` controls whether to deploy centralized Kubernetes informers.
+// `FlowCollectorInformerCacheProxy` defines the configuration for the informer cache proxy
+type FlowCollectorInformerCacheProxy struct {
+	// `enabled` controls whether to deploy the informer cache proxy.
 	// When `true`, a dedicated deployment watches K8s resources and pushes cache updates via gRPC to FLP processors, reducing API server load.
 	// When `false` (default), each FLP processor uses local informers.
 	// Enable only on large clusters or when API server load is a concern, as it adds deployment complexity.
@@ -784,23 +784,23 @@ type FlowCollectorCentralizedInformers struct {
 	// +kubebuilder:default:=2
 	Replicas *int32 `json:"replicas,omitempty"`
 
-	// `resources` are the compute resources required by the informers container.
+	// `resources` are the compute resources required by the informer cache proxy container.
 	// For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
 	// +kubebuilder:default:={requests:{memory:"128Mi",cpu:"50m"},limits:{memory:"256Mi",cpu:"200m"}}
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,8,opt,name=resources"`
 
-	// `advanced` allows setting some technical parameters of the informers component.
+	// `advanced` allows setting some technical parameters of the informer cache proxy component.
 	// +optional
-	Advanced *AdvancedCentralizedInformersConfig `json:"advanced,omitempty"`
+	Advanced *AdvancedInformerCacheProxyConfig `json:"advanced,omitempty"`
 
-	// `tls` defines the TLS configuration for the gRPC communication between informers and processors.
+	// `tls` defines the TLS configuration for the gRPC communication between the informer cache proxy and processors.
 	// +optional
-	TLS *CentralizedInformersTLSConfig `json:"tls,omitempty"`
+	TLS *InformerCacheProxyTLSConfig `json:"tls,omitempty"`
 }
 
-// `AdvancedCentralizedInformersConfig` defines advanced configuration for the centralized informers component
-type AdvancedCentralizedInformersConfig struct {
+// `AdvancedInformerCacheProxyConfig` defines advanced configuration for the informer cache proxy component
+type AdvancedInformerCacheProxyConfig struct {
 	// `resyncInterval` defines the interval in seconds to rediscover processors and sync state.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:default:=60
@@ -1650,8 +1650,8 @@ type ProcessorServiceConfig struct {
 	ProvidedCertificates *ClientServerTLS `json:"providedCertificates,omitempty"`
 }
 
-// `CentralizedInformersTLSConfig` defines the TLS configuration for gRPC communication between centralized informers and processors
-type CentralizedInformersTLSConfig struct {
+// `InformerCacheProxyTLSConfig` defines the TLS configuration for gRPC communication between the informer cache proxy and processors
+type InformerCacheProxyTLSConfig struct {
 	// Select the type of TLS configuration:<br>
 	// - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
 	// - `Provided` to manually provide cert/key references for mTLS.<br>

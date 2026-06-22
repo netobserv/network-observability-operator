@@ -262,7 +262,7 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 	}
 
 	// Informers - when centralized informers are disabled, flowlogs-pipeline needs direct K8s API access
-	if !builder.desired.Processor.IsCentralizedInformersEnabled() {
+	if !builder.desired.Processor.IsInformerCacheProxyEnabled() {
 		// Local informers mode - grant K8s API permissions to flowlogs-pipeline ServiceAccount
 		r.rbInformers = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.FLPInformersRole)
 		if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformers); err != nil {

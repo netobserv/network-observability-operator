@@ -215,7 +215,7 @@ func (b *transfoBuilder) service() *corev1.Service {
 	}
 	// In OpenShift with TLS Auto mode, request service-ca to generate certificate
 	// This certificate will be used by the k8scache gRPC server
-	if b.desired.Processor.CentralizedInformers.UsesOpenShiftServiceCA(b.info.ClusterInfo.IsOpenShift()) {
+	if b.desired.Processor.InformerCacheProxy.UsesOpenShiftServiceCA(b.info.ClusterInfo.IsOpenShift()) {
 		if svc.Annotations == nil {
 			svc.Annotations = make(map[string]string)
 		}

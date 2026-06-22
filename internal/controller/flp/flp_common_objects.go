@@ -133,7 +133,7 @@ func podTemplate(
 		ContainerPort: desired.Processor.GetMetricsPort(),
 	})
 	// Only expose k8scache port when centralized informers are enabled
-	if desired.Processor.IsCentralizedInformersEnabled() {
+	if desired.Processor.IsInformerCacheProxyEnabled() {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          "k8scache",
 			ContainerPort: k8scachePort,
@@ -287,7 +287,7 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 
 // addK8sCacheArgs adds k8scache server arguments for centralized informers
 func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Builder, certSecretName string, args *[]string) {
-	if desired.Processor.CentralizedInformers == nil || desired.Processor.CentralizedInformers.Enabled == nil || !*desired.Processor.CentralizedInformers.Enabled {
+	if desired.Processor.InformerCacheProxy == nil || desired.Processor.InformerCacheProxy.Enabled == nil || !*desired.Processor.InformerCacheProxy.Enabled {
 		return
 	}
 
@@ -296,7 +296,7 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 		"--k8scache.address=0.0.0.0",
 	)
 
-	tlsType := desired.Processor.CentralizedInformers.GetTLSType()
+	tlsType := desired.Processor.InformerCacheProxy.GetTLSType()
 
 	if tlsType == flowslatest.TLSDisabled {
 		return
@@ -307,9 +307,9 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 
 	if tlsType == flowslatest.TLSProvided {
 		// Manual mode: user provides certificates
-		if desired.Processor.CentralizedInformers.TLS != nil && desired.Processor.CentralizedInformers.TLS.ProvidedCertificates != nil {
-			serverCert = desired.Processor.CentralizedInformers.TLS.ProvidedCertificates.ServerCert
-			caFile = desired.Processor.CentralizedInformers.TLS.ProvidedCertificates.CAFile
+		if desired.Processor.InformerCacheProxy.TLS != nil && desired.Processor.InformerCacheProxy.TLS.ProvidedCertificates != nil {
+			serverCert = desired.Processor.InformerCacheProxy.TLS.ProvidedCertificates.ServerCert
+			caFile = desired.Processor.InformerCacheProxy.TLS.ProvidedCertificates.CAFile
 		}
 	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
 		// Auto mode: use service-ca certificate for the k8scache service
