@@ -20,7 +20,7 @@ func TestPortConflictValidation(t *testing.T) {
 			spec: FlowCollectorSpec{
 				Processor: FlowCollectorFLP{
 					Advanced: &AdvancedProcessorConfig{
-						Port: ptr.To(int32(9402)),
+						Port: ptr.To(int32(DefaultK8sCachePort)),
 					},
 					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
@@ -35,7 +35,7 @@ func TestPortConflictValidation(t *testing.T) {
 			spec: FlowCollectorSpec{
 				Processor: FlowCollectorFLP{
 					Advanced: &AdvancedProcessorConfig{
-						HealthPort: ptr.To(int32(9402)),
+						HealthPort: ptr.To(int32(DefaultK8sCachePort)),
 					},
 					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
@@ -51,7 +51,7 @@ func TestPortConflictValidation(t *testing.T) {
 				Processor: FlowCollectorFLP{
 					Metrics: FLPMetrics{
 						Server: MetricsServerConfig{
-							Port: ptr.To(int32(9402)),
+							Port: ptr.To(int32(DefaultK8sCachePort)),
 						},
 					},
 					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
@@ -67,7 +67,7 @@ func TestPortConflictValidation(t *testing.T) {
 			spec: FlowCollectorSpec{
 				Processor: FlowCollectorFLP{
 					Advanced: &AdvancedProcessorConfig{
-						ProfilePort: ptr.To(int32(9402)),
+						ProfilePort: ptr.To(int32(DefaultK8sCachePort)),
 					},
 					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(true),
@@ -78,11 +78,11 @@ func TestPortConflictValidation(t *testing.T) {
 			errorContains: "spec.processor.advanced.profilePort 9402 conflicts with reserved k8scache port 9402",
 		},
 		{
-			name: "Port 9402 is allowed when informers disabled",
+			name: "Port DefaultK8sCachePort is allowed when informers disabled",
 			spec: FlowCollectorSpec{
 				Processor: FlowCollectorFLP{
 					Advanced: &AdvancedProcessorConfig{
-						Port: ptr.To(int32(9402)),
+						Port: ptr.To(int32(DefaultK8sCachePort)),
 					},
 					InformerCacheProxy: &FlowCollectorInformerCacheProxy{
 						Enabled: ptr.To(false),
@@ -92,11 +92,11 @@ func TestPortConflictValidation(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Port 9402 is allowed when informers is nil",
+			name: "Port DefaultK8sCachePort is allowed when informers is nil",
 			spec: FlowCollectorSpec{
 				Processor: FlowCollectorFLP{
 					Advanced: &AdvancedProcessorConfig{
-						Port: ptr.To(int32(9402)),
+						Port: ptr.To(int32(DefaultK8sCachePort)),
 					},
 					InformerCacheProxy: nil,
 				},

@@ -241,6 +241,21 @@ func (spec *FlowCollectorFLP) IsInformerCacheProxyEnabled() bool {
 	return spec.InformerCacheProxy != nil && spec.InformerCacheProxy.Enabled != nil && *spec.InformerCacheProxy.Enabled
 }
 
+// DefaultK8sCachePort is the default gRPC port where FLP processors listen for k8scache updates
+const DefaultK8sCachePort int32 = 9402
+
+// GetK8sCachePort returns the gRPC port where FLP processors listen for k8scache updates.
+// If spec.processor.informerCacheProxy.advanced.processorPort is configured, it returns that value.
+// Otherwise, it returns the default port (9402).
+func (spec *FlowCollectorFLP) GetK8sCachePort() int32 {
+	if spec.InformerCacheProxy != nil &&
+		spec.InformerCacheProxy.Advanced != nil &&
+		spec.InformerCacheProxy.Advanced.ProcessorPort != nil {
+		return *spec.InformerCacheProxy.Advanced.ProcessorPort
+	}
+	return DefaultK8sCachePort
+}
+
 func (spec *FlowCollectorInformerCacheProxy) GetTLSType() TLSConfigType {
 	if spec == nil || spec.TLS == nil {
 		return TLSAuto

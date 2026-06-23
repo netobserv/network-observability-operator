@@ -27,7 +27,6 @@ const (
 	healthPortName          = "health"
 	prometheusPortName      = "prometheus"
 	profilePortName         = "pprof"
-	k8scachePort            = 9402 // gRPC port for k8s cache updates
 	healthTimeoutSeconds    = 5
 	livenessPeriodSeconds   = 10
 	startupFailureThreshold = 5
@@ -136,7 +135,7 @@ func podTemplate(
 	if desired.Processor.IsInformerCacheProxyEnabled() {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          "k8scache",
-			ContainerPort: k8scachePort,
+			ContainerPort: desired.Processor.GetK8sCachePort(),
 			Protocol:      corev1.ProtocolTCP,
 		})
 	}
@@ -292,7 +291,7 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 	}
 
 	*args = append(*args,
-		fmt.Sprintf("--k8scache.port=%d", k8scachePort),
+		fmt.Sprintf("--k8scache.port=%d", desired.Processor.GetK8sCachePort()),
 		"--k8scache.address=0.0.0.0",
 	)
 

@@ -61,7 +61,7 @@ func (b *informerBuilder) deployment() (*appsv1.Deployment, error) {
 	batchSize := 100
 	sendTimeout := 10
 	updateBufferSize := 100
-	processorPort := int32(k8scachePort)
+	processorPort := flowslatest.DefaultK8sCachePort
 	if config.Advanced != nil {
 		if config.Advanced.ResyncInterval != nil {
 			resyncInterval = *config.Advanced.ResyncInterval

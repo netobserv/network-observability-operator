@@ -182,11 +182,12 @@ func (b *monolithBuilder) service() *corev1.Service {
 	}
 	// Only expose k8scache port when centralized informers are enabled
 	if b.desired.Processor.IsInformerCacheProxyEnabled() {
+		k8scachePort := b.desired.Processor.GetK8sCachePort()
 		svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
 			Name:       "k8scache",
 			Port:       k8scachePort,
 			Protocol:   corev1.ProtocolTCP,
-			TargetPort: intstr.FromInt(k8scachePort),
+			TargetPort: intstr.FromInt32(k8scachePort),
 		})
 	}
 	if b.info.ClusterInfo.IsOpenShift() && (b.desired.Processor.Service == nil || b.desired.Processor.Service.TLSType == flowslatest.TLSAuto) {

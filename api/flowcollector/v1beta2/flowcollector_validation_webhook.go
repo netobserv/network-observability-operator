@@ -489,8 +489,8 @@ func (v *validator) validatePortConflicts() {
 		return
 	}
 
-	// k8scache port is hardcoded to 9402 when informer cache proxy is enabled
-	const k8scachePort = 9402
+	// Get the configured k8scache port (configurable or default)
+	k8scachePort := v.fc.Processor.GetK8sCachePort()
 
 	// Get advanced processor config with defaults
 	var port, healthPort, profilePort *int32

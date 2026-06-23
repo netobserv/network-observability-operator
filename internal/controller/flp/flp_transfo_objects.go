@@ -206,9 +206,9 @@ func (b *transfoBuilder) service() *corev1.Service {
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "k8scache",
-					Port:       k8scachePort,
+					Port:       b.desired.Processor.GetK8sCachePort(),
 					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromInt(k8scachePort),
+					TargetPort: intstr.FromInt32(b.desired.Processor.GetK8sCachePort()),
 				},
 			},
 		},
