@@ -48,11 +48,11 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 		status: mgr.Status.ForComponent(status.StaticController),
 	}
 
-	// Return initReconcile as a post-create hook
-	return r.initReconcile, ctrl.NewControllerManagedBy(mgr).
+	b := ctrl.NewControllerManagedBy(mgr).
 		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
-		Named("staticPlugin").
-		Watches(
+		Named("staticPlugin")
+	if mgr.Config.StaticPluginConfig.InheritTolerationFromSubscription != "" {
+		b = b.Watches(
 			&olm.Subscription{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
 				if o.GetNamespace() == mgr.Config.Namespace && o.GetName() == mgr.Config.StaticPluginConfig.InheritTolerationFromSubscription {
@@ -61,8 +61,10 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 				return []reconcile.Request{}
 			}),
 			reconcilers.IgnoreStatusChange,
-		).
-		Complete(&r)
+		)
+	}
+	// Return initReconcile as a post-create hook
+	return r.initReconcile, b.Complete(&r)
 }
 
 func (r *Reconciler) initReconcile(ctx context.Context) error {
