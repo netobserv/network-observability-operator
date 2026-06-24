@@ -34,3 +34,11 @@ rules:
     verbs:
       - create
       - patch
+  - apiGroups:
+      - operators.coreos.com
+    resources:
+      - subscriptions
+    verbs:
+      - get
+      - list
+      - watch

@@ -79,6 +79,3 @@ package manager
 
 // Transitive: operator needs to grant UDN read permission to FLP at the cluster scope
 //+kubebuilder:rbac:groups=k8s.ovn.org,resources=userdefinednetworks;clusteruserdefinednetworks,verbs=get;list;watch
-
-// Operator needs to read its own Subscription (own namespace)
-//+kubebuilder:rbac:groups=operators.coreos.com,resources=subscriptions,verbs=get;list;watch,namespace=system

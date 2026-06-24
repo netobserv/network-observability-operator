@@ -35,3 +35,17 @@ rules:
   verbs:
   - create
   - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: subscription-watcher-role
+rules:
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - subscriptions
+  verbs:
+  - get
+  - list
+  - watch
