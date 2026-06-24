@@ -42,8 +42,8 @@ type Config struct {
 
 // Config of the static plugin.
 type StaticPluginConfig struct {
-	// Inherited toleration from Subscriptions, for static controller (static plugin)
-	InheritedTolerationFromSubscription string
+	// Inherit toleration from Subscriptions, for static controller (static plugin); this must refer to the subscription name
+	InheritTolerationFromSubscription string
 }
 
 // ParseConsolePluginImages parses console plugin image configuration.

@@ -55,7 +55,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 		Watches(
 			&olm.Subscription{},
 			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
-				if o.GetNamespace() == mgr.Config.Namespace && o.GetName() == mgr.Config.StaticPluginConfig.InheritedTolerationFromSubscription {
+				if o.GetNamespace() == mgr.Config.Namespace && o.GetName() == mgr.Config.StaticPluginConfig.InheritTolerationFromSubscription {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 				}
 				return []reconcile.Request{}

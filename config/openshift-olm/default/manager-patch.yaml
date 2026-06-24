@@ -25,3 +25,9 @@
 - op: add
   path: "/spec/template/spec/containers/0/args/-"
   value: '--metrics-cert-key-file=/etc/tls/private/tls.key'
+
+- op: add
+  path: "/spec/template/spec/containers/0/env/-"
+  value:
+    name: STATIC_PLUGIN_INHERIT_TOLERATION_SUBSCRIPTION
+    value: netobserv-operator

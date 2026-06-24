@@ -65,11 +65,11 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 
 	if r.ClusterInfo.HasConsolePlugin() {
 		// Retrieve toleration
-		if r.cfg.InheritedTolerationFromSubscription != "" {
+		if r.cfg.InheritTolerationFromSubscription != "" {
 			sub := olm.Subscription{}
 			if err = r.Client.Get(
 				ctx,
-				types.NamespacedName{Name: r.cfg.InheritedTolerationFromSubscription, Namespace: r.Namespace},
+				types.NamespacedName{Name: r.cfg.InheritTolerationFromSubscription, Namespace: r.Namespace},
 				&sub,
 			); err != nil {
 				return err

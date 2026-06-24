@@ -12,7 +12,7 @@ resources:
 - monitor.yaml
 
 patches:
-  - path: ./monitoring-patch.yaml
+  - path: ./manager-patch.yaml
     target:
       kind: Deployment
       name: controller-manager
