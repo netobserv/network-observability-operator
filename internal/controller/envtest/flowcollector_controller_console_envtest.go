@@ -3,11 +3,13 @@ package envtest
 
 import (
 	"context"
+	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
+	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -53,6 +55,10 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 	}
 	consoleCRKey := types.NamespacedName{
 		Name: "cluster",
+	}
+	subscriptionKey := types.NamespacedName{
+		Name:      "netobserv-operator",
+		Namespace: "main-namespace",
 	}
 	rbKeyPlugin := types.NamespacedName{Name: "netobserv-token-review-plugin"}
 
@@ -302,6 +308,46 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 					}
 					return cr.Spec.Plugins
 				}, timeout, interval).Should(Equal([]string{"netobserv-plugin-static", "netobserv-plugin"}))
+			})
+		})
+
+		Context("Static plugin toleration config", func() {
+			It("Should configure toleration from subscription", func() {
+				Eventually(func() interface{} {
+					subs := olm.Subscription{}
+					if err := k8sClient.Get(ctx, subscriptionKey, &subs); err != nil {
+						return err
+					}
+					subs.Spec.Config = &olm.SubscriptionConfig{
+						Tolerations: []v1.Toleration{
+							{
+								Key:      "foo",
+								Operator: v1.TolerationOpEqual,
+								Value:    "bar",
+							},
+						},
+						NodeSelector: map[string]string{
+							"foo": "bar",
+						},
+					}
+					return k8sClient.Update(ctx, &subs)
+				}, timeout, interval).Should(Succeed())
+			})
+
+			It("Should propagate toleration config", func() {
+				Eventually(func() interface{} {
+					dp := appsv1.Deployment{}
+					if err := k8sClient.Get(ctx, staticCpKey, &dp); err != nil {
+						return err
+					}
+					if len(dp.Spec.Template.Spec.Tolerations) != 1 || dp.Spec.Template.Spec.Tolerations[0].Key != "foo" {
+						return fmt.Errorf("expected toleration set, got: %v", dp.Spec.Template.Spec.Tolerations)
+					}
+					if len(dp.Spec.Template.Spec.NodeSelector) != 1 || dp.Spec.Template.Spec.NodeSelector["foo"] != "bar" {
+						return fmt.Errorf("expected node selector set with foo=bar, got: %v", dp.Spec.Template.Spec.NodeSelector)
+					}
+					return nil
+				}, timeout, interval).Should(Succeed())
 			})
 		})
 	}

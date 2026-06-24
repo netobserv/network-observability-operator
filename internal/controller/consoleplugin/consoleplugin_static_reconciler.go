@@ -74,10 +74,14 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 			); err != nil {
 				return err
 			}
-			desired.Spec.ConsolePlugin.Advanced.Scheduling = &flowslatest.SchedulingConfig{
-				Tolerations:  sub.Spec.Config.Tolerations,
-				NodeSelector: sub.Spec.Config.NodeSelector,
-				Affinity:     sub.Spec.Config.Affinity,
+			if sub.Spec != nil && sub.Spec.Config != nil {
+				desired.Spec.ConsolePlugin.Advanced.Scheduling = &flowslatest.SchedulingConfig{
+					Tolerations:  sub.Spec.Config.Tolerations,
+					NodeSelector: sub.Spec.Config.NodeSelector,
+					Affinity:     sub.Spec.Config.Affinity,
+				}
+			} else {
+				desired.Spec.ConsolePlugin.Advanced.Scheduling = nil
 			}
 		}
 
