@@ -53,9 +53,6 @@ jobs:
           docker load --input ./operator.tar
           docker load --input ./bundle.tar
           docker load --input ./catalog.tar
-          docker image tag ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:tmp ${{ env.main_image }}
-          docker image tag ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-tmp ${{ env.bundle_image }}
-          docker image tag ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-tmp ${{ env.catalog_image }}
       - name: docker login to quay.io
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
