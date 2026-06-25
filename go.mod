@@ -7,8 +7,8 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
-	github.com/netobserv/flowlogs-pipeline v1.11.4-community.0.20260521155724-7ee2fbbc7651
-	github.com/netobserv/netobserv-ebpf-agent v1.11.4-community
+	github.com/netobserv/flowlogs-pipeline v1.11.5-community.0.20260625083056-0aefbc7d051e
+	github.com/netobserv/netobserv-ebpf-agent v1.11.5-community.0.20260625084536-cd2c2a1fa4fb
 	github.com/onsi/ginkgo/v2 v2.31.0
 	github.com/onsi/gomega v1.41.0
 	github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
@@ -124,7 +124,3 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2-0.20260122202528-d9cc6641c482 // indirect
 )
-
-replace github.com/netobserv/flowlogs-pipeline => ../flowlogs-pipeline/
-
-replace github.com/netobserv/netobserv-ebpf-agent => ../netobserv-ebpf-agent/
