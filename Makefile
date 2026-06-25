@@ -340,6 +340,8 @@ fmt: ## Run go fmt against code.
 lint: prereqs ## Run linter (golangci-lint).
 	@echo "### Linting code"
 	./bin/golangci-lint-${GOLANGCI_LINT_VERSION} run --timeout 5m ./...
+	@echo "### Checking workflow security"
+	./hack/check-workflow-security.sh
 
 test: envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" go test ./api/... ./internal/... -coverpkg="./api/... ./internal/..." -coverprofile cover.out
