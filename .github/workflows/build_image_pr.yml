@@ -41,6 +41,7 @@ jobs:
             FLP_VERSION=${{ env.WF_RELIMG_VERSION }} \
             BPF_VERSION=${{ env.WF_RELIMG_VERSION }} \
             BUNDLE_VERSION=0.0.0-sha-${{ env.short_sha }} \
+            BUNDLE_TARGET=OpenShift \
             CLEAN_BUILD=1 \
             BUNDLE_SET_DATE=true \
             make bundle-nogen bundle-tar
