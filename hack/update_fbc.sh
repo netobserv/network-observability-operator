@@ -32,8 +32,8 @@ mkdir -p "${dir_catalog_legacy}"
 cp -f catalog/parts/other.yaml ${dir_catalog}
 cp -f catalog/parts/other.yaml ${dir_catalog_legacy}
 
-${OPM} render ./bundle --output=yaml --migrate-level=bundle-object-to-csv-metadata > "${dir_catalog}/bundle.yaml"
-${OPM} render ./bundle --output=yaml > "${dir_catalog_legacy}/bundle.yaml"
+${OPM} render ./bundles/openshift --output=yaml --migrate-level=bundle-object-to-csv-metadata > "${dir_catalog}/bundle.yaml"
+${OPM} render ./bundles/openshift --output=yaml > "${dir_catalog_legacy}/bundle.yaml"
 
 echo "Generating single index..."
 cat <<EOF > "${dir_catalog}/index.yaml"
