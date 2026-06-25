@@ -224,5 +224,6 @@ func (r *FlowCollectorReconciler) newCommonInfo(clh *helper.Client, ns string, l
 		Watcher:     r.watcher,
 		Loki:        loki,
 		Vendor:      r.mgr.Config.Vendor,
+		TLSConfig:   r.mgr.ClusterInfo.GetComponentTLSConfig(),
 	}
 }

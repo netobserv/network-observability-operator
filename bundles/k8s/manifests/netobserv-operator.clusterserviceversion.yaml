@@ -819,6 +819,7 @@ spec:
         - apiGroups:
           - config.openshift.io
           resources:
+          - apiservers
           - clusterversions
           - networks
           verbs:
@@ -1049,6 +1050,12 @@ spec:
                     drop:
                     - ALL
                   readOnlyRootFilesystem: true
+                startupProbe:
+                  failureThreshold: 30
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  periodSeconds: 10
                 volumeMounts:
                 - mountPath: /tmp/k8s-webhook-server/serving-certs
                   name: cert

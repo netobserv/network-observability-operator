@@ -8,8 +8,8 @@ package manager
 // Operator reads Network config for configured CIDRs (cluster-scope resource)
 //+kubebuilder:rbac:groups=operator.openshift.io,resources=networks,verbs=get;list;watch
 
-// Operator reads ClusterVersions for cluster info, and Network config for configured CIDRs (cluster-scope resources)
-//+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions;networks,verbs=get;list;watch
+// Operator reads APIServer TLS profile, ClusterVersions for cluster info, and Network config for configured CIDRs (cluster-scope resources)
+//+kubebuilder:rbac:groups=config.openshift.io,resources=apiservers;clusterversions;networks,verbs=get;list;watch
 
 // Operator needs to create namespaces, services, service accounts, CM, PVC in a user-defined namespace
 //+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete

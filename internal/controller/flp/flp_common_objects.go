@@ -1,6 +1,7 @@
 package flp
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -101,6 +102,7 @@ func podTemplate(
 	netType flowNetworkType,
 	annotations map[string]string,
 	isOpenShift bool,
+	tlsConfig *tls.Config,
 ) corev1.PodTemplateSpec {
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
 	var ports []corev1.ContainerPort
@@ -155,7 +157,7 @@ func podTemplate(
 		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
 	envs = append(envs, constants.EnvNoHTTP2)
-
+	envs = helper.AppendTLSEnvVars(envs, tlsConfig)
 	envs = helper.EnvFromReqsLimits(envs, &desired.Processor.Resources)
 
 	// Build args - only include k8scache flags when centralized informers are enabled
@@ -184,7 +186,6 @@ func podTemplate(
 			},
 		},
 	}})
-
 	container := corev1.Container{
 		Name:            constants.FLPName,
 		Image:           imageName,

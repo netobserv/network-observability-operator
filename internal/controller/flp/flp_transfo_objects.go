@@ -64,6 +64,7 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 		pull,
 		annotations,
 		b.info.ClusterInfo.IsOpenShift(),
+		b.info.TLSConfig,
 	)
 	replicas := b.desired.Processor.GetFLPReplicas()
 	return &appsv1.Deployment{

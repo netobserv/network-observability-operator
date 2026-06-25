@@ -74,6 +74,12 @@ func (c *Info) refresh(ctx context.Context) error {
 	if err := c.fetchClusterInfo(ctx); err != nil {
 		return err
 	}
+
+	// Note: tlsProfile is NOT refreshed here. When the APIServer TLS profile changes, the
+	// SecurityProfileWatcher (main.go) triggers os.Exit(0) and Kubernetes restarts the operator.
+	// On restart, NewManager fetches the current profile and reconciliation re-aligns all
+	// component env vars. Refreshing it here would be redundant.
+
 	c.onRefresh()
 	return nil
 }

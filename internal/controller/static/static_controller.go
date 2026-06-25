@@ -133,6 +133,7 @@ func (r *Controller) newDefaultReconcilerInstance(clh *helper.Client, image stri
 		Watcher:     nil,
 		Loki:        &helper.LokiConfig{},
 		Vendor:      r.mgr.Config.Vendor,
+		TLSConfig:   r.mgr.ClusterInfo.GetComponentTLSConfig(),
 	}
 	var images map[reconcilers.ImageRef]string
 	if image != "" {

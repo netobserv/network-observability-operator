@@ -1,8 +1,10 @@
 package helper
 
 import (
+	"crypto/tls"
 	"fmt"
 
+	"github.com/netobserv/netobserv-operator/internal/pkg/tlsconfig"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -17,4 +19,15 @@ func EnvFromReqsLimits(envs []corev1.EnvVar, reqs *corev1.ResourceRequirements) 
 		}
 	}
 	return envs
+}
+
+// AppendTLSEnvVars appends TLS configuration environment variables from the cluster's
+// composed TLS config. This allows components (FLP, eBPF agent, console plugin) to
+// inherit TLS settings from the cluster. Returns the input envs unchanged if tlsCfg is nil.
+func AppendTLSEnvVars(envs []corev1.EnvVar, tlsCfg *tls.Config) []corev1.EnvVar {
+	if tlsCfg == nil {
+		return envs
+	}
+
+	return append(envs, tlsconfig.ConfigToEnvVars(tlsCfg)...)
 }

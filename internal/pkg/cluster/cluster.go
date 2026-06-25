@@ -2,14 +2,17 @@ package cluster
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/coreos/go-semver/semver"
 	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
+	configv1 "github.com/openshift/api/config/v1"
 	osv1 "github.com/openshift/api/console/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -18,10 +21,15 @@ import (
 	v1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/netobserv/netobserv-operator/internal/pkg/tlsconfig"
 )
 
 // discoveryClient is an interface for API discovery operations
@@ -40,10 +48,12 @@ type Info struct {
 	apiServerIPs                []string
 	apiServerPorts              []int32
 	ready                       bool
-	readinessLock               sync.RWMutex
+	readinessLock               sync.RWMutex // Protects all cluster info including tlsProfile/tlsConfig
 	dcl                         discoveryClient
 	livecl                      liveClient
 	onRefresh                   func()
+	tlsProfile                  *configv1.TLSSecurityProfile
+	tlsConfig                   *tls.Config
 }
 
 type APIName string
@@ -58,8 +68,9 @@ var (
 	LokiStack      APIName = APIName("lokistacks." + lokiv1.GroupVersion.String())
 )
 
-func NewInfo(ctx context.Context, cfg *rest.Config, dcl *discovery.DiscoveryClient, onRefresh func()) (*Info, func(ctx context.Context) error, error) {
-	info := Info{dcl: dcl, onRefresh: onRefresh}
+// NewInfo creates cluster Info, discovering available APIs.
+func NewInfo(ctx context.Context, cfg *rest.Config, dcl *discovery.DiscoveryClient) (*Info, func(ctx context.Context) error, error) {
+	info := Info{dcl: dcl}
 	liveCl, err := newLiveClient(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -68,11 +79,114 @@ func NewInfo(ctx context.Context, cfg *rest.Config, dcl *discovery.DiscoveryClie
 	if err := info.fetchAvailableAPIs(ctx); err != nil {
 		return &info, nil, err
 	}
+
+	logger := log.FromContext(ctx)
+	if info.IsOpenShift() {
+		tlsProfile, err := retryStartupAPICall(ctx, "TLS profile fetch", isTransientAPIError,
+			func(ctx context.Context) (*configv1.TLSSecurityProfile, error) {
+				return tlsconfig.FetchAPIServerTLSProfile(ctx, cfg)
+			})
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to fetch TLS profile: %w", err)
+		}
+		info.tlsProfile = tlsProfile
+	}
+
+	tlsCfg, err := tlsconfig.ComposeTLSConfig(info.tlsProfile)
+	if err != nil {
+		logger.Error(err, "Failed to fully compose TLS config from profile, applying partial/default settings")
+	}
+	info.tlsConfig = tlsCfg
+	switch {
+	case info.tlsProfile != nil:
+		logger.Info("Using OpenShift TLS profile", "profileType", info.tlsProfile.Type)
+	case info.IsOpenShift():
+		logger.Info("OpenShift detected but no TLS profile configured in APIServer, using secure defaults")
+	default:
+		logger.Info("Using secure TLS defaults")
+	}
+
 	return &info, info.postCreate, nil
 }
 
+var errCriticalAPIDiscovery = errors.New("critical API discovery failed")
+
+// startupRetryBackoff bounds the retries for the startup calls that hit the apiserver
+// directly (API discovery and the APIServer TLS profile fetch). Both can transiently
+// fail while the apiserver rolls out after a TLS profile change.
+var startupRetryBackoff = wait.Backoff{
+	Duration: 3 * time.Second,
+	Factor:   1.5,
+	Jitter:   0.1,
+	Cap:      30 * time.Second,
+	Steps:    15,
+}
+
+// retryStartupAPICall runs op with the bounded startup backoff (startupRetryBackoff), retrying only
+// when retryable(err) reports the failure as transient; anything else fails fast so misconfigurations
+// (e.g. Forbidden) surface immediately. On exhaustion it surfaces the last real error rather than the
+// generic wait timeout/cancel. Shared by the startup calls that hit the apiserver directly (API
+// discovery and the APIServer TLS profile fetch), both of which can transiently fail while the
+// apiserver rolls out after a TLS profile change; without this the operator would os.Exit(1) and, with
+// repeated restarts during the rollout window, land in CrashLoopBackOff. what is a short label used
+// only for logging.
+func retryStartupAPICall[T any](ctx context.Context, what string, retryable func(error) bool, op func(context.Context) (T, error)) (T, error) {
+	log := log.FromContext(ctx)
+	var result T
+	var lastErr error
+	err := wait.ExponentialBackoffWithContext(ctx, startupRetryBackoff, func(ctx context.Context) (bool, error) {
+		result, lastErr = op(ctx)
+		if lastErr == nil {
+			return true, nil
+		}
+		if !retryable(lastErr) {
+			return false, lastErr
+		}
+		log.Info("Transient failure during startup "+what+", retrying (apiserver may be rolling out)", "error", lastErr.Error())
+		return false, nil
+	})
+	if err != nil && lastErr != nil {
+		return result, lastErr
+	}
+	return result, err
+}
+
+// fetchAvailableAPIs runs the startup API discovery, retrying transient critical-API failures with
+// the shared bounded backoff.
 func (c *Info) fetchAvailableAPIs(ctx context.Context) error {
-	return c.fetchAvailableAPIsInternal(ctx, false)
+	_, err := retryStartupAPICall(ctx, "API discovery",
+		func(e error) bool { return errors.Is(e, errCriticalAPIDiscovery) },
+		func(ctx context.Context) (struct{}, error) {
+			return struct{}{}, c.fetchAvailableAPIsInternal(ctx, false)
+		})
+	return err
+}
+
+// isTransientAPIError reports whether err looks like a transient apiserver unavailability
+// (timeouts, server-side timeouts, service unavailable, or dropped connections) that is
+// typical while the apiserver rolls out and worth retrying during startup. Permanent errors
+// (e.g. Forbidden/Unauthorized from a misconfiguration) return false so they surface fast.
+func isTransientAPIError(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch {
+	case k8serrors.IsServerTimeout(err),
+		k8serrors.IsTimeout(err),
+		k8serrors.IsServiceUnavailable(err),
+		k8serrors.IsInternalError(err),
+		k8serrors.IsTooManyRequests(err),
+		k8serrors.IsUnexpectedServerError(err):
+		return true
+	case errors.Is(err, context.DeadlineExceeded):
+		return true
+	case utilnet.IsConnectionRefused(err),
+		utilnet.IsConnectionReset(err),
+		utilnet.IsProbableEOF(err):
+		return true
+	default:
+		return false
+	}
 }
 
 // fetchAvailableAPIsInternal discovers available APIs and optionally allows continuing despite critical API failures
@@ -154,7 +268,7 @@ func (c *Info) fetchAvailableAPIsInternal(ctx context.Context, allowCriticalFail
 	// - During startup (allowCriticalFailure=false): fail fast to prevent wrong cluster detection
 	// - During refresh (allowCriticalFailure=true): log error but continue, allowing time to recover
 	if criticalAPIFailed && !allowCriticalFailure {
-		return fmt.Errorf("critical API discovery failed: cannot determine if running on OpenShift (security.openshift.io API unavailable)")
+		return fmt.Errorf("%w: cannot determine if running on OpenShift (security.openshift.io API unavailable)", errCriticalAPIDiscovery)
 	}
 
 	return nil
@@ -470,4 +584,42 @@ func (c *Info) HasLokiStack(ctx context.Context) bool {
 	c.apisMapLock.RLock()
 	defer c.apisMapLock.RUnlock()
 	return c.apisMap[LokiStack]
+}
+
+// GetTLSConfig returns the tls.Config composed from the OpenShift TLS profile, or secure
+// defaults when not on OpenShift or no profile is configured (thread-safe). Never nil.
+// Intended for the operator's own servers (metrics, webhook), which should always use
+// secure defaults regardless of platform.
+func (c *Info) GetTLSConfig() *tls.Config {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
+	return c.tlsConfig
+}
+
+// GetComponentTLSConfig returns the tls.Config to relay to managed components (FLP, eBPF
+// agent, console plugin) via environment variables, or nil when not on OpenShift. Components
+// fall back to their own Go TLS defaults in that case, matching the pre-TLS-profile behavior.
+func (c *Info) GetComponentTLSConfig() *tls.Config {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
+	if !c.IsOpenShift() {
+		return nil
+	}
+	return c.tlsConfig
+}
+
+// GetTLSProfileSpec returns the TLSProfileSpec derived from the OpenShift TLS profile
+// (thread-safe). Used by the SecurityProfileWatcher to detect profile changes.
+// Returns nil if not on OpenShift or if the profile hasn't been fetched yet.
+func (c *Info) GetTLSProfileSpec() *configv1.TLSProfileSpec {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
+	return tlsconfig.ExtractTLSProfileSpec(c.tlsProfile)
+}
+
+// SetOnRefresh updates the onRefresh callback
+func (c *Info) SetOnRefresh(callback func()) {
+	c.readinessLock.Lock()
+	defer c.readinessLock.Unlock()
+	c.onRefresh = callback
 }

@@ -2,6 +2,7 @@ package reconcilers
 
 import (
 	"context"
+	"crypto/tls"
 
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
@@ -19,6 +20,7 @@ type Common struct {
 	ClusterInfo *cluster.Info
 	Loki        *helper.LokiConfig
 	Vendor      constants.Vendor
+	TLSConfig   *tls.Config
 }
 
 func (c *Common) PrivilegedNamespace() string {
