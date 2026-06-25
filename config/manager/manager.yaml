@@ -27,8 +27,6 @@ spec:
         env:
           - name: RELATED_IMAGE_EBPF_AGENT
             value: quay.io/netobserv/netobserv-ebpf-agent:v1.11.5-community
-          - name: RELATED_IMAGE_EBPF_BYTECODE
-            value: quay.io/netobserv/ebpf-bytecode:main
           - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
             value: quay.io/netobserv/flowlogs-pipeline:v1.11.5-community
           - name: RELATED_IMAGE_WEB_CONSOLE

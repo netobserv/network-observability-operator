@@ -183,7 +183,7 @@ set-release-kind-downstream: set-vendor
 
 .PHONY: set-vendor
 set-vendor:
-	kubectl -n $(NAMESPACE) set env deployment netobserv-controller-manager -c "manager" VENDOR=$(VENDOR)
+	kubectl -n $(OPERATOR_NS) set env deployment netobserv-controller-manager -c "manager" VENDOR=$(VENDOR)
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
 	kubectl wait -n $(OPERATOR_NS) --timeout=60s --for condition=Available=True deployment netobserv-controller-manager

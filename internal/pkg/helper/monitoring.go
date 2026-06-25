@@ -31,22 +31,6 @@ func GetSecretOrConfigMap(file *flowslatest.FileReference) monitoringv1.SecretOr
 
 func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, vendor constants.Vendor) (monitoringv1.Scheme, *monitoringv1.TLSConfig) {
 	if tls.Type == flowslatest.TLSAuto {
-		if vendor == constants.VendorOpenShift {
-			// Upstream prometheus disallows CAFile
-			return "https", &monitoringv1.TLSConfig{
-				SafeTLSConfig: monitoringv1.SafeTLSConfig{
-					ServerName: ptr.To(serverName),
-					CA: monitoringv1.SecretOrConfigMap{
-						ConfigMap: &corev1.ConfigMapKeySelector{
-							Key: "service-ca.crt",
-							LocalObjectReference: corev1.LocalObjectReference{
-								Name: "openshift-service-ca.crt",
-							},
-						},
-					},
-				},
-			}
-		}
 		return "https", &monitoringv1.TLSConfig{
 			SafeTLSConfig: monitoringv1.SafeTLSConfig{
 				ServerName: ptr.To(serverName),

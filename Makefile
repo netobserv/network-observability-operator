@@ -412,7 +412,7 @@ deploy: BPF_VERSION=main
 deploy: FLP_VERSION=main
 deploy: PLG_VERSION=main
 deploy: kustomize set-manager-images ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/openshift | sed -r "s/openshift-netobserv-operator\.svc/${NAMESPACE}.svc/" | kubectl apply --server-side --force-conflicts -f -
+	$(KUSTOMIZE) build config/openshift | kubectl apply --server-side --force-conflicts -f -
 	kubectl get ns openshift-netobserv-operator || kubectl create ns openshift-netobserv-operator
 	cat $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl apply --server-side --force-conflicts -f -
 
@@ -426,7 +426,7 @@ run: fmt lint ## Run a controller from your host.
 ##@ OLM
 
 .PHONY: bundle-nogen
-bundle-nogen: OPSDK kustomize set-manager-images ## Generate final bundle files, without prior code/doc generation.
+bundle-nogen: YQ OPSDK kustomize set-manager-images ## Generate final bundle files, without prior code/doc generation.
 	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(VERSION)/~g' $(BUNDLE_CONFIG)/description.md
 	rm -r $(BUNDLE_OUT)/manifests || true
 	rm -r $(BUNDLE_OUT)/metadata || true
@@ -434,7 +434,7 @@ bundle-nogen: OPSDK kustomize set-manager-images ## Generate final bundle files,
 	( \
 		($(KUSTOMIZE) build config/csv \
 			| $(YQ) '.metadata.annotations.containerImage = "$(IMAGE)"' \
-			| yq '.spec.description = load_str("$(BUNDLE_CONFIG)/description.md")' \
+			| $(YQ) '.spec.description = load_str("$(BUNDLE_CONFIG)/description.md")' \
 		); \
 		echo "---"; $(KUSTOMIZE) build config/samples; \
 		echo "---"; $(KUSTOMIZE) build $(BUNDLE_CONFIG) \
@@ -543,11 +543,11 @@ related-release-notes: ## Grab release notes for related components (to be inser
 helm-update: YQ ## Update helm template
 	sed -i -r 's/^appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
 	sed -i -r 's/^version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
-	yq -i '.ebpfAgent.version="v$(BUNDLE_VERSION)"' helm/values.yaml
-	yq -i '.flowlogsPipeline.version="v$(BUNDLE_VERSION)"' helm/values.yaml
-	yq -i '.consolePlugin.version="v$(BUNDLE_VERSION)"' helm/values.yaml
-	yq -i '.standaloneConsole.version="v$(BUNDLE_VERSION)"' helm/values.yaml
-	yq -i '.operator.version="$(BUNDLE_VERSION)"' helm/values.yaml
+	$(YQ) -i '.ebpfAgent.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	$(YQ) -i '.flowlogsPipeline.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	$(YQ) -i '.consolePlugin.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	$(YQ) -i '.standaloneConsole.version="v$(BUNDLE_VERSION)"' helm/values.yaml
+	$(YQ) -i '.operator.version="$(BUNDLE_VERSION)"' helm/values.yaml
 	hack/helm-update.sh
 	cp LICENSE helm/
 

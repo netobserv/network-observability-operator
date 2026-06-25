@@ -356,7 +356,7 @@ spec:
       - displayName: Image pull policy
         path: consolePlugin.imagePullPolicy
         x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
+        - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
         - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
         - urn:alm:descriptor:com.tectonic.ui:advanced
       - displayName: Resource Requirements
@@ -1002,8 +1002,6 @@ spec:
                 env:
                 - name: RELATED_IMAGE_EBPF_AGENT
                   value: quay.io/netobserv/netobserv-ebpf-agent:v1.11.5-community
-                - name: RELATED_IMAGE_EBPF_BYTECODE
-                  value: quay.io/netobserv/ebpf-bytecode:main
                 - name: RELATED_IMAGE_FLOWLOGS_PIPELINE
                   value: quay.io/netobserv/flowlogs-pipeline:v1.11.5-community
                 - name: RELATED_IMAGE_WEB_CONSOLE
@@ -1152,8 +1150,6 @@ spec:
   relatedImages:
   - image: quay.io/netobserv/netobserv-ebpf-agent:v1.11.5-community
     name: ebpf-agent
-  - image: quay.io/netobserv/ebpf-bytecode:main
-    name: ebpf-bytecode
   - image: quay.io/netobserv/flowlogs-pipeline:v1.11.5-community
     name: flowlogs-pipeline
   - image: quay.io/netobserv/network-observability-console-plugin:v1.11.5-community

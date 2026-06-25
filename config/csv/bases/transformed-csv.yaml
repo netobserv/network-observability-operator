@@ -273,7 +273,7 @@ spec:
             displayName: Log level
           - path: consolePlugin.imagePullPolicy
             x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy"
+              - urn:alm:descriptor:com.tectonic.ui:imagePullPolicy
               - urn:alm:descriptor:com.tectonic.ui:fieldDependency:consolePlugin.enable:true
               - urn:alm:descriptor:com.tectonic.ui:advanced
             displayName: Image pull policy

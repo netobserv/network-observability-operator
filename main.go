@@ -232,7 +232,7 @@ func readConfigFromEnv() *manager.Config {
 	return &manager.Config{
 		Vendor:                constants.Vendor(os.Getenv("VENDOR")),
 		EBPFAgentImage:        defaultStringEnv("RELATED_IMAGE_EBPF_AGENT", "quay.io/netobserv/netobserv-ebpf-agent:main"),
-		EBPFByteCodeImage:     defaultStringEnv("RELATED_IMAGE_EBPF_BYTECODE", "quay.io/netobserv/ebpf-bytecode:main"),
+		EBPFByteCodeImage:     defaultStringEnv("RELATED_IMAGE_EBPF_BYTECODE", "quay.io/netobserv/ebpf-bytecode:main"), // TODO: productize for GA
 		FlowlogsPipelineImage: defaultStringEnv("RELATED_IMAGE_FLOWLOGS_PIPELINE", "quay.io/netobserv/flowlogs-pipeline:main"),
 		WebConsoleImage:       defaultStringEnv("RELATED_IMAGE_WEB_CONSOLE", "quay.io/netobserv/network-observability-console-plugin:main"),
 		WebConsolePF4Image:    defaultStringEnv("RELATED_IMAGE_WEB_CONSOLE_PF4", "quay.io/netobserv/network-observability-console-plugin:main-pf4"),
