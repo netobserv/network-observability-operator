@@ -2,7 +2,6 @@ package helper
 
 import (
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
-	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
@@ -29,7 +28,7 @@ func GetSecretOrConfigMap(file *flowslatest.FileReference) monitoringv1.SecretOr
 	}
 }
 
-func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string, vendor constants.Vendor) (monitoringv1.Scheme, *monitoringv1.TLSConfig) {
+func GetServiceMonitorTLSConfig(tls *flowslatest.ServerTLS, serverName string) (monitoringv1.Scheme, *monitoringv1.TLSConfig) {
 	if tls.Type == flowslatest.TLSAuto {
 		return "https", &monitoringv1.TLSConfig{
 			SafeTLSConfig: monitoringv1.SafeTLSConfig{
