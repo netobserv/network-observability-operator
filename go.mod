@@ -9,7 +9,7 @@ require (
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
 	github.com/netobserv/flowlogs-pipeline v1.11.5-community.0.20260625083056-0aefbc7d051e
 	github.com/netobserv/netobserv-ebpf-agent v1.11.5-community.0.20260625084536-cd2c2a1fa4fb
-	github.com/onsi/ginkgo/v2 v2.31.0
+	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.41.0
 	github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
 	github.com/operator-framework/api v0.42.0
