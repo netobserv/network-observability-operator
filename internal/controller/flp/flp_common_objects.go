@@ -148,6 +148,25 @@ func podTemplate(
 		})
 	}
 
+	var envs []corev1.EnvVar
+	// we need to sort env map to keep idempotency,
+	// as equal maps could be iterated in different order
+	for _, pair := range helper.KeySorted(advancedConfig.Env) {
+		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
+	}
+	envs = append(envs, constants.EnvNoHTTP2)
+
+	envs = helper.EnvFromReqsLimits(envs, &desired.Processor.Resources)
+
+	// Build args - only include k8scache flags when centralized informers are enabled
+	// IMPORTANT: This must be called BEFORE extracting volumes/mounts from vols builder,
+	// as it may add certificates to the builder
+	args := []string{
+		fmt.Sprintf(`--config=%s/%s`, configPath, configFile),
+	}
+	addK8sCacheArgs(desired, vols, certSecretName, &args)
+
+	// Extract volumes and mounts AFTER all volume modifications are done
 	volumeMounts := vols.AppendMounts([]corev1.VolumeMount{{
 		MountPath: configPath,
 		Name:      configVolume,
@@ -162,22 +181,6 @@ func podTemplate(
 			},
 		},
 	}})
-
-	var envs []corev1.EnvVar
-	// we need to sort env map to keep idempotency,
-	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(advancedConfig.Env) {
-		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
-	}
-	envs = append(envs, constants.EnvNoHTTP2)
-
-	envs = helper.EnvFromReqsLimits(envs, &desired.Processor.Resources)
-
-	// Build args - only include k8scache flags when centralized informers are enabled
-	args := []string{
-		fmt.Sprintf(`--config=%s/%s`, configPath, configFile),
-	}
-	addK8sCacheArgs(desired, vols, certSecretName, &args)
 
 	container := corev1.Container{
 		Name:            constants.FLPName,
