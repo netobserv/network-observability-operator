@@ -748,20 +748,22 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			config = addEnv(config, envKafkaSASLSecretPath, secretPath, advancedConfig.Env)
 		}
 	} else {
-		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
+		config = addEnv(config, envExport, exportGRPC, advancedConfig.Env)
 		procConfig := helper.GetAdvancedProcessorConfig(&coll.Spec)
 		if coll.Spec.UseHostNetwork() {
 			// When flowlogs-pipeline is deployed as a daemonset, each agent must send
 			// data to the pod that is deployed in the same host
-			config = append(config, corev1.EnvVar{
-				Name: envFlowsTargetHost,
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						APIVersion: "v1",
-						FieldPath:  "status.hostIP",
+			if _, exists := advancedConfig.Env[envFlowsTargetHost]; !exists {
+				config = append(config, corev1.EnvVar{
+					Name: envFlowsTargetHost,
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							APIVersion: "v1",
+							FieldPath:  "status.hostIP",
+						},
 					},
-				},
-			})
+				})
+			}
 			config = addEnv(config, envFlowsTargetPort, strconv.Itoa(int(*procConfig.Port)), advancedConfig.Env)
 		} else {
 			// Service mode
