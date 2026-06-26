@@ -191,6 +191,10 @@ func (b *informerBuilder) deployment() (*appsv1.Deployment, error) {
 		SecurityContext: helper.ContainerDefaultSecurityContext(),
 	}
 
+	// Get processor advanced scheduling configuration to apply to informers
+	// Informers should be scheduled on the same nodes as processors for optimal communication
+	advancedConfig := helper.GetAdvancedProcessorConfig(b.desired)
+
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      informerName,
@@ -220,6 +224,11 @@ func (b *informerBuilder) deployment() (*appsv1.Deployment, error) {
 					ServiceAccountName: informerName,
 					Containers:         []corev1.Container{container},
 					Volumes:            (&vols).GetVolumes(),
+					// Apply processor scheduling constraints to informers
+					NodeSelector:      advancedConfig.Scheduling.NodeSelector,
+					Tolerations:       advancedConfig.Scheduling.Tolerations,
+					Affinity:          advancedConfig.Scheduling.Affinity,
+					PriorityClassName: advancedConfig.Scheduling.PriorityClassName,
 				},
 			},
 		},
