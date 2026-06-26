@@ -10,6 +10,7 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -96,8 +97,12 @@ func TestGetEnvConfig_Default(t *testing.T) {
 			},
 		},
 	}
+	info := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &cluster.Info{}}
+	agent := NewAgentController(info.NewInstance(nil, status.Instance{}))
 
-	env := getEnvConfig(&fc, &cluster.Info{})
+	env, err := agent.envConfig(context.Background(), &fc, map[string]string{})
+	require.NoError(t, err)
+
 	assert.Equal(t, []corev1.EnvVar{
 		{Name: "METRICS_ENABLE", Value: "true"},
 		{Name: "METRICS_SERVER_PORT", Value: "9400"},
@@ -113,6 +118,12 @@ func TestGetEnvConfig_Default(t *testing.T) {
 		{Name: "NETWORK_EVENTS_MONITORING_GROUP_ID", Value: "10"},
 		{Name: "PREFERRED_INTERFACE_FOR_MAC_PREFIX", Value: "0a:58=eth0"},
 		{Name: "TC_ATTACH_MODE", Value: "tcx"},
+		{Name: "EXPORT", Value: "grpc"},
+		{Name: "TARGET_TLS_CA_CERT_PATH", Value: "/var/netobserv-ca/service-ca.crt"},
+		{Name: "TARGET_HOST", Value: "flowlogs-pipeline.netobserv.svc.cluster.local."},
+		{Name: "TARGET_PORT", Value: "0"},
+		{Name: "GRPC_RECONNECT_TIMER", Value: "5m"},
+		{Name: "GRPC_RECONNECT_TIMER_RANDOMIZATION", Value: "30s"},
 	}, env)
 }
 
@@ -127,6 +138,7 @@ func TestGetEnvConfig_WithOverrides(t *testing.T) {
 							"DNS_TRACKING_PORT":                  "5353",
 							"NETWORK_EVENTS_MONITORING_GROUP_ID": "any",
 							"TC_ATTACH_MODE":                     "any",
+							"TARGET_HOST":                        "test",
 						},
 					},
 					Resources: corev1.ResourceRequirements{
@@ -149,8 +161,17 @@ func TestGetEnvConfig_WithOverrides(t *testing.T) {
 		},
 	}
 
-	env := getEnvConfig(&fc, &cluster.Info{})
+	info := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &cluster.Info{}}
+	agent := NewAgentController(info.NewInstance(nil, status.Instance{}))
+
+	env, err := agent.envConfig(context.Background(), &fc, map[string]string{})
+	require.NoError(t, err)
 	assert.Equal(t, []corev1.EnvVar{
+		{Name: "DNS_TRACKING_PORT", Value: "5353"},
+		{Name: "NETWORK_EVENTS_MONITORING_GROUP_ID", Value: "any"},
+		{Name: "PREFERRED_INTERFACE_FOR_MAC_PREFIX", Value: "0a:58=ens5"},
+		{Name: "TARGET_HOST", Value: "test"},
+		{Name: "TC_ATTACH_MODE", Value: "any"},
 		{Name: "GOMEMLIMIT", Value: "754974720"},
 		{Name: "FLOW_FILTER_RULES", Value: `[{"ip_cidr":"0.0.0.0/0","action":"Accept"}]`},
 		{Name: "AGENT_IP", Value: "",
@@ -160,10 +181,11 @@ func TestGetEnvConfig_WithOverrides(t *testing.T) {
 					FieldPath:  "status.hostIP",
 				},
 			}},
-		{Name: "DNS_TRACKING_PORT", Value: "5353"},
-		{Name: "NETWORK_EVENTS_MONITORING_GROUP_ID", Value: "any"},
-		{Name: "PREFERRED_INTERFACE_FOR_MAC_PREFIX", Value: "0a:58=ens5"},
-		{Name: "TC_ATTACH_MODE", Value: "any"},
+		{Name: "EXPORT", Value: "grpc"},
+		{Name: "TARGET_TLS_CA_CERT_PATH", Value: "/var/netobserv-ca/service-ca.crt"},
+		{Name: "TARGET_PORT", Value: "0"},
+		{Name: "GRPC_RECONNECT_TIMER", Value: "5m"},
+		{Name: "GRPC_RECONNECT_TIMER_RANDOMIZATION", Value: "30s"},
 	}, env)
 }
 
@@ -178,7 +200,11 @@ func TestGetEnvConfig_OCP4_14(t *testing.T) {
 
 	info := cluster.Info{}
 	info.Mock("4.14.5", "")
-	env := getEnvConfig(&fc, &info)
+	cmn := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &info}
+	agent := NewAgentController(cmn.NewInstance(nil, status.Instance{}))
+
+	env, err := agent.envConfig(context.Background(), &fc, map[string]string{})
+	require.NoError(t, err)
 	assert.Equal(t, []corev1.EnvVar{
 		{Name: "METRICS_ENABLE", Value: "true"},
 		{Name: "METRICS_SERVER_PORT", Value: "9400"},
@@ -194,6 +220,12 @@ func TestGetEnvConfig_OCP4_14(t *testing.T) {
 		{Name: "NETWORK_EVENTS_MONITORING_GROUP_ID", Value: "10"},
 		{Name: "PREFERRED_INTERFACE_FOR_MAC_PREFIX", Value: "0a:58=eth0"},
 		{Name: "TC_ATTACH_MODE", Value: "tc"},
+		{Name: "EXPORT", Value: "grpc"},
+		{Name: "TARGET_TLS_CA_CERT_PATH", Value: "/var/netobserv-ca/service-ca.crt"},
+		{Name: "TARGET_HOST", Value: "flowlogs-pipeline.netobserv.svc.cluster.local."},
+		{Name: "TARGET_PORT", Value: "0"},
+		{Name: "GRPC_RECONNECT_TIMER", Value: "5m"},
+		{Name: "GRPC_RECONNECT_TIMER_RANDOMIZATION", Value: "30s"},
 	}, env)
 }
 

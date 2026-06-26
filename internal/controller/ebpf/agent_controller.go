@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/ebpf/internal/permissions"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
-	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/volumes"
 	"github.com/netobserv/netobserv-operator/internal/pkg/watchers"
@@ -455,133 +455,6 @@ func (c *AgentController) desired(ctx context.Context, coll *flowslatest.FlowCol
 	}, nil
 }
 
-func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
-	config := getEnvConfig(coll, c.ClusterInfo)
-
-	if coll.Spec.UseKafka() {
-		config = append(config,
-			corev1.EnvVar{Name: envExport, Value: exportKafka},
-			corev1.EnvVar{Name: envKafkaBrokers, Value: coll.Spec.Kafka.Address},
-			corev1.EnvVar{Name: envKafkaTopic, Value: coll.Spec.Kafka.Topic},
-			corev1.EnvVar{Name: envKafkaBatchSize, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize)},
-			// For easier user configuration, we can assume a constant message size per flow (~100B in protobuf)
-			corev1.EnvVar{Name: envKafkaBatchMessages, Value: strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize / averageMessageSize)},
-			corev1.EnvVar{Name: envKafkaCompression, Value: coll.Spec.Kafka.Compression},
-		)
-		if coll.Spec.Kafka.TLS.Enable {
-			// Annotate pod with certificate reference so that it is reloaded if modified
-			// If user cert is provided, it will use mTLS. Else, simple TLS (the userDigest and paths will be empty)
-			caDigest, userDigest, err := c.Watcher.ProcessMTLSCerts(ctx, c.Client, &coll.Spec.Kafka.TLS, c.PrivilegedNamespace())
-			if err != nil {
-				return nil, reconcilers.WrapKafkaError(err)
-			}
-			annots[watchers.Annotation("kafka-ca")] = caDigest
-			annots[watchers.Annotation("kafka-user")] = userDigest
-
-			caPath, userCertPath, userKeyPath := c.volumes.AddMutualTLSCertificates(&coll.Spec.Kafka.TLS, "kafka-certs")
-			config = append(config,
-				corev1.EnvVar{Name: envKafkaEnableTLS, Value: "true"},
-				corev1.EnvVar{Name: envKafkaTLSInsecureSkipVerify, Value: strconv.FormatBool(coll.Spec.Kafka.TLS.InsecureSkipVerify)},
-				corev1.EnvVar{Name: envKafkaTLSCACertPath, Value: caPath},
-				corev1.EnvVar{Name: envKafkaTLSUserCertPath, Value: userCertPath},
-				corev1.EnvVar{Name: envKafkaTLSUserKeyPath, Value: userKeyPath},
-			)
-		}
-		if coll.Spec.Kafka.SASL.UseSASL() {
-			sasl := &coll.Spec.Kafka.SASL
-			// Annotate pod with secret reference so that it is reloaded if modified
-			d1, d2, err := c.Watcher.ProcessSASL(ctx, c.Client, sasl, c.PrivilegedNamespace())
-			if err != nil {
-				return nil, reconcilers.WrapKafkaError(err)
-			}
-			annots[watchers.Annotation("kafka-sd1")] = d1
-			annots[watchers.Annotation("kafka-sd2")] = d2
-
-			t := "plain"
-			if coll.Spec.Kafka.SASL.Type == flowslatest.SASLScramSHA512 {
-				t = "scramSHA512"
-			}
-			idPath := c.volumes.AddVolume(&sasl.ClientIDReference, "kafka-sasl-id")
-			secretPath := c.volumes.AddVolume(&sasl.ClientSecretReference, "kafka-sasl-secret")
-			config = append(config,
-				corev1.EnvVar{Name: envKafkaEnableSASL, Value: "true"},
-				corev1.EnvVar{Name: envKafkaSASLType, Value: t},
-				corev1.EnvVar{Name: envKafkaSASLIDPath, Value: idPath},
-				corev1.EnvVar{Name: envKafkaSASLSecretPath, Value: secretPath},
-			)
-		}
-	} else {
-		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
-		advancedConfig := helper.GetAdvancedProcessorConfig(&coll.Spec)
-		if coll.Spec.UseHostNetwork() {
-			// When flowlogs-pipeline is deployed as a daemonset, each agent must send
-			// data to the pod that is deployed in the same host
-			config = append(config, corev1.EnvVar{
-				Name: envFlowsTargetHost,
-				ValueFrom: &corev1.EnvVarSource{
-					FieldRef: &corev1.ObjectFieldSelector{
-						APIVersion: "v1",
-						FieldPath:  "status.hostIP",
-					},
-				},
-			}, corev1.EnvVar{
-				Name:  envFlowsTargetPort,
-				Value: strconv.Itoa(int(*advancedConfig.Port)),
-			})
-		} else {
-			// Service mode
-			ca, clientCert := helper.GetServiceClientTLSConfig(coll.Spec.Processor.Service, "ebpf-agent-cert", c.ClusterInfo.IsOpenShift())
-			if ca != nil {
-				// Send to FLP service using TLS
-				caPath := c.volumes.AddVolume(ca, "netobserv-ca")
-				config = append(config, corev1.EnvVar{Name: envTargetTLSCACertPath, Value: caPath})
-				// Ideally, the certificate is installed in the privileged namespace already. Trust-manager can be used for that (used in the provided helm chart)
-				// In OpenShift, we currently don't assume that (trust-manager isn't available there at this time), so we'll copy it
-				assumeCertInstalled := !c.ClusterInfo.IsOpenShift()
-				if clientCert == nil {
-					if ca.Namespace != "" && !assumeCertInstalled {
-						// Annotate pod with CA ref
-						caDigest, err := c.Watcher.ProcessFileReference(ctx, c.Client, *ca, c.PrivilegedNamespace())
-						if err != nil {
-							return nil, err
-						}
-						annots[watchers.Annotation("tls-ca")] = caDigest
-					}
-				} else {
-					certPath, keyPath := c.volumes.AddCertificate(clientCert, "client-certs")
-					config = append(config, corev1.EnvVar{Name: envTargetTLSUserCertPath, Value: certPath})
-					config = append(config, corev1.EnvVar{Name: envTargetTLSUserKeyPath, Value: keyPath})
-
-					if !assumeCertInstalled {
-						// Annotate pod with certificate reference so that it is reloaded if modified
-						caDigest, userDigest, err := c.Watcher.ProcessMTLSCertsFromRefs(ctx, c.Client, ca, clientCert, c.PrivilegedNamespace())
-						if err != nil {
-							return nil, err
-						}
-						annots[watchers.Annotation("mtls-ca")] = caDigest
-						annots[watchers.Annotation("mtls-user")] = userDigest
-					}
-				}
-			}
-			config = append(config,
-				corev1.EnvVar{
-					Name: envFlowsTargetHost,
-					// NB: trailing dot (...local.) is a DNS optimization for exact name match without extra search
-					Value: fmt.Sprintf("%s.%s.svc.cluster.local.", constants.FLPName, c.Namespace),
-				},
-				corev1.EnvVar{
-					Name:  envFlowsTargetPort,
-					Value: strconv.Itoa(int(*advancedConfig.Port)),
-				},
-				corev1.EnvVar{Name: envGRPCReconnect, Value: "5m"},
-				corev1.EnvVar{Name: envGRPCReconnectRnd, Value: "30s"},
-			)
-		}
-	}
-
-	return config, nil
-}
-
 func mapFlowFilterRuleToFilter(rule *flowslatest.EBPFFlowFilterRule) ebpfconfig.FlowFilter {
 	f := ebpfconfig.FlowFilter{
 		IPCIDR:    rule.CIDR,
@@ -711,130 +584,87 @@ func (c *AgentController) securityContext(coll *flowslatest.FlowCollector) *core
 }
 
 // nolint:cyclop
-func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1.EnvVar {
+func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowCollector, annots map[string]string) ([]corev1.EnvVar, error) {
 	var config []corev1.EnvVar
 
+	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
+	for k, v := range advancedConfig.Env {
+		config = append(config, corev1.EnvVar{Name: k, Value: v})
+	}
+	sort.Slice(config, func(i, j int) bool {
+		return config[i].Name < config[j].Name
+	})
+
 	if coll.Spec.Agent.EBPF.CacheActiveTimeout != "" {
-		config = append(config, corev1.EnvVar{
-			Name:  envCacheActiveTimeout,
-			Value: coll.Spec.Agent.EBPF.CacheActiveTimeout,
-		})
+		config = addEnv(config, envCacheActiveTimeout, coll.Spec.Agent.EBPF.CacheActiveTimeout, advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.CacheMaxFlows != 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envCacheMaxFlows,
-			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)),
-		})
+		config = addEnv(config, envCacheMaxFlows, strconv.Itoa(int(coll.Spec.Agent.EBPF.CacheMaxFlows)), advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.LogLevel != "" {
-		config = append(config, corev1.EnvVar{
-			Name:  envLogLevel,
-			Value: coll.Spec.Agent.EBPF.LogLevel,
-		})
+		config = addEnv(config, envLogLevel, coll.Spec.Agent.EBPF.LogLevel, advancedConfig.Env)
 	}
 
 	if len(coll.Spec.Agent.EBPF.Interfaces) > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envInterfaces,
-			Value: strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator),
-		})
+		config = addEnv(config, envInterfaces, strings.Join(coll.Spec.Agent.EBPF.Interfaces, envListSeparator), advancedConfig.Env)
 	}
 
 	if len(coll.Spec.Agent.EBPF.ExcludeInterfaces) > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envExcludeInterfaces,
-			Value: strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator),
-		})
+		config = addEnv(config, envExcludeInterfaces, strings.Join(coll.Spec.Agent.EBPF.ExcludeInterfaces, envListSeparator), advancedConfig.Env)
 	}
 
 	sampling := coll.Spec.Agent.EBPF.Sampling
 	if sampling != nil && *sampling > 0 {
-		config = append(config, corev1.EnvVar{
-			Name:  envSampling,
-			Value: strconv.Itoa(int(*sampling)),
-		})
+		config = addEnv(config, envSampling, strconv.Itoa(int(*sampling)), advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsFlowRTTEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableFlowRTT,
-			Value: "true",
-		})
+		config = addEnv(config, envEnableFlowRTT, "true", advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsNetworkEventsEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableNetworkEvents,
-			Value: "true",
-		})
+		config = addEnv(config, envEnableNetworkEvents, "true", advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsUDNMappingEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableUDNMapping,
-			Value: "true",
-		})
+		config = addEnv(config, envEnableUDNMapping, "true", advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsPacketTranslationEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnablePacketTranslation,
-			Value: "true",
-		})
-	}
-	if coll.Spec.Agent.EBPF.IsEbpfManagerEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableEbpfMgr,
-			Value: "true",
-		})
+		config = addEnv(config, envEnablePacketTranslation, "true", advancedConfig.Env)
 	}
 
-	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached to prevent OOM
-	config = helper.EnvFromReqsLimits(config, &coll.Spec.Agent.EBPF.Resources)
+	if coll.Spec.Agent.EBPF.IsEbpfManagerEnabled() {
+		config = addEnv(config, envEnableEbpfMgr, "true", advancedConfig.Env)
+	}
 
 	if coll.Spec.Agent.EBPF.IsPktDropEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnablePktDrop,
-			Value: "true",
-		})
+		config = addEnv(config, envEnablePktDrop, "true", advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsDNSTrackingEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableDNSTracking,
-			Value: "true",
-		})
+		config = addEnv(config, envEnableDNSTracking, "true", advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsIPSecEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableIPsec,
-			Value: "true",
-		})
+		config = addEnv(config, envEnableIPsec, "true", advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsTLSTrackingEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableTLSTracking,
-			Value: "true",
-		})
+		config = addEnv(config, envEnableTLSTracking, "true", advancedConfig.Env)
 	}
 
 	if coll.Spec.Agent.EBPF.IsEBPFMetricsEnabled() {
-		config = append(config, corev1.EnvVar{
-			Name:  envEnableMetrics,
-			Value: "true",
-		})
-		config = append(config, corev1.EnvVar{
-			Name:  envMetricsPort,
-			Value: strconv.Itoa(int(coll.Spec.Agent.EBPF.GetMetricsPort())),
-		})
-		config = append(config, corev1.EnvVar{
-			Name:  envMetricPrefix,
-			Value: "netobserv_agent_",
-		})
+		config = addEnv(config, envEnableMetrics, "true", advancedConfig.Env)
+		config = addEnv(config, envMetricsPort, strconv.Itoa(int(coll.Spec.Agent.EBPF.GetMetricsPort())), advancedConfig.Env)
+		config = addEnv(config, envMetricPrefix, "netobserv_agent_", advancedConfig.Env)
+	}
+
+	// set GOMEMLIMIT which allows specifying a soft memory cap to force GC when resource limit is reached to prevent OOM
+	if _, exists := advancedConfig.Env["GOMEMLIMIT"]; !exists {
+		config = helper.EnvFromReqsLimits(config, &coll.Spec.Agent.EBPF.Resources)
 	}
 
 	if coll.Spec.Agent.EBPF.IsEBPFFlowFilterEnabled() {
@@ -860,20 +690,128 @@ func getEnvConfig(coll *flowslatest.FlowCollector, cinfo *cluster.Info) []corev1
 	})
 
 	defaultAttach := "tcx"
-	if old, _, _ := cinfo.IsOpenShiftVersionLessThan("4.16.0"); old {
+	if old, _, _ := c.ClusterInfo.IsOpenShiftVersionLessThan("4.16.0"); old {
 		defaultAttach = "tc"
 	}
 
 	// Other default config that can be overriden by env
-	defaults := map[string]string{
-		envDNSTrackingPort:      defaultDNSTrackingPort,
-		envNetworkEventsGroupID: defaultNetworkEventsGroupID,
-		envPreferredInterface:   defaultPreferredInterface,
-		envAttachMode:           defaultAttach,
-	}
-	advancedConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
-	moreConfig := helper.BuildEnvFromDefaults(advancedConfig.Env, defaults)
-	config = append(config, moreConfig...)
+	config = addEnv(config, envDNSTrackingPort, defaultDNSTrackingPort, advancedConfig.Env)
+	config = addEnv(config, envNetworkEventsGroupID, defaultNetworkEventsGroupID, advancedConfig.Env)
+	config = addEnv(config, envPreferredInterface, defaultPreferredInterface, advancedConfig.Env)
+	config = addEnv(config, envAttachMode, defaultAttach, advancedConfig.Env)
 
-	return config
+	if coll.Spec.UseKafka() {
+		config = addEnv(config, envExport, exportKafka, advancedConfig.Env)
+		config = addEnv(config, envKafkaBrokers, coll.Spec.Kafka.Address, advancedConfig.Env)
+		config = addEnv(config, envKafkaTopic, coll.Spec.Kafka.Topic, advancedConfig.Env)
+		config = addEnv(config, envKafkaBatchSize, strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize), advancedConfig.Env)
+		// For easier user configuration, we can assume a constant message size per flow (~100B in protobuf)
+		config = addEnv(config, envKafkaBatchMessages, strconv.Itoa(coll.Spec.Agent.EBPF.KafkaBatchSize/averageMessageSize), advancedConfig.Env)
+		config = addEnv(config, envKafkaCompression, coll.Spec.Kafka.Compression, advancedConfig.Env)
+
+		if coll.Spec.Kafka.TLS.Enable {
+			// Annotate pod with certificate reference so that it is reloaded if modified
+			// If user cert is provided, it will use mTLS. Else, simple TLS (the userDigest and paths will be empty)
+			caDigest, userDigest, err := c.Watcher.ProcessMTLSCerts(ctx, c.Client, &coll.Spec.Kafka.TLS, c.PrivilegedNamespace())
+			if err != nil {
+				return nil, reconcilers.WrapKafkaError(err)
+			}
+			annots[watchers.Annotation("kafka-ca")] = caDigest
+			annots[watchers.Annotation("kafka-user")] = userDigest
+
+			caPath, userCertPath, userKeyPath := c.volumes.AddMutualTLSCertificates(&coll.Spec.Kafka.TLS, "kafka-certs")
+			config = addEnv(config, envKafkaEnableTLS, "true", advancedConfig.Env)
+			config = addEnv(config, envKafkaTLSInsecureSkipVerify, strconv.FormatBool(coll.Spec.Kafka.TLS.InsecureSkipVerify), advancedConfig.Env)
+			config = addEnv(config, envKafkaTLSCACertPath, caPath, advancedConfig.Env)
+			config = addEnv(config, envKafkaTLSUserCertPath, userCertPath, advancedConfig.Env)
+			config = addEnv(config, envKafkaTLSUserKeyPath, userKeyPath, advancedConfig.Env)
+		}
+		if coll.Spec.Kafka.SASL.UseSASL() {
+			sasl := &coll.Spec.Kafka.SASL
+			// Annotate pod with secret reference so that it is reloaded if modified
+			d1, d2, err := c.Watcher.ProcessSASL(ctx, c.Client, sasl, c.PrivilegedNamespace())
+			if err != nil {
+				return nil, reconcilers.WrapKafkaError(err)
+			}
+			annots[watchers.Annotation("kafka-sd1")] = d1
+			annots[watchers.Annotation("kafka-sd2")] = d2
+
+			t := "plain"
+			if coll.Spec.Kafka.SASL.Type == flowslatest.SASLScramSHA512 {
+				t = "scramSHA512"
+			}
+			idPath := c.volumes.AddVolume(&sasl.ClientIDReference, "kafka-sasl-id")
+			secretPath := c.volumes.AddVolume(&sasl.ClientSecretReference, "kafka-sasl-secret")
+			config = addEnv(config, envKafkaEnableSASL, "true", advancedConfig.Env)
+			config = addEnv(config, envKafkaSASLType, t, advancedConfig.Env)
+			config = addEnv(config, envKafkaSASLIDPath, idPath, advancedConfig.Env)
+			config = addEnv(config, envKafkaSASLSecretPath, secretPath, advancedConfig.Env)
+		}
+	} else {
+		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
+		procConfig := helper.GetAdvancedProcessorConfig(&coll.Spec)
+		if coll.Spec.UseHostNetwork() {
+			// When flowlogs-pipeline is deployed as a daemonset, each agent must send
+			// data to the pod that is deployed in the same host
+			config = append(config, corev1.EnvVar{
+				Name: envFlowsTargetHost,
+				ValueFrom: &corev1.EnvVarSource{
+					FieldRef: &corev1.ObjectFieldSelector{
+						APIVersion: "v1",
+						FieldPath:  "status.hostIP",
+					},
+				},
+			})
+			config = addEnv(config, envFlowsTargetPort, strconv.Itoa(int(*procConfig.Port)), advancedConfig.Env)
+		} else {
+			// Service mode
+			ca, clientCert := helper.GetServiceClientTLSConfig(coll.Spec.Processor.Service, "ebpf-agent-cert", c.ClusterInfo.IsOpenShift())
+			if ca != nil {
+				// Send to FLP service using TLS
+				caPath := c.volumes.AddVolume(ca, "netobserv-ca")
+				config = addEnv(config, envTargetTLSCACertPath, caPath, advancedConfig.Env)
+				// Ideally, the certificate is installed in the privileged namespace already. Trust-manager can be used for that (used in the provided helm chart)
+				// In OpenShift, we currently don't assume that (trust-manager isn't available there at this time), so we'll copy it
+				assumeCertInstalled := !c.ClusterInfo.IsOpenShift()
+				if clientCert == nil {
+					if ca.Namespace != "" && !assumeCertInstalled {
+						// Annotate pod with CA ref
+						caDigest, err := c.Watcher.ProcessFileReference(ctx, c.Client, *ca, c.PrivilegedNamespace())
+						if err != nil {
+							return nil, err
+						}
+						annots[watchers.Annotation("tls-ca")] = caDigest
+					}
+				} else {
+					certPath, keyPath := c.volumes.AddCertificate(clientCert, "client-certs")
+					config = addEnv(config, envTargetTLSUserCertPath, certPath, advancedConfig.Env)
+					config = addEnv(config, envTargetTLSUserKeyPath, keyPath, advancedConfig.Env)
+
+					if !assumeCertInstalled {
+						// Annotate pod with certificate reference so that it is reloaded if modified
+						caDigest, userDigest, err := c.Watcher.ProcessMTLSCertsFromRefs(ctx, c.Client, ca, clientCert, c.PrivilegedNamespace())
+						if err != nil {
+							return nil, err
+						}
+						annots[watchers.Annotation("mtls-ca")] = caDigest
+						annots[watchers.Annotation("mtls-user")] = userDigest
+					}
+				}
+			}
+			// NB: trailing dot (...local.) is a DNS optimization for exact name match without extra search
+			config = addEnv(config, envFlowsTargetHost, fmt.Sprintf("%s.%s.svc.cluster.local.", constants.FLPName, c.Namespace), advancedConfig.Env)
+			config = addEnv(config, envFlowsTargetPort, strconv.Itoa(int(*procConfig.Port)), advancedConfig.Env)
+			config = addEnv(config, envGRPCReconnect, "5m", advancedConfig.Env)
+			config = addEnv(config, envGRPCReconnectRnd, "30s", advancedConfig.Env)
+		}
+	}
+
+	return config, nil
+}
+
+func addEnv(envs []corev1.EnvVar, key, value string, overrides map[string]string) []corev1.EnvVar {
+	if _, exists := overrides[key]; !exists {
+		envs = append(envs, corev1.EnvVar{Name: key, Value: value})
+	}
+	return envs
 }
