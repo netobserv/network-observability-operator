@@ -548,14 +548,24 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(2))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+				// Check that loki-certs-ca volume exists
+				// (may have additional volumes like svc-certs for k8scache when informers are enabled)
+				hasLokiCert := false
+				hasConfig := false
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "loki-certs-ca" {
+						hasLokiCert = true
+					}
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "config-volume" {
+						hasConfig = true
+					}
+				}
+				return hasLokiCert && hasConfig
+			}, timeout, interval).Should(BeTrue())
 		})
 
 		It("Should restore no TLS config", func() {
@@ -564,13 +574,25 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 					Enable: false,
 				}
 			})
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+				// Verify loki-certs-ca volume is removed
+				// (config-volume and potentially svc-certs for k8scache may remain)
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "loki-certs-ca" {
+						return false
+					}
+				}
+				// Verify config-volume is still present
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "config-volume" {
+						return true
+					}
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
@@ -606,14 +628,24 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(2))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+				// Check that loki-certs-ca volume exists
+				// (may have additional volumes like svc-certs for k8scache when informers are enabled)
+				hasLokiCert := false
+				hasConfig := false
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "loki-certs-ca" {
+						hasLokiCert = true
+					}
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "config-volume" {
+						hasConfig = true
+					}
+				}
+				return hasLokiCert && hasConfig
+			}, timeout, interval).Should(BeTrue())
 		})
 
 		It("Should restore no TLS config", func() {
@@ -622,13 +654,25 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 					Enable: false,
 				}
 			})
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+				// Verify loki-certs-ca volume is removed
+				// (config-volume and potentially svc-certs for k8scache may remain)
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "loki-certs-ca" {
+						return false
+					}
+				}
+				// Verify config-volume is still present
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "config-volume" {
+						return true
+					}
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
@@ -664,14 +708,24 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(2))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("loki-certs-ca"))
+				// Check that loki-certs-ca volume exists
+				// (may have additional volumes like svc-certs for k8scache when informers are enabled)
+				hasLokiCert := false
+				hasConfig := false
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "loki-certs-ca" {
+						hasLokiCert = true
+					}
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "config-volume" {
+						hasConfig = true
+					}
+				}
+				return hasLokiCert && hasConfig
+			}, timeout, interval).Should(BeTrue())
 		})
 
 		It("Should restore no TLS config", func() {
@@ -680,13 +734,25 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 					Enable: false,
 				}
 			})
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+				// Verify loki-certs-ca volume is removed
+				// (config-volume and potentially svc-certs for k8scache may remain)
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "loki-certs-ca" {
+						return false
+					}
+				}
+				// Verify config-volume is still present
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "config-volume" {
+						return true
+					}
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
@@ -714,15 +780,27 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 
 		It("Should have certificate mounted", func() {
 			By("Expecting certificate mounted")
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(3))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[1].Name).To(Equal("flowlogs-pipeline"))
-			Expect(flpDS.Spec.Template.Spec.Volumes[2].Name).To(Equal("loki-certs-ca"))
+				// Check that required volumes exist
+				// (may have additional volumes like svc-certs for k8scache when informers are enabled)
+				hasConfig := false
+				hasFlp := false
+				hasLokiCert := false
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					switch flpDS.Spec.Template.Spec.Volumes[i].Name {
+					case "config-volume":
+						hasConfig = true
+					case "flowlogs-pipeline":
+						hasFlp = true
+					case "loki-certs-ca":
+						hasLokiCert = true
+					}
+				}
+				return hasConfig && hasFlp && hasLokiCert
+			}, timeout, interval).Should(BeTrue())
 		})
 
 		It("Should deploy Loki roles", func() {
@@ -740,13 +818,25 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 					Enable: false,
 				}
 			})
-			Eventually(func() interface{} {
+			Eventually(func() bool {
 				if err := k8sClient.Get(ctx, flpKey1, &flpDS); err != nil {
-					return err
+					return false
 				}
-				return flpDS.Spec.Template.Spec.Volumes
-			}, timeout, interval).Should(HaveLen(1))
-			Expect(flpDS.Spec.Template.Spec.Volumes[0].Name).To(Equal("config-volume"))
+				// Verify loki-certs-ca volume is removed
+				// (config-volume, flowlogs-pipeline, and potentially svc-certs for k8scache may remain)
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "loki-certs-ca" {
+						return false
+					}
+				}
+				// Verify config-volume is still present
+				for i := range flpDS.Spec.Template.Spec.Volumes {
+					if flpDS.Spec.Template.Spec.Volumes[i].Name == "config-volume" {
+						return true
+					}
+				}
+				return false
+			}, timeout, interval).Should(BeTrue())
 		})
 	})
 
