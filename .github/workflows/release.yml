@@ -5,6 +5,9 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
+  artifact-metadata: write
 
 env:
   WF_REGISTRY_USER: netobserv+github_ci
@@ -17,17 +20,13 @@ jobs:
   push-image:
     name: build and push release
     runs-on: ubuntu-latest
+
     steps:
       - name: checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
-      - name: docker login to quay.io
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
-        with:
-          username: ${{ env.WF_REGISTRY_USER }}
-          password: ${{ secrets.QUAY_SECRET }}
-          registry: quay.io
+
       - name: validate tag
         run: |
           tag=`git describe --exact-match --tags 2> /dev/null`
@@ -39,27 +38,85 @@ jobs:
               echo "$tag is NOT a valid release tag"
               exit 1
           fi
+
       - name: install make
         run: sudo apt-get install make
+
       - name: build operator
         run: |
           MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} CLEAN_BUILD=1 make image-build
+
+      - name: docker login to quay.io
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          username: ${{ env.WF_REGISTRY_USER }}
+          password: ${{ secrets.QUAY_SECRET }}
+          registry: quay.io
+
       - name: push operator
         run: |
           MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make image-push
+
       - name: build and push manifest
         run: |
           MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} IMAGE=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} make manifest-build manifest-push
+
       - name: build bundle
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} CLEAN_BUILD=1 make bundle-build
+
       - name: push bundle to quay.io
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make bundle-push
+
       - name: build catalog
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make catalog-build
+
       - name: push catalog to quay.io
         run: IMAGE_ORG=${{ env.WF_ORG }} BUNDLE_VERSION=${{ env.tag }} make catalog-push
+
       - name: extract binaries
         run: MULTIARCH_TARGETS="${{ env.WF_MULTIARCH_TARGETS }}" IMAGE_ORG=${{ env.WF_ORG }} VERSION=${{ env.tag }} make extract-binaries
+
+      - name: capture image digest
+        id: image_digest
+        run: |
+          digest=$(docker buildx imagetools inspect ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${{ env.tag }} \
+            --format '{{json .Manifest.Digest}}' | tr -d '"')
+          echo "digest=$digest" >> "$GITHUB_ENV"
+          echo "${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}@$digest" >> ./release-assets/images
+
+      - name: cosign-installer
+        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003
+
+      - name: Sign and verify the image with GitHub OIDC Token
+        run: |
+          cosign sign --yes ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}@${{ env.digest }}
+
+          cosign verify ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}@${{ env.digest }} \
+            --certificate-identity=https://github.com/netobserv/netobserv-operator/.github/workflows/release.yml@refs/tags/${{ env.tag }} \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com
+
+      - name: Attest Provenance attestations
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4
+        with:
+          subject-name: ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}
+          subject-digest: ${{ env.digest }}
+          push-to-registry: true
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}@${{ env.digest }}
+          format: 'spdx-json'
+          output-file: './release-assets/sbom.spdx.json'
+
+      - name: Attest SBOM
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4
+        with:
+          subject-name: ${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}
+          subject-digest: ${{ env.digest }}
+          sbom-path: './release-assets/sbom.spdx.json'
+          push-to-registry: true
+
       - name: create draft release and upload binaries
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
