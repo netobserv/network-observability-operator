@@ -1,6 +1,6 @@
 module e2etests
 
-go 1.25.1
+go 1.25.7
 
 replace (
 	bitbucket.org/ww/goautoneg => github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d

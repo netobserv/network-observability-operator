@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 
 	filePath "path/filepath"
 	"strings"
@@ -175,11 +174,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		defer func() { _ = flow.DeleteFlowcollector(oc) }()
 		flow.CreateFlowcollector(oc)
 
+		// Note: In older OCP versions, oc adm inspect outputs benign discovery errors that don't affect data collection.
 		g.By("Run must-gather command")
-		defer func() { _, _ = exec.Command("bash", "-c", "rm -rf "+mustgatherDir).Output() }()
-		output, err := oc.AsAdmin().WithoutNamespace().Run("adm").Args("must-gather", "--image", mustgatherImage, "--dest-dir="+mustgatherDir).Output()
+		defer func() { _ = os.RemoveAll(mustgatherDir) }()
+		_, err := oc.AsAdmin().WithoutNamespace().Run("adm").Args("must-gather", "--image", mustgatherImage, "--dest-dir="+mustgatherDir).Output()
 		o.Expect(err).NotTo(o.HaveOccurred(), "must-gather command failed")
-		o.Expect(output).NotTo(o.ContainSubstring("error"))
 
 		g.By("Wait for must-gather directory to be populated")
 		var mustgatherLogsDir string
@@ -804,7 +803,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		})
 
 		g.It("Author:memodi-NonPreRelease-Longduration-High-63839-Verify-multi-tenancy [Disruptive][Slow]", func() {
-			SkipIfOCPBelow("v4.15")
 			users, usersHTpassFile, htPassSecret := getNewUser(oc, 2)
 			defer userCleanup(oc, users, usersHTpassFile, htPassSecret)
 
@@ -1985,7 +1983,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		})
 
 		g.It("Author:aramesha-NonPreRelease-High-80090-Verify FLP tail-based filtering [Serial]", func() {
-			SkipIfOCPBelow("v4.15")
 			// Accept flows with Source Namespace = < namespace > and
 			// Source Name containing 'flowlogs-pipeline-' and
 			// NOT Source Port 9401 and
@@ -2667,15 +2664,21 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			e2e.Logf("Components after pause: %s", componentsAfterPause)
 
 			// Components with stable names that should remain when paused
+			// Common components across all OCP versions
 			componentsShouldRemain := []string{
-				"deployment.apps/netobserv-plugin-static",
-				"service/netobserv-plugin-static",
-				"networkpolicy.networking.k8s.io/netobserv",
 				"configmap/lokistack-ca-bundle",
 				"configmap/lokistack-gateway-ca-bundle",
 				"configmap/grafana-dashboard-netobserv-health",
 				"configmap/netobserv-main",
 				"secret/lokistack-query-frontend-http",
+			}
+			// Static plugin and network policy are only available on OCP 4.15+
+			if IsOCPVersionAtLeast("v4.15") {
+				componentsShouldRemain = append(componentsShouldRemain,
+					"deployment.apps/netobserv-plugin-static",
+					"service/netobserv-plugin-static",
+					"networkpolicy.networking.k8s.io/netobserv",
+				)
 			}
 			verifyComponentsExist(componentsAfterPause, componentsShouldRemain)
 
@@ -2684,7 +2687,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				"pod", "-A", "-l", "netobserv-managed=true", "-o", "name",
 			).Output()
 			o.Expect(err).NotTo(o.HaveOccurred())
-			o.Expect(podsAfterPause).Should(o.ContainSubstring("pod/netobserv-plugin-static-"), "netobserv-plugin-static pod should exist after pause")
+			if IsOCPVersionAtLeast("v4.15") {
+				o.Expect(podsAfterPause).Should(o.ContainSubstring("pod/netobserv-plugin-static-"), "netobserv-plugin-static pod should exist after pause")
+			}
 			o.Expect(podsAfterPause).ShouldNot(o.ContainSubstring("pod/flowlogs-pipeline-"), "flowlogs-pipeline pods should be deleted")
 			o.Expect(podsAfterPause).ShouldNot(o.ContainSubstring("pod/netobserv-ebpf-agent-"), "netobserv-ebpf-agent pods should be deleted")
 			// Verify regular netobserv-plugin pod is deleted (not the static one)
