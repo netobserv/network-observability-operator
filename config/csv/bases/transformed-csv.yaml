@@ -385,6 +385,24 @@ spec:
             displayName: Sampling
           - path: processor.filters
             displayName: Filters
+          - path: processor.informerCacheProxy
+            displayName: Informer cache proxy
+          - path: processor.informerCacheProxy.advanced
+            displayName: Advanced
+          - path: processor.informerCacheProxy.advanced.batchSize
+            displayName: Batch size
+          - path: processor.informerCacheProxy.advanced.processorPort
+            displayName: Processor port
+          - path: processor.informerCacheProxy.advanced.resyncInterval
+            displayName: Resync interval
+          - path: processor.informerCacheProxy.advanced.sendTimeout
+            displayName: Send timeout
+          - path: processor.informerCacheProxy.advanced.updateBufferSize
+            displayName: Update buffer size
+          - path: processor.informerCacheProxy.enabled
+            displayName: Enabled
+          - path: processor.informerCacheProxy.replicas
+            displayName: Replicas
           - path: processor.logTypes
             displayName: Log types
           - path: processor.metrics.additionalIncludeList

@@ -5531,6 +5531,256 @@ spec:
                     - Always
                     - Never
                     type: string
+                  informerCacheProxy:
+                    description: |-
+                      `informerCacheProxy` configuration for centralized Kubernetes informers that push cache updates to flowlogs-pipeline processors.
+                      This reduces load on the Kubernetes API server by having a single component query the API instead of N FLP processors.
+                      When enabled, a dedicated deployment is created that watches Kubernetes resources and pushes updates via gRPC.
+                      Benefits: Reduced API server load on large clusters with many FLP replicas.
+                      Drawbacks: More complex deployment (additional component), higher resource usage on small clusters.
+                      Recommended only for clusters with many FLP replicas (>3) or when API server load is a concern.
+                    properties:
+                      advanced:
+                        description: '`advanced` allows setting some technical parameters
+                          of the informer cache proxy component.'
+                        properties:
+                          batchSize:
+                            default: 100
+                            description: '`batchSize` defines the maximum number of
+                              cache entries to send in a single update batch.'
+                            minimum: 1
+                            type: integer
+                          processorPort:
+                            default: 9402
+                            description: '`processorPort` defines the gRPC port where
+                              flowlogs-pipeline processors listen for k8s cache updates.'
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          resyncInterval:
+                            default: 60
+                            description: '`resyncInterval` defines the interval in
+                              seconds to rediscover processors and sync state.'
+                            minimum: 1
+                            type: integer
+                          sendTimeout:
+                            default: 10
+                            description: '`sendTimeout` defines the timeout in seconds
+                              for sending updates to processors.'
+                            minimum: 1
+                            type: integer
+                          updateBufferSize:
+                            default: 100
+                            description: '`updateBufferSize` defines the size of the
+                              internal update channel buffer.'
+                            minimum: 1
+                            type: integer
+                        type: object
+                      enabled:
+                        default: false
+                        description: |-
+                          `enabled` controls whether to deploy the informer cache proxy.
+                          When `true`, a dedicated deployment watches K8s resources and pushes cache updates via gRPC to FLP processors, reducing API server load.
+                          When `false` (default), each FLP processor uses local informers.
+                          Enable only on large clusters or when API server load is a concern, as it adds deployment complexity.
+                        type: boolean
+                      replicas:
+                        default: 2
+                        description: |-
+                          `replicas` defines the number of replicas for the flowlogs-pipeline-informers deployment.
+                          For high availability, a minimum of 2 replicas is required when `enabled` is `true`.
+                        format: int32
+                        minimum: 2
+                        type: integer
+                      resources:
+                        default:
+                          limits:
+                            cpu: 200m
+                            memory: 256Mi
+                          requests:
+                            cpu: 50m
+                            memory: 128Mi
+                        description: |-
+                          `resources` are the compute resources required by the informer cache proxy container.
+                          For more information, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        properties:
+                          claims:
+                            description: |-
+                              Claims lists the names of resources, defined in spec.resourceClaims,
+                              that are used by this container.
+
+                              This field depends on the
+                              DynamicResourceAllocation feature gate.
+
+                              This field is immutable. It can only be set for containers.
+                            items:
+                              description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                              properties:
+                                name:
+                                  description: |-
+                                    Name must match the name of one entry in pod.spec.resourceClaims of
+                                    the Pod where this field is used. It makes that resource available
+                                    inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - name
+                            x-kubernetes-list-type: map
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Limits describes the maximum amount of compute resources allowed.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Requests describes the minimum amount of compute resources required.
+                              If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                              otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                            type: object
+                        type: object
+                      tls:
+                        description: '`tls` defines the TLS configuration for the
+                          gRPC communication between the informer cache proxy and
+                          processors.'
+                        properties:
+                          providedCertificates:
+                            description: |-
+                              mTLS configuration when `type` is set to `Provided`.
+                              `serverCert` is required. `clientCert` is optional; if provided, mTLS is enabled.
+                            properties:
+                              caFile:
+                                description: Reference to the CA file.
+                                properties:
+                                  file:
+                                    description: File name within the config map or
+                                      secret.
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing the file.
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: |-
+                                      Namespace of the config map or secret containing the file. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the file reference: `configmap`
+                                      or `secret`.'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                              clientCert:
+                                description: TLS client certificate reference, used
+                                  for mTLS. Leave unset for simple TLS.
+                                properties:
+                                  certFile:
+                                    description: '`certFile` defines the path to the
+                                      certificate file name within the config map
+                                      or secret.'
+                                    type: string
+                                  certKey:
+                                    description: '`certKey` defines the path to the
+                                      certificate private key file name within the
+                                      config map or secret. Omit when the key is not
+                                      necessary.'
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing certificates.
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: |-
+                                      Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the certificate reference:
+                                      `configmap` or `secret`.'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                              serverCert:
+                                description: TLS server certificate reference.
+                                properties:
+                                  certFile:
+                                    description: '`certFile` defines the path to the
+                                      certificate file name within the config map
+                                      or secret.'
+                                    type: string
+                                  certKey:
+                                    description: '`certKey` defines the path to the
+                                      certificate private key file name within the
+                                      config map or secret. Omit when the key is not
+                                      necessary.'
+                                    type: string
+                                  name:
+                                    description: Name of the config map or secret
+                                      containing certificates.
+                                    type: string
+                                  namespace:
+                                    default: ""
+                                    description: |-
+                                      Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+                                      If the namespace is different, the config map or the secret is copied so that it can be mounted as required.
+                                    type: string
+                                  type:
+                                    description: 'Type for the certificate reference:
+                                      `configmap` or `secret`.'
+                                    enum:
+                                    - configmap
+                                    - secret
+                                    type: string
+                                type: object
+                            type: object
+                          type:
+                            default: Auto
+                            description: |-
+                              Select the type of TLS configuration:<br>
+                              - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
+                              - `Provided` to manually provide cert/key references for mTLS.<br>
+                              - `Auto` (default) to use OpenShift service-ca for automatic server certificate generation (simple TLS, OpenShift only).<br>
+                              - `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
+                              See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.
+                            enum:
+                            - Disabled
+                            - Provided
+                            - Auto
+                            - Auto-mTLS
+                            type: string
+                        required:
+                        - type
+                        type: object
+                    type: object
                   kafkaConsumerAutoscaler:
                     description: |-
                       `kafkaConsumerAutoscaler` [deprecated (*)] is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.

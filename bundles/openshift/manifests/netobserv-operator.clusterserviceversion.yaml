@@ -466,6 +466,24 @@ spec:
         path: processor.deduper.sampling
       - displayName: Filters
         path: processor.filters
+      - displayName: Informer cache proxy
+        path: processor.informerCacheProxy
+      - displayName: Advanced
+        path: processor.informerCacheProxy.advanced
+      - displayName: Batch size
+        path: processor.informerCacheProxy.advanced.batchSize
+      - displayName: Processor port
+        path: processor.informerCacheProxy.advanced.processorPort
+      - displayName: Resync interval
+        path: processor.informerCacheProxy.advanced.resyncInterval
+      - displayName: Send timeout
+        path: processor.informerCacheProxy.advanced.sendTimeout
+      - displayName: Update buffer size
+        path: processor.informerCacheProxy.advanced.updateBufferSize
+      - displayName: Enabled
+        path: processor.informerCacheProxy.enabled
+      - displayName: Replicas
+        path: processor.informerCacheProxy.replicas
       - displayName: Log types
         path: processor.logTypes
       - displayName: Additional include list
@@ -816,6 +834,16 @@ spec:
           - get
           - list
           - patch
+          - update
+          - watch
+        - apiGroups:
+          - coordination.k8s.io
+          resources:
+          - leases
+          verbs:
+          - create
+          - get
+          - list
           - update
           - watch
         - apiGroups:
