@@ -228,7 +228,3 @@ type FlowMetricList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []FlowMetric `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&FlowMetric{}, &FlowMetricList{})
-}

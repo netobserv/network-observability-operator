@@ -62,7 +62,3 @@ type FlowCollectorSliceList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []FlowCollectorSlice `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&FlowCollectorSlice{}, &FlowCollectorSliceList{})
-}
