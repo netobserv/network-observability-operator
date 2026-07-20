@@ -53,12 +53,7 @@ Resource Types:
         <td><b><a href="#flowcollectorspec">spec</a></b></td>
         <td>object</td>
         <td>
-          Defines the desired state of the FlowCollector resource.
-<br><br>
-*: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
-is not officially supported by Red Hat. It might have been, for example, contributed by the community
-and accepted without a formal agreement for maintenance. The product maintainers might provide some support
-for these features as a best effort only.<br/>
+          Defines the desired state of the FlowCollector resource.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -78,11 +73,6 @@ for these features as a best effort only.<br/>
 
 
 Defines the desired state of the FlowCollector resource.
-<br><br>
-*: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
-is not officially supported by Red Hat. It might have been, for example, contributed by the community
-and accepted without a formal agreement for maintenance. The product maintainers might provide some support
-for these features as a best effort only.
 
 <table>
     <thead>

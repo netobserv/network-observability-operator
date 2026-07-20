@@ -40,11 +40,6 @@ const (
 // https://github.com/kubernetes-sigs/controller-tools/issues/622
 
 // Defines the desired state of the FlowCollector resource.
-// <br><br>
-// *: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
-// is not officially supported by Red Hat. It might have been, for example, contributed by the community
-// and accepted without a formal agreement for maintenance. The product maintainers might provide some support
-// for these features as a best effort only.
 type FlowCollectorSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
