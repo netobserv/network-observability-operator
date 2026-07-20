@@ -15,7 +15,8 @@ The components are:
 - [Flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline) (FLP), a component that collects, enriches and exports these flows.
   - It uses Kubernetes informers to enrich flows with details such as Pod names, namespaces, availability zones, etc.
   - It derives all flows into metric counters, for Prometheus.
-  - Raw flows can be exported to Loki and/or custom exporters (Kafka, IPFIX, OpenTelemetry).
+  - Raw flows can be exported to Loki, S3 Parquet, and/or custom exporters (Kafka, IPFIX, OpenTelemetry).
+  - Optional `flowBuffer` keeps a bounded in-memory ring of enriched flows per FLP instance for Console raw queries when Loki is off.
   - As a standalone, FLP is very flexible and configurable. It supports more inputs and outputs, allows more arbitrary filters, sampling, aggregations, relabelling, etc. When deployed via the operator, only a subset of its capacities is used.
 - [A web console](https://github.com/netobserv/netobserv-web-console) for flows visualization with powerful filtering options, a topology representation and more.
   - It provides a polished web UI to visualize and explore the flow logs and metrics stored in Loki and/or Prometheus.
@@ -44,15 +45,28 @@ flowchart TD
         A[eBPF Agent]
     end
     A -->|flows| F[FLP]
-    F -. exports .-> E[(Kafka/Otlp/IPFIX)]
+    F -. exports .-> E[(Kafka/Otlp/IPFIX/S3)]
     F -->|raw logs| L[(Loki)]
     F -->|metrics| P[(Prometheus)]
     C[Console plugin] <-->|fetches| L
     C <-->|fetches| P
+    C -. flowBuffer/S3 .-> F
     O[Operator] -->|manages| A
     O -->|manages| F
     O -->|manages| C
 ```
+
+## Raw flow storage modes
+
+| Mode | Loki | S3 exporter | flowBuffer | Guidance |
+|---|---|---|---|---|
+| **Buffer-only** | off | off | on (default) | Short troubleshooting; older flows are lost — Console shows a retention warning |
+| **Recommended** | off | on | on (default) | Prometheus + S3 Parquet; Console uses flowBuffer then S3 |
+| **Legacy Loki** | on | off | off (default) | Current production path; raw via Loki |
+| **Not recommended** | on | on | off | Dual raw stores; avoid |
+
+`spec.processor.flowBuffer.enable` defaults to on when Loki is off and off when Loki is on (explicit override allowed).
+`spec.consolePlugin.s3.enable` defaults to on when an S3 exporter exists and Loki is off.
 
 ## Direct deployment model
 

@@ -1,6 +1,7 @@
 package flp
 
 import (
+	"context"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -88,7 +89,11 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 	}
 }
 
-func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
+func (b *transfoBuilder) configMaps(ctx context.Context) (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
+	s3Creds, err := loadS3ExporterCredentials(ctx, b.info, b.desired)
+	if err != nil {
+		return nil, "", nil, err
+	}
 	pipeline, err := createPipeline(
 		b.desired,
 		b.flowMetrics,
@@ -98,6 +103,7 @@ func (b *transfoBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Config
 		b.info.ClusterInfo.GetID(),
 		&b.volumes,
 		newKafkaPipeline(b.desired, &b.volumes),
+		s3Creds,
 	)
 	if err != nil {
 		return nil, "", nil, err
@@ -187,8 +193,7 @@ func (b *transfoBuilder) prometheusRule(rules []monitoringv1.Rule) *monitoringv1
 	)
 }
 
-// service creates a Service for k8scache (informers communication)
-// This service is only needed when centralized informers are enabled
+// service creates a Service for k8scache (informers) and/or flowBuffer query
 func (b *transfoBuilder) service() *corev1.Service {
 	svc := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -202,25 +207,32 @@ func (b *transfoBuilder) service() *corev1.Service {
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": transfoName},
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "k8scache",
-					Port:       b.desired.Processor.GetK8sCachePort(),
-					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromInt32(b.desired.Processor.GetK8sCachePort()),
-				},
-			},
+			Ports:     []corev1.ServicePort{},
 		},
 	}
-	// In OpenShift with TLS Auto mode, request service-ca to generate certificate
-	// This certificate will be used by the k8scache gRPC server
-	if b.desired.Processor.InformerCacheProxy.UsesOpenShiftServiceCA(b.info.ClusterInfo.IsOpenShift()) {
-		if svc.Annotations == nil {
-			svc.Annotations = make(map[string]string)
+	if b.desired.Processor.IsInformerCacheProxyEnabled() {
+		svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
+			Name:       "k8scache",
+			Port:       b.desired.Processor.GetK8sCachePort(),
+			Protocol:   corev1.ProtocolTCP,
+			TargetPort: intstr.FromInt32(b.desired.Processor.GetK8sCachePort()),
+		})
+		// In OpenShift with TLS Auto mode, request service-ca to generate certificate
+		// This certificate will be used by the k8scache gRPC server
+		if b.desired.Processor.InformerCacheProxy.UsesOpenShiftServiceCA(b.info.ClusterInfo.IsOpenShift()) {
+			if svc.Annotations == nil {
+				svc.Annotations = make(map[string]string)
+			}
+			svc.Annotations[constants.OpenShiftCertificateAnnotation] = transfoCertSecretName
 		}
-		svc.Annotations[constants.OpenShiftCertificateAnnotation] = transfoCertSecretName
 	}
-	// Note: k8scache TLS Auto mode generates a service-ca certificate (transfoCertSecretName)
-	// for the transformer service DNS name
+	if b.desired.UseFlowBuffer() {
+		svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
+			Name:       constants.FLPQueryPortName,
+			Port:       constants.FLPQueryPort,
+			Protocol:   corev1.ProtocolTCP,
+			TargetPort: intstr.FromInt32(constants.FLPQueryPort),
+		})
+	}
 	return &svc
 }

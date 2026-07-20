@@ -1,6 +1,7 @@
 package flp
 
 import (
+	"context"
 	"encoding/json"
 	"sort"
 	"testing"
@@ -66,7 +67,7 @@ func TestPipelineConfig(t *testing.T) {
 	cfg := getConfig()
 	cfg.Processor.LogLevel = "info"
 	b := monoBuilder(ns, &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -77,7 +78,7 @@ func TestPipelineConfig(t *testing.T) {
 	// Kafka Transformer
 	cfg.DeploymentModel = flowslatest.DeploymentModelKafka
 	bt := transfBuilder(ns, &cfg)
-	scm, _, dcm, err = bt.configMaps()
+	scm, _, dcm, err = bt.configMaps(context.Background())
 	assert.NoError(err)
 	_, pipeline = validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -92,7 +93,7 @@ func TestPipelineTraceStage(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -112,7 +113,7 @@ func getSortedMetricsNames(m []api.MetricsItem) []string {
 
 func buildAndGetMetricNames(t *testing.T, cfg *flowslatest.FlowCollectorSpec) ([]string, *config.Root) {
 	b := monoBuilder("namespace", cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(t, err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -125,7 +126,7 @@ func TestMergeMetricsConfiguration_Default(t *testing.T) {
 	cfg := getConfig()
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -150,7 +151,7 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 	cfg.Agent.EBPF.Features = []flowslatest.AgentFeature{flowslatest.DNSTracking, flowslatest.FlowRTT, flowslatest.PacketDrop}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -178,7 +179,7 @@ func TestMergeMetricsConfiguration_WithList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -205,7 +206,7 @@ func TestMergeMetricsConfiguration_WithFlowMetrics(t *testing.T) {
 	fmstatus.Reset()
 
 	b := monoBuilderWithMetrics("namespace", &cfg, &metrics)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
@@ -220,7 +221,7 @@ func TestMergeMetricsConfiguration_EmptyList(t *testing.T) {
 	cfg.Processor.Metrics.IncludeList = &[]flowslatest.FLPMetric{}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	assert.Len(cfs.Parameters, 5)
@@ -329,7 +330,7 @@ func TestPipelineWithExporter(t *testing.T) {
 	})
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -352,11 +353,11 @@ func TestPipelineWithoutLoki(t *testing.T) {
 	cfg.Loki.Enable = ptr.To(false)
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	_, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"}]`,
+		`[{"name":"grpc"},{"name":"extract_conntrack","follows":"grpc"},{"name":"enrich","follows":"extract_conntrack"},{"name":"stdout","follows":"enrich"},{"name":"prometheus","follows":"enrich"},{"name":"flowbuffer","follows":"enrich"}]`,
 		pipeline,
 	)
 }
@@ -430,11 +431,11 @@ func TestPipelineWithSubnetLabels(t *testing.T) {
 			CIDRs: []string{"10.128.0.0/14"},
 		},
 	}
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
-		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"subnets","follows":"enrich"},{"name":"prometheus","follows":"subnets"}]`,
+		`[{"name":"grpc"},{"name":"enrich","follows":"grpc"},{"name":"subnets","follows":"enrich"},{"name":"prometheus","follows":"subnets"},{"name":"flowbuffer","follows":"subnets"}]`,
 		pipeline,
 	)
 	assert.Equal(
@@ -475,7 +476,7 @@ func TestPipelineWithFilters_WantNamespacesABC(t *testing.T) {
 	}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(
@@ -516,7 +517,7 @@ func TestPipelineWithFilters_DontWantNamespacesABC_LokiOnly(t *testing.T) {
 	}
 
 	b := monoBuilder("namespace", &cfg)
-	scm, _, dcm, err := b.configMaps()
+	scm, _, dcm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	cfs, pipeline := validatePipelineConfig(t, scm, dcm)
 	assert.Equal(

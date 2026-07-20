@@ -7,6 +7,7 @@ If you can't find help here, don't hesitate to open [an issue](https://github.co
 * Q&A
   * [Is it for OpenShift only?](#is-it-for-openshift-only)
   * [Which version of Kubernetes / OpenShift is supported?](#which-version-of-kubernetes--openshift-is-supported)
+  * [Can I run without Loki?](#can-i-run-without-loki)
 * How-to
   * [How do I visualize flows and metrics?](#how-do-i-visualize-flows-and-metrics)
   * [How can I make sure everything is correctly deployed?](#how-can-i-make-sure-everything-is-correctly-deployed)
@@ -19,6 +20,16 @@ If you can't find help here, don't hesitate to open [an issue](https://github.co
   * [I'm finding discrepancies in metrics](#im-finding-discrepancies-in-metrics)
 
 ## Q&A
+
+### Can I run without Loki?
+
+Yes. Disable Loki (`spec.loki.enable: false`) and keep Prometheus for metrics. For raw flows in the Console:
+
+- **Recommended:** add an S3 Parquet exporter (`spec.exporters[].type: S3`) and leave `spec.consolePlugin.s3` enabled (default when Loki is off and an S3 exporter exists). The processor `flowBuffer` holds the hot tip; Console falls back to S3 for older data.
+- **Buffer-only:** rely on `spec.processor.flowBuffer` alone (default on when Loki is off). Only recent in-memory flows are available; the Console warns that older flows were discarded. Enable S3 or Loki for retention.
+- **Metrics-only:** set `spec.processor.flowBuffer.enable: false` (and do not enable s3). The Console still deploys for metrics if Prometheus querier is on.
+
+Avoid enabling Loki and S3 raw storage together; it duplicates raw stores and is not recommended.
 
 ### How can I make sure everything is correctly deployed?
 

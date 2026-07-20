@@ -1,6 +1,7 @@
 package flp
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -75,7 +76,7 @@ func TestFlowMetricToFLP(t *testing.T) {
 		},
 	})
 	assert.NoError(err)
-	_, _, cm, err := b.configMaps()
+	_, _, cm, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	items, err := getConfiguredMetrics(cm)
 	assert.NoError(err)

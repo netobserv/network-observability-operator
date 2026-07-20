@@ -34,6 +34,7 @@ type monolithReconciler struct {
 	rbHostNetwork    *rbacv1.ClusterRoleBinding
 	rbLokiWriter     *rbacv1.ClusterRoleBinding
 	rbInformers      *rbacv1.ClusterRoleBinding
+	rbPeerQuery      *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
 }
@@ -52,6 +53,7 @@ func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
 		rbHostNetwork:    cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.HostNetworkRole)),
 		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.LokiWriterRole)),
 		rbInformers:      cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.FLPInformersRole)),
+		rbPeerQuery:      cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.FLPPeerQueryRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(monoServiceMonitor)
@@ -94,7 +96,7 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 	if err != nil {
 		return err
 	}
-	staticCM, configDigest, dynCM, err := builder.configMaps()
+	staticCM, configDigest, dynCM, err := builder.configMaps(ctx)
 	if err != nil {
 		return err
 	}
@@ -119,7 +121,7 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	if desired.Spec.UseHostNetwork() {
+	if desired.Spec.UseHostNetwork() && !desired.Spec.UseFlowBuffer() {
 		r.Managed.TryDelete(ctx, r.service)
 	} else {
 		if err := r.reconcileService(ctx, &builder); err != nil {
@@ -142,6 +144,11 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 
 	// Watch for Kafka exporter certificate if necessary; need to restart pods in case of cert rotation
 	if err = annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
+		return err
+	}
+
+	// Watch for S3 exporter credentials; restart pods on secret rotation
+	if err = annotateS3ExporterSecrets(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
 		return err
 	}
 
@@ -271,6 +278,16 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 	} else {
 		// Centralized informers mode - permissions handled by flowlogs-pipeline-informers ServiceAccount
 		r.Managed.TryDelete(ctx, r.rbInformers)
+	}
+
+	// Peer query (EndpointSlice discovery for flowBuffer fan-in)
+	if builder.desired.UseFlowBuffer() {
+		r.rbPeerQuery = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.FLPPeerQueryRole)
+		if err := r.ReconcileClusterRoleBinding(ctx, r.rbPeerQuery); err != nil {
+			return err
+		}
+	} else {
+		r.Managed.TryDelete(ctx, r.rbPeerQuery)
 	}
 
 	// Config watcher

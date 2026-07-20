@@ -22,6 +22,8 @@ const (
 	FLPTransfoName           = FLPName + "-transformer"
 	FLPTransfoMetricsSvcName = FLPTransfoName + "-prom"
 	FLPMetricsPort           = 9401
+	FLPQueryPort             = 9200
+	FLPQueryPortName         = "query"
 	PluginName               = "netobserv-plugin"
 	StaticPluginName         = "netobserv-plugin-static"
 	PluginShortName          = "plugin"
@@ -66,6 +68,7 @@ const (
 	PromReaderRole          ClusterRoleName = "netobserv-metrics-reader"
 	ExposeMetricsRole       RoleName        = "netobserv-expose-metrics"
 	FLPInformersRole        ClusterRoleName = "netobserv-informers"
+	FLPPeerQueryRole        ClusterRoleName = "netobserv-flp-peer-query"
 	HostNetworkRole         ClusterRoleName = "netobserv-hostnetwork"
 	ConsoleTokenReviewRole  ClusterRoleName = "netobserv-token-review"
 	FlowCollectorViewerRole ClusterRoleName = "netobserv-flowcollector-viewer-role"

@@ -140,6 +140,14 @@ func podTemplate(
 		})
 	}
 
+	if desired.UseFlowBuffer() {
+		ports = append(ports, corev1.ContainerPort{
+			Name:          constants.FLPQueryPortName,
+			ContainerPort: constants.FLPQueryPort,
+			Protocol:      corev1.ProtocolTCP,
+		})
+	}
+
 	if advancedConfig.ProfilePort != nil && *advancedConfig.ProfilePort > 0 {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          profilePortName,
@@ -340,10 +348,52 @@ func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builder
 	metricsSettings := metricsSettings(desired, vol, promTLS)
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
 	static, dynamic := pipeline.GetSplitStageParams()
+
+	stages := pipeline.GetStages()
+	var staticParams interface{} = static
+	if pipeline.flowBufferParam != nil || len(pipeline.s3StageExtras) > 0 {
+		// Round-trip so we can inject flowBuffer write stage and S3 format/prefix fields
+		// that may be missing from the vendored EncodeS3 struct.
+		raw, err := json.Marshal(static)
+		if err != nil {
+			return "", "", err
+		}
+		var params []map[string]interface{}
+		if err := json.Unmarshal(raw, &params); err != nil {
+			return "", "", err
+		}
+		for _, extra := range pipeline.s3StageExtras {
+			for i := range params {
+				if name, _ := params[i]["name"].(string); name != extra.name {
+					continue
+				}
+				encode, _ := params[i]["encode"].(map[string]interface{})
+				if encode == nil {
+					continue
+				}
+				s3, _ := encode["s3"].(map[string]interface{})
+				if s3 == nil {
+					continue
+				}
+				if extra.format != "" {
+					s3["format"] = extra.format
+				}
+				if extra.prefix != "" {
+					s3["prefix"] = extra.prefix
+				}
+			}
+		}
+		if pipeline.flowBufferParam != nil {
+			stages = append(stages, config.Stage{Name: "flowbuffer", Follows: pipeline.flowBufferFollows})
+			params = append(params, pipeline.flowBufferParam)
+		}
+		staticParams = params
+	}
+
 	config := map[string]interface{}{
 		"log-level":       desired.Processor.LogLevel,
-		"pipeline":        pipeline.GetStages(),
-		"parameters":      static,
+		"pipeline":        stages,
+		"parameters":      staticParams,
 		"metricsSettings": metricsSettings,
 		"dynamicParameters": config.DynamicParameters{
 			Namespace: desired.Namespace,

@@ -67,6 +67,7 @@ func (r *FlowCollector) Validate(_ context.Context, fc *FlowCollector) (admissio
 	v.validateNetPol()
 	v.validateAgent()
 	v.validateFLP()
+	v.validateStorageModes()
 	v.warnLogLevels()
 	v.warnProfiling()
 	v.warnLokiDemo()
@@ -279,6 +280,40 @@ func (v *validator) validateFLP() {
 	v.validateFLPMetricsIncludeLists()
 	v.validateFLPTLS()
 	v.validatePortConflicts()
+	v.validateS3Exporters()
+}
+
+func (v *validator) validateStorageModes() {
+	hasS3 := v.fc.HasS3Exporter()
+	if v.fc.UseLoki() && hasS3 {
+		v.warnings = append(v.warnings, LokiS3Warning)
+	}
+	if v.fc.UseLoki() && v.fc.Processor.FlowBuffer != nil && v.fc.Processor.FlowBuffer.Enable != nil && *v.fc.Processor.FlowBuffer.Enable {
+		v.warnings = append(v.warnings, LokiFlowBufferWarning)
+	}
+	if v.fc.UseLoki() && v.fc.ConsolePlugin.S3 != nil && v.fc.ConsolePlugin.S3.Enable != nil && *v.fc.ConsolePlugin.S3.Enable {
+		v.warnings = append(v.warnings, LokiS3WarningSelectable)
+	}
+	if v.fc.UseS3() && !hasS3 {
+		v.errors = append(v.errors, errors.New("spec.consolePlugin.s3.enable requires at least one exporters entry with type S3"))
+	}
+}
+
+func (v *validator) validateS3Exporters() {
+	for i, exporter := range v.fc.Exporters {
+		if exporter == nil || exporter.Type != S3Exporter {
+			continue
+		}
+		if exporter.S3.Endpoint == "" {
+			v.errors = append(v.errors, fmt.Errorf("spec.exporters[%d].s3.endpoint is required", i))
+		}
+		if exporter.S3.Bucket == "" {
+			v.errors = append(v.errors, fmt.Errorf("spec.exporters[%d].s3.bucket is required", i))
+		}
+		if exporter.S3.Credentials.Name == "" {
+			v.errors = append(v.errors, fmt.Errorf("spec.exporters[%d].s3.credentials.name is required", i))
+		}
+	}
 }
 
 func (v *validator) validateScheduling() {
@@ -532,6 +567,26 @@ func (v *validator) validatePortConflicts() {
 			v.errors,
 			fmt.Errorf("spec.processor.advanced.profilePort %d conflicts with reserved k8scache port %d used by centralized informers", *profilePort, k8scachePort),
 		)
+	}
+
+	// Check flowBuffer query port when enabled
+	if v.fc.UseFlowBuffer() {
+		queryPort := int32(9200) // constants.FLPQueryPort — keep in sync
+		if port != nil && *port == queryPort {
+			v.errors = append(v.errors, fmt.Errorf("spec.processor.advanced.port %d conflicts with reserved flowBuffer query port %d", *port, queryPort))
+		}
+		if healthPort != nil && *healthPort == queryPort {
+			v.errors = append(v.errors, fmt.Errorf("spec.processor.advanced.healthPort %d conflicts with reserved flowBuffer query port %d", *healthPort, queryPort))
+		}
+		if metricsPort == queryPort {
+			v.errors = append(v.errors, fmt.Errorf("spec.processor.metrics.server.port %d conflicts with reserved flowBuffer query port %d", metricsPort, queryPort))
+		}
+		if profilePort != nil && *profilePort == queryPort {
+			v.errors = append(v.errors, fmt.Errorf("spec.processor.advanced.profilePort %d conflicts with reserved flowBuffer query port %d", *profilePort, queryPort))
+		}
+		if k8scachePort == queryPort {
+			v.errors = append(v.errors, fmt.Errorf("k8scache port %d conflicts with reserved flowBuffer query port %d", k8scachePort, queryPort))
+		}
 	}
 }
 
