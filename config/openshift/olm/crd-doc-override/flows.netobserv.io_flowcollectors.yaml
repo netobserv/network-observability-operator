@@ -4,8 +4,128 @@ spec:
     <br><br>
     *: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
     is not officially supported by Red Hat. It might have been, for example, contributed by the community
-    and accepted without a formal agreement for maintenance. The product maintainers might provide some support
-    for these features as a best effort only.
+    and accepted without a formal agreement for maintenance. The product maintainers might provide support
+    for these features, without any guarantee.
   properties:
     namespace:
       default: openshift-netobserv
+    agent:
+      properties:
+        ebpf:
+          properties:
+            metrics:
+              properties:
+                server:
+                  properties:
+                    tls:
+                      properties:
+                        type:
+                          description: |-
+                            Select the type of TLS configuration:<br>
+                            - `Disabled` (default) to not configure TLS for the endpoint.
+                            - `Provided` to manually provide cert file and a key file. [Unsupported (*)].
+                            - `Auto` to use OpenShift auto generated certificate using annotations.
+    consolePlugin:
+      properties:
+        standalone:
+          description: |-
+            Deploy as a standalone console, instead of a plugin of the OpenShift Console.
+            This is not recommended, as it doesn't provide the same level of integration with OpenShift.
+            [Unsupported (*)].
+        advanced:
+          properties:
+            register:
+              description: |-
+                `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
+                When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
+                `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
+    loki:
+      properties:
+        monolithic:
+          properties:
+            installDemoLoki:
+              description: |-
+                Set `installDemoLoki` to `true` to automatically create Loki deployment, service and storage.
+                This is meant for development and demo use only, and not recommended in production.
+                [Unsupported (*)].
+    processor:
+      properties:
+        clusterName:
+          description: |-
+            `clusterName` is the name of the cluster to appear in the flows data.
+            In a multi-cluster context, it makes it possible to identify the flows provenance.
+            Leave empty to make it determined automatically.
+        informerCacheProxy:
+          properties:
+            tls:
+              properties:
+                type:
+                  description: |-
+                    Select the type of TLS configuration:<br>
+                    - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
+                    - `Provided` to manually provide cert/key references for mTLS.<br>
+                    - `Auto` (default) to use OpenShift service-ca for automatic server certificate generation (simple TLS).<br>
+                    - `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
+                    See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.
+        metrics:
+          properties:
+            server:
+              properties:
+                tls:
+                  properties:
+                    type:
+                      description: |-
+                        Select the type of TLS configuration:<br>
+                        - `Disabled` (default) to not configure TLS for the endpoint.
+                        - `Provided` to manually provide cert file and a key file. [Unsupported (*)].
+                        - `Auto` to use OpenShift auto generated certificate using annotations.
+        service:
+          properties:
+            tlsType:
+              description: |-
+                Select the type of TLS configuration:<br>
+                - `Disabled` to not configure TLS for the endpoint. Disabling TLS results in a less secure deployment model.<br>
+                - `Provided` to manually provide the key and certificate references.<br>
+                - `Auto` (default) to enable automatically based on the running environment.<br>
+                - `Auto-mTLS` to preconfigure mTLS. [Unsupported (*)].<br>
+                See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.
+        subnetLabels:
+          description: |-
+            `subnetLabels` allows to define custom labels on subnets and IPs and to enable automatic labeling of recognized subnets, which is used to identify cluster external traffic.
+            When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
+          properties:
+            autoDetect:
+              description: |-
+                `autoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on
+                OpenShift configuration. Indirectly, this is a way to accurately detect
+                external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by defaut.
+            openShiftAutoDetect:
+              description: |-
+                `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on
+                OpenShift configuration. Indirectly, this is a way to accurately detect
+                external traffic: flows that are not labeled for those subnets are external to the cluster.
+
+                Deprecated: use `autoDetect` instead.
+            customLabels:
+              description: |-
+                `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
+                External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
+                If `autoDetect` is disabled, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+                If `autoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/>
+    prometheus:
+      properties:
+        querier:
+          properties:
+            manual:
+              properties:
+                alertManager:
+                  description: |-
+                    AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
+                    It can be left empty to use the Console API instead.
+                    [Unsupported (*)].
+            mode:
+              default: Auto
+              description: |-
+                `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
+                - Use `Auto` to configure automatically. It uses the Thanos querier from OpenShift Cluster Monitoring.<br>
+                - Use `Manual` for a manual setup.<br>

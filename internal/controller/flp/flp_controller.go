@@ -143,7 +143,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, fc *flow
 
 	// Auto-detect subnets
 	var subnetLabels []flowslatest.SubnetLabel
-	if r.mgr.ClusterInfo.IsOpenShift() && fc.Spec.Processor.HasAutoDetectOpenShiftNetworks() {
+	if r.mgr.ClusterInfo.IsOpenShift() && fc.Spec.Processor.HasAutoDetectNetworks() {
 		var err error
 		subnetLabels, err = r.getOpenShiftSubnets(ctx)
 		if err != nil {

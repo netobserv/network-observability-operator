@@ -6,7 +6,7 @@ Best practices for AI coding agents on NetObserv Operator.
 
 ## Project Context
 
-**NetObserv Operator** - Kubernetes/OpenShift operator for network observability
+**NetObserv Operator** - Kubernetes operator for network observability
 (operator-sdk)
 
 **Components:**
@@ -14,8 +14,8 @@ Best practices for AI coding agents on NetObserv Operator.
   flow generation from packets (DaemonSet)
 - **[flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)**: Flow
   collection, enrichment, export (Deployment/StatefulSet) -
-  **[Console Plugin](https://github.com/netobserv/netobserv-web-console)**:
-  OpenShift visualization (optional)
+  **[Web Console](https://github.com/netobserv/netobserv-web-console)**:
+  Visualization console (either as standalone, or as a plugin for vendor (OpenShift console))
 - **CRD**: `FlowCollector` v1beta2 - **single cluster-wide resource named
   `cluster`**
 - **Integrations**: Loki (optional), Prometheus, Kafka (optional)
@@ -170,9 +170,9 @@ Three deployment modes (check `spec.loki.mode`):
 - **Memory**: Default limits 800MB
 - **Metrics**: Prefix `netobserv_*`, watch cardinality
 
-### Namespace Handling
+### Namespace Handling (can be vendor specific)
+- **Generic**: `netobserv`
 - **OpenShift**: `openshift-netobserv-operator`
-- **Community**: `netobserv`
 - Use `flowCollector.Spec.Namespace` for deployed resources
 
 ### Console Plugin Configuration
@@ -217,8 +217,8 @@ make undeploy                      # Clean up
 
 **API Stability:**
 - FlowCollector: v1beta2 (stable - backward compatible changes only)
-- Min OpenShift: 4.10+
 - Min Kubernetes: 1.23+
+- Min OpenShift: 4.10+
 
 ## AI Workflow Example
 
@@ -245,7 +245,6 @@ Before commit:
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Build, test, deploy
 - [docs/Architecture.md](docs/Architecture.md) - Component relationships
 - [docs/FlowCollector.md](docs/FlowCollector.md) - API reference
-- [FAQ.md](FAQ.md) - Troubleshooting
 - [Contributing](https://github.com/netobserv/documents/blob/main/CONTRIBUTING.md)
 
 

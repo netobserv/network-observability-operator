@@ -279,10 +279,6 @@ Please refer to [the Architecture page](./docs/Architecture.md).
 
 Please refer to [this documentation](./DEVELOPMENT.md) for everything related to building, deploying or bundling from sources.
 
-## F.A.Q / Troubleshooting
-
-Please refer to [F.A.Q / Troubleshooting main document](./FAQ.md).
-
 ## Discussions and contributions
 
 Discussions related to NetObserv are welcome on [GitHub discussions](https://github.com/orgs/netobserv/discussions) as well as on the [#netobserv-project](http://cloud-native.slack.com/) channel from the CNCF slack (to create an account get an invite from https://slack.cncf.io/).

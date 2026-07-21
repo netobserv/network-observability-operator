@@ -546,6 +546,8 @@ spec:
         path: processor.slicesConfig.namespacesAllowList
       - displayName: Subnet labels
         path: processor.subnetLabels
+      - displayName: Auto detect
+        path: processor.subnetLabels.autoDetect
       - displayName: Custom labels
         path: processor.subnetLabels.customLabels
       - displayName: Unmanaged replicas

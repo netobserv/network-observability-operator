@@ -1,0 +1,4 @@
+spec:
+  properties:
+    charts:
+      description: Charts configuration, for the OpenShift Console, in the Dashboards menu.

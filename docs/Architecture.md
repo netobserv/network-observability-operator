@@ -27,7 +27,7 @@ The components are:
 - [A CLI](https://github.com/netobserv/netobserv-cli) that also manages some of the above components, for on-demand monitoring and packet capture.
   - It is provided as a `kubectl` or `oc` plugin, allowing to capture flows (similar to what the operator does, except it's on-demand and in the terminal), full packets (much like a `tcpdump` command) or metrics.
   - It is also available via [Krew](https://krew.sigs.k8s.io/).
-  - It offers a live visualization via a TUI. For metrics, when used in OpenShift, it provides out-of-the-box dashboards.
+  - It offers a live visualization via a TUI. For metrics, when used in a Kubernetes vendor supporting dashboards, it provides out-of-the-box dashboards.
   - Check out the blog post: [Network observability on demand](https://developers.redhat.com/articles/2024/09/17/network-observability-demand#what_is_the_network_observability_cli_).
 
 ## Service deployment model

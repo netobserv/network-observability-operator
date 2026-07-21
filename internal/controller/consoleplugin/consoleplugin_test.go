@@ -328,7 +328,7 @@ func TestConfigMapContent(t *testing.T) {
 		Agent:         agentSpec,
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
-		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
+		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{AutoDetect: ptr.To(false)}},
 	}
 	builder := getBuilder(&spec, &loki)
 	cm, _, err := builder.configMap(context.Background(), nil, &lokiStatusUnused)
@@ -363,7 +363,7 @@ func TestConfigMapExternalRecordingAnnotations(t *testing.T) {
 	spec := flowslatest.FlowCollectorSpec{
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
-		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
+		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{AutoDetect: ptr.To(false)}},
 	}
 	builder := getBuilder(&spec, &loki)
 
