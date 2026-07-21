@@ -31,9 +31,3 @@
   value:
     name: VENDOR
     value: OpenShift_Downstream
-
-- op: add
-  path: "/spec/template/spec/containers/0/env/-"
-  value:
-    name: STATIC_PLUGIN_INHERIT_TOLERATION_SUBSCRIPTION
-    value: netobserv-operator

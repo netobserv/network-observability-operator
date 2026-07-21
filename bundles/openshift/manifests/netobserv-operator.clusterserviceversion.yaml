@@ -1046,8 +1046,6 @@ spec:
                       fieldPath: metadata.namespace
                 - name: VENDOR
                   value: OpenShift_Downstream
-                - name: STATIC_PLUGIN_INHERIT_TOLERATION_SUBSCRIPTION
-                  value: netobserv-operator
                 image: quay.io/netobserv/network-observability-operator:1.12.0-community
                 imagePullPolicy: Always
                 livenessProbe:
