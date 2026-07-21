@@ -164,9 +164,9 @@ type FlowCollectorIPFIX struct {
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
 // - `FlowRTT`, to track TCP latency.<br>
-// - `NetworkEvents`, to track network events [Technology Preview].<br>
+// - `NetworkEvents`, to track network events.<br>
 // - `PacketTranslation`, to enrich flows with packets translation information, such as Service NAT.<br>
-// - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs. [Unsupported (*)].<br>
+// - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs.<br>
 // - `UDNMapping`, to enable interfaces mapping to UDN.<br>
 // - `IPSec`, to track flows between nodes with IPsec encryption.<br>
 // - `TLSTracking`, to track TLS usage.<br>
@@ -377,15 +377,14 @@ type FlowCollectorEBPF struct {
 	// - `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
 	// - `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
 	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
-	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
-	// IMPORTANT: This feature is available as a Technology Preview.<br>
+	// It requires using the OVN-Kubernetes network plugin with the Observability feature.<br>
 	// - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
-	// - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
-	// - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
+	// - `EbpfManager`: Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
+	// - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN).<br>
 	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
-	// It requires using the OVN-Kubernetes network plugin with the Observability feature. <br>
-	// - `IPSec`, to track flows between nodes with IPsec encryption. <br>
-	// - `TLSTracking`, to track TLS usage. <br>
+	// It requires using the OVN-Kubernetes network plugin.<br>
+	// - `IPSec`, to track flows between nodes with IPsec encryption.<br>
+	// - `TLSTracking`, to track TLS usage.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
@@ -869,7 +868,6 @@ const (
 	HPAStatusEnabled  HPAStatus = "Enabled"
 )
 
-// Deprecated: the embedded HPA API will be removed in a future version. You can still use a HPA by deploying your own, and set `unmanagedReplicas: true` instead.
 type FlowCollectorHPA struct {
 	// +kubebuilder:validation:Enum:=Disabled;Enabled
 	// +kubebuilder:default:=Disabled
@@ -1456,7 +1454,9 @@ type AdvancedProcessorConfig struct {
 
 	//+kubebuilder:default:=true
 	//+optional
-	// `dropUnusedFields` [deprecated (*)] this setting is not used anymore.
+	// `dropUnusedFields`.
+	//
+	// Deprecated: this setting is not used anymore.
 	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:default:="30s"
@@ -1632,8 +1632,8 @@ type InformerCacheProxyTLSConfig struct {
 	// Select the type of TLS configuration:<br>
 	// - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
 	// - `Provided` to manually provide cert/key references for mTLS.<br>
-	// - `Auto` (default) to use a default certificate, which may vary depending on the Kubernetes vendor.
-	// - `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
+	// - `Auto` (default) to use a default certificate, which may vary depending on the Kubernetes vendor.<br>
+	// - `Auto-mTLS` to preconfigure mTLS with cert-manager.<br>
 	// See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.
 	// +kubebuilder:validation:Enum:="Disabled";"Provided";"Auto";"Auto-mTLS"
 	// +kubebuilder:validation:Required

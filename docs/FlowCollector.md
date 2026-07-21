@@ -297,15 +297,14 @@ the kernel debug filesystem, so the eBPF agent pods must run as privileged via `
 - `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
 - `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
-It requires using the OVN-Kubernetes network plugin with the Observability feature.
-IMPORTANT: This feature is available as a Technology Preview.<br>
+It requires using the OVN-Kubernetes network plugin with the Observability feature.<br>
 - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
-- `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
-- `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
+- `EbpfManager`: Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
+- `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN).<br>
 This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
-It requires using the OVN-Kubernetes network plugin with the Observability feature. <br>
-- `IPSec`, to track flows between nodes with IPsec encryption. <br>
-- `TLSTracking`, to track TLS usage. <br><br/>
+It requires using the OVN-Kubernetes network plugin.<br>
+- `IPSec`, to track flows between nodes with IPsec encryption.<br>
+- `TLSTracking`, to track TLS usage.<br><br/>
           <br/>
             <i>Enum</i>: PacketDrop, DNSTracking, FlowRTT, NetworkEvents, PacketTranslation, EbpfManager, UDNMapping, IPSec, TLSTracking<br/>
         </td>
@@ -8734,7 +8733,9 @@ This delay is ignored when a FIN packet is collected for TCP flows (see `convers
         <td><b>dropUnusedFields</b></td>
         <td>boolean</td>
         <td>
-          `dropUnusedFields` [deprecated (*)] this setting is not used anymore.<br/>
+          `dropUnusedFields`.
+
+Deprecated: this setting is not used anymore.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -10944,8 +10945,8 @@ only the result of this request.<br/>
           Select the type of TLS configuration:<br>
 - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
 - `Provided` to manually provide cert/key references for mTLS.<br>
-- `Auto` (default) to use a default certificate, which may vary depending on the Kubernetes vendor.
-- `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
+- `Auto` (default) to use a default certificate, which may vary depending on the Kubernetes vendor.<br>
+- `Auto-mTLS` to preconfigure mTLS with cert-manager.<br>
 See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.<br/>
           <br/>
             <i>Enum</i>: Disabled, Provided, Auto, Auto-mTLS<br/>

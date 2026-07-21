@@ -274,9 +274,12 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 				Kind:       "Deployment",
 				Name:       constants.PluginName,
 			},
+			//nolint:staticcheck
 			MinReplicas: b.desired.ConsolePlugin.Autoscaler.MinReplicas,
+			//nolint:staticcheck
 			MaxReplicas: b.desired.ConsolePlugin.Autoscaler.MaxReplicas,
-			Metrics:     b.desired.ConsolePlugin.Autoscaler.Metrics,
+			//nolint:staticcheck
+			Metrics: b.desired.ConsolePlugin.Autoscaler.Metrics,
 		},
 	}
 }

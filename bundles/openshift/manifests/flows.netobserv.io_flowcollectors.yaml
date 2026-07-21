@@ -1071,11 +1071,11 @@ spec:
                             IMPORTANT: This feature is available as a Technology Preview.<br>
                             - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
                             - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
-                            - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
+                            - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN).<br>
                             This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
-                            It requires using the OVN-Kubernetes network plugin with the Observability feature. <br>
-                            - `IPSec`, to track flows between nodes with IPsec encryption. <br>
-                            - `TLSTracking`, to track TLS usage. <br>
+                            It requires using the OVN-Kubernetes network plugin.<br>
+                            - `IPSec`, to track flows between nodes with IPsec encryption.<br>
+                            - `TLSTracking`, to track TLS usage.<br>
                           items:
                             description: |-
                               Agent feature, can be one of:<br>
@@ -4044,7 +4044,10 @@ spec:
                           type: string
                         dropUnusedFields:
                           default: true
-                          description: '`dropUnusedFields` [deprecated (*)] this setting is not used anymore.'
+                          description: |-
+                            `dropUnusedFields`.
+
+                            Deprecated: this setting is not used anymore.
                           type: boolean
                         enableKubeProbes:
                           default: true
@@ -5970,9 +5973,9 @@ spec:
                                   default: Disabled
                                   description: |-
                                     Select the type of TLS configuration:<br>
-                                    - `Disabled` (default) to not configure TLS for the endpoint.
-                                    - `Provided` to manually provide cert file and a key file. [Unsupported (*)].
-                                    - `Auto` to use OpenShift auto generated certificate using annotations.
+                                    - `Disabled` (default) to not configure TLS for the endpoint.<br>
+                                    - `Provided` to manually provide cert file and a key file. [Unsupported (*)].<br>
+                                    - `Auto` to use OpenShift auto generated certificate using annotations.<br>
                                   enum:
                                     - Disabled
                                     - Provided
