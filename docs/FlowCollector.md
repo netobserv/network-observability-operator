@@ -12985,7 +12985,7 @@ When a subnet matches the source or destination IP of a flow, a corresponding fi
         <td>
           `autoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on
 vendor-specific configuration. It requires a vendor-specific implementation. Indirectly, this is a way to accurately detect
-external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by defaut.<br/>
+external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default.<br/>
         </td>
         <td>false</td>
       </tr><tr>

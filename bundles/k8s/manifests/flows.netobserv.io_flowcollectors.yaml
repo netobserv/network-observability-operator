@@ -6670,7 +6670,7 @@ spec:
                         description: |-
                           `autoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on
                           vendor-specific configuration. It requires a vendor-specific implementation. Indirectly, this is a way to accurately detect
-                          external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by defaut.
+                          external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default.
                         type: boolean
                       customLabels:
                         description: |-
