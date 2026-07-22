@@ -169,7 +169,7 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 	if reg && !registered {
 		// Note, envtest does not support any kind of patch strategy.
 		// Using MergeFrom (ie. full inspection) is not the most efficient, but it's what makes envtest happy.
-		patch := client.MergeFrom(console.DeepCopy())
+		patch := client.MergeFromWithOptions(console.DeepCopy(), client.MergeFromWithOptimisticLock{})
 		console.Spec.Plugins = append(console.Spec.Plugins, name)
 		if err := r.Client.Patch(ctx, &console, patch); err != nil {
 			log.FromContext(ctx).Error(err, "Could not update the Console Operator resource for plugin registration. Please register manually.")
