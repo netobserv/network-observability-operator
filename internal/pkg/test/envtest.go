@@ -247,6 +247,18 @@ func setupOpenShiftClusterResources(ctx context.Context, k8sClient client.Client
 	})
 	Expect(err).NotTo(HaveOccurred())
 
+	err = k8sClient.Create(ctx, &operatorsv1.Console{
+		ObjectMeta: metav1.ObjectMeta{Name: "cluster"},
+		Spec: operatorsv1.ConsoleSpec{
+			OperatorSpec: operatorsv1.OperatorSpec{
+				ManagementState: operatorsv1.Unmanaged,
+				LogLevel:        operatorsv1.Normal,
+			},
+			Plugins: []string{},
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
+
 	err = k8sClient.Create(ctx, &olm.Subscription{
 		ObjectMeta: metav1.ObjectMeta{Name: "netobserv-operator", Namespace: opNamespace},
 		Spec:       &olm.SubscriptionSpec{},
@@ -271,6 +283,9 @@ func writeKubeConfig(testEnv *envtest.Environment) (string, error) {
 }
 
 func TeardownEnvTest(suiteContext *SuiteContext) {
+	if suiteContext == nil {
+		return
+	}
 	if suiteContext.kubeConfig != "" {
 		defer os.Remove(suiteContext.kubeConfig)
 	}

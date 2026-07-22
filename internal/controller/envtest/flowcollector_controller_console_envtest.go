@@ -7,7 +7,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	configv1 "github.com/openshift/api/config/v1"
 	operatorsv1 "github.com/openshift/api/operator/v1"
 	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -63,32 +62,6 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 	rbKeyPlugin := types.NamespacedName{Name: "netobserv-token-review-plugin"}
 
 	if env == test.EnvOpenShift {
-		Context("Console plugin test init", func() {
-			It("Should create Console CR", func() {
-				created := &operatorsv1.Console{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: consoleCRKey.Name,
-					},
-					Spec: operatorsv1.ConsoleSpec{
-						OperatorSpec: operatorsv1.OperatorSpec{
-							ManagementState: operatorsv1.Unmanaged,
-							LogLevel:        operatorsv1.Normal,
-						},
-						Providers: operatorsv1.ConsoleProviders{},
-						Route: operatorsv1.ConsoleConfigRoute{
-							Hostname: "",
-							Secret: configv1.SecretNameReference{
-								Name: "",
-							},
-						},
-					},
-				}
-
-				// Create
-				Expect(k8sClient.Create(ctx, created)).Should(Succeed())
-			})
-		})
-
 		Context("Deploying the static console plugin", func() {
 			It("Should create successfully", func() {
 				By("Expecting to create the static console plugin Deployment")
@@ -468,18 +441,6 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 		It("Should delete CR", func() {
 			test.CleanupCR(ctx, k8sClient, crKey)
 		})
-
-		if env == test.EnvOpenShift {
-			It("Should delete Console CR", func() {
-				Eventually(func() error {
-					return k8sClient.Delete(ctx, &operatorsv1.Console{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: consoleCRKey.Name,
-						},
-					})
-				}, timeout, interval).Should(Succeed())
-			})
-		}
 
 		It("Should delete fake controller", func() {
 			dp := appsv1.Deployment{}

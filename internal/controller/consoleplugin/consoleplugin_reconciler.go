@@ -3,7 +3,6 @@ package consoleplugin
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 
 	osv1 "github.com/openshift/api/console/v1"
@@ -168,8 +167,11 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 	}
 	registered := helper.ContainsString(console.Spec.Plugins, name)
 	if reg && !registered {
-		patch := fmt.Appendf(nil, `[{"op": "add", "path": "/spec/plugins/-", "value": "%s"}]`, name)
-		if err := r.Client.Patch(ctx, &console, client.RawPatch(types.JSONPatchType, patch)); err != nil {
+		// Note, envtest does not support any kind of patch strategy.
+		// Using MergeFrom (ie. full inspection) is not the most efficient, but it's what makes envtest happy.
+		patch := client.MergeFrom(console.DeepCopy())
+		console.Spec.Plugins = append(console.Spec.Plugins, name)
+		if err := r.Client.Patch(ctx, &console, patch); err != nil {
 			log.FromContext(ctx).Error(err, "Could not update the Console Operator resource for plugin registration. Please register manually.")
 			r.Status.SetDegraded("PluginRegistrationFailed", "Could not auto-register console plugin; manual registration needed")
 		}
