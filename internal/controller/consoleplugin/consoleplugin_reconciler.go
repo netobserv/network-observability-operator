@@ -3,6 +3,7 @@ package consoleplugin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	osv1 "github.com/openshift/api/console/v1"
@@ -167,8 +168,8 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 	}
 	registered := helper.ContainsString(console.Spec.Plugins, name)
 	if reg && !registered {
-		console.Spec.Plugins = append(console.Spec.Plugins, name)
-		if err := r.Client.Update(ctx, &console); err != nil {
+		patch := fmt.Appendf(nil, `[{"op": "add", "path": "/spec/plugins/-", "value": "%s"}]`, name)
+		if err := r.Client.Patch(ctx, &console, client.RawPatch(types.JSONPatchType, patch)); err != nil {
 			log.FromContext(ctx).Error(err, "Could not update the Console Operator resource for plugin registration. Please register manually.")
 			r.Status.SetDegraded("PluginRegistrationFailed", "Could not auto-register console plugin; manual registration needed")
 		}

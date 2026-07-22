@@ -34,8 +34,8 @@ package manager
 // Operator needs to create roles and cluster roles for granting transitive rights to its workloads
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;rolebindings,verbs=get;list;create;delete;update;watch
 
-// To be removed
-//+kubebuilder:rbac:groups=operator.openshift.io,resources=consoles,verbs=get;list;update;watch
+// Operator needs to patch Console CR (cluster scope)
+//+kubebuilder:rbac:groups=operator.openshift.io,resources=consoles,verbs=get;list;patch;watch
 
 // Operator needs to create ConsolePlugin (cluster scope)
 //+kubebuilder:rbac:groups=console.openshift.io,resources=consoleplugins,verbs=get;create;delete;update;patch;list;watch
@@ -79,3 +79,5 @@ package manager
 
 // Transitive: operator needs to grant UDN read permission to FLP at the cluster scope
 //+kubebuilder:rbac:groups=k8s.ovn.org,resources=userdefinednetworks;clusteruserdefinednetworks,verbs=get;list;watch
+
+//+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update

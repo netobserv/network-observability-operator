@@ -246,7 +246,7 @@ rules:
     verbs:
       - get
       - list
-      - update
+      - patch
       - watch
   - apiGroups:
       - operator.openshift.io
