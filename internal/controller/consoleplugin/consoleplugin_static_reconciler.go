@@ -58,9 +58,7 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 	}
 
 	if r.ClusterInfo.HasConsolePlugin() {
-		if err = r.checkAutoPatch(ctx, desired, constants.StaticPluginName); err != nil {
-			return err
-		}
+		r.checkAutoPatch(ctx, desired, constants.StaticPluginName)
 	}
 
 	if r.ClusterInfo.HasConsolePlugin() {

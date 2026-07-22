@@ -86,9 +86,7 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 	hasPluginAPI := r.ClusterInfo.HasConsolePlugin()
 	if hasPluginAPI {
-		if err = r.checkAutoPatch(ctx, desired, constants.PluginName); err != nil {
-			return err
-		}
+		r.checkAutoPatch(ctx, desired, constants.PluginName)
 	}
 
 	if desired.Spec.NeedsConsolePluginDeployment(hasPluginAPI) {
@@ -156,7 +154,7 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 	return nil
 }
 
-func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector, name string) error {
+func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector, name string) {
 	console := operatorsv1.Console{}
 	advancedConfig := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
 	reg := desired.Spec.UseWebConsole() && *advancedConfig.Register
@@ -165,14 +163,16 @@ func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.
 			log.FromContext(ctx).Error(err, "Could not get the Console Operator resource for plugin registration. Please register manually.")
 			r.Status.SetDegraded("PluginRegistrationFailed", "Could not auto-register console plugin; manual registration needed")
 		}
-		return nil
+		return
 	}
 	registered := helper.ContainsString(console.Spec.Plugins, name)
 	if reg && !registered {
 		console.Spec.Plugins = append(console.Spec.Plugins, name)
-		return r.Client.Update(ctx, &console)
+		if err := r.Client.Update(ctx, &console); err != nil {
+			log.FromContext(ctx).Error(err, "Could not update the Console Operator resource for plugin registration. Please register manually.")
+			r.Status.SetDegraded("PluginRegistrationFailed", "Could not auto-register console plugin; manual registration needed")
+		}
 	}
-	return nil
 }
 
 func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builder, name string) error {
