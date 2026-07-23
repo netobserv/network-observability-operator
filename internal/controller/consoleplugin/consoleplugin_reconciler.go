@@ -21,7 +21,6 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
-	"github.com/netobserv/netobserv-operator/internal/pkg/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -180,30 +179,6 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 		return r.CreateOwned(ctx, builder.serviceAccount(name))
 	} // update not needed for now
 
-	binding := resources.GetClusterRoleBinding(
-		r.Namespace,
-		constants.PluginShortName,
-		name,
-		name,
-		constants.ConsoleTokenReviewRole,
-	)
-	if err := r.ReconcileClusterRoleBinding(ctx, binding); err != nil {
-		return err
-	}
-	if builder.useStandalone {
-		// Currently, standalone mode uses service account token, not user token, for permissions.
-		// Add FlowCollector viewer role so that it can display the FC status icon.
-		binding := resources.GetClusterRoleBinding(
-			r.Namespace,
-			constants.PluginShortName,
-			name,
-			name,
-			constants.FlowCollectorViewerRole,
-		)
-		if err := r.ReconcileClusterRoleBinding(ctx, binding); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

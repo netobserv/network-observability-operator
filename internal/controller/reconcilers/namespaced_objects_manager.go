@@ -102,12 +102,6 @@ func (m *NamespacedObjectManager) NewPrometheusRule(name string) *monitoringv1.P
 	return &sm
 }
 
-func (m *NamespacedObjectManager) NewCRB(name string) *rbacv1.ClusterRoleBinding {
-	crb := rbacv1.ClusterRoleBinding{}
-	m.AddManagedObject(name, &crb)
-	return &crb
-}
-
 func (m *NamespacedObjectManager) NewRB(name string) *rbacv1.RoleBinding {
 	rb := rbacv1.RoleBinding{}
 	m.AddManagedObject(name, &rb)

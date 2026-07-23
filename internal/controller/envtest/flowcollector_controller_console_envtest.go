@@ -13,7 +13,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	v1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -59,8 +58,6 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 		Name:      "netobserv-operator",
 		Namespace: "main-namespace",
 	}
-	rbKeyPlugin := types.NamespacedName{Name: "netobserv-token-review-plugin"}
-
 	if env == test.EnvOpenShift {
 		Context("Deploying the static console plugin", func() {
 			It("Should create successfully", func() {
@@ -157,14 +154,6 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 			Eventually(getConfigMapData(ctx, k8sClient, configKey),
 				timeout, interval).Should(ContainSubstring("url: http://loki:3100/"))
 
-			By("Expecting to create console plugin role binding")
-			rb := rbacv1.ClusterRoleBinding{}
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, rbKeyPlugin, &rb)
-			}, timeout, interval).Should(Succeed())
-			Expect(rb.Subjects).Should(HaveLen(1))
-			Expect(rb.Subjects[0].Name).Should(Equal("netobserv-plugin"))
-			Expect(rb.RoleRef.Name).Should(Equal("netobserv-token-review"))
 		})
 
 		It("Should update successfully", func() {

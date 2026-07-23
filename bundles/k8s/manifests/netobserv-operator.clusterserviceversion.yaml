@@ -91,7 +91,7 @@ metadata:
     categories: Monitoring, Networking, Observability
     console.openshift.io/plugins: '["netobserv-plugin"]'
     containerImage: quay.io/netobserv/network-observability-operator:1.12.0-community
-    createdAt: "2026-07-21T07:39:49Z"
+    createdAt: "2026-08-13T13:33:44Z"
     description: Network flows collector and monitoring solution
     operatorframework.io/initialization-resource: '{"apiVersion":"flows.netobserv.io/v1beta2",
       "kind":"FlowCollector","metadata":{"name":"cluster"},"spec": {}}'
@@ -785,14 +785,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - apps
-          resources:
-          - replicasets
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
           - autoscaling
           resources:
           - horizontalpodautoscalers
@@ -846,16 +838,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - coordination.k8s.io
-          resources:
-          - leases
-          verbs:
-          - create
-          - get
-          - list
-          - update
-          - watch
-        - apiGroups:
           - discovery.k8s.io
           resources:
           - endpointslices
@@ -894,15 +876,6 @@ spec:
           - patch
           - update
         - apiGroups:
-          - k8s.ovn.org
-          resources:
-          - clusteruserdefinednetworks
-          - userdefinednetworks
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
           - loki.grafana.com
           resources:
           - lokistacks
@@ -910,20 +883,6 @@ spec:
           - get
           - list
           - watch
-        - apiGroups:
-          - loki.grafana.com
-          resourceNames:
-          - logs
-          resources:
-          - network
-          verbs:
-          - create
-        - apiGroups:
-          - metrics.k8s.io
-          resources:
-          - pods
-          verbs:
-          - create
         - apiGroups:
           - monitoring.coreos.com
           resources:
@@ -969,7 +928,6 @@ spec:
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
-          - clusterrolebindings
           - rolebindings
           verbs:
           - create

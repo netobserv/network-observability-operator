@@ -144,7 +144,10 @@ Kafka can provide better scalability, resiliency, and high availability (for mor
         <td><b>namespace</b></td>
         <td>string</td>
         <td>
-          Namespace where NetObserv pods are deployed.<br/>
+          Namespace where NetObserv pods are deployed.
+Those pods require various cluster role bindings is order to operate. Those bindings are preinstalled for service accounts located in the default namespace.
+If you configured a different namespace, you must update (or recreate) the cluster role bindings accordingly.
+You can see the list of preinstalled bindings here: https://github.com/netobserv/netobserv-operator/blob/main/helm/templates/component_role_bindings.yaml<br/>
           <br/>
             <i>Validations</i>:<li>self == oldSelf: Namespace is immutable. If you need to change it, delete and recreate the resource.</li>
             <i>Default</i>: netobserv<br/>

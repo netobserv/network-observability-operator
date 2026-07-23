@@ -25,6 +25,7 @@ bases:
 - ../../manager
 - ../../webhook
 - ../../certmanager
+- ./rbac.yaml
 
 patchesStrategicMerge:
 - manager_webhook_patch.yaml

@@ -46,7 +46,6 @@ func NewManager(
 	narrowCache := narrowcache.NewConfig(kcfg,
 		narrowcache.ConfigMaps,
 		narrowcache.ClusterRoles,
-		narrowcache.ClusterRoleBindings,
 		narrowcache.Daemonsets,
 		narrowcache.Deployments,
 		narrowcache.HorizontalPodAutoscalers,
