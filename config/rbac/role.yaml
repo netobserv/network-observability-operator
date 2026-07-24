@@ -232,7 +232,6 @@ rules:
   verbs:
   - create
   - list
-  - update
   - watch
 - apiGroups:
   - security.openshift.io
@@ -242,3 +241,11 @@ rules:
   - securitycontextconstraints
   verbs:
   - use
+- apiGroups:
+  - security.openshift.io
+  resourceNames:
+  - netobserv-ebpf-agent
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - update
