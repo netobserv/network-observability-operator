@@ -1,4 +1,4 @@
-GOLANGCI_LINT_VERSION = v2.12.2
+GOLANGCI_LINT_VERSION = v2.8.0
 
 # Detect OS
 UNAME_S := $(shell uname -s)
