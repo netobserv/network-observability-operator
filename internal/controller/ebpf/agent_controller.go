@@ -179,14 +179,18 @@ func (c *AgentController) reconcile(ctx context.Context, target *flowslatest.Flo
 
 	if target.Spec.OnHold() {
 		c.Status.SetUnused("FlowCollector is on hold")
-		rlog.Info("action: delete agent")
-		err = c.DeleteIfOwned(ctx, current)
-		if err != nil {
-			return err
+		if current != nil {
+			rlog.Info("action: delete agent")
+			err = c.DeleteIfOwned(ctx, current)
+			if err != nil {
+				return err
+			}
 		}
-		err = c.DeleteIfOwned(ctx, c.promSvc)
-		if err != nil {
-			return err
+		if c.promSvc != nil {
+			err = c.DeleteIfOwned(ctx, c.promSvc)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	}
