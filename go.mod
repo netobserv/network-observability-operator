@@ -7,14 +7,14 @@ require (
 	github.com/coreos/go-semver v0.3.1
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/loki/operator/apis/loki v0.0.0-20241021105923-5e970e50b166
-	github.com/netobserv/flowlogs-pipeline v1.11.5-community.0.20260625083056-0aefbc7d051e
+	github.com/netobserv/flowlogs-pipeline v1.12.0-community
 	github.com/netobserv/netobserv-ebpf-agent v1.11.5-community.0.20260625084536-cd2c2a1fa4fb
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.1
 	github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080
 	github.com/operator-framework/api v0.44.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.87.0
-	github.com/prometheus/common v0.69.0
+	github.com/prometheus/common v0.70.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/zap v1.28.0
@@ -79,7 +79,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/procfs v0.19.2 // indirect
+	github.com/prometheus/procfs v0.21.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect

@@ -34,6 +34,7 @@ type ClientTLS struct {
 func (c *ClientTLS) Build() (*tls.Config, error) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: c.InsecureSkipVerify,
+		MinVersion:         tls.VersionTLS13,
 	}
 	if c.CACertPath != "" {
 		caCert, err := os.ReadFile(c.CACertPath)
