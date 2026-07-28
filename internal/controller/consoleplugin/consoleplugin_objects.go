@@ -453,6 +453,52 @@ func (b *builder) getPromConfig(ctx context.Context) cfg.PrometheusConfig {
 	return config
 }
 
+func (b *builder) getFlowBufferConfig() cfg.FlowBufferConfig {
+	if !b.desired.UseFlowBuffer() {
+		return cfg.FlowBufferConfig{}
+	}
+	svc := b.desired.GetFLPServiceName()
+	ns := b.info.Namespace
+	timeout := b.desired.GetFlowBufferQueryTimeout()
+	return cfg.FlowBufferConfig{
+		Enable:  true,
+		URL:     fmt.Sprintf("http://%s.%s.svc:%d", svc, ns, constants.FLPQueryPort),
+		Timeout: api.Duration{Duration: timeout.Duration},
+	}
+}
+
+func (b *builder) getS3Config() cfg.S3Config {
+	if !b.desired.UseS3() {
+		return cfg.S3Config{}
+	}
+	ex := b.desired.GetFirstS3Exporter()
+	if ex == nil {
+		return cfg.S3Config{}
+	}
+	s3 := ex.S3
+	accessKeyPath := b.volumes.AddVolume(&flowslatest.FileReference{
+		Type: flowslatest.RefTypeSecret,
+		Name: s3.Credentials.Name,
+		File: "accessKeyId",
+	}, "s3-query-creds")
+	secretKeyPath := filepath.Join(filepath.Dir(accessKeyPath), "secretAccessKey")
+
+	out := cfg.S3Config{
+		Enable:        true,
+		Endpoint:      s3.Endpoint,
+		Bucket:        s3.Bucket,
+		Region:        s3.Region,
+		Prefix:        s3.Prefix,
+		Account:       s3.Account,
+		AccessKeyPath: accessKeyPath,
+		SecretKeyPath: secretKeyPath,
+	}
+	if s3.TLS.Enable && s3.TLS.InsecureSkipVerify {
+		out.SkipTLS = true
+	}
+	return out
+}
+
 // nolint:cyclop	// no real complexity here, just long boilerplate
 func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig, metrics []cfg.MetricInfo) (string, error) {
 	if b.desired.Agent.EBPF.IsPktDropEnabled() || b.desired.Agent.EBPF.IsNetworkEventsEnabled() {
@@ -504,6 +550,12 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig, metrics []cfg.Met
 	}
 	if b.desired.Processor.IsSubnetLabelsEnabled() {
 		fconf.Features = append(fconf.Features, "subnetLabels")
+	}
+	if b.desired.UseFlowBuffer() {
+		fconf.Features = append(fconf.Features, "flowBuffer")
+	}
+	if b.desired.UseS3() {
+		fconf.Features = append(fconf.Features, "s3")
 	}
 
 	// Add health rules metadata for frontend
@@ -663,6 +715,12 @@ func (b *builder) configMap(ctx context.Context, externalRecordingAnnotations ma
 
 	// configure prometheus
 	config.Prometheus = b.getPromConfig(ctx)
+
+	// configure flowBuffer (one-hop FLP Service URL)
+	config.FlowBuffer = b.getFlowBufferConfig()
+
+	// configure S3 datasource (Parquet cold tier)
+	config.S3 = b.getS3Config()
 
 	// configure frontend from embedded static file
 	config.Frontend, err = cfg.GetStaticFrontendConfig()

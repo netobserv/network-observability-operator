@@ -2,8 +2,10 @@ package v1beta2
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (spec *FlowCollectorSpec) GetNamespace() string {
@@ -37,6 +39,20 @@ func (spec *FlowCollectorSpec) HasKafkaExporter() bool {
 	return false
 }
 
+func (spec *FlowCollectorSpec) HasS3Exporter() bool {
+	return spec.GetFirstS3Exporter() != nil
+}
+
+// GetFirstS3Exporter returns the first exporters entry with type S3, or nil.
+func (spec *FlowCollectorSpec) GetFirstS3Exporter() *FlowCollectorExporter {
+	for _, ex := range spec.Exporters {
+		if ex != nil && ex.Type == S3Exporter {
+			return ex
+		}
+	}
+	return nil
+}
+
 func (cfg *SASLConfig) UseSASL() bool {
 	return cfg.Type == SASLPlain || cfg.Type == SASLScramSHA512
 }
@@ -55,10 +71,54 @@ func (spec *FlowCollectorSpec) UsePrometheus() bool {
 	return spec.Prometheus.Querier.Enable == nil || *spec.Prometheus.Querier.Enable
 }
 
+// UseFlowBuffer reports whether the in-memory flow buffer should be active.
+// Explicit spec.processor.flowBuffer.enable overrides the Loki-based default
+// (on when Loki is off, off when Loki is on).
+func (spec *FlowCollectorSpec) UseFlowBuffer() bool {
+	if spec.Processor.FlowBuffer != nil && spec.Processor.FlowBuffer.Enable != nil {
+		return *spec.Processor.FlowBuffer.Enable
+	}
+	return !spec.UseLoki()
+}
+
+// UseS3 reports whether the Console plugin should query S3 Parquet.
+// Explicit spec.consolePlugin.s3.enable overrides the default
+// (on when an S3 exporter exists and Loki is off).
+func (spec *FlowCollectorSpec) UseS3() bool {
+	if spec.ConsolePlugin.S3 != nil && spec.ConsolePlugin.S3.Enable != nil {
+		return *spec.ConsolePlugin.S3.Enable
+	}
+	return spec.HasS3Exporter() && !spec.UseLoki()
+}
+
 func (spec *FlowCollectorSpec) UseWebConsole() bool {
-	return (spec.UseLoki() || spec.UsePrometheus()) &&
+	return (spec.UseLoki() || spec.UsePrometheus() || spec.UseFlowBuffer() || spec.UseS3()) &&
 		// nil should fallback to default value, which is "true"
 		(spec.ConsolePlugin.Enable == nil || *spec.ConsolePlugin.Enable)
+}
+
+// GetFLPServiceName returns the Kubernetes Service name used to reach FLP (ingest and/or flow-buffer query).
+func (spec *FlowCollectorSpec) GetFLPServiceName() string {
+	if spec.UseKafka() {
+		return constants.FLPTransfoName
+	}
+	return constants.FLPName
+}
+
+// GetFlowBufferMaxEntries returns the configured max entries, or the default.
+func (spec *FlowCollectorSpec) GetFlowBufferMaxEntries() int32 {
+	if spec.Processor.FlowBuffer != nil && spec.Processor.FlowBuffer.MaxEntries != nil {
+		return *spec.Processor.FlowBuffer.MaxEntries
+	}
+	return 50000
+}
+
+// GetFlowBufferQueryTimeout returns the configured query timeout, or the default.
+func (spec *FlowCollectorSpec) GetFlowBufferQueryTimeout() metav1.Duration {
+	if spec.Processor.FlowBuffer != nil && spec.Processor.FlowBuffer.QueryTimeout != nil {
+		return *spec.Processor.FlowBuffer.QueryTimeout
+	}
+	return metav1.Duration{Duration: 2 * time.Second}
 }
 
 func (spec *FlowCollectorSpec) UseStandaloneConsole(hasPluginAPI bool) bool {

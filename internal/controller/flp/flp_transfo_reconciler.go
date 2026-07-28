@@ -34,6 +34,7 @@ type transformerReconciler struct {
 	rbConfigWatcher  *rbacv1.RoleBinding
 	rbLokiWriter     *rbacv1.ClusterRoleBinding
 	rbInformers      *rbacv1.ClusterRoleBinding
+	rbPeerQuery      *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
 }
@@ -51,6 +52,7 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole)),
 		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.LokiWriterRole)),
 		rbInformers:      cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.FLPInformersRole)),
+		rbPeerQuery:      cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.FLPPeerQueryRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(transfoServiceMonitor)
@@ -93,7 +95,7 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	if err != nil {
 		return err
 	}
-	newSCM, configDigest, newDCM, err := builder.configMaps()
+	newSCM, configDigest, newDCM, err := builder.configMaps(ctx)
 	if err != nil {
 		return err
 	}
@@ -142,6 +144,10 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 	// Same for Kafka exporters
 	if err = annotateKafkaExporterCerts(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
+		return err
+	}
+	// Watch for S3 exporter credentials; restart pods on secret rotation
+	if err = annotateS3ExporterSecrets(ctx, r.Common, desired.Spec.Exporters, annotations); err != nil {
 		return err
 	}
 	// Watch for monitoring caCert
@@ -199,18 +205,17 @@ func (r *transformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *fl
 }
 
 func (r *transformerReconciler) reconcileService(ctx context.Context, builder *transfoBuilder, desired *flowslatest.FlowCollectorSpec) error {
-	report := helper.NewChangeReport("FLP k8scache service")
+	report := helper.NewChangeReport("FLP service")
 	defer report.LogIfNeeded(ctx)
 
-	// Only create k8scache service when centralized informers are enabled
-	informersEnabled := desired.Processor.IsInformerCacheProxyEnabled()
+	// Service is needed for k8scache (centralized informers) and/or flowBuffer query
+	needService := desired.Processor.IsInformerCacheProxyEnabled() || desired.UseFlowBuffer()
 
-	if informersEnabled {
+	if needService {
 		if err := r.ReconcileService(ctx, r.service, builder.service(), &report); err != nil {
 			return err
 		}
 	} else {
-		// Delete service if informers are disabled
 		r.Managed.TryDelete(ctx, r.service)
 	}
 	return nil
@@ -264,6 +269,16 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	} else {
 		// Centralized informers mode - permissions handled by flowlogs-pipeline-informers ServiceAccount
 		r.Managed.TryDelete(ctx, r.rbInformers)
+	}
+
+	// Peer query (EndpointSlice discovery for flowBuffer fan-in)
+	if builder.desired.UseFlowBuffer() {
+		r.rbPeerQuery = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPPeerQueryRole)
+		if err := r.ReconcileClusterRoleBinding(ctx, r.rbPeerQuery); err != nil {
+			return err
+		}
+	} else {
+		r.Managed.TryDelete(ctx, r.rbPeerQuery)
 	}
 
 	// Config watcher

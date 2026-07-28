@@ -186,14 +186,14 @@ func TestDaemonSetNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	_, digest, _, err := b.configMaps()
+	_, digest, _, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	first := b.daemonSet(annotate(digest))
 
 	// Check no change
 	cfg = getConfig()
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	second := b.daemonSet(annotate(digest))
 
@@ -209,14 +209,14 @@ func TestDaemonSetChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := monoBuilder(ns, &cfg)
-	_, digest, _, err := b.configMaps()
+	_, digest, _, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	first := b.daemonSet(annotate(digest))
 
 	// Check probes enabled change
 	cfg.Processor.Advanced.EnableKubeProbes = ptr.To(true)
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	second := b.daemonSet(annotate(digest))
 
@@ -247,7 +247,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	third := b.daemonSet(annotate(digest))
 
@@ -261,7 +261,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	fourth := b.daemonSet(annotate(digest))
 
@@ -275,7 +275,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	fifth := b.daemonSet(annotate(digest))
 
@@ -296,7 +296,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	sixth := b.daemonSet(annotate(digest))
 
@@ -314,7 +314,7 @@ func TestDaemonSetChanged(t *testing.T) {
 		},
 	}
 	b = monoBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	seventh := b.daemonSet(annotate(digest))
 
@@ -330,14 +330,14 @@ func TestDeploymentNoChange(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := transfBuilder(ns, &cfg)
-	_, digest, _, err := b.configMaps()
+	_, digest, _, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
 	// Check no change
 	cfg = getConfig()
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -353,14 +353,14 @@ func TestDeploymentChanged(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	b := transfBuilder(ns, &cfg)
-	_, digest, _, err := b.configMaps()
+	_, digest, _, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
 	// Check probes enabled change
 	cfg.Processor.Advanced.EnableKubeProbes = ptr.To(true)
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -378,7 +378,7 @@ func TestDeploymentChanged(t *testing.T) {
 	// Check log level change
 	cfg.Processor.LogLevel = "info"
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	third := b.deployment(annotate(digest))
 
@@ -392,7 +392,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("500Gi"),
 	}
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	fourth := b.deployment(annotate(digest))
 
@@ -406,7 +406,7 @@ func TestDeploymentChanged(t *testing.T) {
 		corev1.ResourceMemory: resource.MustParse("512Mi"),
 	}
 	b = transfBuilder(ns, &cfg)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	fifth := b.deployment(annotate(digest))
 
@@ -421,7 +421,7 @@ func TestDeploymentChanged(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.ConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	sixth := b.deployment(annotate(digest))
 
@@ -437,7 +437,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfigNoHPA()
 	b := transfBuilder(ns, &cfg)
-	_, digest, _, err := b.configMaps()
+	_, digest, _, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	first := b.deployment(annotate(digest))
 
@@ -445,7 +445,7 @@ func TestDeploymentChangedReplicasNoHPA(t *testing.T) {
 	cfg2 := cfg
 	cfg2.Processor.ConsumerReplicas = ptr.To(int32(5))
 	b = transfBuilder(ns, &cfg2)
-	_, digest, _, err = b.configMaps()
+	_, digest, _, err = b.configMaps(context.Background())
 	assert.NoError(err)
 	second := b.deployment(annotate(digest))
 
@@ -619,7 +619,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	cfg := getConfig()
 	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
-	cm, digest, _, err := b.configMaps()
+	cm, digest, _, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
 
@@ -670,7 +670,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	useLokiStack(&cfg)
 	cfg.Agent.Type = flowslatest.AgentEBPF
 	b := monoBuilder(ns, &cfg)
-	cm, digest, _, err := b.configMaps()
+	cm, digest, _, err := b.configMaps(context.Background())
 	assert.NoError(err)
 	assert.NotEmpty(t, digest)
 

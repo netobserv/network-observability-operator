@@ -3094,6 +3094,17 @@ For more information, see https://kubernetes.io/docs/concepts/configuration/mana
         </td>
         <td>false</td>
       </tr><tr>
+        <td><b><a href="#flowcollectorspecconsoleplugins3">s3</a></b></td>
+        <td>object</td>
+        <td>
+          `s3` configures Console plugin read access to S3 Parquet storage for raw flows.
+Connection details are taken from the first `exporters` entry with `type: S3`.
+Enabling this without an S3 exporter is a validation error.
+Default: enabled when an S3 exporter exists and Loki is disabled; otherwise disabled.
+When Loki is also enabled, Auto still prefers Loki for raw flows; users can select S3 explicitly in the Console.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
         <td><b>standalone</b></td>
         <td>boolean</td>
         <td>
@@ -6021,6 +6032,39 @@ only the result of this request.<br/>
 </table>
 
 
+### FlowCollector.spec.consolePlugin.s3
+<sup><sup>[↩ Parent](#flowcollectorspecconsoleplugin)</sup></sup>
+
+
+
+`s3` configures Console plugin read access to S3 Parquet storage for raw flows.
+Connection details are taken from the first `exporters` entry with `type: S3`.
+Enabling this without an S3 exporter is a validation error.
+Default: enabled when an S3 exporter exists and Loki is disabled; otherwise disabled.
+When Loki is also enabled, Auto still prefers Loki for raw flows; users can select S3 explicitly in the Console.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to `true` to allow the Console plugin to query S3 Parquet as a datasource
+(dropdown option and Auto fallback when the flow buffer does not cover the requested range).
+Requires at least one `exporters` entry with `type: S3`.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### FlowCollector.spec.execution
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
@@ -6074,9 +6118,9 @@ It allows to use minimal cluster resources without losing configuration.<br/>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, and `OpenTelemetry`.<br/>
+          `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, `OpenTelemetry`, and `S3`.<br/>
           <br/>
-            <i>Enum</i>: Kafka, IPFIX, OpenTelemetry<br/>
+            <i>Enum</i>: Kafka, IPFIX, OpenTelemetry, S3<br/>
         </td>
         <td>true</td>
       </tr><tr>
@@ -6098,6 +6142,13 @@ It allows to use minimal cluster resources without losing configuration.<br/>
         <td>object</td>
         <td>
           OpenTelemetry configuration, such as the IP address and port to send enriched logs or metrics to.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexs3">s3</a></b></td>
+        <td>object</td>
+        <td>
+          S3 configuration for write-only Parquet export of enriched flows.<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -6915,6 +6966,324 @@ If the namespace is different, the config map or the secret is copied so that it
 </table>
 
 
+### FlowCollector.spec.exporters[index].s3
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindex)</sup></sup>
+
+
+
+S3 configuration for write-only Parquet export of enriched flows.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>bucket</b></td>
+        <td>string</td>
+        <td>
+          Name of the S3 bucket.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexs3credentials">credentials</a></b></td>
+        <td>object</td>
+        <td>
+          Reference to a Secret containing S3 credentials.
+Expected keys: `accessKeyId` and `secretAccessKey`.<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>endpoint</b></td>
+        <td>string</td>
+        <td>
+          Address of the S3-compatible endpoint (e.g. `https://minio.example:9000` or AWS regional endpoint).<br/>
+        </td>
+        <td>true</td>
+      </tr><tr>
+        <td><b>account</b></td>
+        <td>string</td>
+        <td>
+          `account` is used as the cluster / tenant identifier in the object path
+(`…/cluster_id=<account>/year=…`). Prefer a stable cluster id.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>batchSize</b></td>
+        <td>integer</td>
+        <td>
+          `batchSize` is the maximum number of flows buffered before flushing an object.<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 5000<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>compression</b></td>
+        <td>enum</td>
+        <td>
+          Compression codec for Parquet objects.<br/>
+          <br/>
+            <i>Enum</i>: none, snappy, zstd, gzip<br/>
+            <i>Default</i>: snappy<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>format</b></td>
+        <td>enum</td>
+        <td>
+          `format` of stored objects. Phase 1 supports `Parquet` only.<br/>
+          <br/>
+            <i>Enum</i>: Parquet<br/>
+            <i>Default</i>: Parquet<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>prefix</b></td>
+        <td>string</td>
+        <td>
+          Optional key prefix under which objects are written (before `cluster_id=` / Hive partitions).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>region</b></td>
+        <td>string</td>
+        <td>
+          AWS region or equivalent region identifier for the bucket (optional for some S3-compatible stores).<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexs3tls">tls</a></b></td>
+        <td>object</td>
+        <td>
+          TLS client configuration for the S3 endpoint.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>writeTimeout</b></td>
+        <td>string</td>
+        <td>
+          `writeTimeout` is the maximum time to wait before flushing a partial batch.<br/>
+          <br/>
+            <i>Default</i>: 60s<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].s3.credentials
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexs3)</sup></sup>
+
+
+
+Reference to a Secret containing S3 credentials.
+Expected keys: `accessKeyId` and `secretAccessKey`.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the referent.
+This field is effectively required, but due to backwards compatibility is
+allowed to be empty. Instances of this type with an empty value here are
+almost certainly wrong.
+More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].s3.tls
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexs3)</sup></sup>
+
+
+
+TLS client configuration for the S3 endpoint.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b><a href="#flowcollectorspecexportersindexs3tlscacert">caCert</a></b></td>
+        <td>object</td>
+        <td>
+          `caCert` defines the reference of the certificate for the Certificate Authority.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Enable TLS<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>insecureSkipVerify</b></td>
+        <td>boolean</td>
+        <td>
+          `insecureSkipVerify` allows skipping client-side verification of the server certificate.
+If set to `true`, the `caCert` field is ignored.<br/>
+          <br/>
+            <i>Default</i>: false<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecexportersindexs3tlsusercert">userCert</a></b></td>
+        <td>object</td>
+        <td>
+          `userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].s3.tls.caCert
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexs3tls)</sup></sup>
+
+
+
+`caCert` defines the reference of the certificate for the Certificate Authority.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.exporters[index].s3.tls.userCert
+<sup><sup>[↩ Parent](#flowcollectorspecexportersindexs3tls)</sup></sup>
+
+
+
+`userCert` defines the user certificate reference and is used for mTLS. When you use one-way TLS, you can ignore this property.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>certFile</b></td>
+        <td>string</td>
+        <td>
+          `certFile` defines the path to the certificate file name within the config map or secret.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>certKey</b></td>
+        <td>string</td>
+        <td>
+          `certKey` defines the path to the certificate private key file name within the config map or secret. Omit when the key is not necessary.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>name</b></td>
+        <td>string</td>
+        <td>
+          Name of the config map or secret containing certificates.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>namespace</b></td>
+        <td>string</td>
+        <td>
+          Namespace of the config map or secret containing certificates. If omitted, the default is to use the same namespace as where NetObserv is deployed.
+If the namespace is different, the config map or the secret is copied so that it can be mounted as required.<br/>
+          <br/>
+            <i>Default</i>: <br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>type</b></td>
+        <td>enum</td>
+        <td>
+          Type for the certificate reference: `configmap` or `secret`.<br/>
+          <br/>
+            <i>Enum</i>: configmap, secret<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
 ### FlowCollector.spec.kafka
 <sup><sup>[↩ Parent](#flowcollectorspec)</sup></sup>
 
@@ -7346,11 +7715,12 @@ This section is aimed mostly for debugging and fine-grained performance optimiza
         <td>boolean</td>
         <td>
           Set `enable` to `true` to store flows in Loki.
-The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
-Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
-such as getting per-pod information or viewing raw flows.
+The Console plugin can use Loki, Prometheus, the processor flow buffer, and/or S3 Parquet as data sources
+(see also `spec.prometheus.querier`, `spec.processor.flowBuffer`, and `spec.consolePlugin.s3`).
+Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled without flowBuffer/S3,
+some features of the plugin are disabled as well, such as getting per-pod information or viewing raw flows.
 If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
-If they are both disabled, the Console plugin is not deployed.<br/>
+The Console plugin is deployed when at least one of Loki, Prometheus querier, flowBuffer, or s3 is enabled.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -8544,6 +8914,15 @@ This setting is ignored when `spec.deploymentModel` is `Direct` or when `spec.pr
           `filters` lets you define custom filters to limit the amount of generated flows.
 These filters provide more flexibility than the eBPF Agent filters (in `spec.agent.ebpf.flowFilter`), such as allowing to filter by Kubernetes namespace,
 but with a lesser improvement in performance.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b><a href="#flowcollectorspecprocessorflowbuffer">flowBuffer</a></b></td>
+        <td>object</td>
+        <td>
+          `flowBuffer` configures an in-memory ring buffer of enriched flows on each flowlogs-pipeline instance.
+When Loki is disabled, it is the hot raw-flow path for the Console plugin (optionally backed by an S3 exporter for retention).
+Default: enabled when `spec.loki.enable` is false; disabled when Loki is enabled. Set `enable` explicitly to override.<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -10687,6 +11066,56 @@ Fields absent from the 'k8s.v1.cni.cncf.io/network-status' annotation must not b
           <br/>
             <i>Format</i>: int32<br/>
             <i>Minimum</i>: 0<br/>
+        </td>
+        <td>false</td>
+      </tr></tbody>
+</table>
+
+
+### FlowCollector.spec.processor.flowBuffer
+<sup><sup>[↩ Parent](#flowcollectorspecprocessor)</sup></sup>
+
+
+
+`flowBuffer` configures an in-memory ring buffer of enriched flows on each flowlogs-pipeline instance.
+When Loki is disabled, it is the hot raw-flow path for the Console plugin (optionally backed by an S3 exporter for retention).
+Default: enabled when `spec.loki.enable` is false; disabled when Loki is enabled. Set `enable` explicitly to override.
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Required</th>
+        </tr>
+    </thead>
+    <tbody><tr>
+        <td><b>enable</b></td>
+        <td>boolean</td>
+        <td>
+          Set `enable` to turn the flow buffer and its query listener on or off.
+When omitted, the operator enables the buffer if Loki is disabled and disables it if Loki is enabled.<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>maxEntries</b></td>
+        <td>integer</td>
+        <td>
+          `maxEntries` is the maximum number of enriched flows retained per flowlogs-pipeline instance (oldest evicted first).<br/>
+          <br/>
+            <i>Format</i>: int32<br/>
+            <i>Default</i>: 50000<br/>
+            <i>Minimum</i>: 1<br/>
+        </td>
+        <td>false</td>
+      </tr><tr>
+        <td><b>queryTimeout</b></td>
+        <td>string</td>
+        <td>
+          `queryTimeout` is the maximum time allowed for a flow-buffer query (including peer fan-in).<br/>
+          <br/>
+            <i>Default</i>: 2s<br/>
         </td>
         <td>false</td>
       </tr></tbody>
@@ -13102,11 +13531,12 @@ Prometheus querying configuration, such as client settings, used in the Console 
         <td>
           When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
 It is enabled by default: set it to `false` to disable this feature.
-The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
-Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
-such as getting per-pod information or viewing raw flows.
+The Console plugin can use Loki, Prometheus, flowBuffer, and/or S3 as data sources
+(see also `spec.loki`, `spec.processor.flowBuffer`, `spec.consolePlugin.s3`).
+Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled without flowBuffer/S3,
+some features of the plugin are disabled as well, such as getting per-pod information or viewing raw flows.
 If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
-If they are both disabled, the Console plugin is not deployed.<br/>
+The Console plugin is deployed when at least one of Loki, Prometheus querier, flowBuffer, or s3 is enabled.<br/>
           <br/>
             <i>Default</i>: true<br/>
         </td>
@@ -14042,9 +14472,9 @@ with respect to the current state of the instance.<br/>
         <td><b>type</b></td>
         <td>enum</td>
         <td>
-          `type` is the exporter type (Kafka, IPFIX, OpenTelemetry).<br/>
+          `type` is the exporter type (Kafka, IPFIX, OpenTelemetry, S3).<br/>
           <br/>
-            <i>Enum</i>: Kafka, IPFIX, OpenTelemetry<br/>
+            <i>Enum</i>: Kafka, IPFIX, OpenTelemetry, S3<br/>
         </td>
         <td>true</td>
       </tr><tr>

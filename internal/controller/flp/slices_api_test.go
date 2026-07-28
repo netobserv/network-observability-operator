@@ -1,6 +1,7 @@
 package flp
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -103,7 +104,7 @@ func TestSlicesDisabled(t *testing.T) {
 	slicesstatus.Reset(&sliceslatest.FlowCollectorSliceList{})
 	b, err := defaultBuilderWithSlices(&flowslatest.SlicesConfig{Enable: false})
 	assert.NoError(t, err)
-	_, _, cm, err := b.configMaps()
+	_, _, cm, err := b.configMaps(context.Background())
 	assert.NoError(t, err)
 	filters, subnets := getConfiguredFiltersAndSubnets(cm)
 	assert.Nil(t, filters)
@@ -134,7 +135,7 @@ func TestSlicesEnablesCollectAll(t *testing.T) {
 		NamespacesAllowList: []string{"should-be-ignored"},
 	})
 	assert.NoError(t, err)
-	_, _, cm, err := b.configMaps()
+	_, _, cm, err := b.configMaps(context.Background())
 	assert.NoError(t, err)
 	filters, subnets := getConfiguredFiltersAndSubnets(cm)
 	assert.Nil(t, filters)
@@ -194,7 +195,7 @@ func TestSlicesEnablesWhitelist(t *testing.T) {
 		NamespacesAllowList: []string{"should-be-filtered", "/should-.*/"},
 	})
 	assert.NoError(t, err)
-	_, _, cm, err := b.configMaps()
+	_, _, cm, err := b.configMaps(context.Background())
 	assert.NoError(t, err)
 	filters, subnets := getConfiguredFiltersAndSubnets(cm)
 	assert.Equal(t, []api.TransformFilterRule{

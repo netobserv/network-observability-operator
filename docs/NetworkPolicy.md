@@ -104,6 +104,11 @@ When using Loki (`spec.loki.enabled`):
 When exporters are configured (`spec.exporters`):
 - Must allow traffic to exporters (refer to the exporter configuration).
 
+When `spec.processor.flowBuffer` is enabled:
+- FLP pods must reach each other on the query port (default TCP 9200) for peer fan-in.
+- The Console plugin must reach the FLP Service on that same query port.
+  Same-namespace allow rules already cover both when the default NetObserv NetworkPolicy is used.
+
 ### Web console
 
 Label: `app=netobserv-plugin`, default namespace: `netobserv`.

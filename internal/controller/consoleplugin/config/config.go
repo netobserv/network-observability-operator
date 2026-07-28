@@ -50,6 +50,27 @@ type PrometheusConfig struct {
 	Metrics          []MetricInfo       `yaml:"metrics,omitempty" json:"metrics,omitempty"`
 }
 
+// FlowBufferConfig is the console → FLP Service URL for hot raw-flow queries.
+type FlowBufferConfig struct {
+	Enable  bool         `yaml:"enable" json:"enable"`
+	URL     string       `yaml:"url,omitempty" json:"url,omitempty"`
+	Timeout api.Duration `yaml:"timeout,omitempty" json:"timeout,omitempty"`
+}
+
+// S3Config is the console S3/Parquet datasource for cold raw flows (derived from first S3 exporter).
+// Keys match network-observability-console-plugin/pkg/config/s3.go.
+type S3Config struct {
+	Enable        bool   `yaml:"enable" json:"enable"`
+	Endpoint      string `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
+	Bucket        string `yaml:"bucket,omitempty" json:"bucket,omitempty"`
+	Region        string `yaml:"region,omitempty" json:"region,omitempty"`
+	Prefix        string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
+	Account       string `yaml:"account,omitempty" json:"account,omitempty"`
+	AccessKeyPath string `yaml:"accessKeyPath,omitempty" json:"accessKeyPath,omitempty"`
+	SecretKeyPath string `yaml:"secretKeyPath,omitempty" json:"secretKeyPath,omitempty"`
+	SkipTLS       bool   `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`
+}
+
 type AlertManagerConfig struct {
 	URL     string `yaml:"url" json:"url"`
 	SkipTLS bool   `yaml:"skipTls,omitempty" json:"skipTls,omitempty"`
@@ -148,6 +169,8 @@ type PluginConfig struct {
 	Server      ServerConfig     `yaml:"server" json:"server"`
 	Loki        LokiConfig       `yaml:"loki" json:"loki"`
 	Prometheus  PrometheusConfig `yaml:"prometheus" json:"prometheus"`
+	FlowBuffer  FlowBufferConfig `yaml:"flowBuffer" json:"flowBuffer"`
+	S3          S3Config         `yaml:"s3" json:"s3"`
 	Kubernetes  K8SConfig        `yaml:"kubernetes" json:"kubernetes"`
 	Frontend    FrontendConfig   `yaml:"frontend" json:"frontend"`
 }

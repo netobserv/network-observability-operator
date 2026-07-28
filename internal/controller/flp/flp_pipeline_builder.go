@@ -32,13 +32,28 @@ const (
 
 type PipelineBuilder struct {
 	*config.PipelineBuilderStage
-	desired         *flowslatest.FlowCollectorSpec
-	flowMetrics     *metricslatest.FlowMetricList
-	fcSlices        []sliceslatest.FlowCollectorSlice
-	detectedSubnets []flowslatest.SubnetLabel
-	volumes         *volumes.Builder
-	loki            *helper.LokiConfig
-	clusterID       string
+	desired           *flowslatest.FlowCollectorSpec
+	flowMetrics       *metricslatest.FlowMetricList
+	fcSlices          []sliceslatest.FlowCollectorSlice
+	detectedSubnets   []flowslatest.SubnetLabel
+	volumes           *volumes.Builder
+	loki              *helper.LokiConfig
+	clusterID         string
+	s3Credentials     map[string]s3Credentials // keyed by exporter stage name e.g. s3-export-0
+	s3StageExtras     []s3StageExtra
+	flowBufferFollows string
+	flowBufferParam   map[string]interface{}
+}
+
+type s3Credentials struct {
+	accessKeyID     string
+	secretAccessKey string
+}
+
+type s3StageExtra struct {
+	name   string
+	prefix string
+	format string
 }
 
 func createPipeline(
@@ -50,6 +65,7 @@ func createPipeline(
 	clusterID string,
 	volumes *volumes.Builder,
 	ingestStage config.PipelineBuilderStage,
+	s3Creds map[string]s3Credentials,
 ) (*PipelineBuilder, error) {
 	b := &PipelineBuilder{
 		PipelineBuilderStage: &ingestStage,
@@ -60,6 +76,7 @@ func createPipeline(
 		loki:                 loki,
 		clusterID:            clusterID,
 		volumes:              volumes,
+		s3Credentials:        s3Creds,
 	}
 	stage := ingestStage
 	stage = b.addConnectionTracking(stage)
@@ -71,6 +88,7 @@ func createPipeline(
 		return nil, err
 	}
 	stage = b.addTruncFiltersDedupStage(stage)
+	flowBufferFollows := tipStageName(stage)
 
 	if b.desired.UseLoki() {
 		if err := b.addLokiStage(stage); err != nil {
@@ -93,7 +111,50 @@ func createPipeline(
 		return nil, err
 	}
 
+	if b.desired.UseFlowBuffer() {
+		b.addFlowBufferStage(flowBufferFollows)
+	}
+
 	return b, nil
+}
+
+// tipStageName returns the current pipeline tip (stage name with no followers yet).
+func tipStageName(s config.PipelineBuilderStage) string {
+	stages := s.GetStages()
+	if len(stages) == 0 {
+		return ""
+	}
+	followed := map[string]bool{}
+	for _, st := range stages {
+		if st.Follows != "" {
+			followed[st.Follows] = true
+		}
+	}
+	for i := len(stages) - 1; i >= 0; i-- {
+		if !followed[stages[i].Name] {
+			return stages[i].Name
+		}
+	}
+	return stages[len(stages)-1].Name
+}
+
+func (b *PipelineBuilder) addFlowBufferStage(follows string) {
+	timeout := b.desired.GetFlowBufferQueryTimeout()
+	// Injected as raw stage maps in getJSONConfigs because vendored FLP may lag WriteFlowBuffer helpers.
+	b.flowBufferFollows = follows
+	b.flowBufferParam = map[string]interface{}{
+		"name": "flowbuffer",
+		"write": map[string]interface{}{
+			"type": "flowBuffer",
+			"flowBuffer": map[string]interface{}{
+				"maxEntries":         int(b.desired.GetFlowBufferMaxEntries()),
+				"queryListenAddress": fmt.Sprintf(":%d", constants.FLPQueryPort),
+				"queryTimeout":       api.Duration{Duration: timeout.Duration},
+				"serviceName":        b.desired.GetFLPServiceName(),
+				"namespace":          b.desired.GetNamespace(),
+			},
+		},
+	}
 }
 
 func (b *PipelineBuilder) addEnrichStage(previous config.PipelineBuilderStage) config.PipelineBuilderStage {
@@ -679,8 +740,76 @@ func (b *PipelineBuilder) addCustomExportStages(previous config.PipelineBuilderS
 				return err
 			}
 		}
+		if exporter.Type == flowslatest.S3Exporter {
+			b.createS3EncodeStage(fmt.Sprintf("s3-export-%d", i), &exporter.S3, &stage)
+		}
 	}
 	return nil
+}
+
+// createS3EncodeStage wires an S3 encode stage matching flowlogs-pipeline EncodeS3 fields:
+// account, endpoint, bucket, prefix, format, batchSize, writeTimeout, accessKeyId, secretAccessKey, secure.
+// Credentials are plaintext values from the referenced Secret (FLP does not support file paths for S3 keys).
+func (b *PipelineBuilder) createS3EncodeStage(name string, spec *flowslatest.FlowCollectorS3, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {
+	account := spec.Account
+	if account == "" {
+		account = b.clusterID
+	}
+	batchSize := 5000
+	if spec.BatchSize != nil {
+		batchSize = int(*spec.BatchSize)
+	}
+	writeTimeout := api.Duration{Duration: 60 * time.Second}
+	if spec.WriteTimeout != nil {
+		writeTimeout = api.Duration{Duration: spec.WriteTimeout.Duration}
+	}
+	format := "parquet"
+	if spec.Format != "" {
+		format = strings.ToLower(string(spec.Format))
+	}
+	endpointLower := strings.ToLower(spec.Endpoint)
+	secure := strings.HasPrefix(endpointLower, "https://")
+	// minio-go expects host[:port] without a URL scheme.
+	endpoint := spec.Endpoint
+	for _, prefix := range []string{"https://", "http://"} {
+		if strings.HasPrefix(endpointLower, prefix) {
+			endpoint = spec.Endpoint[len(prefix):]
+			break
+		}
+	}
+	endpoint = strings.TrimSuffix(endpoint, "/")
+
+	accessKeyID := ""
+	secretAccessKey := ""
+	if creds, ok := b.s3Credentials[name]; ok {
+		accessKeyID = creds.accessKeyID
+		secretAccessKey = creds.secretAccessKey
+	}
+
+	// Mount secret so console (and future FLP file-path support) can share the same volume layout.
+	_ = b.volumes.AddVolume(&flowslatest.FileReference{
+		Type: flowslatest.RefTypeSecret,
+		Name: spec.Credentials.Name,
+		File: "accessKeyId",
+	}, name+"-creds")
+
+	stage := fromStage.EncodeS3(name, api.EncodeS3{
+		Account:         account,
+		Endpoint:        endpoint,
+		AccessKeyID:     accessKeyID,
+		SecretAccessKey: api.RedactedText(secretAccessKey),
+		Bucket:          spec.Bucket,
+		WriteTimeout:    writeTimeout,
+		BatchSize:       batchSize,
+		Secure:          secure,
+	})
+	// Vendored EncodeS3 may omit Format/Prefix; getJSONConfigs patches them onto the stage.
+	b.s3StageExtras = append(b.s3StageExtras, s3StageExtra{
+		name:   name,
+		prefix: spec.Prefix,
+		format: format,
+	})
+	return stage
 }
 
 func (b *PipelineBuilder) createKafkaWriteStage(name string, spec *flowslatest.FlowCollectorKafka, fromStage *config.PipelineBuilderStage) config.PipelineBuilderStage {

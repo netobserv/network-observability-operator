@@ -762,11 +762,36 @@ type FlowCollectorFLP struct {
 	// +optional
 	InformerCacheProxy *FlowCollectorInformerCacheProxy `json:"informerCacheProxy,omitempty"`
 
+	// `flowBuffer` configures an in-memory ring buffer of enriched flows on each flowlogs-pipeline instance.
+	// When Loki is disabled, it is the hot raw-flow path for the Console plugin (optionally backed by an S3 exporter for retention).
+	// Default: enabled when `spec.loki.enable` is false; disabled when Loki is enabled. Set `enable` explicitly to override.
+	// +optional
+	FlowBuffer *FlowCollectorFlowBuffer `json:"flowBuffer,omitempty"`
+
 	// `advanced` allows setting some aspects of the internal configuration of the flow processor.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedProcessorConfig `json:"advanced,omitempty"`
+}
+
+// `FlowCollectorFlowBuffer` configures the per-instance in-memory flow buffer (hot raw tier).
+type FlowCollectorFlowBuffer struct {
+	// Set `enable` to turn the flow buffer and its query listener on or off.
+	// When omitted, the operator enables the buffer if Loki is disabled and disables it if Loki is enabled.
+	// +optional
+	Enable *bool `json:"enable,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=50000
+	// `maxEntries` is the maximum number of enriched flows retained per flowlogs-pipeline instance (oldest evicted first).
+	// +optional
+	MaxEntries *int32 `json:"maxEntries,omitempty"`
+
+	//+kubebuilder:default:="2s"
+	// `queryTimeout` is the maximum time allowed for a flow-buffer query (including peer fan-in).
+	// +optional
+	QueryTimeout *metav1.Duration `json:"queryTimeout,omitempty"`
 }
 
 // `FlowCollectorInformerCacheProxy` defines the configuration for the informer cache proxy
@@ -1063,11 +1088,12 @@ type FlowCollectorLoki struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// Set `enable` to `true` to store flows in Loki.
-	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
-	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
-	// such as getting per-pod information or viewing raw flows.
+	// The Console plugin can use Loki, Prometheus, the processor flow buffer, and/or S3 Parquet as data sources
+	// (see also `spec.prometheus.querier`, `spec.processor.flowBuffer`, and `spec.consolePlugin.s3`).
+	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled without flowBuffer/S3,
+	// some features of the plugin are disabled as well, such as getting per-pod information or viewing raw flows.
 	// If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
-	// If they are both disabled, the Console plugin is not deployed.
+	// The Console plugin is deployed when at least one of Loki, Prometheus querier, flowBuffer, or s3 is enabled.
 	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
@@ -1178,11 +1204,12 @@ type FlowCollectorPrometheus struct {
 type PrometheusQuerier struct {
 	// When `enable` is `true`, the Console plugin queries flow metrics from Prometheus instead of Loki whenever possible.
 	// It is enabled by default: set it to `false` to disable this feature.
-	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.loki`), or both.
-	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
-	// such as getting per-pod information or viewing raw flows.
+	// The Console plugin can use Loki, Prometheus, flowBuffer, and/or S3 as data sources
+	// (see also `spec.loki`, `spec.processor.flowBuffer`, `spec.consolePlugin.s3`).
+	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled without flowBuffer/S3,
+	// some features of the plugin are disabled as well, such as getting per-pod information or viewing raw flows.
 	// If both Prometheus and Loki are enabled, Prometheus takes precedence and Loki is used as a fallback for queries that Prometheus cannot handle.
-	// If they are both disabled, the Console plugin is not deployed.
+	// The Console plugin is deployed when at least one of Loki, Prometheus querier, flowBuffer, or s3 is enabled.
 	//+kubebuilder:default:=true
 	Enable *bool `json:"enable,omitempty"`
 
@@ -1256,11 +1283,28 @@ type FlowCollectorConsolePlugin struct {
 	// Filters for external traffic assume the subnet labels are configured to distinguish internal and external traffic (see `spec.processor.subnetLabels`).
 	QuickFilters []QuickFilter `json:"quickFilters"`
 
+	// `s3` configures Console plugin read access to S3 Parquet storage for raw flows.
+	// Connection details are taken from the first `exporters` entry with `type: S3`.
+	// Enabling this without an S3 exporter is a validation error.
+	// Default: enabled when an S3 exporter exists and Loki is disabled; otherwise disabled.
+	// When Loki is also enabled, Auto still prefers Loki for raw flows; users can select S3 explicitly in the Console.
+	// +optional
+	S3 *ConsolePluginS3 `json:"s3,omitempty"`
+
 	// `advanced` allows setting some aspects of the internal configuration of the console plugin.
 	// This section is aimed mostly for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` environment variables. Set these values at your own risk.
 	// +optional
 	Advanced *AdvancedPluginConfig `json:"advanced,omitempty"`
+}
+
+// `ConsolePluginS3` enables Console plugin queries against S3 Parquet (cold raw tier).
+type ConsolePluginS3 struct {
+	// Set `enable` to `true` to allow the Console plugin to query S3 Parquet as a datasource
+	// (dropdown option and Auto fallback when the flow buffer does not cover the requested range).
+	// Requires at least one `exporters` entry with `type: S3`.
+	// +optional
+	Enable *bool `json:"enable,omitempty"`
 }
 
 // Configuration of the port to service name translation feature of the console plugin
@@ -1676,13 +1720,78 @@ const (
 	KafkaExporter         ExporterType = "Kafka"
 	IpfixExporter         ExporterType = "IPFIX"
 	OpenTelemetryExporter ExporterType = "OpenTelemetry"
+	S3Exporter            ExporterType = "S3"
 )
+
+// S3 object format for flow export.
+// +kubebuilder:validation:Enum:="Parquet"
+type S3Format string
+
+const (
+	S3FormatParquet S3Format = "Parquet"
+)
+
+// `FlowCollectorS3` defines write-only S3 / object-storage export of enriched flows (Parquet).
+// Console read access is configured separately via `spec.consolePlugin.s3`.
+type FlowCollectorS3 struct {
+	// Address of the S3-compatible endpoint (e.g. `https://minio.example:9000` or AWS regional endpoint).
+	// +kubebuilder:validation:Required
+	Endpoint string `json:"endpoint"`
+
+	// Name of the S3 bucket.
+	// +kubebuilder:validation:Required
+	Bucket string `json:"bucket"`
+
+	// AWS region or equivalent region identifier for the bucket (optional for some S3-compatible stores).
+	// +optional
+	Region string `json:"region,omitempty"`
+
+	// Optional key prefix under which objects are written (before `cluster_id=` / Hive partitions).
+	// +optional
+	Prefix string `json:"prefix,omitempty"`
+
+	// `account` is used as the cluster / tenant identifier in the object path
+	// (`…/cluster_id=<account>/year=…`). Prefer a stable cluster id.
+	// +optional
+	Account string `json:"account,omitempty"`
+
+	//+kubebuilder:validation:Minimum=1
+	//+kubebuilder:default:=5000
+	// `batchSize` is the maximum number of flows buffered before flushing an object.
+	// +optional
+	BatchSize *int32 `json:"batchSize,omitempty"`
+
+	//+kubebuilder:default:="60s"
+	// `writeTimeout` is the maximum time to wait before flushing a partial batch.
+	// +optional
+	WriteTimeout *metav1.Duration `json:"writeTimeout,omitempty"`
+
+	//+kubebuilder:default:="Parquet"
+	// `format` of stored objects. Phase 1 supports `Parquet` only.
+	// +optional
+	Format S3Format `json:"format,omitempty"`
+
+	//+kubebuilder:validation:Enum:="none";"snappy";"zstd";"gzip"
+	//+kubebuilder:default:="snappy"
+	// Compression codec for Parquet objects.
+	// +optional
+	Compression string `json:"compression,omitempty"`
+
+	// Reference to a Secret containing S3 credentials.
+	// Expected keys: `accessKeyId` and `secretAccessKey`.
+	// +kubebuilder:validation:Required
+	Credentials corev1.LocalObjectReference `json:"credentials"`
+
+	// TLS client configuration for the S3 endpoint.
+	// +optional
+	TLS ClientTLS `json:"tls"`
+}
 
 // `FlowCollectorExporter` defines an additional exporter to send enriched flows to.
 type FlowCollectorExporter struct {
-	// `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, and `OpenTelemetry`.
+	// `type` selects the type of exporters. The available options are `Kafka`, `IPFIX`, `OpenTelemetry`, and `S3`.
 	// +unionDiscriminator
-	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry"
+	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry";"S3"
 	// +kubebuilder:validation:Required
 	Type ExporterType `json:"type"`
 
@@ -1697,6 +1806,10 @@ type FlowCollectorExporter struct {
 	// OpenTelemetry configuration, such as the IP address and port to send enriched logs or metrics to.
 	// +optional
 	OpenTelemetry FlowCollectorOpenTelemetry `json:"openTelemetry,omitempty"`
+
+	// S3 configuration for write-only Parquet export of enriched flows.
+	// +optional
+	S3 FlowCollectorS3 `json:"s3,omitempty"`
 }
 
 type ExecutionMode string
@@ -1754,8 +1867,8 @@ type FlowCollectorExporterStatus struct {
 	// `name` is a generated identifier for this exporter (e.g., "kafka-export-0"), derived from its type and position in spec.exporters.
 	Name string `json:"name"`
 
-	// `type` is the exporter type (Kafka, IPFIX, OpenTelemetry).
-	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry"
+	// `type` is the exporter type (Kafka, IPFIX, OpenTelemetry, S3).
+	// +kubebuilder:validation:Enum:="Kafka";"IPFIX";"OpenTelemetry";"S3"
 	Type string `json:"type"`
 
 	// `state` reports the health of this exporter.

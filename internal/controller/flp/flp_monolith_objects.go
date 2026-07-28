@@ -1,6 +1,8 @@
 package flp
 
 import (
+	"context"
+
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	sliceslatest "github.com/netobserv/netobserv-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
@@ -122,7 +124,11 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 	}
 }
 
-func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
+func (b *monolithBuilder) configMaps(ctx context.Context) (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
+	s3Creds, err := loadS3ExporterCredentials(ctx, b.info, b.desired)
+	if err != nil {
+		return nil, "", nil, err
+	}
 	pipeline, err := createPipeline(
 		b.desired,
 		b.flowMetrics,
@@ -132,6 +138,7 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 		b.info.ClusterInfo.GetID(),
 		&b.volumes,
 		newGRPCPipeline(b.desired, &b.volumes, b.info.ClusterInfo.IsOpenShift()),
+		s3Creds,
 	)
 	if err != nil {
 		return nil, "", nil, err
@@ -188,6 +195,14 @@ func (b *monolithBuilder) service() *corev1.Service {
 			Port:       k8scachePort,
 			Protocol:   corev1.ProtocolTCP,
 			TargetPort: intstr.FromInt32(k8scachePort),
+		})
+	}
+	if b.desired.UseFlowBuffer() {
+		svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
+			Name:       constants.FLPQueryPortName,
+			Port:       constants.FLPQueryPort,
+			Protocol:   corev1.ProtocolTCP,
+			TargetPort: intstr.FromInt32(constants.FLPQueryPort),
 		})
 	}
 	if b.info.ClusterInfo.IsOpenShift() && (b.desired.Processor.Service == nil || b.desired.Processor.Service.TLSType == flowslatest.TLSAuto) {

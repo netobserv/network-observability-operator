@@ -406,6 +406,10 @@ spec:
         path: consolePlugin.portNaming.enable
       - displayName: Port names
         path: consolePlugin.portNaming.portNames
+      - displayName: S3
+        path: consolePlugin.s3
+      - displayName: Enable
+        path: consolePlugin.s3.enable
       - displayName: Standalone
         path: consolePlugin.standalone
       - displayName: Unmanaged replicas
@@ -466,6 +470,14 @@ spec:
         path: processor.deduper.sampling
       - displayName: Filters
         path: processor.filters
+      - displayName: Flow buffer
+        path: processor.flowBuffer
+      - displayName: Enable
+        path: processor.flowBuffer.enable
+      - displayName: Max entries
+        path: processor.flowBuffer.maxEntries
+      - displayName: Query timeout
+        path: processor.flowBuffer.queryTimeout
       - displayName: Informer cache proxy
         path: processor.informerCacheProxy
       - displayName: Advanced
