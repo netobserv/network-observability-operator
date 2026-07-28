@@ -47,13 +47,12 @@ func (flowSlice *FlowcollectorSlice) DeleteFlowcollectorSlice(oc *exutil.CLI) er
 // WaitForFlowcollectorSliceReady waits for FlowCollectorSlice to be ready by checking status conditions
 func (flowSlice *FlowcollectorSlice) WaitForFlowcollectorSliceReady(oc *exutil.CLI) {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-		// Check Ready condition
 		readyCondition, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("flowcollectorslice", flowSlice.Name, "-n", flowSlice.Namespace, "-o", "jsonpath={.status.conditions[?(@.type==\"Ready\")].status}").Output()
-		if err != nil || readyCondition != "True" {
+		if err != nil {
 			e2e.Logf("Error getting Ready condition: %v", err)
 			return false, nil
 		}
-		return true, nil
+		return readyCondition == "True", nil
 	})
 	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("FlowCollectorSlice %s/%s did not become Ready", flowSlice.Namespace, flowSlice.Name))
 }

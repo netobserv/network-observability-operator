@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 
 	exutil "github.com/openshift/origin/test/extended/util"
@@ -15,30 +17,56 @@ func getConfiguredAlertRules(oc *exutil.CLI, ruleName string, namespace string) 
 	return oc.AsAdmin().WithoutNamespace().Run("get").Args("prometheusrules", ruleName, "-o=jsonpath='{.spec.groups[*].rules[*].alert}'", "-n", namespace).Output()
 }
 
-func getAlertStatus(oc *exutil.CLI, alertName string) (map[string]interface{}, error) {
-	alertOut, err := oc.AsAdmin().WithoutNamespace().Run("exec").Args("-n", "openshift-monitoring", "alertmanager-main-0", "--", "amtool", "--alertmanager.url", "http://localhost:9093", "alert", "query", alertName, "-o", "json").Output()
-	if err != nil {
-		return make(map[string]interface{}), err
-	}
-	var alertStatus []interface{}
-	_ = json.Unmarshal([]byte(alertOut), &alertStatus)
-
-	if len(alertStatus) == 0 {
-		return make(map[string]interface{}), nil
-	}
-	return alertStatus[0].(map[string]interface{}), nil
+type prometheusAlertResult struct {
+	Data struct {
+		Result []struct {
+			Metric map[string]string `json:"metric"`
+		} `json:"result"`
+	} `json:"data"`
 }
 
-func waitForAlertToBeActive(oc *exutil.CLI, alertName string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 900*time.Second, false, func(context.Context) (done bool, err error) {
-		alertStatus, err := getAlertStatus(oc, alertName)
-		if err != nil {
-			return false, err
-		}
-		if len(alertStatus) == 0 {
+// getAlertLabels queries Prometheus for an alert and returns its labels.
+func getAlertLabels(oc *exutil.CLI, alertName string) (map[string]string, error) {
+	bearerToken := getSAToken(oc, "prometheus-k8s", "openshift-monitoring")
+	promRoute := "https://" + getRouteAddress(oc, "openshift-monitoring", "prometheus-k8s")
+	query := fmt.Sprintf(`ALERTS{alertname="%s"}`, alertName)
+
+	h := make(http.Header)
+	h.Add("Content-Type", "application/json")
+	h.Add("Authorization", "Bearer "+bearerToken)
+
+	params := url.Values{}
+	params.Add("query", query)
+
+	resp, err := doHTTPRequest(h, promRoute, "/api/v1/query", params.Encode(), "GET", false, 5, nil, 200)
+	if err != nil {
+		return nil, err
+	}
+
+	var result prometheusAlertResult
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, err
+	}
+	if len(result.Data.Result) == 0 {
+		return nil, nil
+	}
+	return result.Data.Result[0].Metric, nil
+}
+
+func waitForAlertToBePending(oc *exutil.CLI, alertName string) {
+	bearerToken := getSAToken(oc, "prometheus-k8s", "openshift-monitoring")
+	promRoute := "https://" + getRouteAddress(oc, "openshift-monitoring", "prometheus-k8s")
+	query := fmt.Sprintf(`ALERTS{alertname="%s"}`, alertName)
+
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 300*time.Second, false, func(context.Context) (done bool, err error) {
+		res, qErr := queryPrometheus(promRoute, query, bearerToken)
+		if qErr != nil {
 			return false, nil
 		}
-		return alertStatus["status"].(map[string]interface{})["state"] == "active", nil
+		if len(res.Data.Result) == 0 {
+			return false, nil
+		}
+		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("%s Alert did not become active", alertName))
+	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("%s Alert did not become pending/active", alertName))
 }

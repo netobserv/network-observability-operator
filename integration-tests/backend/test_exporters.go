@@ -3,7 +3,6 @@ package e2etests
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"strconv"
 
@@ -21,31 +20,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	defer g.GinkgoRecover()
 	var (
 		oc = compat_otp.NewCLI("netobserv", compat_otp.KubeConfigPath())
-		// NetObserv Operator variables
-		NOcatSrc = Resource{"catsrc", "netobserv-konflux-fbc", netobservNS}
-		NOSource = CatalogSourceObjects{"stable", NOcatSrc.Name, NOcatSrc.Namespace}
-
-		// Template directories
-		baseDir, _      = filePath.Abs("testdata")
-		subscriptionDir = filePath.Join(baseDir, "subscription")
-		flowFixturePath = filePath.Join(baseDir, "flowcollector_v1beta2_template.yaml")
-
-		// Operator namespace object
-		OperatorNS = OperatorNamespace{
-			Name:              netobservNS,
-			NamespaceTemplate: filePath.Join(subscriptionDir, "namespace.yaml"),
-		}
-		NO = SubscriptionObjects{
-			OperatorName:  "netobserv-operator",
-			Namespace:     netobservNS,
-			PackageName:   NOPackageName,
-			Subscription:  filePath.Join(subscriptionDir, "sub-template.yaml"),
-			OperatorGroup: filePath.Join(subscriptionDir, "allnamespace-og.yaml"),
-			CatalogSource: &NOSource,
-		}
-		imageDigest    = filePath.Join(subscriptionDir, "image-digest-mirror-set.yaml")
-		catSrcTemplate = filePath.Join(subscriptionDir, "catalog-source.yaml")
-		catalogSource  = os.Getenv("MULTISTAGE_PARAM_OVERRIDE_NETOBSERV_CS_IMAGE")
 
 		OtelNS = OperatorNamespace{
 			Name:              "openshift-opentelemetry-operator",
@@ -67,19 +41,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 	g.BeforeEach(func() {
 		namespace = oc.Namespace()
-
-		if strings.Contains(os.Getenv("E2E_RUN_TAGS"), "disconnected") {
-			g.Skip("Skipping tests for disconnected profiles")
-		}
-
-		OperatorNS.DeployOperatorNamespace(oc)
-		deployedUpstreamCatalogSource, catSrcErr := setupCatalogSource(oc, NOcatSrc, catSrcTemplate, imageDigest, catalogSource, false, &NOSource, &NO)
-		o.Expect(catSrcErr).NotTo(o.HaveOccurred())
-		ensureNetObservOperatorDeployed(oc, NO, NOSource, deployedUpstreamCatalogSource)
 	})
 
 	g.It("Author:aramesha-High-64156-Verify IPFIX-exporter [Serial]", func() {
-		SkipIfOCPBelow("v4.10")
 		clusterArch, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("nodes", "-o=jsonpath={.items[0].status.nodeInfo.architecture}").Output()
 		o.Expect(err).NotTo(o.HaveOccurred())
 		if !strings.Contains(clusterArch, "amd64") {
@@ -120,7 +84,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Namespace:                         namespace,
 			Template:                          flowFixturePath,
 			LokiEnable:                        "false",
-			LokiNamespace:                     namespace,
+			InstallDemoLoki:                   "false",
 			Exporters:                         []string{IPFIXexporter},
 			NetworkPolicyAdditionalNamespaces: []string{additionalNamespaces},
 			Sampling:                          strconv.Itoa(samplingValue),
@@ -159,7 +123,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	})
 
 	g.It("Author:memodi-High-74977-Verify OTEL exporter with TLS [Serial]", func() {
-		SkipIfOCPBelow("v4.13")
 		// don't delete the OTEL Operator at the end of the test
 		g.By("Subscribe to OTEL Operator")
 		OtelNS.DeployOperatorNamespace(oc)
@@ -213,11 +176,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Deploy FlowCollector with OTEL TLS exporter and Loki disabled")
 		flow := Flowcollector{
-			Namespace:     namespace,
-			Template:      flowFixturePath,
-			LokiEnable:    "false",
-			LokiNamespace: namespace,
-			Exporters:     []string{config_str},
+			Namespace:       namespace,
+			Template:        flowFixturePath,
+			LokiEnable:      "false",
+			InstallDemoLoki: "false",
+			Exporters:       []string{config_str},
 		}
 
 		defer func() { _ = flow.DeleteFlowcollector(oc) }()

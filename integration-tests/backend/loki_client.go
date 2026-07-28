@@ -79,19 +79,28 @@ type lokiClient struct {
 	localhost       bool      // whether loki is port-forwarded to localhost, useful for monolithic loki
 }
 
+type lokiStream struct {
+	App             string `json:"app"`
+	DstK8SNamespace string `json:"DstK8S_Namespace"`
+	FlowDirection   string `json:"FlowDirection"`
+	SrcK8SNamespace string `json:"SrcK8S_Namespace"`
+	SrcK8SOwnerName string `json:"SrcK8S_OwnerName"`
+	DstK8SOwnerName string `json:"DstK8S_OwnerName"`
+	SrcK8SType      string `json:"SrcK8S_Type"`
+	DstK8SType      string `json:"DstK8S_Type"`
+	SrcK8SZone      string `json:"SrcK8S_Zone"`
+	DstK8SZone      string `json:"DstK8S_Zone"`
+	K8SClusterName  string `json:"K8S_ClusterName"`
+	K8SFlowLayer    string `json:"K8S_FlowLayer"`
+	RecordType      string `json:"_RecordType"`
+}
+
 type lokiQueryResponse struct {
 	Status string `json:"status"`
 	Data   struct {
 		ResultType string `json:"resultType"`
 		Result     []struct {
-			Stream struct {
-				App             string `json:"app"`
-				DstK8SNamespace string `json:"DstK8S_Namespace"`
-				FlowDirection   string `json:"FlowDirection"`
-				SrcK8SNamespace string `json:"SrcK8S_Namespace"`
-				SrcK8SOwnerName string `json:"SrcK8S_OwnerName"`
-				DstK8SOwnerName string `json:"kubernetes_pod_name"`
-			} `json:"stream"`
+			Stream lokiStream `json:"stream"`
 			Values [][]string `json:"values"`
 		} `json:"result"`
 		Stats struct {

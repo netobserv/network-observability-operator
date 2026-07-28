@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	filePath "path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -45,23 +44,6 @@ type CatalogSourceObjects struct {
 type OperatorNamespace struct {
 	Name              string
 	NamespaceTemplate string
-}
-
-type subscriptionResource struct {
-	name             string
-	namespace        string
-	operatorName     string
-	channel          string
-	catalog          string
-	catalogNamespace string
-	template         string
-}
-
-type operatorGroupResource struct {
-	name             string
-	namespace        string
-	targetNamespaces string
-	template         string
 }
 
 // waitForPackagemanifestAppear waits for the packagemanifest to appear in the cluster
@@ -277,239 +259,15 @@ func CheckOperatorStatus(oc *exutil.CLI, operatorNamespace string, operatorName 
 
 func (ns *OperatorNamespace) DeployOperatorNamespace(oc *exutil.CLI) {
 	e2e.Logf("Creating %s operator namespace", ns.Name)
-	nsParameters := []string{"--ignore-unknown-parameters=true", "-f", ns.NamespaceTemplate, "-p", "NAMESPACE_NAME=" + ns.Name}
+	// -n default: oc process requires a valid namespace context; in BeforeSuite the CLI may not have one yet
+	nsParameters := []string{"-n", "default", "--ignore-unknown-parameters=true", "-f", ns.NamespaceTemplate, "-p", "NAMESPACE_NAME=" + ns.Name}
 	compat_otp.ApplyClusterResourceFromTemplate(oc, nsParameters...)
 }
 
-func generateTemplateAbsolutePath(fileName string) string {
-	testDataDir, _ := filePath.Abs("testdata/networking/nmstate")
-	return filePath.Join(testDataDir, fileName)
-}
-
-func operatorInstall(oc *exutil.CLI, sub subscriptionResource, ns OperatorNamespace, og operatorGroupResource) (status bool) {
-	//Installing Operator
-	g.By("INSTALLING Operator in the namespace")
-
-	//Applying the config of necessary yaml files from templates to create metallb operator
-	g.By("Applying namespace template")
-	err0 := applyResourceFromTemplateByAdmin(oc, "--ignore-unknown-parameters=true", "-f", ns.NamespaceTemplate, "-p", "NAME="+ns.Name)
-	if err0 != nil {
-		e2e.Logf("Error creating namespace %v", err0)
-	}
-
-	g.By("Applying operatorgroup yaml")
-	err0 = applyResourceFromTemplateByAdmin(oc, "--ignore-unknown-parameters=true", "-f", og.template, "-p", "NAME="+og.name, "NAMESPACE="+og.namespace, "TARGETNAMESPACES="+og.targetNamespaces)
-	if err0 != nil {
-		e2e.Logf("Error creating operator group %v", err0)
-	}
-
-	g.By("Creating subscription YAML from template")
-	// no need to check for an existing subscription
-	err0 = applyResourceFromTemplateByAdmin(oc, "--ignore-unknown-parameters=true", "-f", sub.template, "-p", "OPERATORNAME="+sub.operatorName, "SUBSCRIPTIONNAME="+sub.name, "NAMESPACE="+sub.namespace, "CHANNEL="+sub.channel,
-		"CATALOGSOURCE="+sub.catalog, "CATALOGSOURCENAMESPACE="+sub.catalogNamespace)
-	if err0 != nil {
-		e2e.Logf("Error creating subscription %v", err0)
-	}
-
-	//confirming operator install
-	g.By("Verify the operator finished subscribing")
-	errCheck := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(context.Context) (bool, error) {
-		subState, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", sub.name, "-n", sub.namespace, "-o=jsonpath={.status.state}").Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		if strings.Compare(subState, "AtLatestKnown") == 0 {
-			return true, nil
-		}
-		// log full status of sub for installation failure debugging
-		subState, _ = oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", sub.name, "-n", sub.namespace, "-o=jsonpath={.status}").Output()
-		e2e.Logf("Status of subscription: %v", subState)
-		return false, nil
-	})
-	compat_otp.AssertWaitPollNoErr(errCheck, fmt.Sprintf("Subscription %s in namespace %v does not have expected status", sub.name, sub.namespace))
-
-	g.By("Get csvName")
-	csvName, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", sub.name, "-n", sub.namespace, "-o=jsonpath={.status.installedCSV}").Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-	o.Expect(csvName).NotTo(o.BeEmpty())
-	errCheck = wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(context.Context) (bool, error) {
-		csvState, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("csv", csvName, "-n", sub.namespace, "-o=jsonpath={.status.phase}").Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		if strings.Compare(csvState, "Succeeded") == 0 {
-			e2e.Logf("CSV check complete!!!")
-			return true, nil
-
-		}
-		return false, nil
-	})
-	compat_otp.AssertWaitPollNoErr(errCheck, fmt.Sprintf("CSV %v in %v namespace does not have expected status", csvName, sub.namespace))
-	return true
-}
-
-func getOpenshiftVersion(oc *exutil.CLI) string {
-	version, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("clusterversion/version", "-ojsonpath={.status.desired.version}").Output()
-	if err != nil {
-		return ""
-	}
-	re := regexp.MustCompile(`^(\d+\.\d+)`)
-	matches := re.FindStringSubmatch(version)
-	if len(matches) < 2 {
-		return ""
-	}
-	return matches[1]
-}
-
-func createImageDigestMirrorSet(oc *exutil.CLI, imagedigestmirrorsetname string, imageDigestMirrorSetFile string) error {
-	pollInterval := 10 * time.Second
-	waitTimeout := 120 * time.Second
-	err := oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", imageDigestMirrorSetFile).Execute()
-	if err != nil {
-		return fmt.Errorf("error applying image digest mirror set: %w", err)
-	}
-	return wait.PollUntilContextTimeout(context.Background(), pollInterval, waitTimeout, false, func(_ context.Context) (bool, error) {
-		err := oc.AsAdmin().WithoutNamespace().
-			Run("get").Args("imagedigestmirrorset", imagedigestmirrorsetname).Execute()
-		return err == nil, nil
-	})
-}
-
-func createCatalogSource(oc *exutil.CLI, operatorName string, catalogSourceName string, catalogNamespace string, catalogSourceTemplateFile string) error {
-	pollInterval := 10 * time.Second
-	waitTimeout := 120 * time.Second
-	openshiftVersion := getOpenshiftVersion(oc)
-	if openshiftVersion == "" {
-		return fmt.Errorf("failed to get OpenShift version")
-	}
-	image := "quay.io/redhat-user-workloads/ocp-art-tenant/art-fbc:ocp__" + openshiftVersion + "__" + operatorName + "-rhel9-operator"
-	e2e.Logf("Creating catalog source with name  '%s' in namespace '%s'", catalogSourceName, catalogNamespace)
-	err := applyResourceFromTemplateByAdmin(oc, "--ignore-unknown-parameters=true", "-f", catalogSourceTemplateFile, "-p", "CATALOGSOURCENAME="+catalogSourceName, "CATALOGNAMESPACE="+catalogNamespace, "IMAGE="+image)
-	if err != nil {
-		return fmt.Errorf("error applying catalog source: %w", err)
-	}
-
-	// Wait for CatalogSource to exist and be ready
-	return wait.PollUntilContextTimeout(context.Background(), pollInterval, waitTimeout, false, func(_ context.Context) (bool, error) {
-		// Check if CatalogSource exists
-		err := oc.AsAdmin().WithoutNamespace().Run("get").Args("catalogsource", catalogSourceName, "-n", catalogNamespace).Execute()
-		if err != nil {
-			e2e.Logf("CatalogSource not found yet: %v", err)
-			return false, nil
-		}
-
-		// Check if CatalogSource connection state is READY
-		connectionState, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("catalogsource", catalogSourceName,
-			"-n", catalogNamespace, "-o=jsonpath={.status.connectionState.lastObservedState}").Output()
-		if err != nil {
-			e2e.Logf("Failed to get connection state: %v", err)
-			return false, nil
-		}
-
-		if string(connectionState) != "READY" {
-			e2e.Logf("CatalogSource connection state is '%s', waiting for 'READY'", string(connectionState))
-			return false, nil
-		}
-
-		// Check if registry pod is running and ready
-		podName, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-n", catalogNamespace,
-			"-l", "olm.catalogSource="+catalogSourceName,
-			"-o=jsonpath={.items[0].metadata.name}").Output()
-		if err != nil || len(podName) == 0 {
-			e2e.Logf("Registry pod not found yet: %v", err)
-			return false, nil
-		}
-
-		// Check pod ready condition
-		podReady, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pod", string(podName), "-n", catalogNamespace,
-			"-o=jsonpath={.status.conditions[?(@.type=='Ready')].status}").Output()
-		if err != nil {
-			e2e.Logf("Failed to get pod ready status: %v", err)
-			return false, nil
-		}
-
-		if string(podReady) != "True" {
-			e2e.Logf("Registry pod '%s' is not ready yet: %s", string(podName), string(podReady))
-			return false, nil
-		}
-		e2e.Logf("CatalogSource '%s' is ready with pod '%s'", catalogSourceName, string(podName))
-		return true, nil
-	})
-}
-
-func getOperatorCatalogSource(oc *exutil.CLI, catalog string, namespace string) string {
-	if isBaselineCapsSet(oc) && !(isEnabledCapability(oc, "OperatorLifecycleManager")) {
-		g.Skip("Skipping the test as baselinecaps have been set and OperatorLifecycleManager capability is not enabled!")
-	}
-	catalogSourceNames, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("catalogsource", "-n", namespace, "-o=jsonpath={.items[*].metadata.name}").Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-	if strings.Contains(catalogSourceNames, catalog) {
-		return catalog
-	}
-	return ""
-}
-
-func getImageDigestMirrorSet(oc *exutil.CLI, imagedigestmirrorsetname string) string {
-	imageDigestMirrorSetNames, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("imagedigestmirrorset", "-o=jsonpath={.items[*].metadata.name}").Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-	if strings.Contains(imageDigestMirrorSetNames, imagedigestmirrorsetname) {
-		return imagedigestmirrorsetname
-	}
-	return ""
-}
-
-func installNMstateOperator(oc *exutil.CLI) {
-	var (
-		opNamespace              = "openshift-nmstate"
-		opName                   = "kubernetes-nmstate-operator"
-		catalogNamespace         = "openshift-marketplace"
-		catalogSourceName        = "kubernetes-nmstate-operator-fbc-catalog"
-		imageDigestMirrorSetName = "kubernetes-nmstate-images-mirror-set"
-	)
-
-	e2e.Logf("Check catalogsource and install nmstate operator.")
-	namespaceTemplate := generateTemplateAbsolutePath("namespace-template.yaml")
-	operatorGroupTemplate := generateTemplateAbsolutePath("operatorgroup-template.yaml")
-	subscriptionTemplate := generateTemplateAbsolutePath("subscription-template.yaml")
-	catalogSourceTemplate := generateTemplateAbsolutePath("catalogsource-template.yaml")
-	imageDigestMirrorSetFile := generateTemplateAbsolutePath("image-digest-mirrorset.yaml")
-	sub := subscriptionResource{
-		name:             "nmstate-operator-sub",
-		namespace:        opNamespace,
-		operatorName:     opName,
-		channel:          "stable",
-		catalog:          catalogSourceName,
-		catalogNamespace: catalogNamespace,
-		template:         subscriptionTemplate,
-	}
-	compat_otp.By("Check the image digest mirror set and catalog source")
-	imageDigestMirrorSet := getImageDigestMirrorSet(oc, imageDigestMirrorSetName)
-	if imageDigestMirrorSet == "" {
-		compat_otp.By("Creating image digest mirror set")
-		o.Expect(createImageDigestMirrorSet(oc, imageDigestMirrorSetName, imageDigestMirrorSetFile)).NotTo(o.HaveOccurred())
-	}
-	catalogSource := getOperatorCatalogSource(oc, catalogSourceName, catalogNamespace)
-	if catalogSource == "" {
-		compat_otp.By("Creating catalog source")
-		o.Expect(createCatalogSource(oc, "kubernetes-nmstate", catalogSourceName, catalogNamespace, catalogSourceTemplate)).NotTo(o.HaveOccurred())
-	}
-	//sub.catalog = catalogSource
-	ns := OperatorNamespace{
-		Name:              opNamespace,
-		NamespaceTemplate: namespaceTemplate,
-	}
-	og := operatorGroupResource{
-		name:             opName,
-		namespace:        opNamespace,
-		targetNamespaces: opNamespace,
-		template:         operatorGroupTemplate,
-	}
-
-	operatorInstall(oc, sub, ns, og)
-	e2e.Logf("SUCCESS - NMState operator installed")
-}
-
 // setupCatalogSource deploys the catalog source and image digest mirror set
-func setupCatalogSource(oc *exutil.CLI, catSrc Resource, catSrcTemplate, imageDigest, catalogSource string, isHypershift bool, NOSource *CatalogSourceObjects, NO *SubscriptionObjects) (bool, error) {
+func setupCatalogSource(oc *exutil.CLI, catSrc Resource, catSrcTemplate, imageDigest, catalogSource string, isHypershift bool, NOSource *CatalogSourceObjects, NO *SubscriptionObjects) error {
 	g.By("Deploy konflux FBC and ImageDigestMirrorSet")
 	upstreamCatalogSource := "quay.io/netobserv/network-observability-operator-catalog:v0.0.0-sha-main"
-	deployedUpstreamCatalogSource := false
 	var catsrcErr error
 
 	if catalogSource != "" {
@@ -520,7 +278,6 @@ func setupCatalogSource(oc *exutil.CLI, catSrc Resource, catSrcTemplate, imageDi
 		catsrcErr = catSrc.applyFromTemplate(oc, "-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace, "IMAGE="+upstreamCatalogSource)
 		NOSource.Channel = "latest"
 		NO.CatalogSource = NOSource
-		deployedUpstreamCatalogSource = true
 	} else {
 		e2e.Logf("Using default ystream catalog")
 		catsrcErr = catSrc.applyFromTemplate(oc, "-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace)
@@ -530,7 +287,7 @@ func setupCatalogSource(oc *exutil.CLI, catSrc Resource, catSrcTemplate, imageDi
 	if !isHypershift {
 		ApplyResourceFromFile(oc, catSrc.Namespace, imageDigest)
 	}
-	return deployedUpstreamCatalogSource, catsrcErr
+	return catsrcErr
 }
 
 // ensureOperatorDeployed checks and deploys an operator if not already present
@@ -560,7 +317,7 @@ func ensureOperatorDeployed(oc *exutil.CLI, operator SubscriptionObjects, operat
 }
 
 // ensureNetObservOperatorDeployed checks and deploys the NetObserv operator with specific configurations
-func ensureNetObservOperatorDeployed(oc *exutil.CLI, NO SubscriptionObjects, NOSource CatalogSourceObjects, deployedUpstreamCatalogSource bool) {
+func ensureNetObservOperatorDeployed(oc *exutil.CLI, NO SubscriptionObjects, NOSource CatalogSourceObjects) {
 	ensureOperatorDeployed(oc, NO, NOSource, "app="+NO.OperatorName)
 
 	// NetObserv-specific checks only if operator was just deployed
@@ -572,13 +329,6 @@ func ensureNetObservOperatorDeployed(oc *exutil.CLI, NO SubscriptionObjects, NOS
 		flowcollectorAPIExists, err := isFlowCollectorAPIExists(oc)
 		o.Expect(flowcollectorAPIExists).To(o.BeTrue())
 		o.Expect(err).NotTo(o.HaveOccurred())
-
-		// Patch upstream catalog source if needed
-		if deployedUpstreamCatalogSource {
-			_, err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("csv", "netobserv-operator.v0.0.0-sha-main", "-n", NO.Namespace,
-				"--type=json", "--patch", "[{\"op\": \"replace\",\"path\": \"/spec/install/spec/deployments/0/spec/template/spec/containers/0/env/4/value\", \"value\": \"true\"}]").Output()
-			o.Expect(err).NotTo(o.HaveOccurred())
-		}
 	}
 }
 
