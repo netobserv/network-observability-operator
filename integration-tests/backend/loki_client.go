@@ -16,9 +16,7 @@ import (
 	"time"
 
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	corev1 "k8s.io/api/core/v1"
 	k8sresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
@@ -30,15 +28,14 @@ type Resource struct {
 	Namespace string
 }
 
-// CompareClusterResources compares the remaning resource with the requested resource provide by user
-func compareClusterResources(oc *exutil.CLI, cpu, memory string) bool {
-	nodes, err := compat_otp.GetSchedulableLinuxWorkerNodes(oc)
-	o.Expect(err).NotTo(o.HaveOccurred())
+func compareClusterResources(cpu, memory string) bool {
+	nodes := getSchedulableLinuxWorkerNodes()
+	resourcesMap := getRemainingResourcesNodesMap(nodes)
+
 	var remainingCPU, remainingMemory int64
-	re := compat_otp.GetRemainingResourcesNodesMap(oc, nodes)
 	for _, node := range nodes {
-		remainingCPU += re[node.Name].CPU
-		remainingMemory += re[node.Name].Memory
+		remainingCPU += resourcesMap[node.Name].CPU
+		remainingMemory += resourcesMap[node.Name].Memory
 	}
 
 	requiredCPU, _ := k8sresource.ParseQuantity(cpu)
@@ -50,19 +47,24 @@ func compareClusterResources(oc *exutil.CLI, cpu, memory string) bool {
 
 // ValidateInfraAndResourcesForLoki checks cluster remaning resources and platform type
 // supportedPlatforms the platform types which the case can be executed on, if it's empty, then skip this check
-func validateInfraAndResourcesForLoki(oc *exutil.CLI, reqMemory, reqCPU string, supportedPlatforms ...string) bool {
-	currentPlatform := compat_otp.CheckPlatform(oc)
+func validateInfraAndResourcesForLoki(reqMemory, reqCPU string, supportedPlatforms ...string) bool {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	o.Expect(err).NotTo(o.HaveOccurred())
+	platformType, _ := getNestedField(obj.Object, ".status.platformStatus.type")
+	currentPlatform := strings.ToLower(platformType)
+
 	if currentPlatform == "aws" {
-		//  skip the case on aws sts clusters
-		_, err := oc.AdminKubeClient().CoreV1().Secrets("kube-system").Get(context.Background(), "aws-creds", metav1.GetOptions{})
-		if apierrors.IsNotFound(err) {
+		_, getErr := k8sClient.CoreV1().Secrets("kube-system").Get(context.Background(), "aws-creds", metav1.GetOptions{})
+		if getErr != nil {
 			return false
 		}
 	}
 	if len(supportedPlatforms) > 0 {
-		return contain(supportedPlatforms, currentPlatform) && compareClusterResources(oc, reqCPU, reqMemory)
+		result := contain(supportedPlatforms, currentPlatform) && compareClusterResources(reqCPU, reqMemory)
+		return result
 	}
-	return compareClusterResources(oc, reqCPU, reqMemory)
+	result := compareClusterResources(reqCPU, reqMemory)
+	return result
 }
 
 type lokiClient struct {
@@ -369,4 +371,153 @@ func (c *lokiClient) searchLogsInLoki(logType, query string) (*lokiQueryResponse
 	e2e.Logf("Loki query is %s", query)
 	res, err := c.queryRange(logType, query, 50, c.startTime, time.Now(), false)
 	return res, err
+}
+
+// Node resource tracking
+type NodeInfo struct {
+	Name string
+}
+
+type NodeResources struct {
+	CPU    int64
+	Memory int64
+}
+
+// getSchedulableLinuxWorkerNodes returns schedulable linux worker nodes
+func getSchedulableLinuxWorkerNodes() []NodeInfo {
+	nodeList, err := k8sClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
+		LabelSelector: "kubernetes.io/os=linux,node-role.kubernetes.io/worker",
+	})
+	o.Expect(err).NotTo(o.HaveOccurred())
+
+	var nodes []NodeInfo
+	for _, node := range nodeList.Items {
+		if node.Spec.Unschedulable {
+			continue
+		}
+		// Check if node is Ready
+		for _, cond := range node.Status.Conditions {
+			if cond.Type == corev1.NodeReady && cond.Status == corev1.ConditionTrue {
+				nodes = append(nodes, NodeInfo{Name: node.Name})
+				break
+			}
+		}
+	}
+	return nodes
+}
+
+// getRemainingResourcesNodesMap returns remaining resources per node
+func getRemainingResourcesNodesMap(nodes []NodeInfo) map[string]NodeResources {
+	rmap := make(map[string]NodeResources)
+	requested := getRequestedResourcesNodesMap(nodes)
+	allocatable := getAllocatableResourcesNodesMap(nodes)
+
+	for _, node := range nodes {
+		rmap[node.Name] = NodeResources{
+			CPU:    allocatable[node.Name].CPU - requested[node.Name].CPU,
+			Memory: allocatable[node.Name].Memory - requested[node.Name].Memory,
+		}
+	}
+	return rmap
+}
+
+// getRequestedResourcesNodesMap returns requested resources per node
+func getRequestedResourcesNodesMap(nodes []NodeInfo) map[string]NodeResources {
+	rmap := make(map[string]NodeResources)
+	podsMap := getPodsNodesMap(nodes)
+
+	for nodeName, pods := range podsMap {
+		var totalRequestedCPU, totalRequestedMemory int64
+		for _, pod := range pods {
+			for _, container := range pod.Containers {
+				if container.RequestsCPU != "" {
+					cpuQty, _ := k8sresource.ParseQuantity(container.RequestsCPU)
+					totalRequestedCPU += cpuQty.MilliValue()
+				}
+				if container.RequestsMemory != "" {
+					memQty, _ := k8sresource.ParseQuantity(container.RequestsMemory)
+					totalRequestedMemory += memQty.MilliValue()
+				}
+			}
+		}
+		rmap[nodeName] = NodeResources{CPU: totalRequestedCPU, Memory: totalRequestedMemory}
+	}
+	return rmap
+}
+
+// getAllocatableResourcesNodesMap returns allocatable resources per node
+func getAllocatableResourcesNodesMap(nodes []NodeInfo) map[string]NodeResources {
+	rmap := make(map[string]NodeResources)
+
+	for _, node := range nodes {
+		nodeObj, err := k8sClient.CoreV1().Nodes().Get(context.Background(), node.Name, metav1.GetOptions{})
+		if err != nil {
+			continue
+		}
+
+		cpuQty := nodeObj.Status.Allocatable[corev1.ResourceCPU]
+		memQty := nodeObj.Status.Allocatable[corev1.ResourceMemory]
+		rmap[node.Name] = NodeResources{
+			CPU:    cpuQty.MilliValue(),
+			Memory: memQty.MilliValue(),
+		}
+	}
+	return rmap
+}
+
+type PodInfo struct {
+	Name       string
+	Namespace  string
+	NodeName   string
+	Phase      string
+	Containers []ContainerInfo
+}
+
+type ContainerInfo struct {
+	RequestsCPU    string
+	RequestsMemory string
+}
+
+// getPodsNodesMap returns all pods per node
+func getPodsNodesMap(nodes []NodeInfo) map[string][]PodInfo {
+	podsMap := make(map[string][]PodInfo)
+
+	// Get all namespaces
+	nsList, err := k8sClient.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return podsMap
+	}
+
+	// Get pods from each namespace
+	for _, nsObj := range nsList.Items {
+		ns := nsObj.Name
+		podList, err := k8sClient.CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			continue
+		}
+
+		for _, pod := range podList.Items {
+			if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodSucceeded {
+				continue
+			}
+			var containers []ContainerInfo
+			for _, c := range pod.Spec.Containers {
+				cpuReq := c.Resources.Requests[corev1.ResourceCPU]
+				memReq := c.Resources.Requests[corev1.ResourceMemory]
+				containers = append(containers, ContainerInfo{
+					RequestsCPU:    cpuReq.String(),
+					RequestsMemory: memReq.String(),
+				})
+			}
+			podsMap[pod.Spec.NodeName] = append(podsMap[pod.Spec.NodeName], PodInfo{
+				Name:       pod.Name,
+				Namespace:  ns,
+				NodeName:   pod.Spec.NodeName,
+				Phase:      string(pod.Status.Phase),
+				Containers: containers,
+			})
+		}
+	}
+
+	return podsMap
 }

@@ -1,9 +1,9 @@
 package e2etests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strconv"
 
 	filePath "path/filepath"
@@ -12,14 +12,15 @@ import (
 
 	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 	defer g.GinkgoRecover()
 	var (
-		oc = compat_otp.NewCLI("netobserv", compat_otp.KubeConfigPath())
+		namespace string
 
 		OtelNS = OperatorNamespace{
 			Name:              "openshift-opentelemetry-operator",
@@ -36,15 +37,15 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			OperatorGroup: filePath.Join(subscriptionDir, "allnamespace-og.yaml"),
 			CatalogSource: &OTELSource,
 		}
-		namespace string
 	)
 
 	g.BeforeEach(func() {
+		oc := NewCLI()
 		namespace = oc.Namespace()
 	})
 
 	g.It("Author:aramesha-High-64156-Verify IPFIX-exporter [Serial]", func() {
-		clusterArch, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("nodes", "-o=jsonpath={.items[0].status.nodeInfo.architecture}").Output()
+		clusterArch, err := getNodeArchitecture()
 		o.Expect(err).NotTo(o.HaveOccurred())
 		if !strings.Contains(clusterArch, "amd64") {
 			g.Skip("IPFIX collector image only supports amd64 architecture. Skip this test!")
@@ -53,19 +54,20 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Create IPFIX namespace")
 		ipfixCollectorTemplatePath := filePath.Join(baseDir, "exporters", "ipfix-collector.yaml")
 		IPFIXns := "ipfix"
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(IPFIXns)
-		oc.CreateSpecifiedNamespaceAsAdmin(IPFIXns)
-		_ = compat_otp.SetNamespacePrivileged(oc, IPFIXns)
+		defer deleteNamespace(IPFIXns)
+		err = createNamespace(IPFIXns)
+		o.Expect(err).NotTo(o.HaveOccurred())
+		_ = setNamespacePrivileged(IPFIXns)
 
 		g.By("Deploy IPFIX collector")
-		createResourceFromFile(oc, IPFIXns, ipfixCollectorTemplatePath)
-		WaitForPodsReadyWithLabel(oc, IPFIXns, "app=ipfix-collector")
+		createResourceFromFile(IPFIXns, ipfixCollectorTemplatePath)
+		WaitForPodsReadyWithLabel(IPFIXns, "app=ipfix-collector")
 
 		g.By("Wait for IPFIX collector TCP listener to initialize")
 		time.Sleep(10 * time.Second)
 
-		IPFIXconfig := map[string]interface{}{
-			"ipfix": map[string]interface{}{
+		IPFIXconfig := map[string]any{
+			"ipfix": map[string]any{
 				"targetHost":   "ipfix-collector.ipfix.svc.cluster.local",
 				"targetPort":   2055,
 				"transport":    "TCP",
@@ -90,23 +92,26 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Sampling:                          strconv.Itoa(samplingValue),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Verify flowcollector is deployed with IPFIX exporter")
-		flowPatch, err := oc.AsAdmin().Run("get").Args("flowcollector", "cluster", "-n", namespace, "-o", "jsonpath='{.spec.exporters[0].type}'").Output()
+		fcObj, err := getDynamicResource("flowcollector", "cluster", "")
 		o.Expect(err).ToNot(o.HaveOccurred())
-		o.Expect(flowPatch).To(o.Equal(`'IPFIX'`))
+		exporters, _, _ := unstructured.NestedSlice(fcObj.Object, "spec", "exporters")
+		o.Expect(exporters).NotTo(o.BeEmpty())
+		exporter0 := exporters[0].(map[string]interface{})
+		o.Expect(exporter0["type"]).To(o.Equal("IPFIX"))
 
 		g.By("Get IPFIX collector pod")
-		collectorPod, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-n", IPFIXns, "-l", "app=ipfix-collector", "-o=jsonpath={.items[0].metadata.name}").Output()
+		collectorPod, err := getPodNameWithLabel(IPFIXns, "app=ipfix-collector")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Wait for IPFIX flows to be collected")
 		time.Sleep(60 * time.Second)
 
 		g.By("Retrieve and parse IPFIX flow records from collector API")
-		flowRecords, err := getIPFIXFlowRecordsFromAPI(oc, IPFIXns, collectorPod)
+		flowRecords, err := getIPFIXFlowRecordsFromAPI(IPFIXns, collectorPod)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "No IPFIX flow records found in collector")
 
@@ -125,10 +130,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	g.It("Author:memodi-High-74977-Verify OTEL exporter with TLS [Serial]", func() {
 		// don't delete the OTEL Operator at the end of the test
 		g.By("Subscribe to OTEL Operator")
-		OtelNS.DeployOperatorNamespace(oc)
-		OTEL.SubscribeOperator(oc)
-		WaitForPodsReadyWithLabel(oc, OTEL.Namespace, "app.kubernetes.io/name="+OTEL.OperatorName)
-		OTELStatus, err := CheckOperatorStatus(oc, OTEL.Namespace, OTEL.PackageName)
+		OtelNS.DeployOperatorNamespace()
+		OTEL.SubscribeOperator()
+		WaitForPodsReadyWithLabel(OTEL.Namespace, "app.kubernetes.io/name="+OTEL.OperatorName)
+		OTELStatus, err := CheckOperatorStatus(OTEL.Namespace, OTEL.PackageName)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect((OTELStatus)).To(o.BeTrue())
 
@@ -137,31 +142,32 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		otlpEndpoint := 4317
 		promEndpoint := "8889"
 		collectorname := "otel"
-		compat_otp.ApplyNsResourceFromTemplate(oc, namespace, "-f", otelCollectorTemplatePath, "-p", "NAME="+collectorname, "OTLP_GRPC_ENDPOINT="+strconv.Itoa(otlpEndpoint), "OTLP_PROM_PORT="+promEndpoint)
+		err = applyNsResourceFromTemplateByAdmin(namespace, "-f", otelCollectorTemplatePath, "-p", "NAME="+collectorname, "OTLP_GRPC_ENDPOINT="+strconv.Itoa(otlpEndpoint), "OTLP_PROM_PORT="+promEndpoint)
+		o.Expect(err).NotTo(o.HaveOccurred())
 		otelPodLabel := "app.kubernetes.io/component=opentelemetry-collector"
 		defer func() {
-			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("opentelemetrycollector", collectorname, "-n", namespace).Execute()
-			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("service", collectorname+"-collector", "-n", namespace).Execute()
-			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("configmap", "service-ca", "-n", namespace).Execute()
+			_ = deleteDynamicResource("opentelemetrycollector", collectorname, namespace)
+			_ = k8sClient.CoreV1().Services(namespace).Delete(context.Background(), collectorname+"-collector", metav1.DeleteOptions{})
+			_ = k8sClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), "service-ca", metav1.DeleteOptions{})
 		}()
-		WaitForPodsReadyWithLabel(oc, namespace, otelPodLabel)
+		WaitForPodsReadyWithLabel(namespace, otelPodLabel)
 
 		g.By("Wait for service-ca configmap to be injected with CA bundle")
-		waitForConfigMapDataInjection(oc, namespace, "service-ca", "service-ca.crt")
+		waitForConfigMapDataInjection(namespace, "service-ca", "service-ca.crt")
 
 		targetHost := fmt.Sprintf("%s-collector.%s.svc", collectorname, namespace)
-		otel_config := map[string]interface{}{
-			"openTelemetry": map[string]interface{}{
+		otel_config := map[string]any{
+			"openTelemetry": map[string]any{
 				"logs": map[string]bool{"enable": true},
-				"metrics": map[string]interface{}{"enable": true,
+				"metrics": map[string]any{"enable": true,
 					"pushTimeInterval": "20s"},
 				"targetHost": targetHost,
 				"targetPort": otlpEndpoint,
 				"protocol":   "grpc",
-				"tls": map[string]interface{}{
+				"tls": map[string]any{
 					"enable":             true,
 					"insecureSkipVerify": false,
-					"caCert": map[string]interface{}{
+					"caCert": map[string]any{
 						"type":     "configmap",
 						"name":     "service-ca",
 						"certFile": "service-ca.crt",
@@ -183,11 +189,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Exporters:       []string{config_str},
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Verify OTEL collector is receiving TLS-encrypted flows")
-		otelCollectorPod, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-n", namespace, "-l", otelPodLabel, "-o=jsonpath={.items[0].metadata.name}").Output()
+		otelCollectorPod, err := getPodNameWithLabel(namespace, otelPodLabel)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		// wait for 60 seconds to ensure we collected enough logs to grep from
@@ -197,33 +203,25 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		textToExist := "Attributes:"
 		textToNotExist := "INVALID"
 
-		podLogs, err := getPodLogs(oc, namespace, otelCollectorPod)
+		podLogs, err := getPodLogs(namespace, otelCollectorPod)
 		o.Expect(err).ToNot(o.HaveOccurred())
 
-		grepCmd := fmt.Sprintf("grep %s %s", textToExist, podLogs)
-		textToExistLogs, err := exec.Command("bash", "-c", grepCmd).Output()
-
-		o.Expect(err).ToNot(o.HaveOccurred())
-		o.Expect(len(textToExistLogs)).To(o.BeNumerically(">", 0))
-
-		grepCmd = fmt.Sprintf("grep %s %s || true", textToNotExist, podLogs)
-		textToNotExistLogs, err := exec.Command("bash", "-c", grepCmd).Output()
-		o.Expect(err).ToNot(o.HaveOccurred())
-		o.Expect(len(textToNotExistLogs)).To(o.BeNumerically("==", 0), string(textToNotExistLogs))
+		o.Expect(podLogs).To(o.ContainSubstring(textToExist))
+		o.Expect(podLogs).ToNot(o.ContainSubstring(textToNotExist))
 
 		g.By("Verify OTEL prometheus has metrics")
 		// Get the service IP for the service with label operator.opentelemetry.io/collector-service-type=base
-		svcIP, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("svc", "-n", namespace, "-l", "operator.opentelemetry.io/collector-service-type=base", "-o=jsonpath={.items[0].spec.clusterIP}").Output()
+		svcIP, err := getServiceClusterIP(namespace, "operator.opentelemetry.io/collector-service-type=base")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		// Get one of the flowlogs-pipeline pods
-		flowlogsPipelinePod, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-n", namespace, "-l", "app=flowlogs-pipeline", "-o=jsonpath={.items[0].metadata.name}").Output()
+		flowlogsPipelinePod, err := getPodNameWithLabel(namespace, "app=flowlogs-pipeline")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		// Use the flowlogs-pipeline pod to curl the metrics endpoint of the otel collector service
 		command := fmt.Sprintf("curl -s http://%s:%s/metrics | grep 'netobserv_workload_flows_total{' | head -1 | awk '{print $2}'", svcIP, promEndpoint)
-		cmd := []string{"-n", namespace, flowlogsPipelinePod, "--", "/bin/sh", "-c", command}
-		count, err := oc.AsAdmin().WithoutNamespace().Run("exec").Args(cmd...).Output()
+		cmd := []string{"/bin/sh", "-c", command}
+		count, err := execInPod(namespace, flowlogsPipelinePod, cmd)
 		o.Expect(err).ToNot(o.HaveOccurred())
 		nCount, err := strconv.Atoi(strings.Trim(count, "\n"))
 		o.Expect(err).ToNot(o.HaveOccurred())

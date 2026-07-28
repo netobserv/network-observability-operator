@@ -2,17 +2,21 @@ package e2etests
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
 	filePath "path/filepath"
 	"reflect"
+	"strings"
 	"time"
 
 	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -22,27 +26,36 @@ type User struct {
 	Password string
 }
 
-func getCoStatus(oc *exutil.CLI, coName string, statusToCompare map[string]string) map[string]string {
+func getCoStatus(coName string, statusToCompare map[string]string) map[string]string {
 	newStatusToCompare := make(map[string]string)
+	obj, err := getDynamicResource("clusteroperator", coName, "")
+	o.Expect(err).NotTo(o.HaveOccurred())
+	conditions, _, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
 	for key := range statusToCompare {
-		args := fmt.Sprintf(`-o=jsonpath={.status.conditions[?(.type == '%s')].status}`, key)
-		status, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("co", args, coName).Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		newStatusToCompare[key] = status
+		for _, c := range conditions {
+			cond, ok := c.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if t, _ := cond["type"].(string); t == key {
+				newStatusToCompare[key], _ = cond["status"].(string)
+				break
+			}
+		}
 	}
 	return newStatusToCompare
 }
 
-func waitCoBecomes(oc *exutil.CLI, coName string, waitTime int, expectedStatus map[string]string) error {
+func waitCoBecomes(coName string, waitTime int, expectedStatus map[string]string) error {
 	errCo := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, time.Duration(waitTime)*time.Second, false, func(context.Context) (bool, error) {
-		gottenStatus := getCoStatus(oc, coName, expectedStatus)
+		gottenStatus := getCoStatus(coName, expectedStatus)
 		eq := reflect.DeepEqual(expectedStatus, gottenStatus)
 		if eq {
 			eq := reflect.DeepEqual(expectedStatus, map[string]string{"Available": "True", "Progressing": "False", "Degraded": "False"})
 			if eq {
 				// For True False False, we want to wait some bit more time and double check, to ensure it is stably healthy
 				time.Sleep(25 * time.Second)
-				gottenStatus := getCoStatus(oc, coName, expectedStatus)
+				gottenStatus := getCoStatus(coName, expectedStatus)
 				eq := reflect.DeepEqual(expectedStatus, gottenStatus)
 				if eq {
 					e2e.Logf("Given operator %s becomes available/non-progressing/non-degraded +%v", coName, gottenStatus)
@@ -56,8 +69,19 @@ func waitCoBecomes(oc *exutil.CLI, coName string, waitTime int, expectedStatus m
 		return false, nil
 	})
 	if errCo != nil {
-		err := oc.AsAdmin().WithoutNamespace().Run("get").Args("co").Execute()
-		o.Expect(err).NotTo(o.HaveOccurred())
+		coGVR, _ := resolveGVR("clusteroperator")
+		coList, err := k8sDynClient.Resource(coGVR).List(context.Background(), metav1.ListOptions{})
+		if err == nil {
+			var coNames []string
+			for _, item := range coList.Items {
+				name := item.GetName()
+				status, _, _ := getConditionStatus(&item, "Available")
+				progressing, _, _ := getConditionStatus(&item, "Progressing")
+				degraded, _, _ := getConditionStatus(&item, "Degraded")
+				coNames = append(coNames, fmt.Sprintf("%s(Available=%s,Progressing=%s,Degraded=%s)", name, status, progressing, degraded))
+			}
+			e2e.Logf("ClusterOperators: %v", strings.Join(coNames, ", "))
+		}
 	}
 	return errCo
 }
@@ -65,8 +89,8 @@ func waitCoBecomes(oc *exutil.CLI, coName string, waitTime int, expectedStatus m
 func generateUsersHtpasswd(passwdFile *string, users []*User) error {
 	for i := 0; i < len(users); i++ {
 		// Generate new username and password
-		username := fmt.Sprintf("testuser-%v-%v", i, compat_otp.GetRandomString())
-		password := compat_otp.GetRandomString()
+		username := fmt.Sprintf("testuser-%v-%v", i, getRandomString())
+		password := getRandomString()
 		users[i] = &User{Username: username, Password: password}
 
 		// Add new user to htpasswd file in the temp directory
@@ -79,13 +103,13 @@ func generateUsersHtpasswd(passwdFile *string, users []*User) error {
 	return nil
 }
 
-func getNewUser(oc *exutil.CLI, count int) ([]*User, string, string) {
-	usersDirPath := "/tmp/" + compat_otp.GetRandomString()
+func getNewUser(count int) ([]*User, string, string) {
+	usersDirPath := "/tmp/" + getRandomString()
 	usersHTpassFile := usersDirPath + "/htpasswd"
 	err := os.MkdirAll(usersDirPath, 0o755)
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	htPassSecret, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("oauth/cluster", "-o", "jsonpath={.spec.identityProviders[0].htpasswd.fileData.name}").Output()
+	htPassSecret, err := getOAuthHTPasswdSecretName()
 	o.Expect(err).NotTo(o.HaveOccurred())
 	users := make([]*User, count)
 	if htPassSecret == "" {
@@ -93,31 +117,31 @@ func getNewUser(oc *exutil.CLI, count int) ([]*User, string, string) {
 		_, _ = os.Create(usersHTpassFile)
 		err = generateUsersHtpasswd(&usersHTpassFile, users)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		err = oc.AsAdmin().WithoutNamespace().Run("create").Args("-n", "openshift-config", "secret", "generic", htPassSecret, "--from-file", "htpasswd="+usersHTpassFile).Execute()
+		err = createSecretFromFile("openshift-config", htPassSecret, "htpasswd", usersHTpassFile)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("--type=json", "-p", `[{"op": "add", "path": "/spec/identityProviders", "value": [{"htpasswd": {"fileData": {"name": "htpass-secret"}}, "mappingMethod": "claim", "name": "htpasswd", "type": "HTPasswd"}]}]`, "oauth/cluster").Execute()
+		err = patchOAuthAddHTPasswdIdentityProvider(htPassSecret)
 		o.Expect(err).NotTo(o.HaveOccurred())
 	} else {
-		err = oc.AsAdmin().WithoutNamespace().Run("extract").Args("-n", "openshift-config", "secret/"+htPassSecret, "--to", usersDirPath, "--confirm").Execute()
+		err = extractSecretToFile("openshift-config", htPassSecret, "htpasswd", usersHTpassFile)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		err = generateUsersHtpasswd(&usersHTpassFile, users)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		// Update htpass-secret with the modified htpasswd file
-		err = oc.AsAdmin().WithoutNamespace().Run("set").Args("-n", "openshift-config", "data", "secret/"+htPassSecret, "--from-file", "htpasswd="+usersHTpassFile).Execute()
+		err = updateSecretFromFile("openshift-config", htPassSecret, "htpasswd", usersHTpassFile)
 		o.Expect(err).NotTo(o.HaveOccurred())
 	}
 
 	g.By("Checking authentication operator should be in Progressing in 180 seconds")
-	err = waitCoBecomes(oc, "authentication", 180, map[string]string{"Progressing": "True"})
-	compat_otp.AssertWaitPollNoErr(err, "authentication operator did not start progressing in 180 seconds")
+	err = waitCoBecomes("authentication", 180, map[string]string{"Progressing": "True"})
+	assertWaitPollNoErr(err, "authentication operator did not start progressing in 180 seconds")
 	e2e.Logf("Checking authentication operator should be Available in 600 seconds")
-	err = waitCoBecomes(oc, "authentication", 600, map[string]string{"Available": "True", "Progressing": "False", "Degraded": "False"})
-	compat_otp.AssertWaitPollNoErr(err, "authentication operator did not become available in 600 seconds")
+	err = waitCoBecomes("authentication", 600, map[string]string{"Available": "True", "Progressing": "False", "Degraded": "False"})
+	assertWaitPollNoErr(err, "authentication operator did not become available in 600 seconds")
 
 	return users, usersHTpassFile, htPassSecret
 }
 
-func userCleanup(oc *exutil.CLI, users []*User, usersHTpassFile string, htPassSecret string) {
+func userCleanup(users []*User, usersHTpassFile string, htPassSecret string) {
 	defer os.RemoveAll(usersHTpassFile)
 	for i := range users {
 		// Add new user to htpasswd file in the temp directory
@@ -127,41 +151,100 @@ func userCleanup(oc *exutil.CLI, users []*User, usersHTpassFile string, htPassSe
 	}
 
 	// Update htpass-secret with the modified htpasswd file
-	err := oc.AsAdmin().WithoutNamespace().Run("set").Args("-n", "openshift-config", "data", "secret/"+htPassSecret, "--from-file", "htpasswd="+usersHTpassFile).Execute()
+	err := updateSecretFromFile("openshift-config", htPassSecret, "htpasswd", usersHTpassFile)
 	o.Expect(err).NotTo(o.HaveOccurred())
 
 	g.By("Checking authentication operator should be in Progressing in 180 seconds")
-	err = waitCoBecomes(oc, "authentication", 180, map[string]string{"Progressing": "True"})
-	compat_otp.AssertWaitPollNoErr(err, "authentication operator did not start progressing in 180 seconds")
+	err = waitCoBecomes("authentication", 180, map[string]string{"Progressing": "True"})
+	assertWaitPollNoErr(err, "authentication operator did not start progressing in 180 seconds")
 	e2e.Logf("Checking authentication operator should be Available in 600 seconds")
-	err = waitCoBecomes(oc, "authentication", 600, map[string]string{"Available": "True", "Progressing": "False", "Degraded": "False"})
-	compat_otp.AssertWaitPollNoErr(err, "authentication operator did not become available in 600 seconds")
+	err = waitCoBecomes("authentication", 600, map[string]string{"Available": "True", "Progressing": "False", "Degraded": "False"})
+	assertWaitPollNoErr(err, "authentication operator did not become available in 600 seconds")
 }
 
-func addUserAsReader(oc *exutil.CLI, username string) {
+func addUserAsReader(username string) {
 	baseDir, _ := filePath.Abs("testdata")
 	readerCRBPath := filePath.Join(baseDir, "netobserv-loki-reader-multitenant-crb.yaml")
-	parameters := []string{"-f", readerCRBPath, "-p", "USERNAME=" + username}
-	compat_otp.CreateClusterResourceFromTemplate(oc, parameters...)
-}
-
-func removeUserAsReader(oc *exutil.CLI, username string) {
-	err := oc.AsAdmin().WithoutNamespace().Run("adm").Args("policy", "remove-cluster-role-from-user", "netobserv-loki-reader", username).Execute()
+	parameters := []string{"--ignore-unknown-parameters=true", "-f", readerCRBPath, "-p", "USERNAME=" + username}
+	err := applyResourceFromTemplateByAdmin(parameters...)
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
-func addTemplatePermissions(oc *exutil.CLI, username string) {
-	baseDir, _ := filePath.Abs("testdata")
-	readerCRBPath := filePath.Join(baseDir, "testuser-template-crb.yaml")
-	parameters := []string{"-f", readerCRBPath, "-p", "USERNAME=" + username}
-	compat_otp.CreateClusterResourceFromTemplate(oc, parameters...)
+func removeUserAsReader(username string) {
+	cmd := exec.Command("oc", "adm", "policy", "remove-cluster-role-from-user", "netobserv-loki-reader", username)
+	err := cmd.Run()
+	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
-func removeTemplatePermissions(oc *exutil.CLI, username string) {
+func addTemplatePermissions(username string) {
+	baseDir, _ := filePath.Abs("testdata")
+	readerCRBPath := filePath.Join(baseDir, "testuser-template-crb.yaml")
+	parameters := []string{"--ignore-unknown-parameters=true", "-f", readerCRBPath, "-p", "USERNAME=" + username}
+	err := applyResourceFromTemplateByAdmin(parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
+}
+
+func generateOAuthTokenPair() (string, string) {
+	const sha256Prefix = "sha256~"
+	randomBytes := make([]byte, 16)
+	_, err := rand.Read(randomBytes)
+	o.Expect(err).NotTo(o.HaveOccurred())
+	randomToken := base64.RawURLEncoding.EncodeToString(randomBytes)
+	hashed := sha256.Sum256([]byte(randomToken))
+	return sha256Prefix + randomToken, sha256Prefix + base64.RawURLEncoding.EncodeToString(hashed[:])
+}
+
+func changeUser(user *User, namespace string) string {
+	serverURL, err := getServerURL()
+	o.Expect(err).NotTo(o.HaveOccurred())
+
+	userUIDBytes, err := exec.Command("oc", "get", "user", user.Username, "-o", "jsonpath={.metadata.uid}").Output()
+	if err != nil {
+		_, err = exec.Command("oc", "create", "user", user.Username).Output()
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("failed to create user %s", user.Username))
+		userUIDBytes, err = exec.Command("oc", "get", "user", user.Username, "-o", "jsonpath={.metadata.uid}").Output()
+		o.Expect(err).NotTo(o.HaveOccurred())
+	}
+	userUID := strings.TrimSpace(string(userUIDBytes))
+
+	oauthClientName := "e2e-client-" + namespace
+	oauthClientJSON := fmt.Sprintf(`{"apiVersion":"oauth.openshift.io/v1","kind":"OAuthClient","metadata":{"name":"%s"},"grantMethod":"auto"}`, oauthClientName)
+	cmd := exec.Command("oc", "create", "-f", "-")
+	cmd.Stdin = strings.NewReader(oauthClientJSON)
+	_ = cmd.Run()
+
+	privToken, pubToken := generateOAuthTokenPair()
+
+	tokenJSON := fmt.Sprintf(`{"apiVersion":"oauth.openshift.io/v1","kind":"OAuthAccessToken","metadata":{"name":"%s"},"clientName":"%s","userName":"%s","userUID":"%s","scopes":["user:full"],"redirectURI":"https://localhost:8443/oauth/token/implicit"}`, pubToken, oauthClientName, user.Username, userUID)
+	cmd = exec.Command("oc", "create", "-f", "-")
+	cmd.Stdin = strings.NewReader(tokenJSON)
+	output, err := cmd.CombinedOutput()
+	o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("failed to create OAuthAccessToken: %s", string(output)))
+
+	err = exec.Command("oc", "config", "set-credentials", user.Username, "--token="+privToken).Run()
+	o.Expect(err).NotTo(o.HaveOccurred(), "failed to set credentials for user "+user.Username)
+
+	clusterNameBytes, err := exec.Command("oc", "config", "view", "-o", "jsonpath={.clusters[0].name}").Output()
+	o.Expect(err).NotTo(o.HaveOccurred(), "failed to get cluster name")
+	clusterName := strings.TrimSpace(string(clusterNameBytes))
+
+	userContext := fmt.Sprintf("%s/%s", user.Username, serverURL)
+	err = exec.Command("oc", "config", "set-context", userContext, "--cluster="+clusterName, "--user="+user.Username, "--namespace="+namespace).Run()
+	o.Expect(err).NotTo(o.HaveOccurred(), "failed to set context for user "+user.Username)
+	err = exec.Command("oc", "config", "use-context", userContext).Run()
+	o.Expect(err).NotTo(o.HaveOccurred(), "failed to switch to context "+userContext)
+
+	e2e.Logf("Changed to user %s with context %s", user.Username, userContext)
+	return userContext
+}
+
+func removeTemplatePermissions(username string) {
 	baseDir, _ := filePath.Abs("testdata")
 	readerCRBPath := filePath.Join(baseDir, "testuser-template-crb.yaml")
 	parameters := []string{"-f", readerCRBPath, "-p", "USERNAME=" + username}
-	configFile := compat_otp.ProcessTemplate(oc, parameters...)
-	err := oc.AsAdmin().WithoutNamespace().Run("delete").Args("-f", configFile).Execute()
+	configFile, err := processTemplate("", parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
+	cmd := exec.Command("oc", "delete", "-f", configFile)
+	err = cmd.Run()
 	o.Expect(err).NotTo(o.HaveOccurred())
 }

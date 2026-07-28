@@ -6,9 +6,6 @@ import (
 	"reflect"
 	"time"
 
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
-
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -23,7 +20,7 @@ type FlowcollectorSlice struct {
 }
 
 // create flowcollector CRD for a given manifest file
-func (flowSlice FlowcollectorSlice) CreateFlowcollectorSlice(oc *exutil.CLI) {
+func (flowSlice FlowcollectorSlice) CreateFlowcollectorSlice() {
 	parameters := []string{"--ignore-unknown-parameters=true", "-f", flowSlice.Template, "-p"}
 
 	flowCollector := reflect.ValueOf(&flowSlice).Elem()
@@ -36,23 +33,27 @@ func (flowSlice FlowcollectorSlice) CreateFlowcollectorSlice(oc *exutil.CLI) {
 		}
 	}
 
-	compat_otp.ApplyNsResourceFromTemplate(oc, flowSlice.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(flowSlice.Namespace, parameters...)
+	if err != nil {
+		e2e.Failf("Failed to create FlowCollectorSlice: %v", err)
+	}
 }
 
 // DeleteFlowcollectorSlice deletes FlowCollectorSlice CRD from a cluster
-func (flowSlice *FlowcollectorSlice) DeleteFlowcollectorSlice(oc *exutil.CLI) error {
-	return oc.AsAdmin().WithoutNamespace().Run("delete").Args("flowcollectorslice", flowSlice.Name, "-n", flowSlice.Namespace).Execute()
+func (flowSlice *FlowcollectorSlice) DeleteFlowcollectorSlice() error {
+	return deleteDynamicResource("flowcollectorslice", flowSlice.Name, flowSlice.Namespace)
 }
 
 // WaitForFlowcollectorSliceReady waits for FlowCollectorSlice to be ready by checking status conditions
-func (flowSlice *FlowcollectorSlice) WaitForFlowcollectorSliceReady(oc *exutil.CLI) {
+func (flowSlice *FlowcollectorSlice) WaitForFlowcollectorSliceReady() {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-		readyCondition, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("flowcollectorslice", flowSlice.Name, "-n", flowSlice.Namespace, "-o", "jsonpath={.status.conditions[?(@.type==\"Ready\")].status}").Output()
-		if err != nil {
-			e2e.Logf("Error getting Ready condition: %v", err)
+		obj, getErr := getDynamicResource("flowcollectorslice", flowSlice.Name, flowSlice.Namespace)
+		if getErr != nil {
+			e2e.Logf("Error getting Ready condition: %v", getErr)
 			return false, nil
 		}
-		return readyCondition == "True", nil
+		condStatus, _, _ := getConditionStatus(obj, "Ready")
+		return condStatus == "True", nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("FlowCollectorSlice %s/%s did not become Ready", flowSlice.Namespace, flowSlice.Name))
+	assertWaitPollNoErr(err, fmt.Sprintf("FlowCollectorSlice %s/%s did not become Ready", flowSlice.Namespace, flowSlice.Name))
 }

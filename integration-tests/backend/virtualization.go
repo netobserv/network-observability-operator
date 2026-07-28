@@ -7,8 +7,9 @@ import (
 	"time"
 
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -32,13 +33,19 @@ type TestVMUDNTemplate struct {
 }
 
 // check if cluster has baremetal workers
-func hasMetalWorkerNodes(oc *exutil.CLI) bool {
-	workers, err := compat_otp.GetClusterNodesBy(oc, "worker")
+func hasMetalWorkerNodes() bool {
+	nodes, err := k8sClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
+		LabelSelector: "node-role.kubernetes.io/worker",
+	})
 	o.Expect(err).NotTo(o.HaveOccurred())
-	for _, w := range workers {
-		Output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("node", w, "-o", "jsonpath='{.metadata.labels.node\\.kubernetes\\.io/instance-type}'").Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		if !strings.Contains(Output, "metal") {
+
+	if len(nodes.Items) == 0 {
+		e2e.Logf("Cluster does not have metal worker nodes")
+		return false
+	}
+	for _, node := range nodes.Items {
+		instanceType := node.Labels["node.kubernetes.io/instance-type"]
+		if !strings.Contains(instanceType, "metal") {
 			e2e.Logf("Cluster does not have metal worker nodes")
 			return false
 		}
@@ -46,102 +53,124 @@ func hasMetalWorkerNodes(oc *exutil.CLI) bool {
 	return true
 }
 
-func isClusterBareMetal(oc *exutil.CLI) (bool, error) {
-	output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("infrastructure", "cluster", "-o=jsonpath={.status.platformStatus.type}").Output()
+func isClusterBareMetal() (bool, error) {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
 	if err != nil {
 		return false, err
 	}
-	if !strings.Contains(output, "BareMetal") && !strings.Contains(output, "None") {
+
+	platformType, _ := getNestedField(obj.Object, ".status.platformStatus.type")
+	if !strings.Contains(platformType, "BareMetal") && !strings.Contains(platformType, "None") {
 		return false, nil
 	}
 	return true, nil
 }
 
 // wait until hyperconverged is ready
-func waitUntilHyperConvergedReady(oc *exutil.CLI, hc, ns string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-		status, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("hyperconverged", hc, "-n", ns, "-o", "jsonpath='{.status.conditions[0].status}'").Output()
-
-		if err != nil {
-			// loop until hyperconverged is found or until timeout
-			if strings.Contains(err.Error(), "not found") {
+func waitUntilHyperConvergedReady(hc, ns string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		obj, getErr := getDynamicResource("hyperconverged", hc, ns)
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
-
-		if strings.Trim(status, "'") != "True" {
-			return false, nil
-		}
-		return true, nil
+		condStatus, _, _ := getConditionStatus(obj, "Available")
+		return condStatus == "True", nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("HyperConverged %s did not become Available", hc))
+	assertWaitPollNoErr(err, fmt.Sprintf("HyperConverged %s did not become Available", hc))
 }
 
-func (testTemplate *TestVMStaticIPTemplate) createVMStaticIP(oc *exutil.CLI) error {
+func (testTemplate *TestVMStaticIPTemplate) createVMStaticIP() error {
 	templateParams := []string{"--ignore-unknown-parameters=true", "-f", testTemplate.Template, "-p", "NAME=" + testTemplate.Name, "-p", "NAMESPACE=" + testTemplate.Namespace, "-p", "NETWORK_NAME=" + testTemplate.NetworkName, "-p", "MAC=" + testTemplate.Mac, "-p", "STATIC_IP=" + testTemplate.StaticIP}
 
 	if testTemplate.RunCmd != "" {
 		templateParams = append(templateParams, "-p", "RUN_CMD="+testTemplate.RunCmd)
 	}
-	configFile := compat_otp.ProcessTemplate(oc, templateParams...)
 
-	err := oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", configFile).Execute()
-	if err != nil {
-		return err
-	}
-	return nil
+	return applyResourceFromTemplateByAdmin(templateParams...)
 }
 
-func (testTemplate *TestVMUDNTemplate) createVMUDN(oc *exutil.CLI) error {
+func (testTemplate *TestVMUDNTemplate) createVMUDN() error {
 	templateParams := []string{"--ignore-unknown-parameters=true", "-f", testTemplate.Template, "-p", "NAME=" + testTemplate.Name, "-p", "NAMESPACE=" + testTemplate.Namespace, "-p", "NETWORK_NAME=" + testTemplate.NetworkName}
 
 	if testTemplate.RunCmd != "" {
 		templateParams = append(templateParams, "-p", "RUN_CMD="+testTemplate.RunCmd)
 	}
-	configFile := compat_otp.ProcessTemplate(oc, templateParams...)
 
-	err := oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", configFile).Execute()
-	if err != nil {
-		return err
+	return applyResourceFromTemplateByAdmin(templateParams...)
+}
+
+// cleanupCNVWebhooks removes orphaned CNV/HCO webhook configurations
+// that can block namespace deletions after the operator is uninstalled.
+func cleanupCNVWebhooks() {
+	ctx := context.Background()
+	cnvPrefixes := []string{"hco", "kubevirt", "virt", "cdi", "kubemacpool", "cnv", "ssp"}
+
+	mutatingList, err := k8sClient.AdmissionregistrationV1().MutatingWebhookConfigurations().List(ctx, metav1.ListOptions{})
+	if err == nil {
+		for _, wh := range mutatingList.Items {
+			for _, prefix := range cnvPrefixes {
+				if strings.Contains(strings.ToLower(wh.Name), prefix) {
+					e2e.Logf("Cleaning up orphaned MutatingWebhookConfiguration: %s", wh.Name)
+					_ = k8sClient.AdmissionregistrationV1().MutatingWebhookConfigurations().Delete(ctx, wh.Name, metav1.DeleteOptions{})
+					break
+				}
+			}
+		}
 	}
-	return nil
+
+	validatingList, err := k8sClient.AdmissionregistrationV1().ValidatingWebhookConfigurations().List(ctx, metav1.ListOptions{})
+	if err == nil {
+		for _, wh := range validatingList.Items {
+			for _, prefix := range cnvPrefixes {
+				if strings.Contains(strings.ToLower(wh.Name), prefix) {
+					e2e.Logf("Cleaning up orphaned ValidatingWebhookConfiguration: %s", wh.Name)
+					_ = k8sClient.AdmissionregistrationV1().ValidatingWebhookConfigurations().Delete(ctx, wh.Name, metav1.DeleteOptions{})
+					break
+				}
+			}
+		}
+	}
 }
 
 // wait until virtual machine is Ready
-func waitUntilVMReady(oc *exutil.CLI, vm, ns string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 30*time.Second, 1200*time.Second, false, func(context.Context) (done bool, err error) {
-		status, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("virtualmachine", vm, "-n", ns, "-o", "jsonpath='{.status.conditions[0].status}'").Output()
-
-		if err != nil {
-			// loop until virtual machine is found or until timeout
-			if strings.Contains(err.Error(), "not found") {
+func waitUntilVMReady(vm, ns string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 30*time.Second, 1200*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		obj, getErr := getDynamicResource("virtualmachine", vm, ns)
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
-
-		if strings.Trim(status, "'") != "True" {
-			return false, nil
-		}
-		return true, nil
+		condStatus, _, _ := getConditionStatus(obj, "Ready")
+		return condStatus == "True", nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Virtual machine %s did not become Available", vm))
+	assertWaitPollNoErr(err, fmt.Sprintf("Virtual machine %s did not become Available", vm))
 }
 
 // waitForVMIPAssignment waits until the VM has an IP assigned to the specified interface index
-func waitForVMIPAssignment(oc *exutil.CLI, vmName, namespace string, interfaceIndex int) (string, error) {
+func waitForVMIPAssignment(vmName, namespace string, interfaceIndex int) (string, error) {
 	var vmIP string
-	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 300*time.Second, false, func(context.Context) (done bool, err error) {
-		ip, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("vmi", vmName, "-n", namespace, fmt.Sprintf("-ojsonpath={.status.interfaces[%d].ipAddress}", interfaceIndex)).Output()
-		if err != nil {
-			// If VMI not found yet, keep polling
-			if strings.Contains(err.Error(), "not found") {
+	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 300*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		obj, getErr := getDynamicResource("vmi", vmName, namespace)
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
-		// Check if IP is actually assigned (not empty)
+		interfaces, found, _ := unstructured.NestedSlice(obj.Object, "status", "interfaces")
+		if !found || interfaceIndex >= len(interfaces) {
+			return false, nil
+		}
+		iface, ok := interfaces[interfaceIndex].(map[string]interface{})
+		if !ok {
+			return false, nil
+		}
+		ip, _ := iface["ipAddress"].(string)
 		if ip != "" {
 			vmIP = ip
 			return true, nil

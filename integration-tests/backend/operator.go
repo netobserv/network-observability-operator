@@ -3,23 +3,17 @@ package e2etests
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	filePath "path/filepath"
 	"strings"
 	"time"
 
 	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
-)
-
-const (
-	netobservNS   = "openshift-netobserv-operator"
-	NOPackageName = "netobserv-operator"
 )
 
 // SubscriptionObjects objects are used to create operators via OLM
@@ -47,34 +41,40 @@ type OperatorNamespace struct {
 }
 
 // waitForPackagemanifestAppear waits for the packagemanifest to appear in the cluster
-// chSource: bool value, true means the packagemanifests' source name must match the so.CatalogSource.SourceName, e.g.: oc get packagemanifests xxxx -l catalog=$source-name
-func (so *SubscriptionObjects) waitForPackagemanifestAppear(oc *exutil.CLI, chSource bool) {
-	args := []string{"-n", so.CatalogSource.SourceNamespace, "packagemanifests"}
-	if chSource {
-		args = append(args, "-l", "catalog="+so.CatalogSource.SourceName)
-	} else {
-		args = append(args, so.PackageName)
-	}
+// chSource: bool value, true means the packagemanifests' source name must match the so.CatalogSource.SourceName
+func (so *SubscriptionObjects) waitForPackagemanifestAppear(chSource bool) {
 	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
-		packages, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(args...).Output()
-		if err != nil {
-			msg := fmt.Sprintf("%v", err)
-			if strings.Contains(msg, "No resources found") || strings.Contains(msg, "NotFound") {
+		if chSource {
+			// List with label selector and check if package exists
+			gvr, _ := resolveGVR("packagemanifest")
+			list, listErr := k8sDynClient.Resource(gvr).List(context.Background(), metav1.ListOptions{
+				LabelSelector: "catalog=" + so.CatalogSource.SourceName,
+			})
+			if listErr != nil {
 				return false, nil
 			}
-			return false, err
-		}
-		if strings.Contains(packages, so.PackageName) {
+			for _, item := range list.Items {
+				if item.GetName() == so.PackageName {
+					return true, nil
+				}
+			}
+		} else {
+			// Get specific package manifest
+			_, getErr := getDynamicResource("packagemanifest", so.PackageName, "")
+			if getErr != nil {
+				e2e.Logf("Waiting for packagemanifest/%s to appear", so.PackageName)
+				return false, nil
+			}
 			return true, nil
 		}
 		e2e.Logf("Waiting for packagemanifest/%s to appear", so.PackageName)
 		return false, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Packagemanifest %s is not availabile", so.PackageName))
+	assertWaitPollNoErr(err, fmt.Sprintf("Packagemanifest %s is not available", so.PackageName))
 }
 
 // setCatalogSourceObjects set the default values of channel, source namespace and source name if they're not specified
-func (so *SubscriptionObjects) setCatalogSourceObjects(oc *exutil.CLI) {
+func (so *SubscriptionObjects) setCatalogSourceObjects() {
 	// set channel
 	if so.CatalogSource.Channel == "" {
 		so.CatalogSource.Channel = "stable"
@@ -87,156 +87,148 @@ func (so *SubscriptionObjects) setCatalogSourceObjects(oc *exutil.CLI) {
 
 	// set source and check if the packagemanifest exists or not
 	if so.CatalogSource.SourceName != "" {
-		so.waitForPackagemanifestAppear(oc, true)
+		// Packagemanifests are only created for catalog sources in openshift-marketplace
+		// For custom namespaces, skip packagemanifest check and verify catalog source directly
+		if so.CatalogSource.SourceNamespace == "openshift-marketplace" {
+			so.waitForPackagemanifestAppear(true)
+		}
 	} else {
-		catsrc, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("catsrc", "-n", so.CatalogSource.SourceNamespace, "qe-app-registry").Output()
-		if catsrc != "" && !(strings.Contains(catsrc, "NotFound")) {
+		// Check if qe-app-registry catalog source exists
+		_, err := getDynamicResource("catalogsource", "qe-app-registry", so.CatalogSource.SourceNamespace)
+		if err == nil {
 			so.CatalogSource.SourceName = "qe-app-registry"
-			so.waitForPackagemanifestAppear(oc, true)
+			so.waitForPackagemanifestAppear(true)
 		} else {
-			so.waitForPackagemanifestAppear(oc, false)
-			source, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("packagemanifests", so.PackageName, "-o", "jsonpath={.status.catalogSource}").Output()
-			if err != nil {
-				e2e.Logf("error getting catalog source name: %v", err)
+			so.waitForPackagemanifestAppear(false)
+			// Get catalog source from package manifest
+			obj, getErr := getDynamicResource("packagemanifest", so.PackageName, "")
+			if getErr != nil {
+				e2e.Logf("error getting catalog source name: %v", getErr)
+			} else {
+				catalogSource, _ := getNestedField(obj.Object, ".status.catalogSource")
+				so.CatalogSource.SourceName = catalogSource
 			}
-			so.CatalogSource.SourceName = source
 		}
 	}
 }
 
 // SubscribeOperator is used to subcribe the CLO and EO
-func (so *SubscriptionObjects) SubscribeOperator(oc *exutil.CLI) {
-	// check if the namespace exists, if it doesn't exist, create the namespace
-	_, err := oc.AdminKubeClient().CoreV1().Namespaces().Get(context.Background(), so.Namespace, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			e2e.Logf("The project %s is not found, create it now...", so.Namespace)
-			namespaceTemplate, _ := filePath.Abs("testdata/logging/subscription/namespace.yaml")
-			namespaceFile, err := processTemplate(oc, "-f", namespaceTemplate, "-p", "NAMESPACE_NAME="+so.Namespace)
-			o.Expect(err).NotTo(o.HaveOccurred())
-			err = wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 120*time.Second, false, func(context.Context) (done bool, err error) {
-				output, err := oc.AsAdmin().Run("apply").Args("-f", namespaceFile).Output()
-				if err != nil {
-					if strings.Contains(output, "AlreadyExists") {
-						return true, nil
-					}
-					return false, err
-				}
-				return true, nil
-			})
-			compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("can't create project %s", so.Namespace))
-		}
-	}
+func (so *SubscriptionObjects) SubscribeOperator() {
+	ctx := context.Background()
 
-	// check the operator group, if no object found, then create an operator group in the project
-	og, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("-n", so.Namespace, "og").Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-	msg := fmt.Sprintf("%v", og)
-	if strings.Contains(msg, "No resources found") {
-		// create operator group
-		ogFile, err := processTemplate(oc, "-n", so.Namespace, "-f", so.OperatorGroup, "-p", "OG_NAME="+so.Namespace, "NAMESPACE="+so.Namespace)
+	// check if the namespace exists, if it doesn't exist, create the namespace
+	_, err := k8sClient.CoreV1().Namespaces().Get(context.Background(), so.Namespace, metav1.GetOptions{})
+	if err != nil {
+		e2e.Logf("The project %s is not found, create it now...", so.Namespace)
+		namespaceTemplate, _ := filePath.Abs("testdata/logging/subscription/namespace.yaml")
+		namespaceFile, err := processTemplate("", "-f", namespaceTemplate, "-p", "NAMESPACE_NAME="+so.Namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		err = wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 120*time.Second, false, func(context.Context) (done bool, err error) {
-			output, err := oc.AsAdmin().Run("apply").Args("-f", ogFile, "-n", so.Namespace).Output()
-			if err != nil {
-				if strings.Contains(output, "AlreadyExists") {
-					return true, nil
-				}
+		err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 120*time.Second, false, func(context.Context) (done bool, err error) {
+			cmd := exec.Command("oc", "apply", "-f", namespaceFile)
+			output, err := cmd.CombinedOutput()
+			if err != nil && !strings.Contains(string(output), "AlreadyExists") {
 				return false, err
 			}
 			return true, nil
 		})
-		compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("can't create operatorgroup %s in %s project", so.Namespace, so.Namespace))
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("can't create project %s", so.Namespace))
 	}
 
-	// check subscription, if there is no subscription objets, then create one
-	sub, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", "-n", so.Namespace, so.PackageName).Output()
-	if err != nil {
-		msg := fmt.Sprint("v%", sub)
-		if strings.Contains(msg, "NotFound") {
-			so.setCatalogSourceObjects(oc)
-			// create subscription object
-			subscriptionFile, err := processTemplate(oc, "-n", so.Namespace, "-f", so.Subscription, "-p", "PACKAGE_NAME="+so.PackageName, "NAMESPACE="+so.Namespace, "CHANNEL="+so.CatalogSource.Channel, "SOURCE="+so.CatalogSource.SourceName, "SOURCE_NAMESPACE="+so.CatalogSource.SourceNamespace)
-			o.Expect(err).NotTo(o.HaveOccurred())
-			err = wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 120*time.Second, false, func(context.Context) (done bool, err error) {
-				output, err := oc.AsAdmin().Run("apply").Args("-f", subscriptionFile, "-n", so.Namespace).Output()
-				if err != nil {
-					if strings.Contains(output, "AlreadyExists") {
-						return true, nil
-					}
-					return false, err
-				}
-				return true, nil
-			})
-			compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("can't create subscription %s in %s project", so.PackageName, so.Namespace))
-		}
-	}
-	//WaitForDeploymentPodsToBeReady(oc, so.Namespace, so.OperatorName)
-}
-
-func deleteNamespace(oc *exutil.CLI, ns string) {
-	err := oc.AdminKubeClient().CoreV1().Namespaces().Delete(context.Background(), ns, metav1.DeleteOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			err = nil
-		}
-	}
-	o.Expect(err).NotTo(o.HaveOccurred())
-	err = wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (bool, error) {
-		_, err := oc.AdminKubeClient().CoreV1().Namespaces().Get(context.Background(), ns, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return true, nil
+	// check the operator group, if no object found, then create an operator group in the project
+	gvr, _ := resolveGVR("operatorgroup")
+	ogList, listErr := k8sDynClient.Resource(gvr).Namespace(so.Namespace).List(context.Background(), metav1.ListOptions{})
+	o.Expect(listErr).NotTo(o.HaveOccurred())
+	if len(ogList.Items) == 0 {
+		// create operator group
+		ogFile, err := processTemplate(so.Namespace, "-f", so.OperatorGroup, "-p", "OG_NAME="+so.Namespace, "NAMESPACE="+so.Namespace)
+		o.Expect(err).NotTo(o.HaveOccurred())
+		err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 120*time.Second, false, func(context.Context) (done bool, err error) {
+			cmd := exec.Command("oc", "apply", "-f", ogFile)
+			output, err := cmd.CombinedOutput()
+			if err != nil && !strings.Contains(string(output), "AlreadyExists") {
+				return false, err
 			}
-			return false, err
-		}
-		return false, nil
-	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Namespace %s is not deleted in 3 minutes", ns))
+			return true, nil
+		})
+		assertWaitPollNoErr(err, fmt.Sprintf("can't create operatorgroup %s in %s project", so.Namespace, so.Namespace))
+	}
+
+	// check subscription, if there is no subscription objects, then create one
+	_, err = getDynamicResource("subscription", so.PackageName, so.Namespace)
+	if err != nil {
+		so.setCatalogSourceObjects()
+		// create subscription object
+		subscriptionFile, err := processTemplate(so.Namespace, "-f", so.Subscription, "-p", "PACKAGE_NAME="+so.PackageName, "NAMESPACE="+so.Namespace, "CHANNEL="+so.CatalogSource.Channel, "SOURCE="+so.CatalogSource.SourceName, "SOURCE_NAMESPACE="+so.CatalogSource.SourceNamespace)
+		o.Expect(err).NotTo(o.HaveOccurred())
+		err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 120*time.Second, false, func(context.Context) (done bool, err error) {
+			cmd := exec.Command("oc", "apply", "-f", subscriptionFile)
+			output, err := cmd.CombinedOutput()
+			if err != nil && !strings.Contains(string(output), "AlreadyExists") {
+				return false, err
+			}
+			return true, nil
+		})
+		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("can't create subscription %s in %s project", so.PackageName, so.Namespace))
+	}
 }
 
-func (so *SubscriptionObjects) uninstallOperator(oc *exutil.CLI) {
-	_ = Resource{"subscription", so.PackageName, so.Namespace}.clear(oc)
-	_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("-n", so.Namespace, "csv", "-l", "operators.coreos.com/"+so.PackageName+"."+so.Namespace+"=").Execute()
+func (so *SubscriptionObjects) uninstallOperator() {
+	// Delete subscription
+	_ = Resource{"subscription", so.PackageName, so.Namespace}.clear()
+
+	// Delete CSVs with label
+	labelSelector := "operators.coreos.com/" + so.PackageName + "." + so.Namespace + "="
+	csvGVR, _ := resolveGVR("csv")
+	_ = k8sDynClient.Resource(csvGVR).Namespace(so.Namespace).DeleteCollection(
+		context.Background(),
+		metav1.DeleteOptions{},
+		metav1.ListOptions{LabelSelector: labelSelector},
+	)
+
 	// do not remove namespace openshift-logging and openshift-operators-redhat, and preserve the operatorgroup as there may have several operators deployed in one namespace
 	// for example: loki-operator and elasticsearch-operator
 	if so.Namespace != "openshift-logging" && so.Namespace != "openshift-operators-redhat" && so.Namespace != "openshift-operators" && so.Namespace != "openshift-netobserv-operator" && !strings.HasPrefix(so.Namespace, "e2e-test-") {
-		deleteNamespace(oc, so.Namespace)
+		deleteNamespace(so.Namespace)
 	}
 }
 
-func checkOperatorChannel(oc *exutil.CLI, operatorNamespace string, operatorName string) (string, error) {
-	channelName, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", operatorName, "-n", operatorNamespace, "-o=jsonpath={.spec.channel}").Output()
+func checkOperatorChannel(operatorNamespace string, operatorName string) (string, error) {
+	obj, err := getDynamicResource("subscription", operatorName, operatorNamespace)
 	if err != nil {
 		return "", err
 	}
-	return channelName, nil
+	channel, _ := getNestedField(obj.Object, ".spec.channel")
+	return channel, nil
 }
 
-func CheckOperatorStatus(oc *exutil.CLI, operatorNamespace string, operatorName string) (bool, error) {
-	err := oc.AsAdmin().WithoutNamespace().Run("get").Args("namespace", operatorNamespace).Execute()
+func CheckOperatorStatus(operatorNamespace string, operatorName string) (bool, error) {
+	_, err := k8sClient.CoreV1().Namespaces().Get(context.Background(), operatorNamespace, metav1.GetOptions{})
 	if err != nil {
 		e2e.Logf("%s operator will be created by tests", operatorName)
 		return false, nil
 	}
 
-	// Check for subscription by exact name first, then fall back to finding any
-	// subscription for this package (e.g. operator-sdk run bundle creates subs
-	// with a different naming convention like <name>-v1-11-4-community-sub).
 	csvName := ""
-	err1 := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", operatorName, "-n", operatorNamespace).Execute()
-	if err1 == nil {
-		csvName, _ = oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", operatorName, "-n", operatorNamespace, "-o=jsonpath={.status.installedCSV}").Output()
+	obj, err := getDynamicResource("subscription", operatorName, operatorNamespace)
+	if err == nil {
+		csvName, _ = getNestedField(obj.Object, ".status.installedCSV")
 	}
+
 	if csvName == "" {
-		// Look for any CSV owned by a subscription for this package in the namespace
-		// operator-sdk run bundle creates subs with names like <name>-v0-0-0-sha-main-sub
-		allSubs, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", "-n", operatorNamespace,
-			"-o=jsonpath={range .items[?(@.spec.name==\""+operatorName+"\")]}{.status.installedCSV}{end}").Output()
-		if allSubs != "" {
-			csvName = allSubs
+		// Try listing subscriptions and find by spec.name
+		gvr, _ := resolveGVR("subscription")
+		list, listErr := k8sDynClient.Resource(gvr).Namespace(operatorNamespace).List(context.Background(), metav1.ListOptions{})
+		if listErr == nil {
+			for _, item := range list.Items {
+				specName, _ := getNestedField(item.Object, ".spec.name")
+				if specName == operatorName {
+					csvName, _ = getNestedField(item.Object, ".status.installedCSV")
+					break
+				}
+			}
 		}
 	}
+
 	if csvName == "" {
 		e2e.Logf("%s operator will be created by tests", operatorName)
 		return false, nil
@@ -244,10 +236,11 @@ func CheckOperatorStatus(oc *exutil.CLI, operatorNamespace string, operatorName 
 
 	e2e.Logf("Found CSV %s for operator %s", csvName, operatorName)
 	err = wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(context.Context) (bool, error) {
-		csvState, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("csv", csvName, "-n", operatorNamespace, "-o=jsonpath={.status.phase}").Output()
-		if err != nil {
-			return false, err
+		csvObj, getErr := getDynamicResource("csv", csvName, operatorNamespace)
+		if getErr != nil {
+			return false, getErr
 		}
+		csvState, _ := getNestedField(csvObj.Object, ".status.phase")
 		e2e.Logf("CSV %s state: %s", csvName, csvState)
 		return csvState == "Succeeded", nil
 	})
@@ -257,56 +250,61 @@ func CheckOperatorStatus(oc *exutil.CLI, operatorNamespace string, operatorName 
 	return true, nil
 }
 
-func (ns *OperatorNamespace) DeployOperatorNamespace(oc *exutil.CLI) {
+func (ns *OperatorNamespace) DeployOperatorNamespace() {
 	e2e.Logf("Creating %s operator namespace", ns.Name)
-	// -n default: oc process requires a valid namespace context; in BeforeSuite the CLI may not have one yet
-	nsParameters := []string{"-n", "default", "--ignore-unknown-parameters=true", "-f", ns.NamespaceTemplate, "-p", "NAMESPACE_NAME=" + ns.Name}
-	compat_otp.ApplyClusterResourceFromTemplate(oc, nsParameters...)
+	nsParameters := []string{"--ignore-unknown-parameters=true", "-f", ns.NamespaceTemplate, "-p", "NAMESPACE_NAME=" + ns.Name}
+	configFile, err := processTemplate("", nsParameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
+	cmd := exec.Command("oc", "apply", "-f", configFile)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		o.Expect(err).NotTo(o.HaveOccurred(), string(output))
+	}
 }
 
 // setupCatalogSource deploys the catalog source and image digest mirror set
-func setupCatalogSource(oc *exutil.CLI, catSrc Resource, catSrcTemplate, imageDigest, catalogSource string, isHypershift bool, NOSource *CatalogSourceObjects, NO *SubscriptionObjects) error {
+func setupCatalogSource(catSrc Resource, catSrcTemplate, imageDigest, catalogSource string, isHypershift bool, NOSource *CatalogSourceObjects, NO *SubscriptionObjects) error {
 	g.By("Deploy konflux FBC and ImageDigestMirrorSet")
 	upstreamCatalogSource := "quay.io/netobserv/network-observability-operator-catalog:v0.0.0-sha-main"
 	var catsrcErr error
 
 	if catalogSource != "" {
 		e2e.Logf("Using %s catalog", catalogSource)
-		catsrcErr = catSrc.applyFromTemplate(oc, "-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace, "IMAGE="+catalogSource)
+		catsrcErr = catSrc.applyFromTemplate("-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace, "IMAGE="+catalogSource)
 	} else if isHypershift {
 		e2e.Logf("Using v0.0.0-sha-main catalog for hypershift")
-		catsrcErr = catSrc.applyFromTemplate(oc, "-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace, "IMAGE="+upstreamCatalogSource)
+		catsrcErr = catSrc.applyFromTemplate("-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace, "IMAGE="+upstreamCatalogSource)
 		NOSource.Channel = "latest"
 		NO.CatalogSource = NOSource
 	} else {
 		e2e.Logf("Using default ystream catalog")
-		catsrcErr = catSrc.applyFromTemplate(oc, "-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace)
+		catsrcErr = catSrc.applyFromTemplate("-n", catSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+catSrc.Namespace)
 	}
-	catSrc.WaitUntilCatSrcReady(oc)
+	catSrc.WaitUntilCatSrcReady()
 
 	if !isHypershift {
-		ApplyResourceFromFile(oc, catSrc.Namespace, imageDigest)
+		ApplyResourceFromFile(catSrc.Namespace, imageDigest)
 	}
 	return catsrcErr
 }
 
 // ensureOperatorDeployed checks and deploys an operator if not already present
-func ensureOperatorDeployed(oc *exutil.CLI, operator SubscriptionObjects, operatorSource CatalogSourceObjects, podLabel string) {
+func ensureOperatorDeployed(operator SubscriptionObjects, operatorSource CatalogSourceObjects, podLabel string) {
 	g.By(fmt.Sprintf("Subscribe %s operator to %s channel", operator.OperatorName, operatorSource.Channel))
-	operatorExisting, err := CheckOperatorStatus(oc, operator.Namespace, operator.PackageName)
+	operatorExisting, err := CheckOperatorStatus(operator.Namespace, operator.PackageName)
 	o.Expect(err).NotTo(o.HaveOccurred())
 
 	if !operatorExisting {
 		e2e.Logf("%s operator not found, subscribing to operator", operator.OperatorName)
-		operator.SubscribeOperator(oc)
+		operator.SubscribeOperator()
 
 		// Wait for operator pods to be ready
 		if podLabel != "" {
-			WaitForPodsReadyWithLabel(oc, operator.Namespace, podLabel)
+			WaitForPodsReadyWithLabel(operator.Namespace, podLabel)
 		}
 
 		// Verify operator status
-		operatorStatus, err := CheckOperatorStatus(oc, operator.Namespace, operator.PackageName)
+		operatorStatus, err := CheckOperatorStatus(operator.Namespace, operator.PackageName)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(operatorStatus).To(o.BeTrue())
 
@@ -317,23 +315,54 @@ func ensureOperatorDeployed(oc *exutil.CLI, operator SubscriptionObjects, operat
 }
 
 // ensureNetObservOperatorDeployed checks and deploys the NetObserv operator with specific configurations
-func ensureNetObservOperatorDeployed(oc *exutil.CLI, NO SubscriptionObjects, NOSource CatalogSourceObjects) {
-	ensureOperatorDeployed(oc, NO, NOSource, "app="+NO.OperatorName)
+func ensureNetObservOperatorDeployed(NO SubscriptionObjects, NOSource CatalogSourceObjects) {
+	ensureOperatorDeployed(NO, NOSource, "app="+NO.OperatorName)
 
 	// NetObserv-specific checks only if operator was just deployed
-	NOexisting, err := CheckOperatorStatus(oc, NO.Namespace, NO.PackageName)
+	NOexisting, err := CheckOperatorStatus(NO.Namespace, NO.PackageName)
 	o.Expect(err).NotTo(o.HaveOccurred())
 
 	if NOexisting {
 		// Verify FlowCollector API exists
-		flowcollectorAPIExists, err := isFlowCollectorAPIExists(oc)
+		flowcollectorAPIExists, err := isFlowCollectorAPIExists()
 		o.Expect(flowcollectorAPIExists).To(o.BeTrue())
 		o.Expect(err).NotTo(o.HaveOccurred())
 	}
 }
 
-func getOperatorChannel(oc *exutil.CLI, catalog string, packageName string) (operatorChannel string, err error) {
-	channels, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("packagemanifests", "-l", "catalog="+catalog, "-n", "openshift-marketplace", "-o=jsonpath={.items[?(@.metadata.name==\""+packageName+"\")].status.channels[*].name}").Output()
-	channelArr := strings.Split(channels, " ")
-	return channelArr[len(channelArr)-1], err
+func getOperatorChannel(catalog string, packageName string) (operatorChannel string, err error) {
+	gvr, gvrErr := resolveGVR("packagemanifest")
+	if gvrErr != nil {
+		return "", gvrErr
+	}
+	list, listErr := k8sDynClient.Resource(gvr).Namespace("openshift-marketplace").List(context.Background(), metav1.ListOptions{
+		LabelSelector: "catalog=" + catalog,
+	})
+	if listErr != nil {
+		return "", listErr
+	}
+	for _, item := range list.Items {
+		if item.GetName() == packageName {
+			channels, found, _ := unstructured.NestedSlice(item.Object, "status", "channels")
+			if !found || len(channels) == 0 {
+				return "", fmt.Errorf("no channels found for package %s in catalog %s", packageName, catalog)
+			}
+			var channelNames []string
+			for _, ch := range channels {
+				chMap, ok := ch.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				name, _ := chMap["name"].(string)
+				if name != "" {
+					channelNames = append(channelNames, name)
+				}
+			}
+			if len(channelNames) == 0 {
+				return "", fmt.Errorf("no channels found for package %s in catalog %s", packageName, catalog)
+			}
+			return channelNames[len(channelNames)-1], nil
+		}
+	}
+	return "", fmt.Errorf("no channels found for package %s in catalog %s", packageName, catalog)
 }

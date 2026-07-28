@@ -6,17 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-func getConfiguredAlertRules(oc *exutil.CLI, ruleName string, namespace string) (string, error) {
-	return oc.AsAdmin().WithoutNamespace().Run("get").Args("prometheusrules", ruleName, "-o=jsonpath='{.spec.groups[*].rules[*].alert}'", "-n", namespace).Output()
-}
-
+// prometheusAlertResult the response of querying prometheus ALERTS metric
 type prometheusAlertResult struct {
 	Data struct {
 		Result []struct {
@@ -25,10 +22,40 @@ type prometheusAlertResult struct {
 	} `json:"data"`
 }
 
-// getAlertLabels queries Prometheus for an alert and returns its labels.
-func getAlertLabels(oc *exutil.CLI, alertName string) (map[string]string, error) {
-	bearerToken := getSAToken(oc, "prometheus-k8s", "openshift-monitoring")
-	promRoute := "https://" + getRouteAddress(oc, "openshift-monitoring", "prometheus-k8s")
+func getConfiguredAlertRules(ruleName string, namespace string) (string, error) {
+	obj, err := getDynamicResource("prometheusRule", ruleName, namespace)
+	if err != nil {
+		return "", err
+	}
+
+	groups, found, _ := unstructured.NestedSlice(obj.Object, "spec", "groups")
+	if !found {
+		return "", fmt.Errorf("no spec.groups found in prometheusrule %s", ruleName)
+	}
+
+	var alertNames []string
+	for _, g := range groups {
+		group, ok := g.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		rules, _, _ := unstructured.NestedSlice(group, "rules")
+		for _, r := range rules {
+			rule, ok := r.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if alert, ok := rule["alert"].(string); ok {
+				alertNames = append(alertNames, alert)
+			}
+		}
+	}
+	return strings.Join(alertNames, " "), nil
+}
+
+func getAlertLabels(alertName string) (map[string]string, error) {
+	bearerToken := getSAToken("prometheus-k8s", "openshift-monitoring")
+	promRoute := "https://" + getRouteAddress("openshift-monitoring", "prometheus-k8s")
 	query := fmt.Sprintf(`ALERTS{alertname="%s"}`, alertName)
 
 	h := make(http.Header)
@@ -45,17 +72,19 @@ func getAlertLabels(oc *exutil.CLI, alertName string) (map[string]string, error)
 
 	var result prometheusAlertResult
 	if err := json.Unmarshal(resp, &result); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal alert result: %w", err)
 	}
+
 	if len(result.Data.Result) == 0 {
 		return nil, nil
 	}
+
 	return result.Data.Result[0].Metric, nil
 }
 
-func waitForAlertToBePending(oc *exutil.CLI, alertName string) {
-	bearerToken := getSAToken(oc, "prometheus-k8s", "openshift-monitoring")
-	promRoute := "https://" + getRouteAddress(oc, "openshift-monitoring", "prometheus-k8s")
+func waitForAlertToBePending(alertName string) {
+	bearerToken := getSAToken("prometheus-k8s", "openshift-monitoring")
+	promRoute := "https://" + getRouteAddress("openshift-monitoring", "prometheus-k8s")
 	query := fmt.Sprintf(`ALERTS{alertname="%s"}`, alertName)
 
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 300*time.Second, false, func(context.Context) (done bool, err error) {
@@ -68,5 +97,5 @@ func waitForAlertToBePending(oc *exutil.CLI, alertName string) {
 		}
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("%s Alert did not become pending/active", alertName))
+	assertWaitPollNoErr(err, fmt.Sprintf("%s Alert did not become pending", alertName))
 }

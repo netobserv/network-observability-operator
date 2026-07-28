@@ -12,14 +12,15 @@ import (
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	e2eframework "k8s.io/kubernetes/test/e2e/framework"
+	e2econfig "k8s.io/kubernetes/test/e2e/framework/config"
 )
 
 func init() {
 	// Initialize framework flags - must be done before flag.Parse()
-	exutil.InitStandardFlags()
+	e2econfig.CopyFlags(e2econfig.Flags, flag.CommandLine)
+	e2eframework.RegisterCommonFlags(flag.CommandLine)
+	e2eframework.RegisterClusterFlags(flag.CommandLine)
 }
 
 var _ = g.BeforeSuite(func() {
@@ -28,6 +29,10 @@ var _ = g.BeforeSuite(func() {
 
 	// Set up provider config after parsing flags
 	e2eframework.AfterReadingAllFlags(&e2eframework.TestContext)
+
+	// Initialize Kubernetes typed client
+	err := initK8sClient()
+	o.Expect(err).NotTo(o.HaveOccurred(), "Failed to initialize Kubernetes client")
 
 	// Control verbose event dumping on test failures via DUMP_EVENTS_ON_FAILURE env variable
 	// Default: disabled (false)
@@ -38,53 +43,48 @@ var _ = g.BeforeSuite(func() {
 	}
 	e2eframework.TestContext.DumpLogsOnFailure = dumpEvents
 
-	// Initialize test
-	o.Expect(exutil.InitTest(false)).NotTo(o.HaveOccurred())
-
-	oc := exutil.NewCLIForMonitorTest("netobserv")
-	_, err = GetOCPVersion(oc)
+	_, err = GetOCPVersion()
 	o.Expect(err).NotTo(o.HaveOccurred())
 
 	if strings.Contains(os.Getenv("E2E_RUN_TAGS"), "disconnected") {
 		g.Skip("Skipping tests for disconnected profiles")
 	}
 
-	isHypershift := compat_otp.IsHypershiftHostedCluster(oc)
-	OperatorNS.DeployOperatorNamespace(oc)
-	catSrcErr := setupCatalogSource(oc, NOcatSrc, catSrcTemplate, imageDigest, catalogSource, isHypershift, &NOSource, &NO)
+	isHypershift := isHypershiftHostedCluster()
+	OperatorNS.DeployOperatorNamespace()
+	catSrcErr := setupCatalogSource(NOcatSrc, catSrcTemplate, imageDigest, catalogSource, isHypershift, &NOSource, &NO)
 	o.Expect(catSrcErr).NotTo(o.HaveOccurred())
-	ensureNetObservOperatorDeployed(oc, NO, NOSource)
+	ensureNetObservOperatorDeployed(NO, NOSource)
+	oc.SetNamespace(netobservNS)
 })
 
 func TestBackend(t *testing.T) {
-	exutil.WithCleanup(func() {
-		o.RegisterFailHandler(g.Fail)
+	o.RegisterFailHandler(g.Fail)
 
-		suiteConfig, reporterConfig := g.GinkgoConfiguration()
+	suiteConfig, reporterConfig := g.GinkgoConfiguration()
 
-		// Apply focus filter
+	// Apply focus filter
 
-		if len(suiteConfig.FocusStrings) > 0 {
-			combinedFocus := make([]string, len(suiteConfig.FocusStrings))
-			for i, userFocus := range suiteConfig.FocusStrings {
-				combinedFocus[i] = "sig-netobserv.*" + userFocus
-			}
-			suiteConfig.FocusStrings = combinedFocus
-		} else {
-			suiteConfig.FocusStrings = []string{"sig-netobserv"}
+	if len(suiteConfig.FocusStrings) > 0 {
+		combinedFocus := make([]string, len(suiteConfig.FocusStrings))
+		for i, userFocus := range suiteConfig.FocusStrings {
+			combinedFocus[i] = "sig-netobserv.*" + userFocus
 		}
+		suiteConfig.FocusStrings = combinedFocus
+	} else {
+		suiteConfig.FocusStrings = []string{"sig-netobserv"}
+	}
 
-		// Configure reporter - suppress default verbose output
-		suiteConfig.EmitSpecProgress = true
-		suiteConfig.OutputInterceptorMode = "none"
-		reporterConfig.SilenceSkips = true // Hide the "S" characters for skipped tests
-		reporterConfig.NoColor = true
-		reporterConfig.Succinct = true
-		reporterConfig.Verbose = false
+	// Configure reporter - suppress default verbose output
+	suiteConfig.EmitSpecProgress = true
+	suiteConfig.OutputInterceptorMode = "none"
+	reporterConfig.SilenceSkips = true // Hide the "S" characters for skipped tests
+	reporterConfig.NoColor = true
+	reporterConfig.Succinct = true
+	reporterConfig.Verbose = false
 
-		// Standard Ginkgo run with custom reporting via hooks
-		g.RunSpecs(t, "Backend Suite", suiteConfig, reporterConfig)
-	})
+	// Standard Ginkgo run with custom reporting via hooks
+	g.RunSpecs(t, "Backend Suite", suiteConfig, reporterConfig)
 }
 
 // Custom reporting hooks

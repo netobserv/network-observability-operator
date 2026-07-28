@@ -92,8 +92,8 @@ objects:
         mode: "${LokiMode}"
         enable: "${{LokiEnable}}"
         lokiStack:
-          name: ${LokistackName}
-          namespace: ${LokiNamespace}
+          name: "${LokistackName}"
+          namespace: "${LokiNamespace}"
         monolithic:
           url: ${MonolithicLokiURL}
           installDemoLoki: "${{InstallDemoLoki}}"
@@ -152,7 +152,7 @@ parameters:
   - name: LokiEnable
     value: "true"
   - name: LokistackName
-    value: lokistack
+    value: "lokistack"
   - name: MonolithicLokiURL
     value: "http://loki.netobserv.svc:3100/"
   - name: InstallDemoLoki

@@ -13,8 +13,6 @@ import (
 
 	o "github.com/onsi/gomega"
 	routev1 "github.com/openshift/api/route/v1"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,13 +29,15 @@ const (
 )
 
 // returns ture/false if flowcollector API exists.
-func isFlowCollectorAPIExists(oc *exutil.CLI) (bool, error) {
-	stdout, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("crd", "-o", "jsonpath='{.items[*].spec.names.kind}'").Output()
-
+func isFlowCollectorAPIExists() (bool, error) {
+	_, err := getDynamicResource("crd", "flowcollectors.flows.netobserv.io", "")
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
 		return false, err
 	}
-	return strings.Contains(stdout, "FlowCollector"), nil
+	return true, nil
 }
 
 // Verify flow records from logs
@@ -100,12 +100,12 @@ func getFlowRecords(lokiValues [][]string, stream lokiStream) ([]FlowRecord, err
 }
 
 // Get flow records from IPFIX collector HTTP API
-func getIPFIXFlowRecordsFromAPI(oc *exutil.CLI, namespace, podName string) ([]FlowRecord, error) {
+func getIPFIXFlowRecordsFromAPI(namespace, podName string) ([]FlowRecord, error) {
 	flowRecords := []FlowRecord{}
 
-	// Query the collector HTTP API using kubectl exec
-	cmd := []string{"-n", namespace, podName, "-c", "ipfix-collector", "--", "curl", "-s", "http://localhost:8080/records?format=json"}
-	output, err := oc.AsAdmin().WithoutNamespace().Run("exec").Args(cmd...).Output()
+	// Query the collector HTTP API using pod exec with specific container
+	cmd := "curl -s http://localhost:8080/records?format=json"
+	output, err := execCommandInSpecificPod(namespace, podName, cmd, "ipfix-collector")
 	if err != nil {
 		return flowRecords, fmt.Errorf("failed to query collector API: %w", err)
 	}
@@ -322,7 +322,7 @@ func (lokilabels Lokilabels) getLokiRegexFilterQuery(parameters ...string) strin
 	lokiQuery := lokilabels.getLokiQueryLabels()
 	if len(parameters) != 0 {
 		for _, p := range parameters {
-			lokiQuery += fmt.Sprintf(" |~ %s", p)
+			lokiQuery += fmt.Sprintf(" |~ `%s`", p)
 		}
 	}
 	e2e.Logf("Loki query is %s", lokiQuery)
@@ -342,64 +342,13 @@ func (lokilabels Lokilabels) getLokiQuery(filterType string, parameters ...strin
 	return lokiQuery
 }
 
-// createLokiRoute creates an OpenShift Route for the demoLoki service if one doesn't already exist.
-// It also creates a NetworkPolicy to allow ingress from the OpenShift router.
-func createLokiRoute(oc *exutil.CLI, namespace string) string {
-	// Allow ingress from the OpenShift router to reach the Loki pod
-	np := &networkingv1.NetworkPolicy{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "allow-from-openshift-ingress-to-loki",
-			Namespace: namespace,
-		},
-		Spec: networkingv1.NetworkPolicySpec{
-			PodSelector: metav1.LabelSelector{
-				MatchLabels: map[string]string{"app": "loki"},
-			},
-			Ingress: []networkingv1.NetworkPolicyIngressRule{{
-				From: []networkingv1.NetworkPolicyPeer{{
-					NamespaceSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							"policy-group.network.openshift.io/ingress": "",
-						},
-					},
-				}},
-			}},
-			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
-		},
+func (lokilabels Lokilabels) GetMonolithicLokiFlowLogs(lokiRoute string, startTime time.Time, parameters ...string) ([]FlowRecord, error) {
+	// Expose Loki service via an OpenShift Route so queries work from outside the cluster
+	namespace, _ := parseMonolithicLokiURL(lokiRoute)
+	if namespace != "" {
+		lokiRoute = "http://" + createLokiRoute(namespace)
+		defer deleteLokiRoute(namespace)
 	}
-	_, err := oc.AdminKubeClient().NetworkingV1().NetworkPolicies(namespace).Create(context.Background(), np, metav1.CreateOptions{})
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		o.Expect(err).NotTo(o.HaveOccurred())
-	}
-
-	route := &routev1.Route{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "loki",
-			Namespace: namespace,
-		},
-		Spec: routev1.RouteSpec{
-			To: routev1.RouteTargetReference{
-				Kind: "Service",
-				Name: "loki",
-			},
-			Port: &routev1.RoutePort{
-				TargetPort: intstr.FromInt32(3100),
-			},
-		},
-	}
-	_, err = oc.AdminRouteClient().RouteV1().Routes(namespace).Create(context.Background(), route, metav1.CreateOptions{})
-	o.Expect(err).NotTo(o.HaveOccurred())
-	return getRouteAddress(oc, namespace, "loki")
-}
-
-func deleteLokiRoute(oc *exutil.CLI, namespace string) {
-	_ = oc.AdminRouteClient().RouteV1().Routes(namespace).Delete(context.Background(), "loki", metav1.DeleteOptions{})
-	_ = oc.AdminKubeClient().NetworkingV1().NetworkPolicies(namespace).Delete(context.Background(), "allow-from-openshift-ingress-to-loki", metav1.DeleteOptions{})
-}
-
-func (lokilabels Lokilabels) GetMonolithicLokiFlowLogs(oc *exutil.CLI, namespace string, startTime time.Time, parameters ...string) ([]FlowRecord, error) {
-	lokiRoute := "http://" + createLokiRoute(oc, namespace)
-	defer deleteLokiRoute(oc, namespace)
 
 	lc := newLokiClient(lokiRoute, startTime).retry(5)
 	lc.quiet = false
@@ -435,6 +384,77 @@ func (lokilabels Lokilabels) GetMonolithicLokiFlowLogs(oc *exutil.CLI, namespace
 	}
 
 	return flowRecords, err
+}
+
+// parseMonolithicLokiURL extracts namespace and port from a cluster-internal Loki URL
+// e.g. "http://loki.e2e-netobserv-uqmm.svc:3100/" returns ("e2e-netobserv-uqmm", "3100")
+func parseMonolithicLokiURL(lokiURL string) (namespace, port string) {
+	re := regexp.MustCompile(`://loki\.([^.]+)\.svc:(\d+)`)
+	matches := re.FindStringSubmatch(lokiURL)
+	if len(matches) == 3 {
+		return matches[1], matches[2]
+	}
+	return "", ""
+}
+
+// createLokiRoute creates an OpenShift Route for the demoLoki service if one doesn't already exist.
+// It also creates a NetworkPolicy to allow ingress from the OpenShift router.
+func createLokiRoute(namespace string) string {
+	_, err := routeV1Client.RouteV1().Routes(namespace).Get(context.Background(), "loki", metav1.GetOptions{})
+	if err == nil {
+		return getRouteAddress(namespace, "loki")
+	}
+
+	// Allow ingress from the OpenShift router to reach the Loki pod
+	np := &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "allow-from-openshift-ingress-to-loki",
+			Namespace: namespace,
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{"app": "loki"},
+			},
+			Ingress: []networkingv1.NetworkPolicyIngressRule{{
+				From: []networkingv1.NetworkPolicyPeer{{
+					NamespaceSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"policy-group.network.openshift.io/ingress": "",
+						},
+					},
+				}},
+			}},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+		},
+	}
+	_, err = k8sClient.NetworkingV1().NetworkPolicies(namespace).Create(context.Background(), np, metav1.CreateOptions{})
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		o.Expect(err).NotTo(o.HaveOccurred())
+	}
+
+	route := &routev1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "loki",
+			Namespace: namespace,
+		},
+		Spec: routev1.RouteSpec{
+			To: routev1.RouteTargetReference{
+				Kind: "Service",
+				Name: "loki",
+			},
+			Port: &routev1.RoutePort{
+				TargetPort: intstr.FromInt32(3100),
+			},
+		},
+	}
+	_, err = routeV1Client.RouteV1().Routes(namespace).Create(context.Background(), route, metav1.CreateOptions{})
+	o.Expect(err).NotTo(o.HaveOccurred())
+	return getRouteAddress(namespace, "loki")
+}
+
+func deleteLokiRoute(namespace string) {
+	_ = routeV1Client.RouteV1().Routes(namespace).Delete(context.Background(), "loki", metav1.DeleteOptions{})
+	_ = k8sClient.NetworkingV1().NetworkPolicies(namespace).Delete(context.Background(), "allow-from-openshift-ingress-to-loki", metav1.DeleteOptions{})
 }
 
 // TODO: add argument for condition to be matched.
@@ -480,6 +500,7 @@ func (lokilabels Lokilabels) getLokiFlowLogs(token, lokiRoute string, startTime 
 	return flowRecords, err
 }
 
+// Verify loki flow records and if it was written in the last 5 minutes
 // func verifyLokilogsTime(token, lokiRoute string, startTime time.Time) error {
 // 	lc := newLokiClient(lokiRoute, startTime).withToken(token).retry(5)
 // 	res, err := lc.searchLogsInLoki("network", "{app=\"netobserv-flowcollector\", FlowDirection=\"0\"}")
@@ -504,6 +525,53 @@ func (lokilabels Lokilabels) getLokiFlowLogs(token, lokiRoute string, startTime 
 // 	}
 // 	return nil
 // }
+
+// Verify monolithic loki flow records and if it was written in the last 5 minutes
+func verifyMonolithicLokilogsTime(lokiRoute string, startTime time.Time) error {
+	// Expose Loki service via an OpenShift Route so queries work from outside the cluster
+	namespace, _ := parseMonolithicLokiURL(lokiRoute)
+	if namespace != "" {
+		lokiRoute = "http://" + createLokiRoute(namespace)
+		defer deleteLokiRoute(namespace)
+	}
+
+	lc := newLokiClient(lokiRoute, startTime).retry(5)
+	lc.quiet = false
+
+	var res *lokiQueryResponse
+	flowRecords := []FlowRecord{}
+
+	err := wait.PollUntilContextTimeout(context.Background(), 30*time.Second, 300*time.Second, false, func(context.Context) (done bool, err error) {
+		var qErr error
+		res, qErr = lc.searchLogsInLoki("", "{app=\"netobserv-flowcollector\", FlowDirection=\"0\"}")
+		if qErr != nil {
+			e2e.Logf("\ngot error %v when getting logs\n", qErr)
+			return false, nil
+		}
+		if len(res.Data.Result) == 0 {
+			e2e.Logf("network logs not found yet, will retry")
+			return false, nil
+		}
+		return true, nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, result := range res.Data.Result {
+		records, recErr := getFlowRecords(result.Values, result.Stream)
+		if recErr != nil {
+			return recErr
+		}
+		flowRecords = append(flowRecords, records...)
+	}
+
+	for _, r := range flowRecords {
+		r.Flowlog.verifyFlowRecord()
+	}
+	return nil
+}
 
 // Verify some key and deterministic conversation record fields and their values
 func (flowlog *Flowlog) verifyConversationRecord() {
@@ -586,70 +654,4 @@ func verifyNetworkEvents(flowRecords []FlowRecord, action NWEvents, policytype, 
 		}
 	}
 	o.Expect(nNWEventsLogs).Should(o.BeNumerically(">=", 1), "Found no logs with Network Events")
-}
-
-func waitForNewPodLogs(oc *exutil.CLI, namespace, podName, filter string) (string, error) {
-	sinceTime := time.Now().Format(time.RFC3339)
-	e2e.Logf("Waiting for new pod logs since %s with filter %q", sinceTime, filter)
-
-	err := wait.PollUntilContextTimeout(context.Background(), 20*time.Second, 10*time.Minute, false, func(context.Context) (bool, error) {
-		logs, err := oc.AsAdmin().WithoutNamespace().Run("logs").Args("--since-time="+sinceTime, podName, "-n", namespace).Output()
-		if err != nil {
-			e2e.Logf("unable to get pod (%s) logs: %v, will retry", podName, err)
-			return false, nil
-		}
-		if strings.Contains(logs, filter) {
-			e2e.Logf("Found new log entries matching filter %q", filter)
-			return true, nil
-		}
-		e2e.Logf("Waiting for new log entries matching %q", filter)
-		return false, nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	return compat_otp.WaitAndGetSpecificPodLogs(oc, namespace, "", podName, "'"+filter+"'")
-}
-
-func verifyMonolithicLokilogsTime(oc *exutil.CLI, namespace string, startTime time.Time) error {
-	lokiRoute := "http://" + createLokiRoute(oc, namespace)
-	defer deleteLokiRoute(oc, namespace)
-
-	lc := newLokiClient(lokiRoute, startTime).retry(5)
-	lc.quiet = false
-
-	var res *lokiQueryResponse
-	flowRecords := []FlowRecord{}
-
-	err := wait.PollUntilContextTimeout(context.Background(), 30*time.Second, 300*time.Second, false, func(context.Context) (done bool, err error) {
-		var qErr error
-		res, qErr = lc.searchLogsInLoki("", "{app=\"netobserv-flowcollector\", FlowDirection=\"0\"}")
-		if qErr != nil {
-			e2e.Logf("\ngot error %v when getting logs\n", qErr)
-			return false, nil
-		}
-		if len(res.Data.Result) == 0 {
-			e2e.Logf("network logs not found yet, will retry")
-			return false, nil
-		}
-		return true, nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	for _, result := range res.Data.Result {
-		records, recErr := getFlowRecords(result.Values, result.Stream)
-		if recErr != nil {
-			return recErr
-		}
-		flowRecords = append(flowRecords, records...)
-	}
-
-	for _, r := range flowRecords {
-		r.Flowlog.verifyFlowRecord()
-	}
-	return nil
 }

@@ -5,17 +5,27 @@ import (
 	filePath "path/filepath"
 )
 
+const (
+	netobservNS   = "openshift-netobserv-operator"
+	NOPackageName = "netobserv-operator"
+
+	minioNS        = "minio-aosqe"
+	minioSecret    = "minio-creds"
+	apiPath        = "/api/logs/v1/"
+	queryRangePath = "/loki/api/v1/query_range"
+	loNS           = "openshift-operators-redhat"
+)
+
 var (
-	// NetObserv Operator variables
-	NOcatSrc = Resource{"catsrc", "netobserv-konflux-fbc", netobservNS}
+	oc = &CLI{}
+
+	NOcatSrc = Resource{"catalogsource", "netobserv-konflux-fbc", netobservNS}
 	NOSource = CatalogSourceObjects{"stable", NOcatSrc.Name, NOcatSrc.Namespace}
 
-	// Template directories
 	baseDir, _      = filePath.Abs("testdata")
 	subscriptionDir = filePath.Join(baseDir, "subscription")
 	flowFixturePath = filePath.Join(baseDir, "flowcollector_v1beta2_template.yaml")
 
-	// Operator namespace object
 	OperatorNS = OperatorNamespace{
 		Name:              netobservNS,
 		NamespaceTemplate: filePath.Join(subscriptionDir, "namespace.yaml"),

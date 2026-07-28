@@ -4,25 +4,28 @@ import (
 	"fmt"
 
 	"github.com/onsi/ginkgo/v2"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
-
 	"golang.org/x/mod/semver"
 )
 
 var clusterVersion string
 
-func GetOCPVersion(oc *exutil.CLI) (string, error) {
+func GetOCPVersion() (string, error) {
 	if clusterVersion != "" {
 		return clusterVersion, nil
 	}
 
-	var err error
-	_, clusterVersion, err = compat_otp.GetClusterVersion(oc)
-	clusterVersion = semver.Canonical("v" + clusterVersion)
+	obj, err := getDynamicResource("clusterversion", "version", "")
+	if err != nil {
+		return "", err
+	}
+	version, found := getNestedField(obj.Object, ".status.desired.version")
+	if !found {
+		return "", fmt.Errorf("desired version not found in clusterversion")
+	}
+	clusterVersion = semver.Canonical("v" + version)
 	clusterVersion = semver.MajorMinor(clusterVersion)
 	fmt.Printf("Detected OCP version: %s\n", clusterVersion)
-	return clusterVersion, err
+	return clusterVersion, nil
 }
 
 // validateRequiredVersion validates and canonicalizes the required version string
