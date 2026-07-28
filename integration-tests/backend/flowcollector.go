@@ -7,9 +7,11 @@ import (
 	"strings"
 	"time"
 
+	o "github.com/onsi/gomega"
 	exutil "github.com/openshift/origin/test/extended/util"
 	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
-
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -191,7 +193,70 @@ func (flow Flowcollector) CreateFlowcollector(oc *exutil.CLI) {
 	}
 
 	compat_otp.ApplyNsResourceFromTemplate(oc, flow.Namespace, parameters...)
+
+	flow.createRoleBindings(oc)
+
 	flow.WaitForFlowcollectorReady(oc)
+}
+
+func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
+	operatorSA := rbacv1.Subject{
+		Kind:      "ServiceAccount",
+		Name:      "netobserv-controller-manager",
+		Namespace: netobservNS,
+	}
+
+	componentCRBs := []struct {
+		name        string
+		clusterRole string
+		sa          string
+	}{
+		{"netobserv-informers-flp-" + flow.Namespace, "netobserv-informers", "flowlogs-pipeline"},
+		{"netobserv-hostnetwork-flp-" + flow.Namespace, "netobserv-hostnetwork", "flowlogs-pipeline"},
+		{"netobserv-loki-writer-flp-" + flow.Namespace, "netobserv-loki-writer", "flowlogs-pipeline"},
+		{"netobserv-informers-flptransfo-" + flow.Namespace, "netobserv-informers", "flowlogs-pipeline-transformer"},
+		{"netobserv-loki-writer-flptransfo-" + flow.Namespace, "netobserv-loki-writer", "flowlogs-pipeline-transformer"},
+		{"netobserv-token-review-plugin-" + flow.Namespace, "netobserv-token-review", "netobserv-plugin"},
+	}
+	for _, crb := range componentCRBs {
+		_, err := oc.AdminKubeClient().RbacV1().ClusterRoleBindings().Create(context.Background(), &rbacv1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{Name: crb.name},
+			RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: crb.clusterRole},
+			Subjects:   []rbacv1.Subject{{Kind: "ServiceAccount", Name: crb.sa, Namespace: flow.Namespace}},
+		}, metav1.CreateOptions{})
+		o.Expect(err).NotTo(o.HaveOccurred())
+	}
+
+	secretRBs := []struct {
+		name        string
+		namespace   string
+		clusterRole string
+	}{
+		{"secret-creator", flow.Namespace, "netobserv-secret-creator"},
+		{"secret-creator", flow.Namespace + "-privileged", "netobserv-secret-creator"},
+	}
+	if flow.DeploymentModel == "Kafka" {
+		secretRBs = append(secretRBs, struct {
+			name        string
+			namespace   string
+			clusterRole string
+		}{"secret-watcher", flow.KafkaNamespace, "netobserv-secret-watcher"})
+	}
+	if flow.LokiMode == "LokiStack" {
+		secretRBs = append(secretRBs, struct {
+			name        string
+			namespace   string
+			clusterRole string
+		}{"secret-watcher", flow.LokiNamespace, "netobserv-secret-watcher"})
+	}
+	for _, rb := range secretRBs {
+		_, err := oc.AdminKubeClient().RbacV1().RoleBindings(rb.namespace).Create(context.Background(), &rbacv1.RoleBinding{
+			ObjectMeta: metav1.ObjectMeta{Name: rb.name, Namespace: rb.namespace},
+			RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: rb.clusterRole},
+			Subjects:   []rbacv1.Subject{operatorSA},
+		}, metav1.CreateOptions{})
+		o.Expect(err).NotTo(o.HaveOccurred())
+	}
 }
 
 // delete flowcollector CRD from a cluster
