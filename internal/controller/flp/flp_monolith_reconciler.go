@@ -119,7 +119,10 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	if desired.Spec.UseHostNetwork() {
+	if desired.Spec.UseHostNetwork() && !desired.Spec.Processor.IsInformerCacheProxyEnabled() {
+		// In Direct mode, agents reach FLP directly (hostNetwork/hostPort), so no Service
+		// is needed... unless centralized informers are enabled, in which case we still
+		// need a Service to expose the k8scache port and trigger serving-cert generation.
 		r.Managed.TryDelete(ctx, r.service)
 	} else {
 		if err := r.reconcileService(ctx, &builder); err != nil {
