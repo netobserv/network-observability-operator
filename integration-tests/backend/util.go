@@ -911,22 +911,6 @@ func isPlatformSuitableForNMState(oc *exutil.CLI) bool {
 	return true
 }
 
-// Check if BaselineCapabilities have been set
-func isBaselineCapsSet(oc *exutil.CLI) bool {
-	baselineCapabilitySet, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("clusterversion", "version", "-o=jsonpath={.spec.capabilities.baselineCapabilitySet}").Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-	e2e.Logf("baselineCapabilitySet parameters: %v\n", baselineCapabilitySet)
-	return len(baselineCapabilitySet) != 0
-}
-
-// Check if component is listed in clusterversion.status.capabilities.enabledCapabilities
-func isEnabledCapability(oc *exutil.CLI, component string) bool {
-	enabledCapabilities, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("clusterversion", "-o=jsonpath={.items[*].status.capabilities.enabledCapabilities}").Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-	e2e.Logf("Cluster enabled capability parameters: %v\n", enabledCapabilities)
-	return strings.Contains(enabledCapabilities, component)
-}
-
 // verifyComponentsDeleted verifies that specified components are NOT present in the output (exact line match)
 func verifyComponentsDeleted(componentsOutput string, componentsList []string) {
 	outputLines := strings.Split(strings.TrimSpace(componentsOutput), "\n")

@@ -1,7 +1,6 @@
 package e2etests
 
 import (
-	"os"
 	filePath "path/filepath"
 	"regexp"
 	"strings"
@@ -16,53 +15,18 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 	defer g.GinkgoRecover()
 	var (
-		oc = compat_otp.NewCLI("netobserv", compat_otp.KubeConfigPath())
-		// NetObserv Operator variables
-		NOcatSrc = Resource{"catsrc", "netobserv-konflux-fbc", netobservNS}
-		NOSource = CatalogSourceObjects{"stable", NOcatSrc.Name, NOcatSrc.Namespace}
-
-		// Template directories
-		baseDir, _      = filePath.Abs("testdata")
-		subscriptionDir = filePath.Join(baseDir, "subscription")
-		flowFixturePath = filePath.Join(baseDir, "flowcollector_v1beta2_template.yaml")
+		oc              = compat_otp.NewCLI("netobserv", compat_otp.KubeConfigPath())
 		flowmetricsPath = filePath.Join(baseDir, "flowmetrics_v1alpha1_template.yaml")
-
-		// Operator namespace object
-		OperatorNS = OperatorNamespace{
-			Name:              netobservNS,
-			NamespaceTemplate: filePath.Join(subscriptionDir, "namespace.yaml"),
-		}
-		NO = SubscriptionObjects{
-			OperatorName:  "netobserv-operator",
-			Namespace:     netobservNS,
-			PackageName:   NOPackageName,
-			Subscription:  filePath.Join(subscriptionDir, "sub-template.yaml"),
-			OperatorGroup: filePath.Join(subscriptionDir, "allnamespace-og.yaml"),
-			CatalogSource: &NOSource,
-		}
-		imageDigest    = filePath.Join(subscriptionDir, "image-digest-mirror-set.yaml")
-		catSrcTemplate = filePath.Join(subscriptionDir, "catalog-source.yaml")
-		catalogSource  = os.Getenv("MULTISTAGE_PARAM_OVERRIDE_NETOBSERV_CS_IMAGE")
-
-		flow Flowcollector
+		flow            Flowcollector
 	)
 
 	g.BeforeEach(func() {
-		if strings.Contains(os.Getenv("E2E_RUN_TAGS"), "disconnected") {
-			g.Skip("Skipping tests for disconnected profiles")
-		}
-
-		OperatorNS.DeployOperatorNamespace(oc)
-		deployedUpstreamCatalogSource, catSrcErr := setupCatalogSource(oc, NOcatSrc, catSrcTemplate, imageDigest, catalogSource, false, &NOSource, &NO)
-		o.Expect(catSrcErr).NotTo(o.HaveOccurred())
-		ensureNetObservOperatorDeployed(oc, NO, NOSource, deployedUpstreamCatalogSource)
-
-		// Create flowcollector in beforeEach
 		flow = Flowcollector{
-			Namespace:   oc.Namespace(),
-			EBPFeatures: []string{"\"FlowRTT\""},
-			LokiEnable:  "false",
-			Template:    flowFixturePath,
+			Namespace:       oc.Namespace(),
+			EBPFeatures:     []string{"\"FlowRTT\""},
+			LokiEnable:      "false",
+			InstallDemoLoki: "false",
+			Template:        flowFixturePath,
 		}
 		flow.CreateFlowcollector(oc)
 	})
@@ -71,7 +35,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	})
 
 	g.It("Author:memodi-High-73539-Create custom metrics and charts [Serial]", func() {
-		SkipIfOCPBelow("v4.12")
 		namespace := oc.Namespace()
 		customMetrics := CustomMetrics{
 			Namespace: namespace,

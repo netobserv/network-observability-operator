@@ -25,13 +25,8 @@ type Flowcollector struct {
 	DeploymentModel                   string
 	LokiEnable                        string
 	LokiMode                          string
-	LokiURL                           string
-	LokiTLSCertName                   string
-	LokiStatusTLSEnable               string
-	LokiStatusURL                     string
-	LokiStatusTLSCertName             string
-	LokiStatusTLSUserCertName         string
 	LokiNamespace                     string
+	InstallDemoLoki                   string
 	MonolithicLokiURL                 string
 	KafkaAddress                      string
 	KafkaTLSEnable                    string
@@ -177,6 +172,8 @@ type Lokilabels struct {
 	SrcK8SType      string `loki:"SrcK8S_Type"`
 	DstK8SType      string `loki:"DstK8S_Type"`
 	Interfaces      string `loki:"Interfaces"`
+	// When set, AllowEmpty is for tests expecting 0 flows (e.g. multi-tenancy, filtering)
+	AllowEmpty bool `loki:"-"`
 }
 
 // create flowcollector CRD for a given manifest file
@@ -207,10 +204,10 @@ func (flow *Flowcollector) WaitForFlowcollectorReady(oc *exutil.CLI) {
 	switch flow.DeploymentModel {
 	case "Kafka":
 		waitUntilDeploymentReady(oc, "flowlogs-pipeline-transformer", flow.Namespace)
-	case "Service":
-		waitUntilDeploymentReady(oc, "flowlogs-pipeline", flow.Namespace)
-	default:
+	case "Direct":
 		waitUntilDaemonSetReady(oc, "flowlogs-pipeline", flow.Namespace)
+	default:
+		waitUntilDeploymentReady(oc, "flowlogs-pipeline", flow.Namespace)
 	}
 	// check ebpf-agent status
 	waitUntilDaemonSetReady(oc, "netobserv-ebpf-agent", flow.Namespace+"-privileged")
@@ -223,21 +220,17 @@ func (flow *Flowcollector) WaitForFlowcollectorReady(oc *exutil.CLI) {
 	compat_otp.AssertAllPodsToBeReady(oc, flow.Namespace)
 	compat_otp.AssertAllPodsToBeReady(oc, flow.Namespace+"-privileged")
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-
-		status, err := oc.AsAdmin().Run("get").Args("flowcollector", "-o", "jsonpath='{.items[*].status.conditions[0].reason}'").Output()
-
+		condStatus, err := oc.AsAdmin().Run("get").Args("flowcollector", "cluster", "-o", `jsonpath='{.status.conditions[?(@.type=="Ready")].status}'`).Output()
 		if err != nil {
-			return false, err
+			return false, nil
 		}
-		if strings.Contains(status, "Ready") {
+		condStatusStr := strings.TrimSpace(condStatus)
+		if condStatusStr == "'True'" {
 			return true, nil
 		}
 
-		msg, err := oc.AsAdmin().Run("get").Args("flowcollector", "-o", "jsonpath='{.items[*].status.conditions[0].message}'").Output()
-		e2e.Logf("flowcollector status is %s due to %s", status, msg)
-		if err != nil {
-			return false, err
-		}
+		msg, _ := oc.AsAdmin().Run("get").Args("flowcollector", "cluster", "-o", `jsonpath='{.status.conditions[?(@.type=="Ready")].reason},{.status.conditions[?(@.type=="Ready")].message}'`).Output()
+		e2e.Logf("flowcollector Ready condition status=%s: %s", condStatusStr, strings.TrimSpace(msg))
 
 		return false, nil
 	})

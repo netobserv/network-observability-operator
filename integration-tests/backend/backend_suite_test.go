@@ -11,8 +11,9 @@ import (
 	g "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
-	"github.com/onsi/gomega"
+	o "github.com/onsi/gomega"
 	exutil "github.com/openshift/origin/test/extended/util"
+	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	e2eframework "k8s.io/kubernetes/test/e2e/framework"
 )
 
@@ -38,16 +39,26 @@ var _ = g.BeforeSuite(func() {
 	e2eframework.TestContext.DumpLogsOnFailure = dumpEvents
 
 	// Initialize test
-	gomega.Expect(exutil.InitTest(false)).NotTo(gomega.HaveOccurred())
+	o.Expect(exutil.InitTest(false)).NotTo(o.HaveOccurred())
 
 	oc := exutil.NewCLIForMonitorTest("netobserv")
 	_, err = GetOCPVersion(oc)
-	gomega.Expect(err).NotTo(gomega.HaveOccurred())
+	o.Expect(err).NotTo(o.HaveOccurred())
+
+	if strings.Contains(os.Getenv("E2E_RUN_TAGS"), "disconnected") {
+		g.Skip("Skipping tests for disconnected profiles")
+	}
+
+	isHypershift := compat_otp.IsHypershiftHostedCluster(oc)
+	OperatorNS.DeployOperatorNamespace(oc)
+	catSrcErr := setupCatalogSource(oc, NOcatSrc, catSrcTemplate, imageDigest, catalogSource, isHypershift, &NOSource, &NO)
+	o.Expect(catSrcErr).NotTo(o.HaveOccurred())
+	ensureNetObservOperatorDeployed(oc, NO, NOSource)
 })
 
 func TestBackend(t *testing.T) {
 	exutil.WithCleanup(func() {
-		gomega.RegisterFailHandler(g.Fail)
+		o.RegisterFailHandler(g.Fail)
 
 		suiteConfig, reporterConfig := g.GinkgoConfiguration()
 

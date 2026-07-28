@@ -94,36 +94,9 @@ objects:
         lokiStack:
           name: ${LokistackName}
           namespace: ${LokiNamespace}
-        manual:
-          authToken: Forward
-          querierUrl: "${LokiURL}"
-          ingesterUrl: "${LokiURL}"
-          statusUrl: "${LokiStatusURL}"
-          tls:
-            enable: true
-            caCert:
-              type: configmap
-              name: "${LokiTLSCertName}"
-              certFile: service-ca.crt
-              namespace: "${LokiNamespace}"
-            insecureSkipVerify: false
-          tenantID: network
-          statusTls:
-            enable: "${{LokiStatusTLSEnable}}"
-            caCert:
-              certFile: service-ca.crt
-              name: "${LokiStatusTLSCertName}"
-              type: configmap
-              namespace: "${LokiNamespace}"
-            insecureSkipVerify: false
-            userCert:
-              certFile: tls.crt
-              certKey: tls.key
-              name: "${LokiStatusTLSUserCertName}"
-              type: secret
-              namespace: "${LokiNamespace}"
         monolithic:
           url: ${MonolithicLokiURL}
+          installDemoLoki: "${{InstallDemoLoki}}"
       networkPolicy:
         additionalNamespaces: "${{NetworkPolicyAdditionalNamespaces}}"
         enable: "${{NetworkPolicyEnable}}"
@@ -139,7 +112,7 @@ parameters:
     description: "namespace where you want flowlogsPipeline and consoleplugin pods to be deployed"
     value: "netobserv"
   - name: DeploymentModel
-    value: "Direct"
+    value: "Service"
   - name: EBPFCacheActiveTimeout
     value: 15s
   - name: Sampling
@@ -175,25 +148,15 @@ parameters:
   - name: NamespacesAllow
     value: '["`/netobserv.*/`"]'
   - name: LokiMode
-    value: "LokiStack"
+    value: "Monolithic"
   - name: LokiEnable
     value: "true"
   - name: LokistackName
     value: lokistack
-  - name: LokiURL
-    value: "https://lokistack-gateway-http.netobserv.svc.cluster.local:8080/api/logs/v1/network/"
-  - name: LokiTLSCertName
-    value: "lokistack-gateway-ca-bundle"
-  - name: LokiStatusURL
-    value: ""
-  - name: LokiStatusTLSEnable
-    value: "false"
-  - name: LokiStatusTLSCertName
-    value: "lokistack-ca-bundle"
-  - name: LokiStatusTLSUserCertName
-    value: "lokistack-query-frontend-http"
   - name: MonolithicLokiURL
     value: "http://loki.netobserv.svc:3100/"
+  - name: InstallDemoLoki
+    value: "true"
   - name: LokiNamespace
     value: "netobserv"
   - name: KafkaAddress
