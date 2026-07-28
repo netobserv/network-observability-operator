@@ -119,15 +119,8 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	if desired.Spec.UseHostNetwork() && !desired.Spec.Processor.IsInformerCacheProxyEnabled() {
-		// In Direct mode, agents reach FLP directly (hostNetwork/hostPort), so no Service
-		// is needed... unless centralized informers are enabled, in which case we still
-		// need a Service to expose the k8scache port and trigger serving-cert generation.
-		r.Managed.TryDelete(ctx, r.service)
-	} else {
-		if err := r.reconcileService(ctx, &builder); err != nil {
-			return err
-		}
+	if err := r.reconcileOrDeleteService(ctx, &desired.Spec, &builder); err != nil {
+		return err
 	}
 
 	err = r.reconcilePrometheusService(ctx, &builder)
@@ -175,6 +168,18 @@ func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, newD
 		}
 	}
 	return nil
+}
+
+// reconcileOrDeleteService reconciles the FLP Service, or deletes it when it's not needed:
+// in Direct mode, agents reach FLP directly (hostNetwork/hostPort), so no Service is needed...
+// unless centralized informers are enabled, in which case we still need a Service to expose
+// the k8scache port and trigger serving-cert generation.
+func (r *monolithReconciler) reconcileOrDeleteService(ctx context.Context, desired *flowslatest.FlowCollectorSpec, builder *monolithBuilder) error {
+	if desired.UseHostNetwork() && !desired.Processor.IsInformerCacheProxyEnabled() {
+		r.Managed.TryDelete(ctx, r.service)
+		return nil
+	}
+	return r.reconcileService(ctx, builder)
 }
 
 func (r *monolithReconciler) reconcileService(ctx context.Context, builder *monolithBuilder) error {
