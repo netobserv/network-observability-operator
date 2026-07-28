@@ -196,6 +196,18 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 					Namespace: operatorNamespace,
 				}, &cm)
 			}, timeout, interval).Should(Succeed())
+
+			By("Expecting to create the flowlogs-pipeline Service, even in Direct mode, because informers are enabled")
+			svc := v1.Service{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, flpKey1, &svc)
+			}, timeout, interval).Should(Succeed())
+			Expect(svc.Spec.Ports).To(HaveLen(1))
+			Expect(svc.Spec.Ports[0].Name).To(Equal("k8scache"))
+			if env == test.EnvOpenShift {
+				By("Expecting the Service to request a serving certificate for the k8scache TLS server")
+				Expect(svc.Annotations[constants.OpenShiftCertificateAnnotation]).To(Equal("flowlogs-pipeline-cert"))
+			}
 		})
 
 		It("Should update successfully", func() {
@@ -269,6 +281,11 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 				g.Expect(ds.Spec.Template.Spec.Tolerations).
 					To(ContainElement(v1.Toleration{Operator: v1.TolerationOpExists}))
 			}, timeout, interval).Should(Succeed())
+
+			By("Deleting the flowlogs-pipeline Service, since informers got disabled and we're still in Direct mode")
+			Eventually(func() error {
+				return k8sClient.Get(ctx, flpKey1, &v1.Service{})
+			}, timeout, interval).Should(MatchError(`services "flowlogs-pipeline" not found`))
 		})
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {

@@ -170,15 +170,17 @@ func (b *monolithBuilder) service() *corev1.Service {
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{"app": monoName},
-			Ports: []corev1.ServicePort{
-				{
-					Name:       constants.FLPPortName,
-					Port:       port,
-					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromInt32(port),
-				},
-			},
 		},
+	}
+	// In Direct mode (hostNetwork/hostPort), the main flow-ingest port is reached directly
+	// by the agents, not through this Service; only expose it otherwise.
+	if !b.desired.UseHostNetwork() {
+		svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
+			Name:       constants.FLPPortName,
+			Port:       port,
+			Protocol:   corev1.ProtocolTCP,
+			TargetPort: intstr.FromInt32(port),
+		})
 	}
 	// Only expose k8scache port when centralized informers are enabled
 	if b.desired.Processor.IsInformerCacheProxyEnabled() {

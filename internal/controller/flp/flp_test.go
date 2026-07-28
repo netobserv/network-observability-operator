@@ -511,6 +511,44 @@ func TestServiceChanged(t *testing.T) {
 	assert.Contains(report.String(), "Service annotations changed")
 }
 
+func TestServiceDirectModeWithInformersEnabled(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.DeploymentModel = flowslatest.DeploymentModelDirect
+	cfg.Processor.InformerCacheProxy = &flowslatest.FlowCollectorInformerCacheProxy{
+		Enabled: ptr.To(true),
+	}
+	b := monoBuilder(ns, &cfg)
+	svc := b.service()
+
+	// The main flow-ingest port must not be exposed: in Direct mode agents reach FLP via hostPort/hostNetwork directly.
+	for _, p := range svc.Spec.Ports {
+		assert.NotEqual(constants.FLPPortName, p.Name, "main port should not be exposed on the Service in Direct mode")
+	}
+	// The k8scache port must still be exposed, so the informers can reach the processors,
+	// and so that the OpenShift serving-cert secret gets created (svc-certs volume relies on it).
+	assert.Contains(svc.Spec.Ports, corev1.ServicePort{
+		Name:       "k8scache",
+		Port:       flowslatest.DefaultK8sCachePort,
+		Protocol:   corev1.ProtocolTCP,
+		TargetPort: intstr.FromInt32(flowslatest.DefaultK8sCachePort),
+	})
+}
+
+func TestServiceDirectModeWithoutInformers(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.DeploymentModel = flowslatest.DeploymentModelDirect
+	b := monoBuilder(ns, &cfg)
+	svc := b.service()
+
+	assert.Empty(svc.Spec.Ports, "no port should be exposed on the Service in Direct mode without informers")
+}
+
 func TestServiceMonitorNoChange(t *testing.T) {
 	assert := assert.New(t)
 
