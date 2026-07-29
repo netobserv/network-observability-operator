@@ -121,6 +121,8 @@ func initK8sClient() error {
 	if err != nil {
 		return fmt.Errorf("cannot build kubeconfig: %w", err)
 	}
+	config.QPS = 20
+	config.Burst = 50
 	k8sRestConfig = config
 	k8sClient, err = kubernetes.NewForConfig(config)
 	if err != nil {
