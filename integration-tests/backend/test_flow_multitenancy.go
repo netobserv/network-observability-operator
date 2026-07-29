@@ -21,8 +21,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 	var (
 		namespace      string
 		kubeadminToken string
-		lokiStackNS     = "netobserv-loki"
-		ls              *lokiStack
+		lokiStackNS    = "netobserv-loki"
+		ls             *lokiStack
 
 		// Template directories
 		lokiDir              = filePath.Join(baseDir, "loki")
