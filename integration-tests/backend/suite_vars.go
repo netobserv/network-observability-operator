@@ -43,11 +43,11 @@ var (
 	catSrcTemplate = filePath.Join(subscriptionDir, "catalog-source.yaml")
 
 	// Environment variables for test configuration
-	catalogSource    = os.Getenv("MULTISTAGE_PARAM_OVERRIDE_NETOBSERV_CS_IMAGE")
+	catalogSource      = os.Getenv("MULTISTAGE_PARAM_OVERRIDE_NETOBSERV_CS_IMAGE")
 	deleteNamespaceEnv = os.Getenv("DELETE_NAMESPACE")
-	dumpEventsEnv    = os.Getenv("DUMP_EVENTS_ON_FAILURE")
-	e2eRunTags       = os.Getenv("E2E_RUN_TAGS")
-	junitReportFile  = os.Getenv("JUNIT_REPORT_FILE")
-	kubeAdminPasswd  = os.Getenv("QE_KUBEADMIN_PASSWORD")
-	kubeconfigPath   = os.Getenv("KUBECONFIG")
+	dumpEventsEnv      = os.Getenv("DUMP_EVENTS_ON_FAILURE")
+	e2eRunTags         = os.Getenv("E2E_RUN_TAGS")
+	junitReportFile    = os.Getenv("JUNIT_REPORT_FILE")
+	kubeAdminPasswd    = os.Getenv("QE_KUBEADMIN_PASSWORD")
+	kubeconfigPath     = os.Getenv("KUBECONFIG")
 )
