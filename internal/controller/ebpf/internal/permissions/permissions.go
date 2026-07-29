@@ -118,7 +118,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context, desired *flows
 		}
 	}
 
-	if desired.Spec.OnHold() {
+	if desired.Spec.OnHold() && actual != nil {
 		return c.DeleteIfOwned(ctx, actual)
 	}
 
@@ -126,7 +126,7 @@ func (c *Reconciler) reconcileServiceAccount(ctx context.Context, desired *flows
 		rlog.Info("creating service account")
 		return c.CreateOwned(ctx, sAcc)
 	}
-	rlog.Info("service account already reconciled. Doing nothing")
+	rlog.Info("service account already reconciled, doing nothing")
 	return nil
 }
 
