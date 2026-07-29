@@ -109,15 +109,15 @@ var gvrMap = map[string]schema.GroupVersionResource{
 }
 
 func initK8sClient() error {
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig == "" {
+	kc := kubeconfigPath
+	if kc == "" {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return fmt.Errorf("cannot determine home directory: %w", err)
 		}
-		kubeconfig = filepath.Join(home, ".kube", "config")
+		kc = filepath.Join(home, ".kube", "config")
 	}
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", kc)
 	if err != nil {
 		return fmt.Errorf("cannot build kubeconfig: %w", err)
 	}

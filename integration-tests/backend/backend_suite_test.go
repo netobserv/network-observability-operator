@@ -3,7 +3,6 @@ package e2etests
 import (
 	"flag"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -37,7 +36,7 @@ var _ = g.BeforeSuite(func() {
 	// Control verbose event dumping on test failures via DUMP_EVENTS_ON_FAILURE env variable
 	// Default: disabled (false)
 	// Set DUMP_EVENTS_ON_FAILURE=true to enable verbose cluster-wide event dumps for debugging
-	dumpEvents, err := strconv.ParseBool(os.Getenv("DUMP_EVENTS_ON_FAILURE"))
+	dumpEvents, err := strconv.ParseBool(dumpEventsEnv)
 	if err != nil {
 		dumpEvents = false
 	}
@@ -46,7 +45,7 @@ var _ = g.BeforeSuite(func() {
 	_, err = GetOCPVersion()
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	if strings.Contains(os.Getenv("E2E_RUN_TAGS"), "disconnected") {
+	if strings.Contains(e2eRunTags, "disconnected") {
 		g.Skip("Skipping tests for disconnected profiles")
 	}
 
@@ -135,7 +134,7 @@ var _ = g.ReportAfterSuite("NetObserv JUnit", func(report g.Report) {
 	_, reporterConfig := g.GinkgoConfiguration()
 	junitFile := reporterConfig.JUnitReport
 	if junitFile == "" {
-		junitFile = os.Getenv("JUNIT_REPORT_FILE")
+		junitFile = junitReportFile
 	}
 	if junitFile == "" {
 		return

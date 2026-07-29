@@ -3,7 +3,6 @@ package e2etests
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	g "github.com/onsi/ginkgo/v2"
@@ -89,7 +88,7 @@ func createNamespace(name string) error {
 
 // deleteNamespace deletes a namespace and waits for it to be fully removed.
 func deleteNamespace(ns string) {
-	if os.Getenv("DELETE_NAMESPACE") == "false" {
+	if deleteNamespaceEnv == "false" {
 		e2e.Logf("Skipping namespace deletion for %s (DELETE_NAMESPACE=false)", ns)
 		return
 	}

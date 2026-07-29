@@ -3,7 +3,6 @@ package e2etests
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	filePath "path/filepath"
 	"strings"
@@ -20,9 +19,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 	defer g.GinkgoRecover()
 
 	var (
-		namespace       string
-		kubeAdminPasswd = os.Getenv("QE_KUBEADMIN_PASSWORD")
-		kubeadminToken  string
+		namespace      string
+		kubeadminToken string
 		lokiStackNS     = "netobserv-loki"
 		ls              *lokiStack
 
