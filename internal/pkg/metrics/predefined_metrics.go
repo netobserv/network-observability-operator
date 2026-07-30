@@ -135,10 +135,9 @@ func init() {
 		dnsLabels = append(dnsLabels, "DnsFlagsResponseCode")
 		dnsLabels = append(dnsLabels, "DnsName")
 		predefinedMetrics = append(predefinedMetrics, metricslatest.FlowMetricSpec{
-			MetricName: fmt.Sprintf("%s_dns_packets_total", groupTrimmed),
+			MetricName: fmt.Sprintf("%s_dns_flows_total", groupTrimmed),
 			Type:       metricslatest.CounterMetric,
-			Help:       fmt.Sprintf("DNS packets per %s", groupTrimmed),
-			ValueField: "Packets",
+			Help:       fmt.Sprintf("DNS flows per %s", groupTrimmed),
 			Filters: []metricslatest.MetricFilter{
 				{Field: "DnsId", MatchType: metricslatest.MatchPresence},
 			},

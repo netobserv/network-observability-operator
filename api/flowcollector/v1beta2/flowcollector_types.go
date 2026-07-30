@@ -577,7 +577,7 @@ type MetricsServerConfig struct {
 }
 
 // Metric name. More information in https://github.com/netobserv/netobserv-operator/blob/main/docs/Metrics.md.
-// +kubebuilder:validation:Enum:="namespace_egress_bytes_total";"namespace_egress_packets_total";"namespace_ingress_bytes_total";"namespace_ingress_packets_total";"namespace_flows_total";"node_egress_bytes_total";"node_egress_packets_total";"node_ingress_bytes_total";"node_ingress_packets_total";"node_flows_total";"workload_egress_bytes_total";"workload_egress_packets_total";"workload_ingress_bytes_total";"workload_ingress_packets_total";"workload_flows_total";"namespace_drop_bytes_total";"namespace_drop_packets_total";"node_drop_bytes_total";"node_drop_packets_total";"workload_drop_bytes_total";"workload_drop_packets_total";"namespace_rtt_seconds";"node_rtt_seconds";"workload_rtt_seconds";"namespace_dns_latency_seconds";"node_dns_latency_seconds";"workload_dns_latency_seconds";"namespace_dns_packets_total";"node_dns_packets_total";"workload_dns_packets_total";"node_network_policy_events_total";"namespace_network_policy_events_total";"workload_network_policy_events_total";"node_ipsec_flows_total";"namespace_ipsec_flows_total";"workload_ipsec_flows_total";"node_tls_flows_total";"namespace_tls_flows_total";"workload_tls_flows_total";"node_to_node_ingress_flows_total"
+// +kubebuilder:validation:Enum:="namespace_egress_bytes_total";"namespace_egress_packets_total";"namespace_ingress_bytes_total";"namespace_ingress_packets_total";"namespace_flows_total";"node_egress_bytes_total";"node_egress_packets_total";"node_ingress_bytes_total";"node_ingress_packets_total";"node_flows_total";"workload_egress_bytes_total";"workload_egress_packets_total";"workload_ingress_bytes_total";"workload_ingress_packets_total";"workload_flows_total";"namespace_drop_bytes_total";"namespace_drop_packets_total";"node_drop_bytes_total";"node_drop_packets_total";"workload_drop_bytes_total";"workload_drop_packets_total";"namespace_rtt_seconds";"node_rtt_seconds";"workload_rtt_seconds";"namespace_dns_latency_seconds";"node_dns_latency_seconds";"workload_dns_latency_seconds";"namespace_dns_flows_total";"node_dns_flows_total";"workload_dns_flows_total";"node_network_policy_events_total";"namespace_network_policy_events_total";"workload_network_policy_events_total";"node_ipsec_flows_total";"namespace_ipsec_flows_total";"workload_ipsec_flows_total";"node_tls_flows_total";"namespace_tls_flows_total";"workload_tls_flows_total";"node_to_node_ingress_flows_total"
 type FLPMetric string
 
 // `FLPMetrics` define the desired FLP configuration regarding metrics
@@ -593,7 +593,7 @@ type FLPMetrics struct {
 	// Metrics enabled by default are:
 	// `namespace_flows_total`, `node_ingress_bytes_total`, `node_egress_bytes_total`, `workload_ingress_bytes_total`,
 	// `workload_egress_bytes_total`, `namespace_drop_packets_total` (when `PacketDrop` feature is enabled),
-	// `namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` and `namespace_dns_packets_total` (when `DNSTracking` feature is enabled),
+	// `namespace_rtt_seconds` (when `FlowRTT` feature is enabled), `namespace_dns_latency_seconds` and `namespace_dns_flows_total` (when `DNSTracking` feature is enabled),
 	// `namespace_network_policy_events_total` (when `NetworkEvents` feature is enabled).
 	// More information, with full list of available metrics: https://github.com/netobserv/netobserv-operator/blob/main/docs/Metrics.md
 	// +optional
