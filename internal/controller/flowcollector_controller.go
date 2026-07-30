@@ -92,7 +92,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 		return nil, err
 	}
 	r.ctrl = ctrl
-	r.watcher = watchers.NewWatcher(ctrl)
+	r.watcher = watchers.NewWatcher(ctrl, mgr.Config.Namespace)
 
 	return nil, nil
 }
