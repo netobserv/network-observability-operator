@@ -156,6 +156,7 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
 		"namespace_dns_latency_seconds",
+		"namespace_dns_packets_total",
 		"namespace_drop_packets_total",
 		"namespace_flows_total",
 		"namespace_ingress_packets_total",
