@@ -2558,6 +2558,8 @@ Metrics server endpoint configuration for the Prometheus scraper.
         <td>string</td>
         <td>
           Prometheus scraping interval, how often metrics are pulled.<br/>
+          <br/>
+            <i>Format</i>: duration<br/>
         </td>
         <td>false</td>
       </tr><tr>
@@ -12396,6 +12398,8 @@ Metrics server endpoint configuration for Prometheus scraper
         <td>string</td>
         <td>
           Prometheus scraping interval, how often metrics are pulled.<br/>
+          <br/>
+            <i>Format</i>: duration<br/>
         </td>
         <td>false</td>
       </tr><tr>

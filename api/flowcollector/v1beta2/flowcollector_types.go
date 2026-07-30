@@ -571,6 +571,8 @@ type MetricsServerConfig struct {
 	TLS ServerTLS `json:"tls"`
 
 	// Prometheus scraping interval, how often metrics are pulled.
+	//+kubebuilder:validation:Format=duration
+	// +optional
 	ScrapeInterval *metav1.Duration `json:"scrapeInterval,omitempty"` // Warning: keep as pointer, else default is ignored
 }
 

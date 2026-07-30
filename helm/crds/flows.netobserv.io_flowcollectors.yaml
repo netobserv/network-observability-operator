@@ -1367,6 +1367,7 @@ spec:
                                   type: integer
                                 scrapeInterval:
                                   description: Prometheus scraping interval, how often metrics are pulled.
+                                  format: duration
                                   type: string
                                 tls:
                                   description: TLS configuration.
@@ -5910,6 +5911,7 @@ spec:
                               type: integer
                             scrapeInterval:
                               description: Prometheus scraping interval, how often metrics are pulled.
+                              format: duration
                               type: string
                             tls:
                               description: TLS configuration.
