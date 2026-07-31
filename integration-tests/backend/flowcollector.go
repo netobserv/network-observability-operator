@@ -11,6 +11,7 @@ import (
 	exutil "github.com/openshift/origin/test/extended/util"
 	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
@@ -213,6 +214,9 @@ func createSecretWatcherRB(oc *exutil.CLI, namespace string) {
 			Namespace: netobservNS,
 		}},
 	}, metav1.CreateOptions{})
+	if apierrors.IsAlreadyExists(err) {
+		return
+	}
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
@@ -241,13 +245,22 @@ func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
 			RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: crb.clusterRole},
 			Subjects:   []rbacv1.Subject{{Kind: "ServiceAccount", Name: crb.sa, Namespace: flow.Namespace}},
 		}, metav1.CreateOptions{})
+		if apierrors.IsAlreadyExists(err) {
+			continue
+		}
 		o.Expect(err).NotTo(o.HaveOccurred())
 	}
 
 	privNS := flow.Namespace + "-privileged"
 	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 120*time.Second, false, func(ctx context.Context) (bool, error) {
 		_, nsErr := oc.AdminKubeClient().CoreV1().Namespaces().Get(ctx, privNS, metav1.GetOptions{})
-		return nsErr == nil, nil
+		if nsErr == nil {
+			return true, nil
+		}
+		if apierrors.IsNotFound(nsErr) {
+			return false, nil
+		}
+		return false, nsErr
 	})
 	o.Expect(err).NotTo(o.HaveOccurred(), "timed out waiting for namespace %s to be created", privNS)
 
@@ -265,6 +278,9 @@ func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
 			RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: rb.clusterRole},
 			Subjects:   []rbacv1.Subject{operatorSA},
 		}, metav1.CreateOptions{})
+		if apierrors.IsAlreadyExists(err) {
+			continue
+		}
 		o.Expect(err).NotTo(o.HaveOccurred())
 	}
 }
