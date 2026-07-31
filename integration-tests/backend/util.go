@@ -3,6 +3,7 @@ package e2etests
 import (
 	"bytes"
 	"context"
+	"errors"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -1575,8 +1576,7 @@ func assertWaitPollNoErr(e error, msg string) {
 		return
 	}
 	var err error
-	if strings.Compare(e.Error(), "timed out waiting for the condition") == 0 ||
-		strings.Compare(e.Error(), "context deadline exceeded") == 0 {
+	if errors.Is(e, context.DeadlineExceeded) || e.Error() == "timed out waiting for the condition" {
 		err = fmt.Errorf("case: %v\nerror: %s", g.CurrentSpecReport().FullText(), msg)
 	} else {
 		err = fmt.Errorf("case: %v\nerror: %s", g.CurrentSpecReport().FullText(), e.Error())
