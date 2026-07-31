@@ -35,7 +35,7 @@ fmt: ## Run go fmt against code.
 .PHONY: lint
 lint: prereqs ## Run linter (golangci-lint)
 	@echo "### Linting code"
-	./bin/golangci-lint-${GOLANGCI_LINT_VERSION} --config .golangci.yml run --timeout 15m ./...
+	./bin/golangci-lint-${GOLANGCI_LINT_VERSION} --config .golangci.yml run --verbose ./...
 
 ##@ Build
 .PHONY: install-ginkgo

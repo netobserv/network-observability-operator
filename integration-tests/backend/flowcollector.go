@@ -209,6 +209,9 @@ func (flow *Flowcollector) WaitForFlowcollectorReady(oc *exutil.CLI) {
 	default:
 		waitUntilDeploymentReady(oc, "flowlogs-pipeline", flow.Namespace)
 	}
+	// check informers deployment
+	waitUntilDeploymentReady(oc, "flowlogs-pipeline-informers", flow.Namespace)
+
 	// check ebpf-agent status
 	waitUntilDaemonSetReady(oc, "netobserv-ebpf-agent", flow.Namespace+"-privileged")
 
