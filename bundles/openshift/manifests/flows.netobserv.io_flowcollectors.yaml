@@ -3987,7 +3987,7 @@ spec:
                     - mode
                   type: object
                 namespace:
-                  default: openshift-netobserv
+                  default: netobserv
                   description: Namespace where NetObserv pods are deployed.
                   type: string
                   x-kubernetes-validations:

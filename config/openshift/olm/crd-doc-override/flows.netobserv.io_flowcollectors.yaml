@@ -9,8 +9,6 @@ spec:
     and accepted without a formal agreement for maintenance. The product maintainers might provide support
     for these features, without any guarantee.
   properties:
-    namespace:
-      default: openshift-netobserv
     agent:
       properties:
         ebpf:
