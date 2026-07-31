@@ -13,6 +13,43 @@ patches:
     target:
       kind: Deployment
       name: controller-manager
+  - patch: |-
+      - op: replace
+        path: /subjects/0/namespace
+        value: openshift-network-observability
+      - op: replace
+        path: /subjects/1/namespace
+        value: openshift-network-observability
+      - op: replace
+        path: /subjects/2/namespace
+        value: openshift-network-observability
+    target:
+      kind: ClusterRoleBinding
+      name: informers
+  - patch: |-
+      - op: replace
+        path: /subjects/0/namespace
+        value: openshift-network-observability
+    target:
+      kind: ClusterRoleBinding
+      name: hostnetwork
+  - patch: |-
+      - op: replace
+        path: /subjects/0/namespace
+        value: openshift-network-observability
+      - op: replace
+        path: /subjects/1/namespace
+        value: openshift-network-observability
+    target:
+      kind: ClusterRoleBinding
+      name: loki-writer
+  - patch: |-
+      - op: replace
+        path: /subjects/0/namespace
+        value: openshift-network-observability
+    target:
+      kind: ClusterRoleBinding
+      name: token-review
 # Labels to add to all resources and selectors.
 #commonLabels:
 #  someName: someValue

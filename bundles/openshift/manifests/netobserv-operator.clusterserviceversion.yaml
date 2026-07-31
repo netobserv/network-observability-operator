@@ -1016,6 +1016,8 @@ spec:
                       fieldPath: metadata.namespace
                 - name: VENDOR
                   value: OpenShift_Downstream
+                - name: DEFAULT_OPERANDS_NAMESPACE
+                  value: openshift-network-observability
                 image: quay.io/netobserv/network-observability-operator:1.12.0-community
                 imagePullPolicy: Always
                 livenessProbe:

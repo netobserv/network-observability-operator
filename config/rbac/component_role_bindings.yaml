@@ -8,6 +8,7 @@ roleRef:
   kind: ClusterRole
   name: informers
 subjects:
+# If you add or remove any subject here, update patch in config/openshift/common/kustomization.yaml accordingly for namespace substitution
 - kind: ServiceAccount
   name: flowlogs-pipeline
   namespace: netobserv
@@ -27,6 +28,7 @@ roleRef:
   kind: ClusterRole
   name: hostnetwork
 subjects:
+# If you add or remove any subject here, update patch in config/openshift/common/kustomization.yaml accordingly for namespace substitution
 - kind: ServiceAccount
   name: flowlogs-pipeline
   namespace: netobserv
@@ -40,6 +42,7 @@ roleRef:
   kind: ClusterRole
   name: loki-writer
 subjects:
+# If you add or remove any subject here, update patch in config/openshift/common/kustomization.yaml accordingly for namespace substitution
 - kind: ServiceAccount
   name: flowlogs-pipeline
   namespace: netobserv
@@ -56,6 +59,7 @@ roleRef:
   kind: ClusterRole
   name: token-review
 subjects:
+# If you add or remove any subject here, update patch in config/openshift/common/kustomization.yaml accordingly for namespace substitution
 - kind: ServiceAccount
   name: netobserv-plugin
   namespace: netobserv
