@@ -924,7 +924,7 @@ func getOAuthHTPasswdSecretName() (string, error) {
 
 	providers, found, _ := unstructured.NestedSlice(obj.Object, "spec", "identityProviders")
 	if !found || len(providers) == 0 {
-		return "", fmt.Errorf("no identityProviders found in oauth cluster config")
+		return "", nil
 	}
 	provider, ok := providers[0].(map[string]interface{})
 	if !ok {

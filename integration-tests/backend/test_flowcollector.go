@@ -525,8 +525,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		query := fmt.Sprintf(`sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="%s"}[1m]))`, testClient.ClientNS)
 		metrics := pollMetrics(query)
 
-		// verfy metric is between 270 and 330
-		o.Expect(metrics).Should(o.BeNumerically("~", 330, 270))
+		// verify metric is between 270 and 330
+		o.Expect(metrics).Should(o.BeNumerically("~", 300, 30))
 	})
 
 	g.It("Author:aramesha-NonPreRelease-Longduration-High-60701-Verify connection tracking [Serial]", func() {
