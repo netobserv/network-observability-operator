@@ -1,18 +1,3 @@
-/*
-Copyright 2023.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-	http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
 package v1beta2
 
 import (
@@ -40,14 +25,7 @@ const (
 // https://github.com/kubernetes-sigs/controller-tools/issues/622
 
 // Defines the desired state of the FlowCollector resource.
-// <br><br>
-// *: the mention of "unsupported" or "deprecated" for a feature throughout this document means that this feature
-// is not officially supported by Red Hat. It might have been, for example, contributed by the community
-// and accepted without a formal agreement for maintenance. The product maintainers might provide some support
-// for these features as a best effort only.
 type FlowCollectorSpec struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	// Namespace where NetObserv pods are deployed.
 	// +kubebuilder:default:=netobserv
 	// +kubebuilder:validation:XValidation:rule="self == oldSelf",message="Namespace is immutable. If you need to change it, delete and recreate the resource."
@@ -66,7 +44,7 @@ type FlowCollectorSpec struct {
 	// `prometheus` defines Prometheus settings, such as querier configuration used to fetch metrics from the Console plugin.
 	Prometheus FlowCollectorPrometheus `json:"prometheus,omitempty"`
 
-	// `consolePlugin` defines the settings related to the OpenShift Console plugin, when available.
+	// `consolePlugin` defines the settings related to the Web Console.
 	ConsolePlugin FlowCollectorConsolePlugin `json:"consolePlugin,omitempty"`
 
 	// `deploymentModel` defines the desired type of deployment for flow processing. Possible values are:<br>
@@ -120,33 +98,35 @@ const (
 	AgentEBPF  FlowCollectorAgentType = "eBPF"
 )
 
-// `FlowCollectorAgent` is a discriminated union that allows to select either ipfix or ebpf, but does not
-// allow defining both fields.
+// `FlowCollectorAgent` is a legacy discriminated union that allowed to select either IPFIX or eBPF. Only eBPF remains available.
 // +union
 type FlowCollectorAgent struct {
-	// `type` [deprecated (*)] selects the flows tracing agent. Previously, this field allowed to select between `eBPF` or `IPFIX`.
+	// `type` selects the flows tracing agent.
+	//
+	// Deprecated: Previously, this field allowed to select between `eBPF` or `IPFIX`.
 	// Only `eBPF` is allowed now, so this field is deprecated and is planned for removal in a future version of the API.
+	//
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="eBPF";"IPFIX"
 	// +kubebuilder:default:=eBPF
 	Type FlowCollectorAgentType `json:"type,omitempty"`
 
-	// `ipfix` [deprecated (*)] - describes the settings related to the IPFIX-based flow reporter when `spec.agent.type`
-	// is set to `IPFIX`.
+	// `ipfix` describes the settings related to the IPFIX-based flow reporter when `spec.agent.type` is set to `IPFIX`.
+	//
+	// Deprecated: only `eBPF` remains supported.
+	//
 	// +optional
 	IPFIX FlowCollectorIPFIX `json:"ipfix,omitempty"`
 
-	// `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type`
-	// is set to `eBPF`.
+	// `ebpf` describes the settings related to the eBPF-based flow reporter when `spec.agent.type` is set to `eBPF`.
 	// +optional
 	EBPF FlowCollectorEBPF `json:"ebpf,omitempty"`
 }
 
-// `FlowCollectorIPFIX` defines a FlowCollector that uses IPFIX on OVN-Kubernetes to collect the
-// flows information
+// `FlowCollectorIPFIX` defines a FlowCollector that uses IPFIX on OVN-Kubernetes to collect the flows information
+//
+// Deprecated: only `eBPF` agent type remains supported.
 type FlowCollectorIPFIX struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	//+kubebuilder:validation:Pattern:=^\d+(ns|ms|s|m)?$
 	//+kubebuilder:default:="20s"
 	// `cacheActiveTimeout` is the max period during which the reporter aggregates flows before sending.
@@ -172,10 +152,11 @@ type FlowCollectorIPFIX struct {
 	// When it is set to `true`, the value of `sampling` is ignored.
 	ForceSampleAll bool `json:"forceSampleAll,omitempty" mapstructure:"-"`
 
-	// `clusterNetworkOperator` defines the settings related to the OpenShift Cluster Network Operator, when available.
+	// `clusterNetworkOperator` defines the settings related to the Cluster Network Operator, when available.
 	ClusterNetworkOperator ClusterNetworkOperatorConfig `json:"clusterNetworkOperator,omitempty" mapstructure:"-"`
 
-	// `ovnKubernetes` defines the settings of the OVN-Kubernetes network plugin, when available. This configuration is used when using OVN's IPFIX exports, without OpenShift. When using OpenShift, refer to the `clusterNetworkOperator` property instead.
+	// `ovnKubernetes` defines the settings of the OVN-Kubernetes network plugin, when available.
+	// This configuration is used when using upstream OVN's IPFIX exports.
 	OVNKubernetes OVNKubernetesConfig `json:"ovnKubernetes,omitempty" mapstructure:"-"`
 }
 
@@ -183,9 +164,9 @@ type FlowCollectorIPFIX struct {
 // - `PacketDrop`, to track packet drops.<br>
 // - `DNSTracking`, to track specific information on DNS traffic.<br>
 // - `FlowRTT`, to track TCP latency.<br>
-// - `NetworkEvents`, to track network events [Technology Preview].<br>
+// - `NetworkEvents`, to track network events.<br>
 // - `PacketTranslation`, to enrich flows with packets translation information, such as Service NAT.<br>
-// - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs. [Unsupported (*)].<br>
+// - `EbpfManager`, to enable using eBPF Manager to manage NetObserv eBPF programs.<br>
 // - `UDNMapping`, to enable interfaces mapping to UDN.<br>
 // - `IPSec`, to track flows between nodes with IPsec encryption.<br>
 // - `TLSTracking`, to track TLS usage.<br>
@@ -321,8 +302,6 @@ type EBPFFlowFilter struct {
 
 // `FlowCollectorEBPF` defines a FlowCollector that uses eBPF to collect the flows information
 type FlowCollectorEBPF struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// `imagePullPolicy` is the Kubernetes pull policy for the image defined above
@@ -398,15 +377,14 @@ type FlowCollectorEBPF struct {
 	// - `FlowRTT`: Enable flow latency (sRTT) extraction in the eBPF agent from TCP traffic.<br>
 	// - `NetworkEvents`: Enable the network events monitoring feature, such as correlating flows and network policies.
 	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
-	// It requires using the OVN-Kubernetes network plugin with the Observability feature.
-	// IMPORTANT: This feature is available as a Technology Preview.<br>
+	// It requires using the OVN-Kubernetes network plugin with the Observability feature.<br>
 	// - `PacketTranslation`: Enable enriching flows with packet translation information, such as Service NAT.<br>
-	// - `EbpfManager`: [Unsupported (*)]. Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
-	// - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN). <br>
+	// - `EbpfManager`: Use eBPF Manager to manage NetObserv eBPF programs. Pre-requisite: the eBPF Manager operator (or upstream bpfman operator) must be installed.<br>
+	// - `UDNMapping`: Enable interfaces mapping to User Defined Networks (UDN).<br>
 	// This feature requires mounting the kernel debug filesystem, so the eBPF agent pods must run as privileged via `spec.agent.ebpf.privileged`.
-	// It requires using the OVN-Kubernetes network plugin with the Observability feature. <br>
-	// - `IPSec`, to track flows between nodes with IPsec encryption. <br>
-	// - `TLSTracking`, to track TLS usage. <br>
+	// It requires using the OVN-Kubernetes network plugin.<br>
+	// - `IPSec`, to track flows between nodes with IPsec encryption.<br>
+	// - `TLSTracking`, to track TLS usage.<br>
 	// +optional
 	Features []AgentFeature `json:"features,omitempty"`
 
@@ -421,8 +399,6 @@ type FlowCollectorEBPF struct {
 
 // `FlowCollectorKafka` defines the desired Kafka config of FlowCollector
 type FlowCollectorKafka struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	// +kubebuilder:default:=""
 	// Address of the Kafka server
 	Address string `json:"address"`
@@ -443,7 +419,7 @@ type FlowCollectorKafka struct {
 	// +optional
 	TLS ClientTLS `json:"tls"`
 
-	// SASL authentication configuration. [Unsupported (*)].
+	// SASL authentication configuration.
 	// +optional
 	SASL SASLConfig `json:"sasl"`
 }
@@ -541,12 +517,13 @@ const (
 	TLSAutoMTLS TLSConfigType = "Auto-mTLS"
 )
 
-// `ServerTLS` define the TLS configuration, server side
+// `ServerTLS` define the TLS configuration, server side.
 type ServerTLS struct {
 	// Select the type of TLS configuration:<br>
 	// - `Disabled` (default) to not configure TLS for the endpoint.
-	// - `Provided` to manually provide cert file and a key file. [Unsupported (*)].
-	// - `Auto` to use OpenShift auto generated certificate using annotations.
+	// - `Provided` to manually provide cert file and a key file.
+	// - `Auto` to use a default certificate, which may vary depending on the Kubernetes vendor.
+	// Refer to https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md for more information.
 	// +unionDiscriminator
 	// +kubebuilder:validation:Enum:="Disabled";"Provided";"Auto"
 	// +kubebuilder:validation:Required
@@ -559,7 +536,7 @@ type ServerTLS struct {
 
 	//+kubebuilder:default:=false
 	// `insecureSkipVerify` allows skipping client-side verification of the provided certificate.
-	// If set to `true`, the `providedCaFile` field is ignored.
+	// If set to `true`, the `providedCaFile` field is ignored. For security, this should not be used other than for testing or demo.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	// Reference to the CA file when `type` is set to `Provided`.
@@ -653,8 +630,6 @@ const (
 
 // `FlowCollectorFLP` defines the desired flowlogs-pipeline state of FlowCollector
 type FlowCollectorFLP struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	//+kubebuilder:validation:Enum=IfNotPresent;Always;Never
 	//+kubebuilder:default:=IfNotPresent
 	// `imagePullPolicy` is the Kubernetes pull policy for the image defined above
@@ -676,14 +651,17 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=3
-	// `kafkaConsumerReplicas` [deprecated (*)] defines the number of replicas (pods) to start for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
+	// `kafkaConsumerReplicas` defines the number of replicas (pods) to start for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
 	// This setting is ignored when Kafka is disabled.
-	// Deprecation notice: use `spec.processor.consumerReplicas` instead.
+	//
+	// Deprecated: use `spec.processor.consumerReplicas` instead.
 	KafkaConsumerReplicas *int32 `json:"kafkaConsumerReplicas,omitempty"`
 
-	// `kafkaConsumerAutoscaler` [deprecated (*)] is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
+	// `kafkaConsumerAutoscaler` is the spec of a horizontal pod autoscaler to set up for `flowlogs-pipeline-transformer`, which consumes Kafka messages.
 	// This setting is ignored when Kafka is disabled.
-	// Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.processor.unmanagedReplicas` to `true`.
+	//
+	// Deprecated: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.processor.unmanagedReplicas` to `true`.
+	//
 	// +optional
 	KafkaConsumerAutoscaler FlowCollectorHPA `json:"kafkaConsumerAutoscaler,omitempty"`
 
@@ -718,7 +696,7 @@ type FlowCollectorFLP struct {
 
 	//+kubebuilder:default:=""
 	// +optional
-	// `clusterName` is the name of the cluster to appear in the flows data. This is useful in a multi-cluster context. When using OpenShift, leave empty to make it automatically determined.
+	// `clusterName` is the name of the cluster to appear in the flows data. In a multi-cluster context, it makes it possible to identify the flows provenance.
 	ClusterName string `json:"clusterName,omitempty"`
 
 	//+kubebuilder:default:=false
@@ -731,7 +709,7 @@ type FlowCollectorFLP struct {
 	AddZone *bool `json:"addZone,omitempty"`
 
 	//+optional
-	// `subnetLabels` allows to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift, which is used to identify cluster external traffic.
+	// `subnetLabels` allows to define custom labels on subnets and IPs and, for supported vendors, to enable automatic labeling of recognized subnets, which is used to identify cluster external traffic.
 	// When a subnet matches the source or destination IP of a flow, a corresponding field is added: `SrcSubnetLabel` or `DstSubnetLabel`.
 	SubnetLabels SubnetLabels `json:"subnetLabels,omitempty"`
 
@@ -799,7 +777,7 @@ type FlowCollectorInformerCacheProxy struct {
 	TLS *InformerCacheProxyTLSConfig `json:"tls,omitempty"`
 }
 
-// `AdvancedInformerCacheProxyConfig` defines advanced configuration for the informer cache proxy component
+// `AdvancedInformerCacheProxyConfig` defines advanced configuration for the informer cache proxy component.
 type AdvancedInformerCacheProxyConfig struct {
 	// `resyncInterval` defines the interval in seconds to rediscover processors and sync state.
 	// +kubebuilder:validation:Minimum=1
@@ -984,7 +962,7 @@ type LokiManualParams struct {
 	// `authToken` describes the way to get a token to authenticate to Loki.<br>
 	// - `Disabled` does not send any token with the request.<br>
 	// - `Forward` forwards the user token for authorization.<br>
-	// - `Host` [deprecated (*)] - uses the local pod service account to authenticate to Loki.<br>
+	// - `Host` (deprecated) - uses the local pod service account to authenticate to Loki.<br>
 	// When using the Loki Operator, this must be set to `Forward`.
 	AuthToken LokiAuthToken `json:"authToken,omitempty"`
 
@@ -1019,8 +997,7 @@ type LokiMicroservicesParams struct {
 // LokiMonolithParams is the configuration for monolithic Loki (https://grafana.com/docs/loki/latest/fundamentals/architecture/deployment-modes/#monolithic-mode)
 type LokiMonolithParams struct {
 	// Set `installDemoLoki` to `true` to automatically create Loki deployment, service and storage.
-	// This is useful for development and demo purposes. Do not use it in production.
-	// [Unsupported (*)].
+	// This is meant for development and demo use only, and not recommended in production.
 	//+kubebuilder:default:=false
 	InstallDemoLoki *bool `json:"installDemoLoki,omitempty"`
 
@@ -1060,8 +1037,6 @@ const (
 
 // `FlowCollectorLoki` defines the desired state for FlowCollector's Loki client.
 type FlowCollectorLoki struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	// Set `enable` to `true` to store flows in Loki.
 	// The Console plugin can use either Loki or Prometheus as a data source for metrics (see also `spec.prometheus.querier`), or both.
 	// Not all queries are transposable from Loki to Prometheus. Hence, if Loki is disabled, some features of the plugin are disabled as well,
@@ -1144,8 +1119,6 @@ type PrometheusQuerierManual struct {
 	ForwardUserToken bool `json:"forwardUserToken"`
 
 	// AlertManager configuration. This is used in the console to query silenced alerts, for displaying health information.
-	// When used in OpenShift it can be left empty to use the Console API instead.
-	// [Unsupported (*)].
 	// +optional
 	AlertManager *AlertManagerQuerierManual `json:"alertManager"`
 }
@@ -1187,7 +1160,7 @@ type PrometheusQuerier struct {
 	Enable *bool `json:"enable,omitempty"`
 
 	// `mode` must be set according to the type of Prometheus installation that stores NetObserv metrics:<br>
-	// - Use `Auto` to try configuring automatically. In OpenShift, it uses the Thanos querier from OpenShift Cluster Monitoring.<br>
+	// - Use `Auto` to try configuring automatically for known vendors.<br>
 	// - Use `Manual` for a manual setup.<br>
 	//+unionDiscriminator
 	//+kubebuilder:validation:Enum=Manual;Auto
@@ -1211,9 +1184,7 @@ type FlowCollectorConsolePlugin struct {
 	// Enables the console plugin deployment.
 	Enable *bool `json:"enable,omitempty"`
 
-	// Deploy as a standalone console, instead of a plugin of the OpenShift Console.
-	// This is not recommended when using with OpenShift, as it doesn't provide an integrated experience.
-	// [Unsupported (*)].
+	// Deploy as a standalone console. Supported vendors may use a plugin system instead.
 	Standalone *bool `json:"standalone,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
@@ -1238,11 +1209,13 @@ type FlowCollectorConsolePlugin struct {
 
 	//+kubebuilder:validation:Enum=trace;debug;info;warn;error;fatal;panic
 	//+kubebuilder:default:=info
-	// `logLevel` for the console plugin backend.
+	// `logLevel` for the web console backend.
 	LogLevel string `json:"logLevel,omitempty"`
 
-	// `autoscaler` [deprecated (*)] spec of a horizontal pod autoscaler to set up for the plugin Deployment.
-	// Deprecation notice: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.consolePlugin.unmanagedReplicas` to `true`.
+	// `autoscaler`: spec of a horizontal pod autoscaler to set up for the web console Deployment.
+	//
+	// Deprecated: managed autoscaler will be removed in a future version. You may configure instead an autoscaler of your choice, and set `spec.consolePlugin.unmanagedReplicas` to `true`.
+	//
 	// +optional
 	Autoscaler FlowCollectorHPA `json:"autoscaler,omitempty"`
 
@@ -1252,7 +1225,7 @@ type FlowCollectorConsolePlugin struct {
 
 	//+kubebuilder:default:={{name:"Applications",filter:{"flow_layer":"\"app\""},default:true},{name:"Infrastructure",filter:{"flow_layer":"\"infra\""}},{name:"Pods network",filter:{"src_kind":"\"Pod\"","dst_kind":"\"Pod\""},default:true},{name:"Services network",filter:{"dst_kind":"\"Service\""}},{name:"External ingress",filter:{"src_subnet_label":"\"\",EXT:"}},{name:"External egress",filter:{"dst_subnet_label":"\"\",EXT:"}}}
 	// +optional
-	// `quickFilters` configures quick filter presets for the Console plugin.
+	// `quickFilters` configures quick filter presets for the web console.
 	// Filters for external traffic assume the subnet labels are configured to distinguish internal and external traffic (see `spec.processor.subnetLabels`).
 	QuickFilters []QuickFilter `json:"quickFilters"`
 
@@ -1291,17 +1264,12 @@ type QuickFilter struct {
 
 // `ClusterNetworkOperatorConfig` defines the desired configuration related to the Cluster Network Configuration
 type ClusterNetworkOperatorConfig struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
-	//+kubebuilder:default:=openshift-network-operator
 	// Namespace  where the config map is going to be deployed.
 	Namespace string `json:"namespace,omitempty"`
 }
 
 // `OVNKubernetesConfig` defines the desired configuration related to the OVN-Kubernetes network plugin, when Cluster Network Operator isn't installed.
 type OVNKubernetesConfig struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-
 	//+kubebuilder:default:=ovn-kubernetes
 	// Namespace where OVN-Kubernetes pods are deployed.
 	Namespace string `json:"namespace,omitempty"`
@@ -1370,7 +1338,7 @@ type ClientTLS struct {
 
 	//+kubebuilder:default:=false
 	// `insecureSkipVerify` allows skipping client-side verification of the server certificate.
-	// If set to `true`, the `caCert` field is ignored.
+	// If set to `true`, the `caCert` field is ignored. For security, this should not be used other than for testing or demo.
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
 	// `caCert` defines the reference of the certificate for the Certificate Authority.
@@ -1403,7 +1371,7 @@ type SASLConfig struct {
 	ClientSecretReference FileReference `json:"clientSecretReference,omitempty"`
 }
 
-// `SchedulingConfig` defines the scheduling configuration for NetObserv pods
+// `SchedulingConfig` defines the scheduling configuration for NetObserv pods.
 type SchedulingConfig struct {
 	// `tolerations` is a list of tolerations that allow the pod to schedule onto nodes with matching taints.
 	// For documentation, refer to https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
@@ -1486,7 +1454,9 @@ type AdvancedProcessorConfig struct {
 
 	//+kubebuilder:default:=true
 	//+optional
-	// `dropUnusedFields` [deprecated (*)] this setting is not used anymore.
+	// `dropUnusedFields`.
+	//
+	// Deprecated: this setting is not used anymore.
 	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:default:="30s"
@@ -1505,7 +1475,7 @@ type AdvancedProcessorConfig struct {
 	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
 	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
 
-	// scheduling controls how the pods are scheduled on nodes.
+	// `scheduling` controls how the pods are scheduled on nodes.
 	// +optional
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 
@@ -1564,11 +1534,11 @@ type AdvancedLokiConfig struct {
 	StaticLabels map[string]string `json:"staticLabels,omitempty"`
 
 	//+optional
-	// `excludeLabels` is a list of fields to be excluded from the list of Loki labels. [Unsupported (*)].
+	// `excludeLabels` is a list of fields to be excluded from the list of Loki labels.
 	ExcludeLabels []string `json:"excludeLabels,omitempty"`
 }
 
-// `AdvancedPluginConfig` allows tweaking some aspects of the internal configuration of the console plugin.
+// `AdvancedPluginConfig` allows tweaking some aspects of the internal configuration of the web console.
 // They are aimed mostly for debugging. Set these values at your own risk.
 type AdvancedPluginConfig struct {
 	// `env` allows passing custom environment variables to underlying components. Useful for passing
@@ -1587,9 +1557,8 @@ type AdvancedPluginConfig struct {
 
 	//+kubebuilder:default:=true
 	//+optional
-	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
-	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
-	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
+	// `register` allows, when set to `true`, to automatically register the console plugin when possible, depending on the vendor.
+	// It requires `spec.consolePlugin.standalone` to be `false`.
 	Register *bool `json:"register,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
@@ -1604,18 +1573,26 @@ type AdvancedPluginConfig struct {
 	Scheduling *SchedulingConfig `json:"scheduling,omitempty"`
 }
 
-// `SubnetLabels` allows you to define custom labels on subnets and IPs or to enable automatic labeling of recognized subnets in OpenShift.
+// `SubnetLabels` allows you to define custom labels on subnets and IPs and, for supported vendors, to enable automatic labeling of recognized subnets, which is used to identify cluster external traffic.
 type SubnetLabels struct {
-	// `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on the
-	// OpenShift install configuration and the Cluster Network Operator configuration. Indirectly, this is a way to accurately detect
-	// external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default on OpenShift.
+	// `openShiftAutoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on
+	// vendor-specific configuration. Indirectly, this is a way to accurately detect
+	// external traffic: flows that are not labeled for those subnets are external to the cluster.
 	//+optional
+	//
+	// Deprecated: use `autoDetect` instead.
 	OpenShiftAutoDetect *bool `json:"openShiftAutoDetect,omitempty"`
+
+	// `autoDetect` allows, when set to `true`, to detect automatically the machines, pods and services subnets based on
+	// vendor-specific configuration. It requires a vendor-specific implementation. Indirectly, this is a way to accurately detect
+	// external traffic: flows that are not labeled for those subnets are external to the cluster. Enabled by default.
+	//+optional
+	AutoDetect *bool `json:"autoDetect,omitempty"`
 
 	// `customLabels` allows you to customize subnets and IPs labeling, such as to identify cluster external workloads or web services.
 	// External subnets must be labeled with the prefix `EXT:`, or not labeled at all, in order to work with default quick filters and some metrics examples provided.<br/>
-	// If `openShiftAutoDetect` is disabled or you are not using OpenShift, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
-	// If `openShiftAutoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/>
+	// If `autoDetect` is disabled or your Kubernetes vendor has no auto-detection implemented, it is recommended to manually configure labels for the cluster subnets, to distinguish internal traffic from external traffic.<br/>
+	// If `autoDetect` is enabled, `customLabels` overrides the detected subnets when they overlap.<br/>
 	//+optional
 	CustomLabels []SubnetLabel `json:"customLabels,omitempty"`
 }
@@ -1638,7 +1615,7 @@ type ProcessorServiceConfig struct {
 	// - `Disabled` to not configure TLS for the endpoint. Disabling TLS results in a less secure deployment model.<br>
 	// - `Provided` to manually provide the key and certificate references.<br>
 	// - `Auto` (default) to enable automatically based on the running environment.<br>
-	// - `Auto-mTLS` to preconfigure mTLS. [Unsupported (*)].<br>
+	// - `Auto-mTLS` to preconfigure mTLS.<br>
 	// See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.
 	// +kubebuilder:validation:Enum:="Disabled";"Provided";"Auto";"Auto-mTLS"
 	// +kubebuilder:validation:Required
@@ -1655,8 +1632,8 @@ type InformerCacheProxyTLSConfig struct {
 	// Select the type of TLS configuration:<br>
 	// - `Disabled` to not configure TLS for the k8scache endpoint. Disabling TLS results in a less secure deployment model.<br>
 	// - `Provided` to manually provide cert/key references for mTLS.<br>
-	// - `Auto` (default) to use OpenShift service-ca for automatic server certificate generation (simple TLS, OpenShift only).<br>
-	// - `Auto-mTLS` to preconfigure mTLS with cert-manager. [Unsupported (*)].<br>
+	// - `Auto` (default) to use a default certificate, which may vary depending on the Kubernetes vendor.<br>
+	// - `Auto-mTLS` to preconfigure mTLS with cert-manager.<br>
 	// See also: https://github.com/netobserv/netobserv-operator/blob/main/docs/TLS.md.
 	// +kubebuilder:validation:Enum:="Disabled";"Provided";"Auto";"Auto-mTLS"
 	// +kubebuilder:validation:Required
@@ -1803,8 +1780,6 @@ type FlowCollectorIntegrationsStatus struct {
 
 // `FlowCollectorStatus` defines the observed state of FlowCollector
 type FlowCollectorStatus struct {
-	// Important: Run "make" to regenerate code after modifying this file
-
 	// `conditions` represents the latest available observations of an object's state
 	Conditions []metav1.Condition `json:"conditions"`
 
@@ -1827,7 +1802,7 @@ type FlowCollectorStatus struct {
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Agent",type="string",JSONPath=`.status.components.agent.state`
 // +kubebuilder:printcolumn:name="Processor",type="string",JSONPath=`.status.components.processor.state`
-// +kubebuilder:printcolumn:name="Plugin",type="string",JSONPath=`.status.components.plugin.state`
+// +kubebuilder:printcolumn:name="Web Console",type="string",JSONPath=`.status.components.plugin.state`
 // +kubebuilder:printcolumn:name="Sampling",type="string",JSONPath=`.spec.agent.ebpf.sampling`
 // +kubebuilder:printcolumn:name="Deployment Model",type="string",JSONPath=`.spec.deploymentModel`
 // +kubebuilder:printcolumn:name="Status",type="string",JSONPath=`.status.conditions[?(@.type=="Ready")].reason`

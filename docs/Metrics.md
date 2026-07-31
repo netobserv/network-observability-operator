@@ -1,7 +1,7 @@
 # Metrics in the NetObserv Operator
 
 The NetObserv operator uses [flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline/) to generate metrics out of flow logs.
-These metrics are meant to be collected by a Prometheus instance (not part of NetObserv deployment). In OpenShift, they are collected either by Cluster Monitoring or User Workload Monitoring.
+These metrics are meant to be collected by a Prometheus instance (not part of NetObserv deployment).
 
 There are two ways to configure metrics:
 
@@ -99,7 +99,7 @@ spec:
     matchType: Absence
 ```
 
-In this example, selecting just the cluster external traffic is done by matching only flows where `SrcSubnetLabel` is absent. This assumes the subnet labels feature is enabled (via `spec.processor.subnetLabels`) and configured to recognize IP ranges used in the cluster. In OpenShift, this is enabled and configured by default.
+In this example, selecting just the cluster external traffic is done by matching only flows where `SrcSubnetLabel` is absent. This assumes the subnet labels feature is enabled (via `spec.processor.subnetLabels`) and configured to recognize IP ranges used in the cluster.
 
 Refer to the [spec reference](./FlowMetric.md) for more information about each field.
 
@@ -135,9 +135,9 @@ Since the RTT is provided as nanos in flows, we use a divider of 1 billion to co
 
 You can find more examples in https://github.com/netobserv/netobserv-operator/tree/main/config/samples/flowmetrics.
 
-### Charts (OpenShift only)
+### Charts (requires dashboards supported by the Kubernetes vendor)
 
-Optionally, you can generate charts for dashboards in the OpenShift Console (administrator view, Dashboard menu), by filling the `charts` section of the `FlowMetric` resources.
+Optionally, you can generate charts for dashboards by filling the `charts` section of the `FlowMetric` resources.
 
 Here is an example for the `flowmetric-cluster-external-ingress-traffic` resource described above:
 

@@ -465,6 +465,8 @@ spec:
             displayName: Namespaces allow list
           - path: processor.subnetLabels
             displayName: Subnet labels
+          - path: processor.subnetLabels.autoDetect
+            displayName: Auto detect
           - path: processor.subnetLabels.customLabels
             displayName: Custom labels
           - path: processor.unmanagedReplicas

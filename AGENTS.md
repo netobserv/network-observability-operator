@@ -6,7 +6,7 @@ Best practices for AI coding agents on NetObserv Operator.
 
 ## Project Context
 
-**NetObserv Operator** - Kubernetes/OpenShift operator for network observability
+**NetObserv Operator** - Kubernetes operator for network observability
 (operator-sdk)
 
 **Components:**
@@ -14,8 +14,8 @@ Best practices for AI coding agents on NetObserv Operator.
   flow generation from packets (DaemonSet)
 - **[flowlogs-pipeline](https://github.com/netobserv/flowlogs-pipeline)**: Flow
   collection, enrichment, export (Deployment/StatefulSet) -
-  **[Console Plugin](https://github.com/netobserv/netobserv-web-console)**:
-  OpenShift visualization (optional)
+- **[Web Console](https://github.com/netobserv/netobserv-web-console)**:
+  Visualization console (either as standalone, or as a plugin for vendor (OpenShift console))
 - **CRD**: `FlowCollector` v1beta2 - **single cluster-wide resource named
   `cluster`**
 - **Integrations**: Loki (optional), Prometheus, Kafka (optional)
@@ -38,11 +38,17 @@ if flowCollector.Name != constants.FlowCollectorName {
 
 ### 🚨 Backward Compatibility
 FlowCollector v1beta2 is stable:
-- ✅ Add optional fields with defaults, use `+optional` marker
+- ✅ Add optional fields, use `+optional` marker; defaults can be set either through OpenAPI or directly hardcoded, depending on how likely it is to change them in the future (a future change of OpenAPI-based default is ignored on installed operators being upgraded).
 - ❌ Never remove/rename fields or change types
 
 ### 🚨 Bundle Updates Required
-After CRD/CSV changes: `make update-bundle`
+After CRD/CSV changes: `make update-bundle`.
+
+Generated files are:
+- Everything in `./bundles`
+- CRD references in `./docs` (e.g. `flowcollector-flows-netobserv-io-v1beta2` and `FlowCollector.md`)
+
+Do not manually edit any of those generated files, modify the source instead (e.g. `./config` (Kustomize) or in-code `kubebuilder` markers for CRD OpenAPI and bundle rbac).
 
 ### 🚨 Image References
 Never hardcode. Use env vars:
@@ -82,12 +88,6 @@ Add spec.agent.ebpf.newFeature (bool, default: false):
 2. Modify internal/controller/ to use field
 3. Add unit tests
 4. Run make update-bundle
-```
-
-### Update Container Image
-```
-Update RELATED_IMAGE_FLOWLOGS_PIPELINE to vX.Y.Z.
-Check main.go and internal/controller/flp/ deployment templates.
 ```
 
 ### Debug Controller
@@ -170,9 +170,9 @@ Three deployment modes (check `spec.loki.mode`):
 - **Memory**: Default limits 800MB
 - **Metrics**: Prefix `netobserv_*`, watch cardinality
 
-### Namespace Handling
+### Namespace Handling (can be vendor specific)
+- **Generic**: `netobserv`
 - **OpenShift**: `openshift-netobserv-operator`
-- **Community**: `netobserv`
 - Use `flowCollector.Spec.Namespace` for deployed resources
 
 ### Console Plugin Configuration
@@ -186,18 +186,14 @@ Two types of configuration:
   - Merged with dynamic config in
     [consoleplugin_objects.go](internal/controller/consoleplugin/consoleplugin_objects.go)
 
-### CI/CD
-Before modifying workflows:
-1. Run `hack/test-workflow.sh`
-2. Test on `workflow-test` branch
-3. Verify images on Quay.io
-
 ## Quick Reference
 
 **Essential Commands:**
 ```bash
-make build lint test                    # Build and test
+make build lint test               # Build and test
 make update-bundle                 # After CRD changes
+make images                        # Build and push to quay OCI images
+make deploy                        # Deploy operator bundle on a running cluster
 make deploy-sample-cr              # Deploy FlowCollector
 make undeploy                      # Clean up
 ```
@@ -217,8 +213,8 @@ make undeploy                      # Clean up
 
 **API Stability:**
 - FlowCollector: v1beta2 (stable - backward compatible changes only)
-- Min OpenShift: 4.10+
 - Min Kubernetes: 1.23+
+- Min OpenShift: 4.10+
 
 ## AI Workflow Example
 
@@ -245,7 +241,6 @@ Before commit:
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Build, test, deploy
 - [docs/Architecture.md](docs/Architecture.md) - Component relationships
 - [docs/FlowCollector.md](docs/FlowCollector.md) - API reference
-- [FAQ.md](FAQ.md) - Troubleshooting
 - [Contributing](https://github.com/netobserv/documents/blob/main/CONTRIBUTING.md)
 
 

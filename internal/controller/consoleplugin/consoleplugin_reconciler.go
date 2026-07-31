@@ -307,6 +307,7 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder *builder, desir
 		r.Instance,
 		r.hpa,
 		builder.autoScaler(),
+		//nolint:staticcheck
 		&desired.ConsolePlugin.Autoscaler,
 		&report,
 	)

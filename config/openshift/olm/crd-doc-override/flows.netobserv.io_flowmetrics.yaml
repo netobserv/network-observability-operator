@@ -1,0 +1,6 @@
+# This file contains OpenShift-specific overrides for the FlowMetrics OpenAPI content.
+# The content is merged into `.spec.versions[0].schema.openAPIV3Schema.properties` at bundle build time.
+spec:
+  properties:
+    charts:
+      description: Charts configuration, for the OpenShift Console, in the Dashboards menu.

@@ -411,7 +411,7 @@ func TestPipelineWithSubnetLabels(t *testing.T) {
 	cfg := flowslatest.FlowCollectorSpec{
 		Processor: flowslatest.FlowCollectorFLP{
 			SubnetLabels: flowslatest.SubnetLabels{
-				OpenShiftAutoDetect: ptr.To(true),
+				AutoDetect: ptr.To(true),
 				CustomLabels: []flowslatest.SubnetLabel{
 					{
 						Name:  "Foo",
