@@ -146,6 +146,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multitenancy", g.Order
 			g.Skip("Skipping test since LokiStack is not ready")
 		}
 		ls.Route = "https://" + getRouteAddress(oc, ls.Namespace, ls.Name)
+
+		g.By("Create secret-watcher RoleBinding in LokiStack namespace")
+		createSecretWatcherRB(oc, lokiStackNS)
 	})
 
 	g.AfterAll(func() {

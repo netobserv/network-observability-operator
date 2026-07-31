@@ -199,6 +199,23 @@ func (flow Flowcollector) CreateFlowcollector(oc *exutil.CLI) {
 	flow.WaitForFlowcollectorReady(oc)
 }
 
+// createSecretWatcherRB creates a secret-watcher RoleBinding in the given
+// namespace so the operator can watch secrets there. Call this when deploying
+// external resources (Kafka, LokiStack) so the RoleBinding is ready before
+// the FlowCollector CR is created.
+func createSecretWatcherRB(oc *exutil.CLI, namespace string) {
+	_, err := oc.AdminKubeClient().RbacV1().RoleBindings(namespace).Create(context.Background(), &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "secret-watcher", Namespace: namespace},
+		RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: "netobserv-secret-watcher"},
+		Subjects: []rbacv1.Subject{{
+			Kind:      "ServiceAccount",
+			Name:      "netobserv-controller-manager",
+			Namespace: netobservNS,
+		}},
+	}, metav1.CreateOptions{})
+	o.Expect(err).NotTo(o.HaveOccurred())
+}
+
 func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
 	operatorSA := rbacv1.Subject{
 		Kind:      "ServiceAccount",
@@ -227,27 +244,20 @@ func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
 		o.Expect(err).NotTo(o.HaveOccurred())
 	}
 
+	privNS := flow.Namespace + "-privileged"
+	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 120*time.Second, false, func(ctx context.Context) (bool, error) {
+		_, nsErr := oc.AdminKubeClient().CoreV1().Namespaces().Get(ctx, privNS, metav1.GetOptions{})
+		return nsErr == nil, nil
+	})
+	o.Expect(err).NotTo(o.HaveOccurred(), "timed out waiting for namespace %s to be created", privNS)
+
 	secretRBs := []struct {
 		name        string
 		namespace   string
 		clusterRole string
 	}{
 		{"secret-creator", flow.Namespace, "netobserv-secret-creator"},
-		{"secret-creator", flow.Namespace + "-privileged", "netobserv-secret-creator"},
-	}
-	if flow.DeploymentModel == "Kafka" {
-		secretRBs = append(secretRBs, struct {
-			name        string
-			namespace   string
-			clusterRole string
-		}{"secret-watcher", flow.KafkaNamespace, "netobserv-secret-watcher"})
-	}
-	if flow.LokiMode == "LokiStack" {
-		secretRBs = append(secretRBs, struct {
-			name        string
-			namespace   string
-			clusterRole string
-		}{"secret-watcher", flow.LokiNamespace, "netobserv-secret-watcher"})
+		{"secret-creator", privNS, "netobserv-secret-creator"},
 	}
 	for _, rb := range secretRBs {
 		_, err := oc.AdminKubeClient().RbacV1().RoleBindings(rb.namespace).Create(context.Background(), &rbacv1.RoleBinding{
