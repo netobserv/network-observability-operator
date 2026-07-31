@@ -3,8 +3,8 @@ package e2etests
 import (
 	"bytes"
 	"context"
-	"errors"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
