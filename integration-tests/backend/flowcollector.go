@@ -9,6 +9,7 @@ import (
 
 	exutil "github.com/openshift/origin/test/extended/util"
 	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	"golang.org/x/mod/semver"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
@@ -209,8 +210,15 @@ func (flow *Flowcollector) WaitForFlowcollectorReady(oc *exutil.CLI) {
 	default:
 		waitUntilDeploymentReady(oc, "flowlogs-pipeline", flow.Namespace)
 	}
-	// check informers deployment
-	waitUntilDeploymentReady(oc, "flowlogs-pipeline-informers", flow.Namespace)
+	// check informers deployment - only available in version >= 2.0
+	csvVersion, err := getCSVVersion(oc.AdminDynamicClient(), netobservNS)
+	if err != nil {
+		e2e.Logf("Could not get CSV version, skipping informers check: %v", err)
+	} else if semver.Compare(semver.Canonical("v"+csvVersion), "v2.0.0") >= 0 {
+		waitUntilDeploymentReady(oc, "flowlogs-pipeline-informers", flow.Namespace)
+	} else {
+		e2e.Logf("Skipping informers check, CSV version %s is below 2.0", csvVersion)
+	}
 
 	// check ebpf-agent status
 	waitUntilDaemonSetReady(oc, "netobserv-ebpf-agent", flow.Namespace+"-privileged")
@@ -222,7 +230,7 @@ func (flow *Flowcollector) WaitForFlowcollectorReady(oc *exutil.CLI) {
 
 	compat_otp.AssertAllPodsToBeReady(oc, flow.Namespace)
 	compat_otp.AssertAllPodsToBeReady(oc, flow.Namespace+"-privileged")
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
+	err = wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
 		condStatus, err := oc.AsAdmin().Run("get").Args("flowcollector", "cluster", "-o", `jsonpath='{.status.conditions[?(@.type=="Ready")].status}'`).Output()
 		if err != nil {
 			return false, nil

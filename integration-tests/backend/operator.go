@@ -13,7 +13,10 @@ import (
 	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
 
@@ -336,4 +339,30 @@ func getOperatorChannel(oc *exutil.CLI, catalog string, packageName string) (ope
 	channels, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("packagemanifests", "-l", "catalog="+catalog, "-n", "openshift-marketplace", "-o=jsonpath={.items[?(@.metadata.name==\""+packageName+"\")].status.channels[*].name}").Output()
 	channelArr := strings.Split(channels, " ")
 	return channelArr[len(channelArr)-1], err
+}
+
+// getCSVVersion returns the version of the installed NetObserv Operator CSV in the given namespace.
+// It uses the dynamic client to list CSVs and finds the one whose name starts with the operator name prefix.
+func getCSVVersion(dynamicClient dynamic.Interface, operatorNamespace string) (string, error) {
+	csvGVR := schema.GroupVersionResource{
+		Group:    "operators.coreos.com",
+		Version:  "v1alpha1",
+		Resource: "clusterserviceversions",
+	}
+
+	csvList, err := dynamicClient.Resource(csvGVR).Namespace(operatorNamespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to list CSVs in namespace %s: %v", operatorNamespace, err)
+	}
+
+	for _, csv := range csvList.Items {
+		if strings.HasPrefix(csv.GetName(), NOPackageName+".") {
+			version, found, err := unstructured.NestedString(csv.Object, "spec", "version")
+			if err != nil || !found {
+				return "", fmt.Errorf("version field not found in CSV %s", csv.GetName())
+			}
+			return version, nil
+		}
+	}
+	return "", fmt.Errorf("no CSV found for %s in namespace %s", NOPackageName, operatorNamespace)
 }
