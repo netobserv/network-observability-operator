@@ -350,19 +350,36 @@ func getCSVVersion(dynamicClient dynamic.Interface, operatorNamespace string) (s
 		Resource: "clusterserviceversions",
 	}
 
-	csvList, err := dynamicClient.Resource(csvGVR).Namespace(operatorNamespace).List(context.Background(), metav1.ListOptions{})
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	csvList, err := dynamicClient.Resource(csvGVR).Namespace(operatorNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return "", fmt.Errorf("failed to list CSVs in namespace %s: %v", operatorNamespace, err)
 	}
 
+	var matched []string
 	for _, csv := range csvList.Items {
-		if strings.HasPrefix(csv.GetName(), NOPackageName+".") {
-			version, found, err := unstructured.NestedString(csv.Object, "spec", "version")
-			if err != nil || !found {
-				return "", fmt.Errorf("version field not found in CSV %s", csv.GetName())
-			}
-			return version, nil
+		if !strings.HasPrefix(csv.GetName(), NOPackageName+".") {
+			continue
 		}
+		// Only consider the active CSV (phase "Succeeded"); during upgrades,
+		// replaced CSVs have phase "Replacing" or "Deleting".
+		phase, _, _ := unstructured.NestedString(csv.Object, "status", "phase")
+		if phase != "Succeeded" {
+			continue
+		}
+		version, found, err := unstructured.NestedString(csv.Object, "spec", "version")
+		if err != nil || !found {
+			return "", fmt.Errorf("version field not found in CSV %s", csv.GetName())
+		}
+		matched = append(matched, version)
 	}
-	return "", fmt.Errorf("no CSV found for %s in namespace %s", NOPackageName, operatorNamespace)
+	switch len(matched) {
+	case 0:
+		return "", fmt.Errorf("no active CSV found for %s in namespace %s", NOPackageName, operatorNamespace)
+	case 1:
+		return matched[0], nil
+	default:
+		return "", fmt.Errorf("multiple active CSVs found for %s in namespace %s: %v", NOPackageName, operatorNamespace, matched)
+	}
 }
