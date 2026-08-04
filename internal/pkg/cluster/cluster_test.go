@@ -536,11 +536,13 @@ func TestHasLokiStack(t *testing.T) {
 }
 
 type mockLiveClient struct {
-	nodes        []v1.Node
-	ksDaemonSets []appsv1.DaemonSet
-	network      *configv1.Network
-	cv           *configv1.ClusterVersion
-	crds         map[string]*apix.CustomResourceDefinition
+	nodes          []v1.Node
+	ksDaemonSets   []appsv1.DaemonSet
+	network        *configv1.Network
+	cv             *configv1.ClusterVersion
+	crds           map[string]*apix.CustomResourceDefinition
+	apiServerIPs   []string
+	apiServerPorts []int32
 }
 
 func (m *mockLiveClient) getNodes(_ context.Context) (*v1.NodeList, error) {
@@ -570,6 +572,20 @@ func (m *mockLiveClient) getCRD(_ context.Context, name string) (*apix.CustomRes
 		return crd, nil
 	}
 	return nil, fmt.Errorf("CRD %s not found", name)
+}
+
+func (m *mockLiveClient) getAPIServerIPsFromEndpointSlices(_ context.Context) ([]string, []int32, error) {
+	if m.apiServerIPs != nil {
+		return m.apiServerIPs, m.apiServerPorts, nil
+	}
+	return nil, nil, errors.New("EndpointSlices kubernetes not found")
+}
+
+func (m *mockLiveClient) getAPIServerIPsFromEndpoints(_ context.Context) ([]string, []int32, error) {
+	if m.apiServerIPs != nil {
+		return m.apiServerIPs, m.apiServerPorts, nil
+	}
+	return nil, nil, errors.New("Endpoints kubernetes not found")
 }
 
 func stubOpenShiftInfo(version string) (*Info, *configv1.ClusterVersion) {

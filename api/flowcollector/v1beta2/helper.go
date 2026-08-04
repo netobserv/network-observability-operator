@@ -216,11 +216,15 @@ func (spec *FlowCollectorFLP) GetMetricsPort() int32 {
 	return port
 }
 
-func (spec *FlowCollectorSpec) DeployNetworkPolicy(trueByDefault bool) bool {
-	if trueByDefault {
-		return spec.NetworkPolicy.Enable == nil || *spec.NetworkPolicy.Enable
+func (spec *FlowCollectorSpec) DeployNetworkPolicy(cni NetworkType) bool {
+	if cni == OpenShiftSDN {
+		return false
 	}
-	return spec.NetworkPolicy.Enable != nil && *spec.NetworkPolicy.Enable
+	if spec.NetworkPolicy.Enable != nil {
+		return *spec.NetworkPolicy.Enable
+	}
+	// Default true only for recognized CNIs
+	return cni != ""
 }
 
 func (spec *FlowCollectorFLP) GetFLPReplicas() int32 {

@@ -17,8 +17,6 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-var outputRecordTypes = flowslatest.LogTypeAll
-
 func getLoki() flowslatest.FlowCollectorLoki {
 	return flowslatest.FlowCollectorLoki{
 		Mode: flowslatest.LokiModeManual,
@@ -55,7 +53,6 @@ func getConfig() flowslatest.FlowCollector {
 					Status:  flowslatest.HPAStatusEnabled,
 					Metrics: []ascv2.MetricSpec{},
 				},
-				LogTypes: &outputRecordTypes,
 				Advanced: &flowslatest.AdvancedProcessorConfig{
 					Port:       ptr.To(int32(2055)),
 					HealthPort: ptr.To(int32(8080)),
@@ -74,26 +71,26 @@ func TestNpBuilder(t *testing.T) {
 	assert := assert.New(t)
 
 	desired := getConfig()
-	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
+	mgr := &manager.Manager{ClusterInfo: cluster.Mock(cluster.WithCNI(flowslatest.OVNKubernetes)), Config: &manager.Config{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	name, np := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
+	name, np := buildMainNetworkPolicy(&desired, mgr)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv", name.Namespace)
 	assert.NotNil(np)
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv-privileged", name.Namespace)
 	assert.NotNil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(false)
-	_, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
+	_, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	name, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
+	name, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -111,28 +108,38 @@ func TestNpBuilder(t *testing.T) {
 	}, np.Spec.Ingress)
 
 	assert.Equal([]networkingv1.NetworkPolicyEgressRule{
-		{To: []networkingv1.NetworkPolicyPeer{
-			{PodSelector: &metav1.LabelSelector{}},
-		}},
-		{To: []networkingv1.NetworkPolicyPeer{
-			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
-				MatchExpressions: []metav1.LabelSelectorRequirement{{
-					Key:      "kubernetes.io/metadata.name",
-					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{"kube-system"},
+		{
+			To: []networkingv1.NetworkPolicyPeer{
+				{PodSelector: &metav1.LabelSelector{}},
+			},
+		},
+		{
+			To: []networkingv1.NetworkPolicyPeer{
+				{NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
 				}},
-			}},
-		}},
+			}, Ports: []networkingv1.NetworkPolicyPort{
+				{Protocol: ptr.To(v1.ProtocolUDP), Port: ptr.To(intstr.FromString("dns"))},
+				{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromString("dns-tcp"))},
+			},
+		},
+		{
+			To: []networkingv1.NetworkPolicyPeer{
+				{NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
+				}},
+			}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromInt(443))}},
+		},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
 	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
 
 	desired.Spec.NetworkPolicy.AdditionalNamespaces = []string{"foo", "bar"}
-	name, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
+	name, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -146,7 +153,7 @@ func TestNpBuilder(t *testing.T) {
 			}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromInt(2055))}},
 		},
 		{From: []networkingv1.NetworkPolicyPeer{
-			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
+			{NamespaceSelector: &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{{
 					Key:      "kubernetes.io/metadata.name",
 					Operator: metav1.LabelSelectorOpIn,
@@ -160,18 +167,35 @@ func TestNpBuilder(t *testing.T) {
 		{To: []networkingv1.NetworkPolicyPeer{
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
+		{
+			To: []networkingv1.NetworkPolicyPeer{
+				{NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
+				}},
+			}, Ports: []networkingv1.NetworkPolicyPort{
+				{Protocol: ptr.To(v1.ProtocolUDP), Port: ptr.To(intstr.FromString("dns"))},
+				{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromString("dns-tcp"))},
+			},
+		},
+		{
+			To: []networkingv1.NetworkPolicyPeer{
+				{NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
+				}},
+			}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromInt(443))}},
+		},
 		{To: []networkingv1.NetworkPolicyPeer{
-			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
+			{NamespaceSelector: &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{{
 					Key:      "kubernetes.io/metadata.name",
 					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{"kube-system", "foo", "bar"},
+					Values:   []string{"foo", "bar"},
 				}},
 			}},
 		}},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -182,18 +206,18 @@ func TestNpBuilderSDN(t *testing.T) {
 	assert := assert.New(t)
 
 	desired := getConfig()
-	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
+	mgr := &manager.Manager{ClusterInfo: cluster.Mock(cluster.WithCNI(flowslatest.OpenShiftSDN)), Config: &manager.Config{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	_, np := buildMainNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN, nil)
+	_, np := buildMainNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	_, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN, nil)
+	_, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.OpenShiftSDN)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
 }
 
@@ -201,26 +225,26 @@ func TestNpBuilderKindnet(t *testing.T) {
 	assert := assert.New(t)
 
 	desired := getConfig()
-	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
+	mgr := &manager.Manager{ClusterInfo: cluster.Mock(cluster.WithCNI(flowslatest.Kindnet)), Config: &manager.Config{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	name, np := buildMainNetworkPolicy(&desired, mgr, flowslatest.Kindnet, nil)
+	name, np := buildMainNetworkPolicy(&desired, mgr)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv", name.Namespace)
 	assert.NotNil(np)
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.Kindnet)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Equal(netpolName, name.Name)
 	assert.Equal("netobserv-privileged", name.Namespace)
 	assert.NotNil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(false)
-	_, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.Kindnet, nil)
+	_, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.Kindnet)
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	name, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.Kindnet, nil)
+	name, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -228,31 +252,42 @@ func TestNpBuilderKindnet(t *testing.T) {
 		{From: []networkingv1.NetworkPolicyPeer{
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
+		{From: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"kubernetes.io/metadata.name": "netobserv-privileged"},
+			}},
+		}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromInt(2055))}}},
 	}, np.Spec.Ingress)
 
 	assert.Equal([]networkingv1.NetworkPolicyEgressRule{
 		{To: []networkingv1.NetworkPolicyPeer{
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
-		{To: []networkingv1.NetworkPolicyPeer{
-			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
-				MatchExpressions: []metav1.LabelSelectorRequirement{{
-					Key:      "kubernetes.io/metadata.name",
-					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{"kube-system"},
+		{
+			To: []networkingv1.NetworkPolicyPeer{
+				{NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
 				}},
+			}, Ports: []networkingv1.NetworkPolicyPort{
+				{Protocol: ptr.To(v1.ProtocolUDP), Port: ptr.To(intstr.FromString("dns"))},
+				{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromString("dns-tcp"))},
+			},
+		},
+		{To: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
 			}},
-		}},
+		}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromInt(443))}}},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.Kindnet)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
 	assert.Equal([]networkingv1.NetworkPolicyIngressRule{}, np.Spec.Ingress)
 
 	desired.Spec.NetworkPolicy.AdditionalNamespaces = []string{"foo", "bar"}
-	name, np = buildMainNetworkPolicy(&desired, mgr, flowslatest.Kindnet, nil)
+	name, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -261,7 +296,12 @@ func TestNpBuilderKindnet(t *testing.T) {
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
 		{From: []networkingv1.NetworkPolicyPeer{
-			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"kubernetes.io/metadata.name": "netobserv-privileged"},
+			}},
+		}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromInt(2055))}}},
+		{From: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{{
 					Key:      "kubernetes.io/metadata.name",
 					Operator: metav1.LabelSelectorOpIn,
@@ -275,18 +315,33 @@ func TestNpBuilderKindnet(t *testing.T) {
 		{To: []networkingv1.NetworkPolicyPeer{
 			{PodSelector: &metav1.LabelSelector{}},
 		}},
+		{
+			To: []networkingv1.NetworkPolicyPeer{
+				{NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
+				}},
+			}, Ports: []networkingv1.NetworkPolicyPort{
+				{Protocol: ptr.To(v1.ProtocolUDP), Port: ptr.To(intstr.FromString("dns"))},
+				{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromString("dns-tcp"))},
+			},
+		},
 		{To: []networkingv1.NetworkPolicyPeer{
-			{PodSelector: &metav1.LabelSelector{}, NamespaceSelector: &metav1.LabelSelector{
+			{NamespaceSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{"kubernetes.io/metadata.name": "kube-system"},
+			}},
+		}, Ports: []networkingv1.NetworkPolicyPort{{Protocol: ptr.To(v1.ProtocolTCP), Port: ptr.To(intstr.FromInt(443))}}},
+		{To: []networkingv1.NetworkPolicyPeer{
+			{NamespaceSelector: &metav1.LabelSelector{
 				MatchExpressions: []metav1.LabelSelectorRequirement{{
 					Key:      "kubernetes.io/metadata.name",
 					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{"kube-system", "foo", "bar"},
+					Values:   []string{"foo", "bar"},
 				}},
 			}},
 		}},
 	}, np.Spec.Egress)
 
-	name, np = buildPrivilegedNetworkPolicy(&desired, mgr, flowslatest.Kindnet)
+	name, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 	assert.Equal(np.ObjectMeta.Name, name.Name)
 	assert.Equal(np.ObjectMeta.Namespace, name.Namespace)
@@ -297,18 +352,18 @@ func TestNpBuilderOtherCNI(t *testing.T) {
 	assert := assert.New(t)
 
 	desired := getConfig()
-	mgr := &manager.Manager{ClusterInfo: &cluster.Info{}}
+	mgr := &manager.Manager{ClusterInfo: cluster.Mock(), Config: &manager.Config{}}
 
 	desired.Spec.NetworkPolicy.Enable = nil
-	_, np := buildMainNetworkPolicy(&desired, mgr, "", nil)
+	_, np := buildMainNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, "")
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.Nil(np)
 
 	desired.Spec.NetworkPolicy.Enable = ptr.To(true)
-	_, np = buildMainNetworkPolicy(&desired, mgr, "", nil)
+	_, np = buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
-	_, np = buildPrivilegedNetworkPolicy(&desired, mgr, "")
+	_, np = buildPrivilegedNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 }
 
@@ -316,25 +371,26 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 	assert := assert.New(t)
 
 	desired := getConfig()
-	clusterInfo := &cluster.Info{}
-	clusterInfo.Mock("4.14.0", flowslatest.OVNKubernetes) // Mock as OpenShift 4.14 with OVN
+	clusterInfo := cluster.Mock(
+		cluster.WithOpenShiftVersion("4.14.0"),
+		cluster.WithCNI(flowslatest.OVNKubernetes),
+		cluster.WithKubeIPs("172.20.0.1", "10.0.0.5"),
+	) // Mock as OpenShift 4.14 with OVN with specific API server IPs (HyperShift scenario)
 	mgr := &manager.Manager{
 		ClusterInfo: clusterInfo,
 		Config:      &manager.Config{Vendor: constants.VendorOpenShift},
 	}
 
-	// Test with specific API server IPs (HyperShift scenario)
-	apiServerIPs := []string{"172.20.0.1", "10.0.0.5"}
-	_, np := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, apiServerIPs)
+	_, np := buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(np)
 
 	// Verify that we have a single egress rule with multiple IP peers
 	found := false
 	for _, egressRule := range np.Spec.Egress {
-		if len(egressRule.To) == 2 && egressRule.To[0].IPBlock != nil && egressRule.To[1].IPBlock != nil {
+		if len(egressRule.To) == 3 && egressRule.To[1].IPBlock != nil && egressRule.To[2].IPBlock != nil {
 			found = true
 			// Verify both IPs are present with correct /32 CIDR for IPv4
-			cidrs := []string{egressRule.To[0].IPBlock.CIDR, egressRule.To[1].IPBlock.CIDR}
+			cidrs := []string{egressRule.To[1].IPBlock.CIDR, egressRule.To[2].IPBlock.CIDR}
 			assert.Contains(cidrs, "172.20.0.1/32")
 			assert.Contains(cidrs, "10.0.0.5/32")
 		}
@@ -342,7 +398,11 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 	assert.True(found, "Expected to find a single egress rule with multiple API server IPs")
 
 	// Test without API server IPs - should not create the external API server egress rule
-	_, npWithoutIPs := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, nil)
+	mgr.ClusterInfo = cluster.Mock(
+		cluster.WithOpenShiftVersion("4.14.0"),
+		cluster.WithCNI(flowslatest.OVNKubernetes),
+	)
+	_, npWithoutIPs := buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(npWithoutIPs)
 
 	// Verify that we do NOT have an egress rule for external API server when IPs are not provided
@@ -361,16 +421,20 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 	assert.False(foundExternalAPIRule, "Should not create external API server egress rule without specific IPs")
 
 	// Test with IPv6 addresses
-	apiServerIPsV6 := []string{"2001:db8::1", "2001:db8::2"}
-	_, npV6 := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, apiServerIPsV6)
+	mgr.ClusterInfo = cluster.Mock(
+		cluster.WithOpenShiftVersion("4.14.0"),
+		cluster.WithCNI(flowslatest.OVNKubernetes),
+		cluster.WithKubeIPs("2001:db8::1", "2001:db8::2"),
+	)
+	_, npV6 := buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(npV6)
 
 	// Verify IPv6 addresses get /128 CIDR
 	foundV6 := false
 	for _, egressRule := range npV6.Spec.Egress {
-		if len(egressRule.To) == 2 && egressRule.To[0].IPBlock != nil && egressRule.To[1].IPBlock != nil {
+		if len(egressRule.To) == 3 && egressRule.To[1].IPBlock != nil && egressRule.To[2].IPBlock != nil {
 			foundV6 = true
-			cidrs := []string{egressRule.To[0].IPBlock.CIDR, egressRule.To[1].IPBlock.CIDR}
+			cidrs := []string{egressRule.To[1].IPBlock.CIDR, egressRule.To[2].IPBlock.CIDR}
 			assert.Contains(cidrs, "2001:db8::1/128", "IPv6 addresses should use /128")
 			assert.Contains(cidrs, "2001:db8::2/128", "IPv6 addresses should use /128")
 		}
@@ -378,15 +442,19 @@ func TestNpBuilderWithAPIServerIPs(t *testing.T) {
 	assert.True(foundV6, "Expected to find IPv6 egress rule")
 
 	// Test with mixed IPv4 and IPv6
-	apiServerIPsMixed := []string{"192.168.1.1", "2001:db8::1"}
-	_, npMixed := buildMainNetworkPolicy(&desired, mgr, flowslatest.OVNKubernetes, apiServerIPsMixed)
+	mgr.ClusterInfo = cluster.Mock(
+		cluster.WithOpenShiftVersion("4.14.0"),
+		cluster.WithCNI(flowslatest.OVNKubernetes),
+		cluster.WithKubeIPs("192.168.1.1", "2001:db8::1"),
+	)
+	_, npMixed := buildMainNetworkPolicy(&desired, mgr)
 	assert.NotNil(npMixed)
 
 	foundMixed := false
 	for _, egressRule := range npMixed.Spec.Egress {
-		if len(egressRule.To) == 2 && egressRule.To[0].IPBlock != nil && egressRule.To[1].IPBlock != nil {
+		if len(egressRule.To) == 3 && egressRule.To[1].IPBlock != nil && egressRule.To[2].IPBlock != nil {
 			foundMixed = true
-			cidrs := []string{egressRule.To[0].IPBlock.CIDR, egressRule.To[1].IPBlock.CIDR}
+			cidrs := []string{egressRule.To[1].IPBlock.CIDR, egressRule.To[2].IPBlock.CIDR}
 			assert.Contains(cidrs, "192.168.1.1/32", "IPv4 should use /32")
 			assert.Contains(cidrs, "2001:db8::1/128", "IPv6 should use /128")
 		}

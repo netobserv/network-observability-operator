@@ -32,8 +32,7 @@ func (m *mockClient) Get(ctx context.Context, key types.NamespacedName, obj clie
 }
 
 func initLSWatcher() (*mockClient, *Watcher) {
-	clust := &cluster.Info{}
-	clust.Mock("", "", cluster.LokiStack)
+	clust := cluster.Mock(cluster.WithAPIs(cluster.LokiStack))
 	client := &mockClient{}
 	lsw := Watcher{
 		mgr:                &manager.Manager{ClusterInfo: clust},

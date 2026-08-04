@@ -44,7 +44,6 @@ const configFile = "config.yaml"
 const configVolume = "config-volume"
 const configPath = "/opt/app-root/"
 const metricsSvcName = constants.PluginName + "-metrics"
-const metricsPort = 9002
 const metricsPortName = "metrics"
 
 type builder struct {
@@ -318,13 +317,13 @@ func (b *builder) metricsService() *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Selector: b.selector,
 			Ports: []corev1.ServicePort{{
-				Port:     metricsPort,
+				Port:     constants.CPMetricsPort,
 				Protocol: corev1.ProtocolTCP,
 				Name:     metricsPortName,
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
 				// explicitly set it here so the reconcile loop verifies that the owned service
 				// is equal as the desired service
-				TargetPort: intstr.FromInt32(metricsPort),
+				TargetPort: intstr.FromInt32(constants.CPMetricsPort),
 			}},
 		},
 	}

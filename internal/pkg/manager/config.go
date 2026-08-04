@@ -28,7 +28,8 @@ type Config struct {
 	// Vendor / variant
 	Vendor constants.Vendor
 	// Static plugin configuration
-	StaticPluginConfig StaticPluginConfig
+	StaticPluginConfig          StaticPluginConfig
+	DeployOperatorNetworkPolicy *bool
 }
 
 // Config of the static plugin.
@@ -40,11 +41,8 @@ type StaticPluginConfig struct {
 // ResolveWebConsoleImage selects the web console image appropriate for the cluster version.
 // On OpenShift, it returns the image from the last variant whose semver MinVersion is satisfied.
 // An empty MinVersion stands for the default match.
-func (c *Config) ResolveWebConsoleImage(clusterInfo *cluster.Info) (string, error) {
-	if c.Vendor == constants.VendorOpenShift || c.Vendor == constants.VendorOpenShiftDownstream {
-		if clusterInfo == nil {
-			return "", errors.New("cluster info is nil")
-		}
+func (c *Config) ResolveWebConsoleImage(clusterInfo *cluster.Info) string {
+	if clusterInfo != nil && (c.Vendor == constants.VendorOpenShift || c.Vendor == constants.VendorOpenShiftDownstream) {
 		for _, v := range []struct {
 			image      string
 			minVersion string
@@ -62,16 +60,16 @@ func (c *Config) ResolveWebConsoleImage(clusterInfo *cluster.Info) (string, erro
 			},
 		} {
 			if len(v.minVersion) == 0 {
-				return v.image, nil
+				return v.image
 			}
 			atLeast, _, err := clusterInfo.IsOpenShiftVersionAtLeast(v.minVersion)
 			if err == nil && atLeast {
-				return v.image, nil
+				return v.image
 			}
 		}
 	}
 
-	return c.WebConsoleImage, nil
+	return c.WebConsoleImage
 }
 
 func (c *Config) Validate() error {

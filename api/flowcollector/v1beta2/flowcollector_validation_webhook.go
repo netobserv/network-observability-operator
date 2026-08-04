@@ -129,8 +129,8 @@ func (v *validator) validateNetPol() {
 			v.warnings = append(v.warnings, fmt.Sprintf("Could not detect CNI: %s", err.Error()))
 		} else if cni == OpenShiftSDN && v.fc.NetworkPolicy.Enable != nil && *v.fc.NetworkPolicy.Enable {
 			v.warnings = append(v.warnings, "OpenShiftSDN detected with unsupported setting: spec.networkPolicy.enable; this setting will be ignored; to remove this warning set spec.networkPolicy.enable to false.")
-		} else if cni == "" && v.fc.DeployNetworkPolicy(false) {
-			v.warnings = append(v.warnings, "Network policy is enabled via spec.networkPolicy.enable, despite running on an unknown CNI: this configuration has not been tested; to remove this warning set spec.networkPolicy.enable to false.")
+		} else if cni == "" && v.fc.DeployNetworkPolicy("") {
+			v.warnings = append(v.warnings, "Network policy is enabled via spec.networkPolicy.enable, despite running on an unknown CNI: this configuration has not been tested.")
 		}
 	} else {
 		v.warnings = append(v.warnings, "Unknown environment, cannot detect the CNI in use")

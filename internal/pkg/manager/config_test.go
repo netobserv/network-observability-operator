@@ -6,7 +6,6 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -63,10 +62,8 @@ func TestResolveWebConsoleImage_OpenShift(t *testing.T) {
 			expected: pf6Image,
 		},
 	} {
-		info := &cluster.Info{}
-		info.Mock(tc.version, "")
-		img, err := cfg.ResolveWebConsoleImage(info)
-		require.NoError(t, err)
+		info := cluster.Mock(cluster.WithOpenShiftVersion(tc.version))
+		img := cfg.ResolveWebConsoleImage(info)
 
 		assert.Equal(t, tc.expected, img, "Wrong web console image for OpenShift %v", tc.version)
 	}
@@ -79,28 +76,27 @@ func TestResolveWebConsoleImage_NoVendor(t *testing.T) {
 		WebConsolePF5Image: pf5Image,
 		Vendor:             "",
 	}
-	info := &cluster.Info{}
-	info.Mock("", "")
-	img, err := cfg.ResolveWebConsoleImage(info)
-	require.NoError(t, err)
+	info := cluster.Mock()
+	img := cfg.ResolveWebConsoleImage(info)
 	assert.Equal(t, pf6Image, img, "should default to WebConsoleImage")
 }
 
 func TestResolveWebConsoleImage_OpenShiftNilInfo(t *testing.T) {
 	cfg := &Config{
-		Vendor: constants.VendorOpenShift,
+		Vendor:             constants.VendorOpenShift,
+		WebConsoleImage:    pf6Image,
+		WebConsolePF4Image: pf4Image,
+		WebConsolePF5Image: pf5Image,
 	}
-	_, err := cfg.ResolveWebConsoleImage(nil)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "cluster info is nil")
+	img := cfg.ResolveWebConsoleImage(nil)
+	assert.Equal(t, pf6Image, img, "should default to WebConsoleImage")
 }
 
 func TestResolveWebConsoleImage_NoVendorNilInfo(t *testing.T) {
 	cfg := &Config{
 		WebConsoleImage: pf6Image,
 	}
-	img, err := cfg.ResolveWebConsoleImage(nil)
-	require.NoError(t, err)
+	img := cfg.ResolveWebConsoleImage(nil)
 	assert.Equal(t, pf6Image, img, "should default to WebConsoleImage")
 }
 

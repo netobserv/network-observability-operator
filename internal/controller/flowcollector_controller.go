@@ -158,11 +158,7 @@ func (r *FlowCollectorReconciler) reconcile(ctx context.Context, clh *helper.Cli
 
 	var cpImage string
 	if desired.Spec.NeedsConsolePluginDeployment(r.mgr.ClusterInfo.HasConsolePlugin()) {
-		var err error
-		cpImage, err = r.mgr.Config.ResolveWebConsoleImage(r.mgr.ClusterInfo)
-		if err != nil {
-			return r.status.Error("ConsolePluginImageError", err)
-		}
+		cpImage = r.mgr.Config.ResolveWebConsoleImage(r.mgr.ClusterInfo)
 	}
 	cpReconciler := consoleplugin.NewReconciler(reconcilersInfo.NewInstance(
 		map[reconcilers.ImageRef]string{

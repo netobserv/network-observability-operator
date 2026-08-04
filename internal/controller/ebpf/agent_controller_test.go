@@ -198,9 +198,10 @@ func TestGetEnvConfig_OCP4_14(t *testing.T) {
 		},
 	}
 
-	info := cluster.Info{}
-	info.Mock("4.14.5", "")
-	cmn := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &info}
+	cmn := reconcilers.Common{
+		Namespace:   "netobserv",
+		ClusterInfo: cluster.Mock(cluster.WithOpenShiftVersion("4.15.5")),
+	}
 	agent := NewAgentController(cmn.NewInstance(nil, status.Instance{}))
 
 	env, err := agent.envConfig(context.Background(), &fc, map[string]string{})
@@ -279,7 +280,7 @@ func TestNetworkEventsOVNMount(t *testing.T) {
 	assert.Equal(t, "/var/run/openvswitch", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
 
 	// OpenShift OVN
-	info.ClusterInfo.Mock("4.20.0", flowslatest.OVNKubernetes)
+	info.ClusterInfo = cluster.Mock(cluster.WithOpenShiftVersion("4.20.0"), cluster.WithCNI(flowslatest.OVNKubernetes))
 	ds, err = agent.desired(context.Background(), &fc)
 	assert.NoError(t, err)
 	assert.NotNil(t, ds)

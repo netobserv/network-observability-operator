@@ -16,6 +16,11 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const (
+	kubernetesServiceName      = "kubernetes"
+	kubernetesServiceNamespace = "default"
+)
+
 // liveClient performs only live queries - no cache
 type liveClient interface {
 	getNodes(ctx context.Context) (*v1.NodeList, error)
@@ -23,6 +28,8 @@ type liveClient interface {
 	getNetworkConfig(ctx context.Context) (*configv1.Network, error)
 	getClusterVersion(ctx context.Context) (*configv1.ClusterVersion, error)
 	getCRD(ctx context.Context, name string) (*apix.CustomResourceDefinition, error)
+	getAPIServerIPsFromEndpointSlices(ctx context.Context) ([]string, []int32, error)
+	getAPIServerIPsFromEndpoints(ctx context.Context) ([]string, []int32, error)
 }
 
 type liveClientImpl struct {
@@ -84,4 +91,47 @@ func (lc *liveClientImpl) getCRD(ctx context.Context, name string) (*apix.Custom
 		return nil, fmt.Errorf("could not convert CRD from unstructured: %w", err)
 	}
 	return &obj, nil
+}
+
+func (lc *liveClientImpl) getAPIServerIPsFromEndpointSlices(ctx context.Context) ([]string, []int32, error) {
+	endpointSlice, err := lc.kc.DiscoveryV1().EndpointSlices(kubernetesServiceNamespace).Get(ctx, kubernetesServiceName, metav1.GetOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var ips []string
+	var ports []int32
+	for j := range endpointSlice.Endpoints {
+		endpoint := &endpointSlice.Endpoints[j]
+		ips = append(ips, endpoint.Addresses...)
+	}
+	for _, p := range endpointSlice.Ports {
+		if p.Port != nil {
+			ports = append(ports, *p.Port)
+		}
+	}
+
+	return ips, ports, nil
+}
+
+func (lc *liveClientImpl) getAPIServerIPsFromEndpoints(ctx context.Context) ([]string, []int32, error) {
+	endpoints, err := lc.kc.CoreV1().Endpoints(kubernetesServiceNamespace).Get(ctx, kubernetesServiceName, metav1.GetOptions{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var ips []string
+	var ports []int32
+	for _, subset := range endpoints.Subsets {
+		for _, address := range subset.Addresses {
+			ips = append(ips, address.IP)
+		}
+		for _, p := range subset.Ports {
+			if p.Port != 0 {
+				ports = append(ports, p.Port)
+			}
+		}
+	}
+
+	return ips, ports, nil
 }
