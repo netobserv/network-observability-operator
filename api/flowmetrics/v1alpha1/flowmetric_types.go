@@ -125,7 +125,7 @@ type FlowMetricSpec struct {
 	// +optional
 	Divider string `json:"divider"`
 
-	// Charts configuration, for the OpenShift Console in the administrator view, Dashboards menu.
+	// Charts configuration, if supported by the Kubernetes vendor.
 	// +optional
 	Charts []Chart `json:"charts,omitempty"`
 }

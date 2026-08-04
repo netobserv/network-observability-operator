@@ -193,6 +193,7 @@ func (r *transformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *fl
 		r.Instance,
 		r.hpa,
 		builder.autoScaler(),
+		//nolint:staticcheck
 		&desiredFLP.KafkaConsumerAutoscaler,
 		&report,
 	)

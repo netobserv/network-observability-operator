@@ -123,6 +123,7 @@ func useLokiStack(cfg *flowslatest.FlowCollectorSpec) {
 
 func getConfigNoHPA() flowslatest.FlowCollectorSpec {
 	cfg := getConfig()
+	//nolint:staticcheck
 	cfg.Processor.KafkaConsumerAutoscaler.Status = flowslatest.HPAStatusDisabled
 	return cfg
 }
@@ -152,6 +153,7 @@ func getAutoScalerSpecs() (ascv2.HorizontalPodAutoscaler, flowslatest.FlowCollec
 		},
 	}
 
+	//nolint:staticcheck
 	return autoScaler, getConfig().Processor.KafkaConsumerAutoscaler
 }
 
@@ -706,7 +708,6 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig()
 	useLokiStack(&cfg)
-	cfg.Agent.Type = flowslatest.AgentEBPF
 	b := monoBuilder(ns, &cfg)
 	cm, digest, _, err := b.configMaps()
 	assert.NoError(err)

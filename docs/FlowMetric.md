@@ -114,7 +114,7 @@ Use "Gauge" for other values that don't necessitate accuracy over time (gauges a
         <td><b><a href="#flowmetricspecchartsindex">charts</a></b></td>
         <td>[]object</td>
         <td>
-          Charts configuration, for the OpenShift Console in the administrator view, Dashboards menu.<br/>
+          Charts configuration, if supported by the Kubernetes vendor.<br/>
         </td>
         <td>false</td>
       </tr><tr>

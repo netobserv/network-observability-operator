@@ -7,7 +7,7 @@ import (
 	"time"
 
 	o "github.com/onsi/gomega"
-
+	"golang.org/x/mod/semver"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -210,6 +210,16 @@ func (flow *Flowcollector) WaitForFlowcollectorReady() {
 	default:
 		waitUntilDeploymentReady("flowlogs-pipeline", flow.Namespace)
 	}
+	// check informers deployment - only available in version >= 2.0
+	csvVersion, err := getCSVVersion(netobservNS)
+	if err != nil {
+		e2e.Logf("Could not get CSV version, skipping informers check: %v", err)
+	} else if semver.Compare(semver.Canonical("v"+csvVersion), "v2.0.0") >= 0 {
+		waitUntilDeploymentReady("flowlogs-pipeline-informers", flow.Namespace)
+	} else {
+		e2e.Logf("Skipping informers check, CSV version %s is below 2.0", csvVersion)
+	}
+
 	// check ebpf-agent status
 	waitUntilDaemonSetReady("netobserv-ebpf-agent", flow.Namespace+"-privileged")
 
@@ -223,7 +233,7 @@ func (flow *Flowcollector) WaitForFlowcollectorReady() {
 	WaitForAllPodsReady(flow.Namespace + "-privileged")
 
 	// Wait for FlowCollector status to be Ready
-	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
+	err = wait.PollUntilContextTimeout(ctx, 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
 		obj, getErr := getDynamicResource("flowcollector", "cluster", "")
 		if getErr != nil {
 			return false, nil

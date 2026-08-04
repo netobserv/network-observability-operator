@@ -1,6 +1,8 @@
 version: "2"
 run:
   go: "1.23"
+  concurrency: 2
+  timeout: 30m
 linters:
   enable:
     - copyloopvar
@@ -16,6 +18,10 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
     rules:
       - linters:
         - staticcheck
@@ -26,3 +32,9 @@ linters:
 formatters:
   enable:
     - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

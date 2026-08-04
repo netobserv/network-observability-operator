@@ -19,7 +19,6 @@ test.out
 **/docs/
 CONTRIBUTING.md
 DEVELOPMENT.md
-FAQ.md
 RELEASE.md
 *.md
 !README.md

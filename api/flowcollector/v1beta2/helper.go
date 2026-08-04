@@ -169,7 +169,7 @@ func (spec *FlowCollectorFLP) IsZoneEnabled() bool {
 }
 
 func (spec *FlowCollectorFLP) IsSubnetLabelsEnabled() bool {
-	return spec.HasAutoDetectOpenShiftNetworks() || len(spec.SubnetLabels.CustomLabels) > 0
+	return spec.HasAutoDetectNetworks() || len(spec.SubnetLabels.CustomLabels) > 0
 }
 
 func (spec *FlowCollectorSpec) GetSecondaryIndexes() []SecondaryNetwork {
@@ -186,8 +186,14 @@ func (spec *FlowCollectorSpec) GetSecondaryIndexes() []SecondaryNetwork {
 	return nil
 }
 
-func (spec *FlowCollectorFLP) HasAutoDetectOpenShiftNetworks() bool {
-	return spec.SubnetLabels.OpenShiftAutoDetect == nil || *spec.SubnetLabels.OpenShiftAutoDetect
+func (spec *FlowCollectorFLP) HasAutoDetectNetworks() bool {
+	if spec.SubnetLabels.AutoDetect != nil {
+		return *spec.SubnetLabels.AutoDetect
+	}
+	if spec.SubnetLabels.OpenShiftAutoDetect != nil {
+		return *spec.SubnetLabels.OpenShiftAutoDetect
+	}
+	return true
 }
 
 func (spec *FlowCollectorFLP) HasFLPDeduper() bool {

@@ -133,7 +133,6 @@ func GetAdvancedProcessorConfig(spec *flowslatest.FlowCollectorSpec) flowslatest
 		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "port")),
 		HealthPort:                     ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "healthPort")),
 		EnableKubeProbes:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "enableKubeProbes")),
-		DropUnusedFields:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "dropUnusedFields")),
 		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationHeartbeatInterval")),
 		ConversationEndTimeout:         ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationEndTimeout")),
 		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationTerminatingTimeout")),
@@ -161,9 +160,6 @@ func GetAdvancedProcessorConfig(spec *flowslatest.FlowCollectorSpec) flowslatest
 		}
 		if specConfig.EnableKubeProbes != nil {
 			cfg.EnableKubeProbes = specConfig.EnableKubeProbes
-		}
-		if specConfig.DropUnusedFields != nil {
-			cfg.DropUnusedFields = specConfig.DropUnusedFields
 		}
 		if specConfig.ConversationHeartbeatInterval != nil {
 			cfg.ConversationHeartbeatInterval = specConfig.ConversationHeartbeatInterval

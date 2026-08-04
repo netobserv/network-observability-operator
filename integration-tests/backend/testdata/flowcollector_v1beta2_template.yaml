@@ -32,6 +32,8 @@ objects:
               tls:
                 type: "${EBPFMetricServerTLSType}"
       processor:
+        informerCacheProxy:
+          enabled: true
         multiClusterDeployment: "${{MultiClusterDeployment}}"
         addZone: "${{AddZone}}"
         service:
