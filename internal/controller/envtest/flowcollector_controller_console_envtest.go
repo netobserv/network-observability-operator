@@ -322,6 +322,33 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 					return nil
 				}, timeout, interval).Should(Succeed())
 			})
+
+			It("Should clear toleration config when subscription config is removed", func() {
+				Eventually(func() interface{} {
+					subs := olm.Subscription{}
+					if err := k8sClient.Get(ctx, subscriptionKey, &subs); err != nil {
+						return err
+					}
+					subs.Spec.Config = nil
+					return k8sClient.Update(ctx, &subs)
+				}, timeout, interval).Should(Succeed())
+			})
+
+			It("Should remove toleration and nodeSelector from static plugin deployment", func() {
+				Eventually(func() interface{} {
+					dp := appsv1.Deployment{}
+					if err := k8sClient.Get(ctx, staticCpKey, &dp); err != nil {
+						return err
+					}
+					if len(dp.Spec.Template.Spec.Tolerations) != 0 {
+						return fmt.Errorf("expected no tolerations, got: %v", dp.Spec.Template.Spec.Tolerations)
+					}
+					if len(dp.Spec.Template.Spec.NodeSelector) != 0 {
+						return fmt.Errorf("expected no node selector, got: %v", dp.Spec.Template.Spec.NodeSelector)
+					}
+					return nil
+				}, timeout, interval).Should(Succeed())
+			})
 		})
 	}
 
