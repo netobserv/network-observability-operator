@@ -145,9 +145,12 @@ func (b *transfoBuilder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 				Kind:       "Deployment",
 				Name:       transfoName,
 			},
+			//nolint:staticcheck
 			MinReplicas: b.desired.Processor.KafkaConsumerAutoscaler.MinReplicas,
+			//nolint:staticcheck
 			MaxReplicas: b.desired.Processor.KafkaConsumerAutoscaler.MaxReplicas,
-			Metrics:     b.desired.Processor.KafkaConsumerAutoscaler.Metrics,
+			//nolint:staticcheck
+			Metrics: b.desired.Processor.KafkaConsumerAutoscaler.Metrics,
 		},
 	}
 }

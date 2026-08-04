@@ -328,7 +328,7 @@ func TestConfigMapContent(t *testing.T) {
 		Agent:         agentSpec,
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
-		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
+		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{AutoDetect: ptr.To(false)}},
 	}
 	builder := getBuilder(&spec, &loki)
 	cm, _, err := builder.configMap(context.Background(), nil, &lokiStatusUnused)
@@ -363,7 +363,7 @@ func TestConfigMapExternalRecordingAnnotations(t *testing.T) {
 	spec := flowslatest.FlowCollectorSpec{
 		ConsolePlugin: getPluginConfig(),
 		Loki:          lokiSpec,
-		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{OpenShiftAutoDetect: ptr.To(false)}},
+		Processor:     flowslatest.FlowCollectorFLP{SubnetLabels: flowslatest.SubnetLabels{AutoDetect: ptr.To(false)}},
 	}
 	builder := getBuilder(&spec, &loki)
 
@@ -457,6 +457,7 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	// equals specs
 	autoScaler, plugin := getAutoScalerSpecs()
 	report := helper.NewChangeReport("")
+	//nolint:staticcheck
 	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), false)
 	assert.Contains(report.String(), "no change")
 
@@ -464,6 +465,7 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	autoScaler, plugin = getAutoScalerSpecs()
 	autoScaler.Spec.MaxReplicas = 10
 	report = helper.NewChangeReport("")
+	//nolint:staticcheck
 	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Max replicas changed")
 
@@ -471,6 +473,7 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	autoScaler, plugin = getAutoScalerSpecs()
 	autoScaler.Spec.MinReplicas = nil
 	report = helper.NewChangeReport("")
+	//nolint:staticcheck
 	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Min replicas changed")
 
@@ -478,6 +481,7 @@ func TestAutoScalerUpdateCheck(t *testing.T) {
 	autoScaler, plugin = getAutoScalerSpecs()
 	autoScaler.Spec.Metrics = []ascv2.MetricSpec{}
 	report = helper.NewChangeReport("")
+	//nolint:staticcheck
 	assert.Equal(helper.AutoScalerChanged(&autoScaler, plugin.Autoscaler, &report), true)
 	assert.Contains(report.String(), "Metrics changed")
 }

@@ -61,7 +61,7 @@ spec:
                     type: string
                   type: array
                 charts:
-                  description: Charts configuration, for the OpenShift Console in the administrator view, Dashboards menu.
+                  description: Charts configuration, if supported by the Kubernetes vendor.
                   items:
                     description: Configures charts / dashboard generation associated to a metric
                     properties:

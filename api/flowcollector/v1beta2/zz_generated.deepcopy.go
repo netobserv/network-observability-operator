@@ -1741,6 +1741,11 @@ func (in *SubnetLabels) DeepCopyInto(out *SubnetLabels) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.AutoDetect != nil {
+		in, out := &in.AutoDetect, &out.AutoDetect
+		*out = new(bool)
+		**out = **in
+	}
 	if in.CustomLabels != nil {
 		in, out := &in.CustomLabels, &out.CustomLabels
 		*out = make([]SubnetLabel, len(*in))
