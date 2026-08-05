@@ -119,7 +119,7 @@ func (r *StaticReconciler) reconcileNetpol(ctx context.Context, desired *flowsla
 		return err
 	}
 
-	if !desired.Spec.DeployNetworkPolicy(cni) {
+	if !flowslatest.ShouldInstallNetworkPolicy(desired.Spec.NetworkPolicy.Enable, cni) {
 		r.Managed.TryDelete(ctx, r.netpol)
 		return nil
 	}

@@ -17,7 +17,18 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 	cni, _ := mgr.ClusterInfo.GetCNI()
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
-	if !desired.Spec.DeployNetworkPolicy(cni) {
+
+	var shouldInstall bool
+	if ns == mgr.Config.Namespace || desired.Spec.NetworkPolicy.Enable == nil {
+		// If operator and operands are in the same namespace or if the operands knob is unset,
+		// then the operands policy follows the operator knob (else, inconsistent config could lead to operands traffic being blocked).
+		// Note that inconsistent config is raised in the validation webhook; no need to raise it again from here
+		shouldInstall = flowslatest.ShouldInstallNetworkPolicy(mgr.Config.DeployOperatorNetworkPolicy, cni)
+	} else {
+		shouldInstall = flowslatest.ShouldInstallNetworkPolicy(desired.Spec.NetworkPolicy.Enable, cni)
+	}
+
+	if !shouldInstall {
 		return name, nil
 	}
 
@@ -87,7 +98,18 @@ func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manag
 	cni, _ := mgr.ClusterInfo.GetCNI()
 
 	name := types.NamespacedName{Name: netpolName, Namespace: privNs}
-	if !desired.Spec.DeployNetworkPolicy(cni) {
+
+	var shouldInstall bool
+	if mainNs == mgr.Config.Namespace || desired.Spec.NetworkPolicy.Enable == nil {
+		// If operator and operands are in the same namespace or if the operands knob is unset,
+		// then the operands policy follows the operator knob (else, inconsistent config could lead to operands traffic being blocked).
+		// Note that inconsistent config is raised in the validation webhook; no need to raise it again from here
+		shouldInstall = flowslatest.ShouldInstallNetworkPolicy(mgr.Config.DeployOperatorNetworkPolicy, cni)
+	} else {
+		shouldInstall = flowslatest.ShouldInstallNetworkPolicy(desired.Spec.NetworkPolicy.Enable, cni)
+	}
+
+	if !shouldInstall {
 		return name, nil
 	}
 

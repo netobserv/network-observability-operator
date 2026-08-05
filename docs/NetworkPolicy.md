@@ -1,6 +1,6 @@
 # NetObserv NetworkPolicy
 
-Depending on the Kubernetes distribution and CNI, NetObserv may come secured by default with a built-in network policy. You can force installing it or not by setting `spec.networkPolicy.enable` in `FlowCollector`. If the built-in policy does not work as intended, it is recommended to turn it off and create your own instead. NetObserv runs some highly privileged workloads, hence it is important to keep it as much isolated as possible.
+Depending on the Kubernetes distribution and CNI, NetObserv may come secured by default with a built-in network policy. You can force installing it or not by setting the helm value `operator.installNetworkPolicy=true/false`. When the operator and the operands don't share the same namespace, you can control the operands network policy installation independently via `spec.networkPolicy.enable` in `FlowCollector`. If the built-in policy does not work as intended, it is recommended to turn it off and create your own instead. NetObserv runs some highly privileged workloads, hence it is important to keep it as much isolated as possible.
 
 If the built-in policy looks _almost_ good, but some allowed namespaces are missing, you can add allowed namespaces in `spec.networkPolicy.additionalNamespaces`.
 
@@ -58,11 +58,11 @@ Label: `app=netobserv-operator`, default namespace: `netobserv`.
 
 **Egress:**
 
-- Must allow traffic to Kube API Server: TCP, port 6443.
+- Must allow traffic to Kube API Server: TCP, port generally 443 (pre-DNAT) or 6443 (post-DNAT). For pre-DNAT policy resolving, you can check API server address and port via pods injected env `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT`. For post-DNAT resolving, check addresses and ports with `kubectl get endpointslices kubernetes -n default -oyaml`.
 
 ### eBPF agents
 
-Label: `app=netobserv-ebpf-agent`, default namespace: `netobserv-privileged`. This is host-network pods.
+Label: `app=netobserv-ebpf-agent`, default namespace: `netobserv-privileged`. **They are host-network pods.**
 
 **Ingress:**
 
@@ -94,6 +94,8 @@ When `spec.deploymentModel` is `Direct`:
 - Must allow traffic from agents (`app=netobserv-ebpf-agent`), TCP, default port 2055 (port configurable in `spec.processor.advanced.port`). `flowlogs-pipeline` are also host-network pods (same host).
 
 **Egress:**
+
+- Must allow traffic to Kube API Server (same as Operator, more details above).
 
 When `spec.deploymentModel` is `Kafka`:
 - Must allow traffic to Kafka, TCP, port depends on your Kafka setup.

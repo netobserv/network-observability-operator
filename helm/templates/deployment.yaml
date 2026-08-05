@@ -43,6 +43,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: OPERATOR_NETWORK_POLICY
+              value: '{{ .Values.operator.installNetworkPolicy }}'
           image: '{{ .Values.operator.image }}:{{ .Values.operator.version }}'
           imagePullPolicy: Always
           livenessProbe:

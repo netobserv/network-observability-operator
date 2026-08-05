@@ -216,12 +216,12 @@ func (spec *FlowCollectorFLP) GetMetricsPort() int32 {
 	return port
 }
 
-func (spec *FlowCollectorSpec) DeployNetworkPolicy(cni NetworkType) bool {
+func ShouldInstallNetworkPolicy(config *bool, cni NetworkType) bool {
 	if cni == OpenShiftSDN {
 		return false
 	}
-	if spec.NetworkPolicy.Enable != nil {
-		return *spec.NetworkPolicy.Enable
+	if config != nil {
+		return *config
 	}
 	// Default true only for recognized CNIs
 	return cni != ""

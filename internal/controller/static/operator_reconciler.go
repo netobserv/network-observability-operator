@@ -44,9 +44,7 @@ func (r *operatorReconciler) reconcileNetpol(ctx context.Context) error {
 		return err
 	}
 
-	specStub := flowslatest.FlowCollectorSpec{NetworkPolicy: flowslatest.NetworkPolicy{Enable: r.cfg.DeployOperatorNetworkPolicy}}
-
-	if !specStub.DeployNetworkPolicy(cni) {
+	if !flowslatest.ShouldInstallNetworkPolicy(r.cfg.DeployOperatorNetworkPolicy, cni) {
 		r.Managed.TryDelete(ctx, r.netpol)
 		return nil
 	}

@@ -89,7 +89,9 @@ func NewManager(
 	if err != nil {
 		return nil, fmt.Errorf("can't collect cluster info: %w", err)
 	}
+	// Update global for validation webhook
 	flowslatest.CurrentClusterInfo = info
+	flowslatest.OperatorNamespace = opcfg.Namespace
 
 	this := &Manager{
 		Manager:     internalManager,

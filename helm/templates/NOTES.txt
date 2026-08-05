@@ -11,8 +11,6 @@ metadata:
   name: cluster
 spec:
   namespace: {{ .Release.Namespace }}
-  networkPolicy:
-    enable: false
   processor:
     service:
       tlsType: Auto-mTLS

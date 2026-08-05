@@ -34,6 +34,7 @@ type clusterInfo interface {
 var (
 	log                    = logf.Log.WithName("flowcollector-resource")
 	CurrentClusterInfo     clusterInfo
+	OperatorNamespace      string
 	needPrivileged         = []AgentFeature{UDNMapping, NetworkEvents}
 	neededOpenShiftVersion = map[AgentFeature]string{
 		PacketDrop:    "4.14.0",
@@ -127,10 +128,19 @@ func (v *validator) validateNetPol() {
 		cni, err := CurrentClusterInfo.GetCNI()
 		if err != nil {
 			v.warnings = append(v.warnings, fmt.Sprintf("Could not detect CNI: %s", err.Error()))
-		} else if cni == OpenShiftSDN && v.fc.NetworkPolicy.Enable != nil && *v.fc.NetworkPolicy.Enable {
+		}
+
+		shouldInstall := ShouldInstallNetworkPolicy(v.fc.NetworkPolicy.Enable, cni)
+		if cni == OpenShiftSDN && v.fc.NetworkPolicy.Enable != nil && *v.fc.NetworkPolicy.Enable {
 			v.warnings = append(v.warnings, "OpenShiftSDN detected with unsupported setting: spec.networkPolicy.enable; this setting will be ignored; to remove this warning set spec.networkPolicy.enable to false.")
-		} else if cni == "" && v.fc.DeployNetworkPolicy("") {
+		} else if cni == "" && shouldInstall {
 			v.warnings = append(v.warnings, "Network policy is enabled via spec.networkPolicy.enable, despite running on an unknown CNI: this configuration has not been tested.")
+		}
+
+		// Check for inconsistent config with operator policy.
+		// If they're in the same namespace, operands config is ignored.
+		if v.fc.GetNamespace() == OperatorNamespace && v.fc.NetworkPolicy.Enable != nil {
+			v.warnings = append(v.warnings, "The configured knob spec.networkPolicy.enable is ignored because the operator and the operands are running in the same namespace, thus sharing the same configuration (see OPERATOR_NETWORK_POLICY environment variable).")
 		}
 	} else {
 		v.warnings = append(v.warnings, "Unknown environment, cannot detect the CNI in use")

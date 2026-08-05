@@ -69,8 +69,6 @@ metadata:
   name: cluster
 spec:
   namespace: netobserv
-  networkPolicy:
-    enable: false
   processor:
     service:
       tlsType: Auto-mTLS
@@ -90,7 +88,7 @@ EOF
 
 A few remarks:
 - You can change the Prometheus and Loki URLs depending on your installation. This example works if you use the "standalone" installation described above, with `install.loki=true` and `install.prom-stack=true`. Check more configuration options for [Prometheus](https://github.com/netobserv/netobserv-operator/blob/main/docs/FlowCollector.md#flowcollectorspecprometheus-1) and [Loki](https://github.com/netobserv/netobserv-operator/blob/main/docs/FlowCollector.md#flowcollectorspecloki-1).
-- Depending on the Kubernetes distribution and CNI, NetObserv may come secured by default with a built-in network policy. You can force installing it or not by setting `spec.networkPolicy.enable` in `FlowCollector`. If the built-in policy does not work as intended, it is recommended to turn it off and create your own instead. NetObserv runs some highly privileged workloads, thus it is important to keep it as much isolated as possible. See [NetworkPolicy.md](https://github.com/netobserv/netobserv-operator/blob/main/docs/NetworkPolicy.md) for more details on how to create a policy.
+- Depending on the Kubernetes distribution and CNI, NetObserv may come secured by default with a built-in network policy. You can force installing it or not by setting the helm value `operator.installNetworkPolicy=true/false`. If the built-in policy does not work as intended, it is recommended to turn it off and create your own instead. NetObserv runs some highly privileged workloads, thus it is important to keep it as much isolated as possible. See [NetworkPolicy.md](https://github.com/netobserv/netobserv-operator/blob/main/docs/NetworkPolicy.md) for more details on how to create a policy.
 
 To view the test console, you can port-forward 9001:
 
