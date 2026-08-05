@@ -165,11 +165,13 @@ func AllowToAPIServer(clusterInfo *cluster.Info, vendor constants.Vendor) networ
 			})
 		}
 	}
-	for _, port := range clusterInfo.GetAPIServerPorts() {
-		ports = append(ports, networkingv1.NetworkPolicyPort{
-			Protocol: ptr.To(corev1.ProtocolTCP),
-			Port:     ptr.To(intstr.FromInt32(port)),
-		})
+	for _, p := range clusterInfo.GetAPIServerPorts() {
+		if p != int32(port) {
+			ports = append(ports, networkingv1.NetworkPolicyPort{
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(intstr.FromInt32(p)),
+			})
+		}
 	}
 	return networkingv1.NetworkPolicyEgressRule{
 		To:    peers,

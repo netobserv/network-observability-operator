@@ -44,8 +44,18 @@ func (r *operatorReconciler) reconcileNetpol(ctx context.Context) error {
 		return err
 	}
 
-	if !flowslatest.ShouldInstallNetworkPolicy(r.cfg.DeployOperatorNetworkPolicy, cni) {
+	np := r.buildNetworkPolicy(cni)
+	if np == nil {
 		r.Managed.TryDelete(ctx, r.netpol)
+		return nil
+	}
+	nsname := helper.NamespacedName(np)
+
+	return reconcilers.ReconcileNetworkPolicy(ctx, &r.Client, nsname, np)
+}
+
+func (r *operatorReconciler) buildNetworkPolicy(cni flowslatest.NetworkType) *networkingv1.NetworkPolicy {
+	if !flowslatest.ShouldInstallNetworkPolicy(r.cfg.DeployOperatorNetworkPolicy, cni) {
 		return nil
 	}
 
@@ -61,7 +71,7 @@ func (r *operatorReconciler) reconcileNetpol(ctx context.Context) error {
 		ingress = append(ingress, netpol.AllowVendorPrometheusScrape(r.Vendor, constants.OperatorMetricsPort))
 	}
 
-	desired := &networkingv1.NetworkPolicy{
+	return &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.OperatorName,
 			Namespace: r.cfg.Namespace,
@@ -84,7 +94,4 @@ func (r *operatorReconciler) reconcileNetpol(ctx context.Context) error {
 			Egress:  egress,
 		},
 	}
-	nsname := helper.NamespacedName(desired)
-
-	return reconcilers.ReconcileNetworkPolicy(ctx, &r.Client, nsname, desired)
 }
