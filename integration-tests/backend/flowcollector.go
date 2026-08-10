@@ -287,9 +287,14 @@ func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
 	}
 }
 
-// delete flowcollector CRD from a cluster
+// delete flowcollector CRD from a cluster and wait for privileged namespace to be fully removed
 func (flow *Flowcollector) DeleteFlowcollector(oc *exutil.CLI) error {
-	return oc.AsAdmin().WithoutNamespace().Run("delete").Args("flowcollector", "cluster").Execute()
+	err := oc.AsAdmin().WithoutNamespace().Run("delete").Args("flowcollector", "cluster").Execute()
+	if err != nil {
+		return err
+	}
+	privNS := flow.Namespace + "-privileged"
+	return Resource{"namespace", privNS, ""}.WaitUntilResourceIsGone(oc)
 }
 
 func (flow *Flowcollector) WaitForFlowcollectorReady(oc *exutil.CLI) {
