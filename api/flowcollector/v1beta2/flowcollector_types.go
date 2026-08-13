@@ -27,7 +27,7 @@ const (
 // Defines the desired state of the FlowCollector resource.
 type FlowCollectorSpec struct {
 	// Namespace where NetObserv pods are deployed.
-	// Those pods require various cluster role bindings is order to operate. Those bindings are preinstalled for service accounts located in the default namespace.
+	// Those pods require various cluster role bindings in order to operate. Those bindings are preinstalled for service accounts located in the default namespace.
 	// If you configured a different namespace, you must update (or recreate) the cluster role bindings accordingly.
 	// You can see the list of preinstalled bindings here: https://github.com/netobserv/netobserv-operator/blob/main/helm/templates/component_role_bindings.yaml
 	// +kubebuilder:default:=netobserv

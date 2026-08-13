@@ -4,6 +4,7 @@ kind: Kustomization
 # used to generate the 'manifests/' directory in a bundle.
 resources:
 - ../../csv
+- ./rbac.yaml
 
 # Adds namespace to all resources.
 namespace: netobserv
@@ -25,7 +26,6 @@ bases:
 - ../../manager
 - ../../webhook
 - ../../certmanager
-- ./rbac.yaml
 
 patchesStrategicMerge:
 - manager_webhook_patch.yaml
