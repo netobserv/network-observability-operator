@@ -235,6 +235,7 @@ func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
 		sa          string
 	}{
 		{"netobserv-informers-flp-" + flow.Namespace, "netobserv-informers", "flowlogs-pipeline"},
+		{"netobserv-informers-flpinformers-" + flow.Namespace, "netobserv-informers", "flowlogs-pipeline-informers"},
 		{"netobserv-hostnetwork-flp-" + flow.Namespace, "netobserv-hostnetwork", "flowlogs-pipeline"},
 		{"netobserv-loki-writer-flp-" + flow.Namespace, "netobserv-loki-writer", "flowlogs-pipeline"},
 		{"netobserv-informers-flptransfo-" + flow.Namespace, "netobserv-informers", "flowlogs-pipeline-transformer"},
@@ -283,6 +284,27 @@ func (flow Flowcollector) createRoleBindings(oc *exutil.CLI) {
 		if apierrors.IsAlreadyExists(err) {
 			continue
 		}
+		o.Expect(err).NotTo(o.HaveOccurred())
+	}
+
+	// flp-informers needs leases access for leader election
+	_, err = oc.AdminKubeClient().RbacV1().Roles(flow.Namespace).Create(context.Background(), &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{Name: "flp-informers-leases", Namespace: flow.Namespace},
+		Rules: []rbacv1.PolicyRule{{
+			APIGroups: []string{"coordination.k8s.io"},
+			Resources: []string{"leases"},
+			Verbs:     []string{"get", "list", "watch", "create", "update", "patch", "delete"},
+		}},
+	}, metav1.CreateOptions{})
+	if !apierrors.IsAlreadyExists(err) {
+		o.Expect(err).NotTo(o.HaveOccurred())
+	}
+	_, err = oc.AdminKubeClient().RbacV1().RoleBindings(flow.Namespace).Create(context.Background(), &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{Name: "flp-informers-leases", Namespace: flow.Namespace},
+		RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "Role", Name: "flp-informers-leases"},
+		Subjects:   []rbacv1.Subject{{Kind: "ServiceAccount", Name: "flowlogs-pipeline-informers", Namespace: flow.Namespace}},
+	}, metav1.CreateOptions{})
+	if !apierrors.IsAlreadyExists(err) {
 		o.Expect(err).NotTo(o.HaveOccurred())
 	}
 }
