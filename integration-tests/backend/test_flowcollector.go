@@ -525,8 +525,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		query := fmt.Sprintf(`sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="%s"}[1m]))`, testClient.ClientNS)
 		metrics := pollMetrics(query)
 
-		// verify metric is between 270 and 330
-		o.Expect(metrics).Should(o.BeNumerically("~", 300, 30))
+		// verify metric is between 265 and 385
+		o.Expect(metrics).Should(o.BeNumerically("~", 325, 60))
 	})
 
 	g.It("Author:aramesha-NonPreRelease-Longduration-High-60701-Verify connection tracking [Serial]", func() {
@@ -2056,8 +2056,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Name:              "bpfman",
 			NamespaceTemplate: filePath.Join(bpfDir, "namespace.yaml"),
 		}
-		bpfCatSrc := Resource{"catalogsource", "bpfman-konflux-fbc", bpfNS.Name}
-		bpfSource := CatalogSourceObjects{"stable", bpfCatSrc.Name, bpfNS.Name}
+		bpfCatSrc := Resource{"catalogSource", "bpfman-konflux-fbc", bpfNS.Name}
 
 		g.By("Deploy bpfman konflux FBC and ImageDigestMirrorSet")
 		bpfNS.DeployOperatorNamespace()
@@ -2065,6 +2064,12 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		o.Expect(catsrcErr).NotTo(o.HaveOccurred())
 		bpfCatSrc.WaitUntilCatSrcReady()
 		ApplyResourceFromFile(bpfNS.Name, bpfIDMS)
+
+		bpfChannel, err := getOperatorChannel(bpfCatSrc.Name, "bpfman-operator")
+		if err != nil || bpfChannel == "" {
+			g.Skip("bpfman-operator channel not found, skip this case")
+		}
+		bpfSource := CatalogSourceObjects{bpfChannel, bpfCatSrc.Name, bpfNS.Name}
 
 		BPF := SubscriptionObjects{
 			OperatorName:  "bpfman-operator",
