@@ -2,6 +2,7 @@ package flp
 
 import (
 	"fmt"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -106,6 +107,20 @@ func (b *informerBuilder) deployment() (*appsv1.Deployment, error) {
 		// ManagedCNI: hardcoded to match flowlogs-pipeline default (config.go line 32)
 		// This ensures informers extract the same node IPs (e.g., OVN mp0) as processors
 		"--managed-cni=ovn",
+	}
+
+	// Propagate secondary networks config to informers (must match processor settings)
+	var secondaryIndexes []string
+	for _, sn := range b.desired.GetSecondaryIndexes() {
+		for _, index := range sn.Index {
+			secondaryIndexes = append(secondaryIndexes, strings.ToLower(string(index)))
+		}
+	}
+	if b.desired.Agent.EBPF.IsUDNMappingEnabled() {
+		secondaryIndexes = append(secondaryIndexes, "udn")
+	}
+	if len(secondaryIndexes) > 0 {
+		args = append(args, fmt.Sprintf("--secondary-networks=%s", strings.Join(secondaryIndexes, ",")))
 	}
 
 	// Add TLS configuration if enabled
