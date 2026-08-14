@@ -911,21 +911,6 @@ func isPlatformSuitableForNMState(oc *exutil.CLI) bool {
 	return true
 }
 
-// verifyComponentsDeleted verifies that specified components are NOT present in the output (exact line match)
-func verifyComponentsDeleted(componentsOutput string, componentsList []string) {
-	outputLines := strings.Split(strings.TrimSpace(componentsOutput), "\n")
-	for _, component := range componentsList {
-		componentFound := false
-		for _, line := range outputLines {
-			if strings.TrimSpace(line) == component {
-				componentFound = true
-				break
-			}
-		}
-		o.Expect(componentFound).Should(o.BeFalse(), fmt.Sprintf("%s should be deleted but was found", component))
-	}
-}
-
 // pollVerifyComponentsDeleted polls until all components in deleteList are gone and all in remainList still exist
 func pollVerifyComponentsDeleted(oc *exutil.CLI, deleteList, remainList []string) {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 180*time.Second, false, func(context.Context) (bool, error) {
@@ -965,17 +950,3 @@ func pollVerifyComponentsDeleted(oc *exutil.CLI, deleteList, remainList []string
 	o.Expect(err).NotTo(o.HaveOccurred(), "timed out waiting for components to be deleted after pause")
 }
 
-// verifyComponentsExist verifies that specified components ARE present in the output (exact line match)
-func verifyComponentsExist(componentsOutput string, componentsList []string) {
-	outputLines := strings.Split(strings.TrimSpace(componentsOutput), "\n")
-	for _, component := range componentsList {
-		componentFound := false
-		for _, line := range outputLines {
-			if strings.TrimSpace(line) == component {
-				componentFound = true
-				break
-			}
-		}
-		o.Expect(componentFound).Should(o.BeTrue(), fmt.Sprintf("%s should exist but was not found", component))
-	}
-}
