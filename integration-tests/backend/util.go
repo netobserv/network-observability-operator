@@ -949,4 +949,3 @@ func pollVerifyComponentsDeleted(oc *exutil.CLI, deleteList, remainList []string
 	})
 	o.Expect(err).NotTo(o.HaveOccurred(), "timed out waiting for components to be deleted after pause")
 }
-
