@@ -1180,8 +1180,8 @@ func getPodLogs(namespace, podname string) (string, error) {
 	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 600*time.Second, false, func(_ context.Context) (bool, error) {
 		stream, err := k8sClient.CoreV1().Pods(namespace).GetLogs(podname, &corev1.PodLogOptions{}).Stream(ctx)
 		if err != nil {
-			e2e.Logf("unable to get the pod (%s) logs: %v", podname, err)
-			return false, err
+			e2e.Logf("unable to get the pod (%s) logs, retrying: %v", podname, err)
+			return false, nil
 		}
 		defer stream.Close()
 		logsBytes, err := io.ReadAll(stream)

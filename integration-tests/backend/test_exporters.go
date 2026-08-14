@@ -192,12 +192,12 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		defer func() { _ = flow.DeleteFlowcollector() }()
 		flow.CreateFlowcollector()
 
+		// wait for 60 seconds to ensure we collected enough logs to grep from
+		time.Sleep(60 * time.Second)
+
 		g.By("Verify OTEL collector is receiving TLS-encrypted flows")
 		otelCollectorPod, err := getPodNameWithLabel(namespace, otelPodLabel)
 		o.Expect(err).NotTo(o.HaveOccurred())
-
-		// wait for 60 seconds to ensure we collected enough logs to grep from
-		time.Sleep(60 * time.Second)
 
 		g.By("Verify OTEL flowlogs are seen in collector pod logs")
 		textToExist := "Attributes:"

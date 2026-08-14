@@ -2056,7 +2056,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Name:              "bpfman",
 			NamespaceTemplate: filePath.Join(bpfDir, "namespace.yaml"),
 		}
-		bpfCatSrc := Resource{"catalogSource", "bpfman-konflux-fbc", bpfNS.Name}
+		bpfCatSrc := Resource{"catalogsource", "bpfman-konflux-fbc", bpfNS.Name}
 
 		g.By("Deploy bpfman konflux FBC and ImageDigestMirrorSet")
 		bpfNS.DeployOperatorNamespace()
