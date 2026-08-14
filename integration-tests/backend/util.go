@@ -926,6 +926,45 @@ func verifyComponentsDeleted(componentsOutput string, componentsList []string) {
 	}
 }
 
+// pollVerifyComponentsDeleted polls until all components in deleteList are gone and all in remainList still exist
+func pollVerifyComponentsDeleted(oc *exutil.CLI, deleteList, remainList []string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 180*time.Second, false, func(context.Context) (bool, error) {
+		output, getErr := oc.AsAdmin().WithoutNamespace().Run("get").Args(
+			"service,deployment,daemonset,serviceaccount,networkpolicy,configmap,secret",
+			"-A", "-l", "netobserv-managed=true", "-o", "name",
+		).Output()
+		if getErr != nil {
+			e2e.Logf("Error getting components: %v", getErr)
+			return false, nil
+		}
+		outputLines := strings.Split(strings.TrimSpace(output), "\n")
+		for _, component := range deleteList {
+			for _, line := range outputLines {
+				if strings.TrimSpace(line) == component {
+					e2e.Logf("Component %s still present, waiting for deletion...", component)
+					return false, nil
+				}
+			}
+		}
+		for _, component := range remainList {
+			found := false
+			for _, line := range outputLines {
+				if strings.TrimSpace(line) == component {
+					found = true
+					break
+				}
+			}
+			if !found {
+				e2e.Logf("Expected component %s not found yet, retrying...", component)
+				return false, nil
+			}
+		}
+		e2e.Logf("All components verified: deleted=%d, remaining=%d", len(deleteList), len(remainList))
+		return true, nil
+	})
+	o.Expect(err).NotTo(o.HaveOccurred(), "timed out waiting for components to be deleted after pause")
+}
+
 // verifyComponentsExist verifies that specified components ARE present in the output (exact line match)
 func verifyComponentsExist(componentsOutput string, componentsList []string) {
 	outputLines := strings.Split(strings.TrimSpace(componentsOutput), "\n")

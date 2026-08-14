@@ -2348,14 +2348,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		})
 		o.Expect(err).NotTo(o.HaveOccurred())
 
-		g.By("Verify except for netobserv-plugin-static and network policies and persistent configmaps, all components are deleted")
-		componentsAfterPause, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(
-			"service,deployment,daemonset,serviceaccount,networkpolicy,configmap,secret",
-			"-A", "-l", "netobserv-managed=true", "-o", "name",
-		).Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		e2e.Logf("Components after pause: %s", componentsAfterPause)
-
 		// Components with stable names that should remain when paused
 		// Common components across all OCP versions
 		componentsShouldRemain := []string{
@@ -2372,25 +2364,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				"service/netobserv-plugin-static",
 				"networkpolicy.networking.k8s.io/netobserv",
 			)
-		}
-		verifyComponentsExist(componentsAfterPause, componentsShouldRemain)
-
-		// Verify netobserv-plugin-static pod exists and other pods are deleted (using pattern since pod names have dynamic IDs)
-		podsAfterPause, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(
-			"pod", "-A", "-l", "netobserv-managed=true", "-o", "name",
-		).Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		if IsOCPVersionAtLeast("v4.15") {
-			o.Expect(podsAfterPause).Should(o.ContainSubstring("pod/netobserv-plugin-static-"), "netobserv-plugin-static pod should exist after pause")
-		}
-		o.Expect(podsAfterPause).ShouldNot(o.ContainSubstring("pod/flowlogs-pipeline-"), "flowlogs-pipeline pods should be deleted")
-		o.Expect(podsAfterPause).ShouldNot(o.ContainSubstring("pod/netobserv-ebpf-agent-"), "netobserv-ebpf-agent pods should be deleted")
-		// Verify regular netobserv-plugin pod is deleted (not the static one)
-		podLines := strings.Split(podsAfterPause, "\n")
-		for _, podLine := range podLines {
-			if strings.Contains(podLine, "pod/netobserv-plugin-") && !strings.Contains(podLine, "pod/netobserv-plugin-static-") {
-				e2e.Failf("Found non-static netobserv-plugin pod that should be deleted: %s", podLine)
-			}
 		}
 
 		// Build list of components that should be deleted = originalComponentsList - componentsShouldRemain
@@ -2414,8 +2387,27 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				componentsShouldDelete = append(componentsShouldDelete, component)
 			}
 		}
-		// Verify all components in the delete list are actually deleted
-		verifyComponentsDeleted(componentsAfterPause, componentsShouldDelete)
+
+		g.By("Verify except for netobserv-plugin-static and network policies and persistent configmaps, all components are deleted")
+		pollVerifyComponentsDeleted(oc, componentsShouldDelete, componentsShouldRemain)
+
+		// Verify netobserv-plugin-static pod exists and other pods are deleted (using pattern since pod names have dynamic IDs)
+		podsAfterPause, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(
+			"pod", "-A", "-l", "netobserv-managed=true", "-o", "name",
+		).Output()
+		o.Expect(err).NotTo(o.HaveOccurred())
+		if IsOCPVersionAtLeast("v4.15") {
+			o.Expect(podsAfterPause).Should(o.ContainSubstring("pod/netobserv-plugin-static-"), "netobserv-plugin-static pod should exist after pause")
+		}
+		o.Expect(podsAfterPause).ShouldNot(o.ContainSubstring("pod/flowlogs-pipeline-"), "flowlogs-pipeline pods should be deleted")
+		o.Expect(podsAfterPause).ShouldNot(o.ContainSubstring("pod/netobserv-ebpf-agent-"), "netobserv-ebpf-agent pods should be deleted")
+		// Verify regular netobserv-plugin pod is deleted (not the static one)
+		podLines := strings.Split(podsAfterPause, "\n")
+		for _, podLine := range podLines {
+			if strings.Contains(podLine, "pod/netobserv-plugin-") && !strings.Contains(podLine, "pod/netobserv-plugin-static-") {
+				e2e.Failf("Found non-static netobserv-plugin pod that should be deleted: %s", podLine)
+			}
+		}
 
 		g.By("Resume the FlowCollector")
 		resumeTime := time.Now()
