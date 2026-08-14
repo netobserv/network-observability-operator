@@ -110,17 +110,22 @@ func (b *informerBuilder) deployment() (*appsv1.Deployment, error) {
 	}
 
 	// Propagate secondary networks config to informers (must match processor settings)
-	var secondaryIndexes []string
+	// Each index set is comma-separated, sets are semicolon-separated to preserve OR semantics
+	var snGroups []string
 	for _, sn := range b.desired.GetSecondaryIndexes() {
+		var indexes []string
 		for _, index := range sn.Index {
-			secondaryIndexes = append(secondaryIndexes, strings.ToLower(string(index)))
+			indexes = append(indexes, strings.ToLower(string(index)))
+		}
+		if len(indexes) > 0 {
+			snGroups = append(snGroups, strings.Join(indexes, ","))
 		}
 	}
 	if b.desired.Agent.EBPF.IsUDNMappingEnabled() {
-		secondaryIndexes = append(secondaryIndexes, "udn")
+		snGroups = append(snGroups, "udn")
 	}
-	if len(secondaryIndexes) > 0 {
-		args = append(args, fmt.Sprintf("--secondary-networks=%s", strings.Join(secondaryIndexes, ",")))
+	if len(snGroups) > 0 {
+		args = append(args, fmt.Sprintf("--secondary-networks=%s", strings.Join(snGroups, ";")))
 	}
 
 	// Add TLS configuration if enabled
