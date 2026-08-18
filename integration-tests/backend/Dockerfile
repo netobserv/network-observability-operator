@@ -17,7 +17,7 @@ COPY testdata/ testdata/
 RUN GOGC=50 GOMAXPROCS=4 GOOS=linux GOARCH=$TARGETARCH \
     ginkgo build --ldflags="-s -w" -o e2e-tests.test
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1777460003
+FROM registry.redhat.io/ubi9/ubi-minimal-pqc:9.8
 
 RUN microdnf install -y which findutils util-linux procps-ng net-tools iputils bind-utils wget tar gzip httpd-tools && \
     microdnf clean all
