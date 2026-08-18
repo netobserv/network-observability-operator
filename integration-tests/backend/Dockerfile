@@ -1,3 +1,9 @@
+# PQC crypto-policies builder
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8 AS crypto-builder
+RUN microdnf install -y crypto-policies-scripts && \
+    update-crypto-policies --set DEFAULT:PQ && \
+    microdnf clean all && rm -rf /var/cache/*
+
 FROM docker.io/library/golang:1.26 AS builder
 
 ARG TARGETARCH=amd64
@@ -17,7 +23,7 @@ COPY testdata/ testdata/
 RUN GOGC=50 GOMAXPROCS=4 GOOS=linux GOARCH=$TARGETARCH \
     ginkgo build --ldflags="-s -w" -o e2e-tests.test
 
-FROM registry.redhat.io/ubi9/ubi-minimal-pqc:9.8
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8-1777460003
 
 RUN microdnf install -y which findutils util-linux procps-ng net-tools iputils bind-utils wget tar gzip httpd-tools && \
     microdnf clean all
@@ -25,6 +31,7 @@ RUN microdnf install -y which findutils util-linux procps-ng net-tools iputils b
 WORKDIR /tests
 
 # Copy the pre-compiled test binary, testdata and ginkgo binary
+COPY --from=crypto-builder /etc/crypto-policies/ /etc/crypto-policies/
 COPY --from=builder /workspace/e2e-tests.test .
 COPY --from=builder /workspace/testdata/ testdata/
 COPY --from=builder /go/bin/ginkgo /usr/local/bin/ginkgo
