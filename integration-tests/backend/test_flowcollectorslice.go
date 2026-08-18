@@ -2,13 +2,13 @@ package e2etests
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	filePath "path/filepath"
 
 	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	e2eoutput "k8s.io/kubernetes/test/e2e/framework/pod/output"
 )
 
@@ -16,18 +16,17 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 	defer g.GinkgoRecover()
 	var (
-		oc                   = compat_otp.NewCLI("netobserv", compat_otp.KubeConfigPath())
-		flowSliceFixturePath = filePath.Join(baseDir, "flowcollectorSlice_v1alpha1_template.yaml")
 		namespace            string
-		ipStackType          string
+		flowSliceFixturePath = filePath.Join(baseDir, "flowcollectorSlice_v1alpha1_template.yaml")
 	)
 
 	g.BeforeEach(func() {
+		oc := NewCLI()
 		namespace = oc.Namespace()
-		ipStackType = checkIPStackType(oc)
 	})
 
 	g.It("Author:aramesha-Critical-86388-Verify flowCollectorSlice collectionMode: AlwaysCollect [Serial]", func() {
+		// Test ping pods template variables
 		pingPodsTemplate := filePath.Join(baseDir, "test-ping-pods_template.yaml")
 		testPingPodsTemplate := TestPingPodsTemplate{
 			ServerNS:    "test-ping-server-86388-always",
@@ -58,8 +57,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Deploy FlowCollectorSlice")
 		startTime := time.Now()
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testPingPodsTemplate.ClientNS)
-		oc.CreateSpecifiedNamespaceAsAdmin(testPingPodsTemplate.ClientNS)
+		defer deleteNamespace(testPingPodsTemplate.ClientNS)
+		err = createNamespace(testPingPodsTemplate.ClientNS)
+		o.Expect(err).NotTo(o.HaveOccurred())
 		flowSlice := FlowcollectorSlice{
 			Name:         "subnet-label-slice",
 			Namespace:    testPingPodsTemplate.ClientNS,
@@ -67,27 +67,28 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template:     flowSliceFixturePath,
 		}
 
-		defer func() { _ = flowSlice.DeleteFlowcollectorSlice(oc) }()
-		flowSlice.CreateFlowcollectorSlice(oc)
+		defer func() { _ = flowSlice.DeleteFlowcollectorSlice() }()
+		flowSlice.CreateFlowcollectorSlice()
 
 		g.By("Deploy FlowCollector with SlicesEnabled in AlwaysCollect mode")
 		flow := Flowcollector{
-			Namespace:      namespace,
-			CollectionMode: "AlwaysCollect",
-			SlicesEnable:   "true",
-			Template:       flowFixturePath,
+			Namespace:         namespace,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			CollectionMode:    "AlwaysCollect",
+			SlicesEnable:      "true",
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
-		flowSlice.WaitForFlowcollectorSliceReady(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
+		flowSlice.WaitForFlowcollectorSliceReady()
 
 		g.By("Deploy test ping server and client pods")
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testPingPodsTemplate.ServerNS)
-		err = testPingPodsTemplate.createPingPods(oc)
+		defer deleteNamespace(testPingPodsTemplate.ServerNS)
+		err = testPingPodsTemplate.createPingPods()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testPingPodsTemplate.ServerNS)
-		compat_otp.AssertAllPodsToBeReady(oc, testPingPodsTemplate.ClientNS)
+		assertAllPodsToBeReady(testPingPodsTemplate.ServerNS)
+		assertAllPodsToBeReady(testPingPodsTemplate.ClientNS)
 
 		g.By("Wait for a min before logs gets collected and written to loki")
 		time.Sleep(60 * time.Second)
@@ -100,7 +101,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 		parameters := []string{"DstAddr=\"192.168.1.0\""}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows from client NS to internal-service > 0")
 		for _, r := range flowRecords {
@@ -111,7 +112,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify flows with external-api subnetLabel")
 		parameters = []string{"DstAddr=\"8.8.8.8\""}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows from client NS to external-api > 0")
 		for _, r := range flowRecords {
@@ -125,7 +126,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SNamespace: testPingPodsTemplate.ServerNS,
 		}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows from server NS > 0")
 		for _, r := range flowRecords {
@@ -134,7 +135,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	})
 
 	g.It("Author:aramesha-Critical-86388-Verify flowCollectorSlice collectionMode: AllowList [Serial]", func() {
-
+		// Test ping pods template variables
 		pingPodsTemplate := filePath.Join(baseDir, "test-ping-pods_template.yaml")
 		testPingPodsTemplate := TestPingPodsTemplate{
 			ServerNS:    "test-ping-server-86388-allowlist",
@@ -145,8 +146,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Deploy FlowCollectorSlice")
 		startTime := time.Now()
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testPingPodsTemplate.ClientNS)
-		oc.CreateSpecifiedNamespaceAsAdmin(testPingPodsTemplate.ClientNS)
+		defer deleteNamespace(testPingPodsTemplate.ClientNS)
+		err := createNamespace(testPingPodsTemplate.ClientNS)
+		o.Expect(err).NotTo(o.HaveOccurred())
 		flowSlice := FlowcollectorSlice{
 			Name:      "namespace-slice",
 			Namespace: testPingPodsTemplate.ClientNS,
@@ -154,28 +156,29 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template:  flowSliceFixturePath,
 		}
 
-		defer func() { _ = flowSlice.DeleteFlowcollectorSlice(oc) }()
-		flowSlice.CreateFlowcollectorSlice(oc)
+		defer func() { _ = flowSlice.DeleteFlowcollectorSlice() }()
+		flowSlice.CreateFlowcollectorSlice()
 
 		g.By("Deploy FlowCollector with Slices enabled in AllowList mode")
 		flow := Flowcollector{
-			Namespace:       namespace,
-			CollectionMode:  "AllowList",
-			SlicesEnable:    "true",
-			NamespacesAllow: []string{"\"/openshift-.*/\""},
-			Template:        flowFixturePath,
+			Namespace:         namespace,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			CollectionMode:    "AllowList",
+			SlicesEnable:      "true",
+			NamespacesAllow:   []string{"\"/openshift-.*/\""},
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
-		flowSlice.WaitForFlowcollectorSliceReady(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
+		flowSlice.WaitForFlowcollectorSliceReady()
 
 		g.By("Deploy test ping server and client pods")
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testPingPodsTemplate.ServerNS)
-		err := testPingPodsTemplate.createPingPods(oc)
+		defer deleteNamespace(testPingPodsTemplate.ServerNS)
+		err = testPingPodsTemplate.createPingPods()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testPingPodsTemplate.ServerNS)
-		compat_otp.AssertAllPodsToBeReady(oc, testPingPodsTemplate.ClientNS)
+		assertAllPodsToBeReady(testPingPodsTemplate.ServerNS)
+		assertAllPodsToBeReady(testPingPodsTemplate.ClientNS)
 
 		g.By("Wait for a min before logs gets collected and written to loki")
 		time.Sleep(60 * time.Second)
@@ -188,7 +191,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 		parameters := []string{"DstAddr=\"8.8.8.8\""}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows from client NS > 0")
 		for _, r := range flowRecords {
@@ -203,7 +206,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			AllowEmpty:      true,
 		}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically("==", 0), "expected number of flows from server NS = 0")
 
@@ -214,16 +217,18 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SNamespace: "openshift-dns",
 		}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows from openshift-dns NS > 0")
 
 		// Scenario4: Flows between namespaces with one in allowedNamespaces section should still be collected
 		g.By("Verify flows between namespaces")
 		startTime = time.Now()
-		serverPodIP, _ := getPodIP(oc, testPingPodsTemplate.ServerNS, "ping-server", ipStackType)
+		// Get server pod IP
+		ipStackType := checkIPStackType()
+		serverPodIP, _ := getPodIP(testPingPodsTemplate.ServerNS, "ping-server", ipStackType)
 
-		_, err = e2eoutput.RunHostCmd(testPingPodsTemplate.ClientNS, "ping-client", "ping -w 300 "+serverPodIP)
+		_, err = e2eoutput.RunHostCmd(testPingPodsTemplate.ClientNS, "ping-client", "ping -w 120 "+serverPodIP)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		time.Sleep(60 * time.Second)
 
@@ -233,7 +238,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			DstK8SNamespace: testPingPodsTemplate.ServerNS,
 		}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows between test namespaces > 0")
 	})

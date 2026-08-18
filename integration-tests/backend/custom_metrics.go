@@ -5,8 +5,6 @@ import (
 	"os"
 	"reflect"
 
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	"gopkg.in/yaml.v3"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -27,7 +25,7 @@ type CustomMetricsConfig struct {
 }
 
 // create flowmetrics resource from template
-func (cm CustomMetrics) createCustomMetrics(oc *exutil.CLI) {
+func (cm CustomMetrics) createCustomMetrics() {
 	parameters := []string{"--ignore-unknown-parameters=true", "-f", cm.Template, "-p"}
 	cmr := reflect.ValueOf(&cm).Elem()
 	for i := 0; i < cmr.NumField(); i++ {
@@ -37,7 +35,10 @@ func (cm CustomMetrics) createCustomMetrics(oc *exutil.CLI) {
 			}
 		}
 	}
-	compat_otp.ApplyNsResourceFromTemplate(oc, cm.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(cm.Namespace, parameters...)
+	if err != nil {
+		e2e.Failf("Failed to create custom metrics: %v", err)
+	}
 }
 
 // parse custom metrics yaml template

@@ -12,7 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
 
@@ -177,8 +178,31 @@ func createIAMRoleForLokiSTSDeployment(iamClient *iam.Client, oidcName, awsAccou
 	return roleArn
 }
 
+func getAWSClusterRegion() (string, error) {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	if err != nil {
+		return "", err
+	}
+	region, found := getNestedField(obj.Object, ".status.platformStatus.aws.region")
+	if !found {
+		return "", fmt.Errorf("aws region not found in infrastructure status")
+	}
+	return region, nil
+}
+
 // Creates Loki object storage secret on AWS STS cluster
-func createObjectStorageSecretOnAWSSTSCluster(oc *exutil.CLI, region, storageSecret, bucketName, namespace string) {
-	err := oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", storageSecret, "--from-literal=region="+region, "--from-literal=bucketnames="+bucketName, "--from-literal=audience=openshift", "-n", namespace).Execute()
+func createObjectStorageSecretOnAWSSTSCluster(region, storageSecret, bucketName, namespace string) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      storageSecret,
+			Namespace: namespace,
+		},
+		StringData: map[string]string{
+			"region":      region,
+			"bucketnames": bucketName,
+			"audience":    "openshift",
+		},
+	}
+	_, err := k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{})
 	o.Expect(err).NotTo(o.HaveOccurred())
 }

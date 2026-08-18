@@ -1,24 +1,30 @@
 package e2etests
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
+	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	appsv1 "k8s.io/api/apps/v1"
+	authv1 "k8s.io/api/authentication/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -47,9 +53,9 @@ type TestPingPodsTemplate struct {
 }
 
 func getRandomString() string {
-	chars := "abcdefghijklmnopqrstuvwxyz0123456789"
+	chars := "abcdefghijklmnopqrstuvwxyz"
 	seed := rand.New(rand.NewSource(time.Now().UnixNano()))
-	buffer := make([]byte, 8)
+	buffer := make([]byte, 4)
 	for index := range buffer {
 		buffer[index] = chars[seed.Intn(len(chars))]
 	}
@@ -76,195 +82,210 @@ func getProxyFromEnv() string {
 	return proxy
 }
 
-func getRouteAddress(oc *exutil.CLI, ns, routeName string) string {
-	route, err := oc.AdminRouteClient().RouteV1().Routes(ns).Get(context.Background(), routeName, metav1.GetOptions{})
+func getRouteAddress(ns, routeName string) string {
+	obj, err := getDynamicResource("route", routeName, ns)
 	o.Expect(err).NotTo(o.HaveOccurred())
-	return route.Spec.Host
+	host, found := getNestedField(obj.Object, ".spec.host")
+	o.Expect(found).To(o.BeTrue())
+	o.Expect(host).NotTo(o.BeEmpty())
+	return host
 }
 
 // return the infrastructureName. For example:  anli922-jglp4
-func getInfrastructureName(oc *exutil.CLI) string {
-	infrastructureName, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("infrastructure/cluster", "-o=jsonpath={.status.infrastructureName}").Output()
+func getInfrastructureName() string {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
 	o.Expect(err).NotTo(o.HaveOccurred())
-	return infrastructureName
+	name, found := getNestedField(obj.Object, ".status.infrastructureName")
+	o.Expect(found).To(o.BeTrue())
+	return name
 }
 
-func (r Resource) applyFromTemplate(oc *exutil.CLI, parameters ...string) error {
-	parameters = append(parameters, "-n", r.Namespace)
-	file, err := processTemplate(oc, parameters...)
+func (r Resource) applyFromTemplate(parameters ...string) error {
+	file, err := processTemplate(r.Namespace, parameters...)
 	defer os.Remove(file)
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Can not process %v", parameters))
-	output, err := oc.AsAdmin().WithoutNamespace().Run("apply").Args("-f", file, "-n", r.Namespace).Output()
 	if err != nil {
-		return fmt.Errorf("%v", output)
+		return fmt.Errorf("can not process %v: %w", parameters, err)
 	}
-	_ = r.WaitForResourceToAppear(oc)
-	return nil
-}
 
-func processTemplate(oc *exutil.CLI, parameters ...string) (string, error) {
-	var configFile string
-	err := wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 15*time.Second, false, func(context.Context) (bool, error) {
-		output, err := oc.AsAdmin().Run("process").Args(parameters...).OutputToFile(getRandomString() + ".json")
-		if err != nil {
-			e2e.Logf("the err:%v, and try next round", err)
-			return false, nil
-		}
-		configFile = output
-		return true, nil
-	})
-	return configFile, err
+	cmd := exec.Command("oc", "apply", "-f", file, "-n", r.Namespace)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s", string(output))
+	}
+
+	err = r.WaitForResourceToAppear()
+	if err != nil {
+		return fmt.Errorf("resource did not appear: %w", err)
+	}
+	return nil
 }
 
 // expect: true means we want the resource contain/compare with the expectedContent, false means the resource is expected not to compare with/contain the expectedContent;
 // compare: true means compare the expectedContent with the resource content, false means check if the resource contains the expectedContent;
 // args are the arguments used to execute command `oc.AsAdmin.WithoutNamespace().Run("get").Args(args...).Output()`;
-func checkResource(oc *exutil.CLI, expect, compare bool, expectedContent string, args []string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
-		output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(args...).Output()
-		if err != nil {
-			if strings.Contains(output, "NotFound") {
+func checkResource(expect, compare bool, expectedContent string, resourceType, resourceName, jsonPath string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
+		obj, getErr := getDynamicResource(resourceType, resourceName, "")
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
 				return false, nil
 			}
-			return false, err
+			e2e.Logf("checkResource error: resource=%s/%s, err=%v", resourceType, resourceName, getErr)
+			return false, getErr
 		}
+
+		value, found := getNestedField(obj.Object, jsonPath)
+		if !found || value == "" {
+			return false, nil
+		}
+
 		if compare {
-			res := strings.Compare(output, expectedContent)
+			res := strings.Compare(value, expectedContent)
 			if (res == 0 && expect) || (res != 0 && !expect) {
 				return true, nil
 			}
 			return false, nil
 		}
-		res := strings.Contains(output, expectedContent)
+		res := strings.Contains(value, expectedContent)
 		if (res && expect) || (!res && !expect) {
 			return true, nil
 		}
 		return false, nil
 	})
 	if expect {
-		compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("The content doesn't match/contain %s", expectedContent))
+		assertWaitPollNoErr(err, fmt.Sprintf("The content doesn't match/contain %s", expectedContent))
 	} else {
-		compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("The %s still exists in the resource", expectedContent))
+		assertWaitPollNoErr(err, fmt.Sprintf("The %s still exists in the resource", expectedContent))
 	}
 }
 
-func getResourceGeneration(oc *exutil.CLI, resource, name, ns string) (int, error) {
-	gen, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(resource, name, "-o=jsonpath='{.metadata.generation}'", "-n", ns).Output()
+func getResourceGeneration(resource, name, ns string) (int, error) {
+	obj, err := getDynamicResource(resource, name, ns)
 	if err != nil {
 		return -1, err
 	}
-	genI, err := strconv.Atoi(strings.Trim(gen, "'"))
-	if err != nil {
-		return -1, err
-	}
-	return genI, nil
-
+	return int(obj.GetGeneration()), nil
 }
 
-func getResourceVersion(oc *exutil.CLI, resource, name, ns string) (int, error) {
-	resV, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(resource, name, "-o=jsonpath='{.metadata.resourceVersion}'", "-n", ns).Output()
+func getResourceVersion(resource, name, ns string) (int, error) {
+	obj, err := getDynamicResource(resource, name, ns)
 	if err != nil {
 		return -1, err
 	}
-	vers, err := strconv.Atoi(strings.Trim(resV, "'"))
+	var rv int
+	_, err = fmt.Sscanf(obj.GetResourceVersion(), "%d", &rv)
 	if err != nil {
 		return -1, err
 	}
-	return vers, nil
+	return rv, nil
 }
 
-func checkResourceExists(oc *exutil.CLI, resource, name, ns string) (bool, error) {
-	stdout, stderr, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(resource, name, "-n", ns).Outputs()
+func checkResourceExists(resource, name, ns string) (bool, error) {
+	_, err := getDynamicResource(resource, name, ns)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
 		return false, err
 	}
-	if strings.Contains(stderr, "NotFound") {
-		return false, nil
-	}
-	if strings.Contains(stdout, name) {
-		return true, nil
-	}
-	return false, nil
+	return true, nil
 }
 
 // Assert the status of a resource
-func assertResourceStatus(oc *exutil.CLI, kind, name, namespace, jsonpath, exptdStatus string) {
-	parameters := []string{kind, name, "-o", "jsonpath=" + jsonpath}
-	if namespace != "" {
-		parameters = append(parameters, "-n", namespace)
-	}
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 180*time.Second, true, func(context.Context) (done bool, err error) {
-		status, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(parameters...).Output()
-		if err != nil {
-			return false, err
+func assertResourceStatus(kind, name, namespace, jsonpath, exptdStatus string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 180*time.Second, true, func(context.Context) (done bool, err error) {
+		obj, getErr := getDynamicResource(kind, name, namespace)
+		if getErr != nil {
+			return false, getErr
 		}
-		if strings.Compare(status, exptdStatus) != 0 {
+
+		status, found := getNestedField(obj.Object, jsonpath)
+		if !found || status == "" {
+			return false, nil
+		}
+
+		if status != exptdStatus {
 			return false, nil
 		}
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("%s/%s value for %s is not %s", kind, name, jsonpath, exptdStatus))
+	assertWaitPollNoErr(err, fmt.Sprintf("%s/%s value for %s is not %s", kind, name, jsonpath, exptdStatus))
 }
 
 // For admin user to create resources in the specified namespace from the file (not template)
-func ApplyResourceFromFile(oc *exutil.CLI, ns, file string) {
-	err := oc.AsAdmin().WithoutNamespace().Run("apply").Args("-f", file, "-n", ns).Execute()
-	o.Expect(err).NotTo(o.HaveOccurred())
-}
-
-func applyResourceFromTemplateByAdmin(oc *exutil.CLI, parameters ...string) error {
-	var configFile string
-	err := wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 15*time.Second, false, func(_ context.Context) (bool, error) {
-		output, err := oc.AsAdmin().Run("process").Args(parameters...).OutputToFile(getRandomString() + "resource.json")
-		if err != nil {
-			e2e.Logf("the err:%v, and try next round", err)
-			return false, nil
-		}
-		configFile = output
-		return true, nil
-	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("as admin fail to process %v", parameters))
-
-	e2e.Logf("the file of resource is %s", configFile)
-	return oc.WithoutNamespace().AsAdmin().Run("apply").Args("-f", configFile).Execute()
+func ApplyResourceFromFile(ns, file string) {
+	args := []string{"apply", "-f", file}
+	if ns != "" {
+		args = append(args, "-n", ns)
+	}
+	cmd := exec.Command("oc", args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		o.Expect(err).NotTo(o.HaveOccurred(), string(output))
+	}
 }
 
 // For normal user to create resources in the specified namespace from the file (not template)
-func createResourceFromFile(oc *exutil.CLI, ns, file string) {
-	err := oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", file, "-n", ns).Execute()
+func createResourceFromFile(ns, file string) {
+	args := []string{"create", "-f", file}
+	if ns != "" {
+		args = append(args, "-n", ns)
+	}
+	cmd := exec.Command("oc", args...)
+	err := cmd.Run()
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
-func getSecrets(oc *exutil.CLI, namespace string) (string, error) {
+func getSecrets(namespace string) (string, error) {
+	ctx := context.Background()
 	var secrets string
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(context.Context) (done bool, err error) {
-		secrets, err = oc.AsAdmin().WithoutNamespace().Run("get").Args("secrets", "-n", namespace, "-o", "jsonpath='{range .items[*]}{.metadata.name}{\" \"}'").Output()
-
-		if err != nil {
-			return false, err
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 360*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		secretList, listErr := k8sClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
+		if listErr != nil {
+			return false, listErr
 		}
+
+		var names []string
+		for _, s := range secretList.Items {
+			names = append(names, s.Name)
+		}
+		secrets = strings.Join(names, " ")
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, "Secrets not available")
+	o.Expect(err).NotTo(o.HaveOccurred(), "Secrets not available")
 	return secrets, err
 }
 
 // check if pods with label are fully deleted
-func checkPodDeleted(oc *exutil.CLI, ns, label, checkValue string) {
-	podCheck := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 240*time.Second, false, func(context.Context) (bool, error) {
-		output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pod", "-n", ns, "-l", label).Output()
-		if err != nil || strings.Contains(output, checkValue) {
+func checkPodDeleted(ns, label, checkValue string) {
+	ctx := context.Background()
+	podCheck := wait.PollUntilContextTimeout(ctx, 5*time.Second, 240*time.Second, false, func(ctx context.Context) (bool, error) {
+		pods, err := k8sClient.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{LabelSelector: label})
+		if err != nil {
 			return false, nil
+		}
+
+		if len(pods.Items) == 0 {
+			return true, nil
+		}
+
+		for _, pod := range pods.Items {
+			if strings.Contains(pod.Name, checkValue) {
+				return false, nil
+			}
 		}
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(podCheck, fmt.Sprintf("Pod \"%s\" exists or not fully deleted", checkValue))
+	assertWaitPollNoErr(podCheck, fmt.Sprintf("Pod \"%s\" exists or not fully deleted", checkValue))
 }
 
-func getSAToken(oc *exutil.CLI, name, ns string) string {
-	token, err := oc.AsAdmin().WithoutNamespace().Run("create").Args("token", name, "-n", ns).Output()
+func getSAToken(name, ns string) string {
+	tokenReq, err := k8sClient.CoreV1().ServiceAccounts(ns).CreateToken(
+		context.Background(), name, &authv1.TokenRequest{}, metav1.CreateOptions{})
 	o.Expect(err).NotTo(o.HaveOccurred())
-	return token
+	return tokenReq.Status.Token
 }
 
 func doHTTPRequest(header http.Header, address, path, query, method string, quiet bool, attempts int, requestBody io.Reader, expectedStatusCode int) ([]byte, error) {
@@ -334,7 +355,7 @@ func doHTTPRequest(header http.Header, address, path, query, method string, quie
 	return io.ReadAll(resp.Body)
 }
 
-func (testTemplate *TestServerTemplate) createServer(oc *exutil.CLI) error {
+func (testTemplate *TestServerTemplate) createServer() error {
 	templateParams := []string{"--ignore-unknown-parameters=true", "-f", testTemplate.Template, "-p", "SERVER_NS=" + testTemplate.ServerNS}
 
 	if testTemplate.LargeBlob != "" {
@@ -343,31 +364,21 @@ func (testTemplate *TestServerTemplate) createServer(oc *exutil.CLI) error {
 	if testTemplate.ServiceType != "" {
 		templateParams = append(templateParams, "-p", "SERVICE_TYPE="+testTemplate.ServiceType)
 	}
-	configFile := compat_otp.ProcessTemplate(oc, templateParams...)
 
-	err := oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", configFile).Execute()
-	if err != nil {
-		return err
-	}
-	return nil
+	return applyResourceFromTemplateByAdmin(templateParams...)
 }
 
-func (testTemplate *TestClientTemplate) createClient(oc *exutil.CLI) error {
+func (testTemplate *TestClientTemplate) createClient() error {
 	templateParams := []string{"--ignore-unknown-parameters=true", "-f", testTemplate.Template, "-p", "SERVER_NS=" + testTemplate.ServerNS, "-p", "CLIENT_NS=" + testTemplate.ClientNS}
 
 	if testTemplate.ObjectSize != "" {
 		templateParams = append(templateParams, "-p", "OBJECT_SIZE="+testTemplate.ObjectSize)
 	}
-	configFile := compat_otp.ProcessTemplate(oc, templateParams...)
 
-	err := oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", configFile).Execute()
-	if err != nil {
-		return err
-	}
-	return nil
+	return applyResourceFromTemplateByAdmin(templateParams...)
 }
 
-func (testTemplate *TestPingPodsTemplate) createPingPods(oc *exutil.CLI) error {
+func (testTemplate *TestPingPodsTemplate) createPingPods() error {
 	templateParams := []string{"--ignore-unknown-parameters=true", "-f", testTemplate.Template, "-p", "SERVER_NS=" + testTemplate.ServerNS, "-p", "CLIENT_NS=" + testTemplate.ClientNS}
 
 	if testTemplate.ServerPodName != "" {
@@ -379,23 +390,18 @@ func (testTemplate *TestPingPodsTemplate) createPingPods(oc *exutil.CLI) error {
 	if testTemplate.PingTargets != "" {
 		templateParams = append(templateParams, "-p", "PING_TARGETS="+testTemplate.PingTargets)
 	}
-	configFile := compat_otp.ProcessTemplate(oc, templateParams...)
 
-	err := oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", configFile).Execute()
-	if err != nil {
-		return err
-	}
-	return nil
+	return applyResourceFromTemplateByAdmin(templateParams...)
 }
 
-func waitForResourceGenerationUpdate(oc *exutil.CLI, resource, name, field string, prev int, ns string) {
+func waitForResourceGenerationUpdate(resource, name, field string, prev int, ns string) {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 300*time.Second, false, func(context.Context) (done bool, err error) {
 		var cur int
 		switch field {
 		case "generation":
-			cur, err = getResourceGeneration(oc, resource, name, ns)
+			cur, err = getResourceGeneration(resource, name, ns)
 		case "resourceVersion":
-			cur, err = getResourceVersion(oc, resource, name, ns)
+			cur, err = getResourceVersion(resource, name, ns)
 		}
 		if err != nil {
 			return false, err
@@ -405,35 +411,35 @@ func waitForResourceGenerationUpdate(oc *exutil.CLI, resource, name, field strin
 		}
 		return false, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("%s/%s generation did not update", resource, name))
+	assertWaitPollNoErr(err, fmt.Sprintf("%s/%s generation did not update", resource, name))
 }
 
-func (r Resource) WaitForResourceToAppear(oc *exutil.CLI) error {
-	err := wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 180*time.Second, true, func(context.Context) (done bool, err error) {
-		output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("-n", r.Namespace, r.Kind, r.Name).Output()
-		if err != nil {
-			msg := fmt.Sprintf("%v", output)
-			if strings.Contains(msg, "NotFound") {
+func (r Resource) WaitForResourceToAppear() error {
+	return wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 180*time.Second, true, func(context.Context) (done bool, err error) {
+		_, getErr := getDynamicResource(r.Kind, r.Name, r.Namespace)
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
 		e2e.Logf("Find %s %s", r.Kind, r.Name)
 		return true, nil
 	})
-	return err
 }
 
-func (r Resource) WaitUntilResourceIsGone(oc *exutil.CLI) error {
+func (r Resource) WaitUntilResourceIsGone() error {
 	err := wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 180*time.Second, true, func(context.Context) (done bool, err error) {
-		output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("-n", r.Namespace, r.Kind, r.Name).Output()
-		if err != nil {
-			errstring := fmt.Sprintf("%v", output)
-			if strings.Contains(errstring, "NotFound") || strings.Contains(errstring, "the server doesn't have a resource type") {
+		_, getErr := getDynamicResource(r.Kind, r.Name, r.Namespace)
+		if getErr != nil {
+			// Resource is gone if NotFound
+			if apierrors.IsNotFound(getErr) {
 				return true, nil
 			}
-			return true, err
+			// Other errors should be retried
+			return false, nil
 		}
+		// Resource still exists
 		return false, nil
 	})
 	if err != nil {
@@ -442,222 +448,270 @@ func (r Resource) WaitUntilResourceIsGone(oc *exutil.CLI) error {
 	return nil
 }
 
-func WaitForPodsReadyWithLabel(oc *exutil.CLI, ns, label string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(context.Context) (done bool, err error) {
-		pods, err := oc.AdminKubeClient().CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{LabelSelector: label})
-		if err != nil {
-			return false, err
+func WaitForPodsReadyWithLabel(ns, label string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 360*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		pods, listErr := k8sClient.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{LabelSelector: label})
+		if listErr != nil {
+			return false, nil
 		}
+
 		if len(pods.Items) == 0 {
 			e2e.Logf("Waiting for pod with label %s to appear\n", label)
 			return false, nil
 		}
-		ready := true
-		for _, pod := range pods.Items {
-			for _, containerStatus := range pod.Status.ContainerStatuses {
-				if !containerStatus.Ready {
-					ready = false
+
+		for i := range pods.Items {
+			ready := false
+			for _, cond := range pods.Items[i].Status.Conditions {
+				if cond.Type == corev1.PodReady {
+					ready = cond.Status == corev1.ConditionTrue
 					break
 				}
 			}
+			if !ready {
+				e2e.Logf("Waiting for pod with label %s to be ready...\n", label)
+				return false, nil
+			}
 		}
-		if !ready {
-			e2e.Logf("Waiting for pod with label %s to be ready...\n", label)
-		}
-		return ready, nil
+		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("The pod with label %s is not availabile", label))
+	assertWaitPollNoErr(err, fmt.Sprintf("The pod with label %s is not availabile", label))
+}
+
+// WaitForAllPodsReady waits for all pods in a namespace to be ready, excluding completed pods
+func WaitForAllPodsReady(namespace string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 4*time.Minute, false, func(ctx context.Context) (done bool, err error) {
+		pods, listErr := k8sClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+		if listErr != nil {
+			e2e.Logf("error listing pods: %v, will retry", listErr)
+			return false, nil
+		}
+		if len(pods.Items) == 0 {
+			e2e.Logf("No pods found in namespace %s yet, will retry", namespace)
+			return false, nil
+		}
+
+		for i := range pods.Items {
+			pod := &pods.Items[i]
+			if pod.Status.Phase == corev1.PodSucceeded {
+				continue
+			}
+			ready := false
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady {
+					ready = cond.Status == corev1.ConditionTrue
+					break
+				}
+			}
+			if !ready {
+				return false, nil
+			}
+		}
+		return true, nil
+	})
+	assertWaitPollNoErr(err, fmt.Sprintf("Some Pods are not ready in NS %s!", namespace))
 }
 
 // waitForConfigMapDataInjection waits for a configmap to have its data field populated
 // This is useful for waiting on service-ca configmap injection or other dynamic configmap updates
-func waitForConfigMapDataInjection(oc *exutil.CLI, namespace, configMapName, dataKey string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (bool, error) {
-		// Check if .data field is populated (returns {} when empty, populated JSON when injected)
-		dataValue, getErr := oc.AsAdmin().WithoutNamespace().Run("get").Args("configmap", configMapName, "-n", namespace, "-o=jsonpath={.data}").Output()
+func waitForConfigMapDataInjection(namespace, configMapName, dataKey string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 180*time.Second, false, func(ctx context.Context) (bool, error) {
+		cm, getErr := k8sClient.CoreV1().ConfigMaps(namespace).Get(ctx, configMapName, metav1.GetOptions{})
 		if getErr != nil {
 			e2e.Logf("ConfigMap %s/%s not found yet, will retry: %v", namespace, configMapName, getErr)
 			return false, nil
 		}
-		// Check if data is populated (more than just empty braces "{}")
-		if len(dataValue) > 2 {
+		if len(cm.Data) > 0 {
 			e2e.Logf("ConfigMap %s/%s has been populated with data", namespace, configMapName)
 			return true, nil
 		}
 		e2e.Logf("ConfigMap %s/%s exists but data not populated yet, will retry", namespace, configMapName)
 		return false, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("ConfigMap %s/%s data was not populated within timeout", namespace, configMapName))
+	assertWaitPollNoErr(err, fmt.Sprintf("ConfigMap %s/%s data was not populated within timeout", namespace, configMapName))
 }
 
 // WaitForDeploymentPodsToBeReady waits for the specific deployment to be ready
-func waitForDeploymentPodsToBeReady(oc *exutil.CLI, namespace, name string) error {
-	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
-		deployment, err := oc.AdminKubeClient().AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
+func waitForDeploymentPodsToBeReady(namespace, name string) error {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 180*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		deploy, getErr := k8sClient.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
+		if getErr != nil {
+			if strings.Contains(getErr.Error(), "not found") {
 				e2e.Logf("Waiting for availability of deployment/%s\n", name)
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
-		if deployment.Status.AvailableReplicas == *deployment.Spec.Replicas && deployment.Status.UpdatedReplicas == *deployment.Spec.Replicas {
-			e2e.Logf("Deployment %s available (%d/%d)\n", name, deployment.Status.AvailableReplicas, *deployment.Spec.Replicas)
+
+		specReplicas := int32(1)
+		if deploy.Spec.Replicas != nil {
+			specReplicas = *deploy.Spec.Replicas
+		}
+		available := deploy.Status.AvailableReplicas
+		updated := deploy.Status.UpdatedReplicas
+
+		if available == specReplicas && updated == specReplicas {
+			e2e.Logf("Deployment %s available (%d/%d)\n", name, available, specReplicas)
 			return true, nil
 		}
-		e2e.Logf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, *deployment.Spec.Replicas)
+		e2e.Logf("Waiting for full availability of %s deployment (%d/%d)\n", name, available, specReplicas)
 		return false, nil
 	})
 	return err
 }
 
-func waitForStatefulsetReady(oc *exutil.CLI, namespace, name string) error {
-	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
-		ss, err := oc.AdminKubeClient().AppsV1().StatefulSets(namespace).Get(context.Background(), name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
+func waitForStatefulsetReady(namespace, name string) error {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 180*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		sts, getErr := k8sClient.AppsV1().StatefulSets(namespace).Get(ctx, name, metav1.GetOptions{})
+		if getErr != nil {
+			if strings.Contains(getErr.Error(), "not found") {
 				e2e.Logf("Waiting for availability of %s statefulset\n", name)
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
-		if ss.Status.ReadyReplicas == *ss.Spec.Replicas && ss.Status.UpdatedReplicas == *ss.Spec.Replicas {
-			e2e.Logf("statefulset %s available (%d/%d)\n", name, ss.Status.ReadyReplicas, *ss.Spec.Replicas)
+
+		specReplicas := int32(1)
+		if sts.Spec.Replicas != nil {
+			specReplicas = *sts.Spec.Replicas
+		}
+		ready := sts.Status.ReadyReplicas
+		updated := sts.Status.UpdatedReplicas
+
+		if ready == specReplicas && updated == specReplicas {
+			e2e.Logf("statefulset %s available (%d/%d)\n", name, ready, specReplicas)
 			return true, nil
 		}
-		e2e.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name, ss.Status.ReadyReplicas, *ss.Spec.Replicas)
+		e2e.Logf("Waiting for full availability of %s statefulset (%d/%d)\n", name, ready, specReplicas)
 		return false, nil
 	})
 	return err
 }
 
 // waitForServiceEndpoints waits for a service to have available endpoints
-func waitForServiceEndpoints(oc *exutil.CLI, namespace, serviceName string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 360*time.Second, false, func(context.Context) (done bool, err error) {
-		endpoints, err := oc.AdminKubeClient().CoreV1().Endpoints(namespace).Get(context.Background(), serviceName, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
+func waitForServiceEndpoints(namespace, serviceName string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 360*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		ep, getErr := k8sClient.CoreV1().Endpoints(namespace).Get(ctx, serviceName, metav1.GetOptions{})
+		if getErr != nil {
+			if strings.Contains(getErr.Error(), "not found") {
 				e2e.Logf("Waiting for endpoints for service %s to appear\n", serviceName)
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
-		// Check if endpoints has at least one address
-		hasEndpoints := false
-		for _, subset := range endpoints.Subsets {
+		for _, subset := range ep.Subsets {
 			if len(subset.Addresses) > 0 {
-				hasEndpoints = true
-				break
+				e2e.Logf("Service %s has available endpoints\n", serviceName)
+				return true, nil
 			}
 		}
-		if !hasEndpoints {
-			e2e.Logf("Waiting for service %s to have available endpoints...\n", serviceName)
-			return false, nil
-		}
-		e2e.Logf("Service %s has available endpoints\n", serviceName)
-		return true, nil
+		e2e.Logf("Waiting for service %s to have available endpoints...\n", serviceName)
+		return false, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Service %s does not have available endpoints", serviceName))
+	assertWaitPollNoErr(err, fmt.Sprintf("Service %s does not have available endpoints", serviceName))
 }
 
 // wait until DaemonSet is Ready
-func waitUntilDaemonSetReady(oc *exutil.CLI, daemonset, namespace string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-		desiredNumber, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("daemonset", daemonset, "-n", namespace, "-o", "jsonpath='{.status.desiredNumberScheduled}'").Output()
-
-		if err != nil {
-			// loop until daemonset is found or until timeout
-			if strings.Contains(err.Error(), "not found") {
+func waitUntilDaemonSetReady(daemonset, namespace string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 600*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		ds, getErr := k8sClient.AppsV1().DaemonSets(namespace).Get(ctx, daemonset, metav1.GetOptions{})
+		if getErr != nil {
+			if strings.Contains(getErr.Error(), "not found") {
 				return false, nil
 			}
-			return false, err
-		}
-		numberReady, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("daemonset", daemonset, "-n", namespace, "-o", "jsonpath='{.status.numberReady}'").Output()
-		if err != nil {
-			return false, err
-		}
-		numberReadyi, err := strconv.Atoi(strings.Trim(numberReady, "'"))
-		if err != nil {
-			return false, err
+			return false, getErr
 		}
 
-		desiredNumberi, err := strconv.Atoi(strings.Trim(desiredNumber, "'"))
-		if err != nil {
-			return false, err
-		}
-		if numberReadyi != desiredNumberi {
-			return false, nil
-		}
-		updatedNumber, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("daemonset", daemonset, "-n", namespace, "-o", "jsonpath='{.status.updatedNumberScheduled}'").Output()
-		if err != nil {
-			return false, err
-		}
-		updatedNumberi, err := strconv.Atoi(strings.Trim(updatedNumber, "'"))
-		if err != nil {
-			return false, err
-		}
-		if updatedNumberi != desiredNumberi {
-			return false, nil
-		}
+		desired := ds.Status.DesiredNumberScheduled
+		ready := ds.Status.NumberReady
+		updated := ds.Status.UpdatedNumberScheduled
 
+		if ready != desired || updated != desired {
+			return false, nil
+		}
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Daemonset %s did not become Ready", daemonset))
+	assertWaitPollNoErr(err, fmt.Sprintf("Daemonset %s did not become Ready", daemonset))
 }
 
 // WaitForDeploymentPodsToBeReady waits for the specific deployment to be ready
-func WaitForDeploymentPodsToBeReady(oc *exutil.CLI, namespace string, name string) {
-	var selectors map[string]string
-	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, true, func(context.Context) (done bool, err error) {
-		deployment, err := oc.AdminKubeClient().AppsV1().Deployments(namespace).Get(context.Background(), name, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
+func WaitForDeploymentPodsToBeReady(namespace string, name string) {
+	ctx := context.Background()
+	var labelSelector string
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 180*time.Second, true, func(ctx context.Context) (done bool, err error) {
+		deploy, getErr := k8sClient.AppsV1().Deployments(namespace).Get(ctx, name, metav1.GetOptions{})
+		if getErr != nil {
+			if strings.Contains(getErr.Error(), "not found") {
 				e2e.Logf("Waiting for deployment/%s to appear\n", name)
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
-		selectors = deployment.Spec.Selector.MatchLabels
-		if deployment.Status.AvailableReplicas == *deployment.Spec.Replicas && deployment.Status.UpdatedReplicas == *deployment.Spec.Replicas {
-			e2e.Logf("Deployment %s available (%d/%d)\n", name, deployment.Status.AvailableReplicas, *deployment.Spec.Replicas)
+
+		specReplicas := int32(1)
+		if deploy.Spec.Replicas != nil {
+			specReplicas = *deploy.Spec.Replicas
+		}
+		available := deploy.Status.AvailableReplicas
+		updated := deploy.Status.UpdatedReplicas
+
+		if deploy.Spec.Selector != nil {
+			var parts []string
+			for k, v := range deploy.Spec.Selector.MatchLabels {
+				parts = append(parts, k+"="+v)
+			}
+			labelSelector = strings.Join(parts, ",")
+		}
+
+		if available == specReplicas && updated == specReplicas {
+			e2e.Logf("Deployment %s available (%d/%d)\n", name, available, specReplicas)
 			return true, nil
 		}
-		e2e.Logf("Waiting for full availability of %s deployment (%d/%d)\n", name, deployment.Status.AvailableReplicas, *deployment.Spec.Replicas)
+		e2e.Logf("Waiting for full availability of %s deployment (%d/%d)\n", name, available, specReplicas)
 		return false, nil
 	})
-	if err != nil && len(selectors) > 0 {
-		var labels []string
-		for k, v := range selectors {
-			labels = append(labels, k+"="+v)
+	if err != nil && labelSelector != "" {
+		pods, listErr := k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
+		if listErr == nil {
+			var condStr string
+			for _, pod := range pods.Items {
+				condStr += pod.Name + ":"
+				for _, c := range pod.Status.Conditions {
+					condStr += fmt.Sprintf("%s=%s ", c.Type, c.Status)
+				}
+				condStr += "|"
+			}
+			e2e.Failf("deployment %s is not ready:\npod conditions: %s", name, condStr)
 		}
-		label := strings.Join(labels, ",")
-		_ = oc.AsAdmin().WithoutNamespace().Run("get").Args("pod", "-n", namespace, "-l", label).Execute()
-		podStatus, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("pod", "-n", namespace, "-l", label, "-ojsonpath={.items[*].status.conditions}").Output()
-		containerStatus, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("pod", "-n", namespace, "-l", label, "-ojsonpath={.items[*].status.containerStatuses}").Output()
-		e2e.Failf("deployment %s is not ready:\nconditions: %s\ncontainer status: %s", name, podStatus, containerStatus)
 	}
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("deployment %s is not available", name))
+	assertWaitPollNoErr(err, fmt.Sprintf("deployment %s is not available", name))
 }
 
 // wait until Deployment is Ready
-func waitUntilDeploymentReady(oc *exutil.CLI, deployment, ns string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-		status, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("deployment", deployment, "-n", ns, "-o", "jsonpath='{.status.conditions[0].type}'").Output()
-
-		if err != nil {
-			// loop until deployment is found or until timeout
-			if strings.Contains(err.Error(), "not found") {
+func waitUntilDeploymentReady(deployment, ns string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 600*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		deploy, getErr := k8sClient.AppsV1().Deployments(ns).Get(ctx, deployment, metav1.GetOptions{})
+		if getErr != nil {
+			if strings.Contains(getErr.Error(), "not found") {
 				return false, nil
 			}
-			return false, err
+			return false, getErr
 		}
 
-		if strings.Trim(status, "'") != "Available" {
-			return false, nil
+		for _, cond := range deploy.Status.Conditions {
+			if cond.Type == appsv1.DeploymentAvailable && cond.Status == corev1.ConditionTrue {
+				return true, nil
+			}
 		}
-		return true, nil
+		return false, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Deployment %s did not become Available", deployment))
+	assertWaitPollNoErr(err, fmt.Sprintf("Deployment %s did not become Available", deployment))
 }
 
 // verifyDeploymentReplicas waits for and verifies the deployment replica count
@@ -666,29 +720,27 @@ func waitUntilDeploymentReady(oc *exutil.CLI, deployment, ns string) {
 // For numeric comparison: verifyDeploymentReplicas(oc, "deploy", "ns", 5, ">")
 // Supported operators: ">", "<", ">=", "<=", "==", "~"
 // Calling code should check the result and provide custom message to o.Expect()
-func verifyDeploymentReplicas(oc *exutil.CLI, deployment, namespace string, expectedValue int, operator string) bool {
-	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
-		dep, err := oc.AdminKubeClient().AppsV1().Deployments(namespace).Get(context.Background(), deployment, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
+func verifyDeploymentReplicas(deployment, namespace string, expectedValue int, operator string) bool {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 180*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		deploy, getErr := k8sClient.AppsV1().Deployments(namespace).Get(ctx, deployment, metav1.GetOptions{})
+		if getErr != nil {
+			if strings.Contains(getErr.Error(), "not found") {
 				e2e.Logf("Waiting for deployment/%s to be created\n", deployment)
 				return false, nil
 			}
-			e2e.Logf("Error getting deployment %s in namespace %s: %v", deployment, namespace, err)
+			e2e.Logf("Error getting deployment %s in namespace %s: %v", deployment, namespace, getErr)
 			return false, nil
 		}
 
-		currentReplicas := int(dep.Status.Replicas)
-		availableReplicas := int(dep.Status.AvailableReplicas)
-		updatedReplicas := int(dep.Status.UpdatedReplicas)
+		currentReplicas := int(deploy.Status.Replicas)
+		availableReplicas := int(deploy.Status.AvailableReplicas)
+		updatedReplicas := int(deploy.Status.UpdatedReplicas)
 
-		// Check if replicas match the condition
 		var conditionMet bool
 		if operator == "" || operator == "==" {
-			// Exact match - check all three replica counts
 			conditionMet = (currentReplicas == expectedValue && availableReplicas == expectedValue && updatedReplicas == expectedValue)
 		} else {
-			// Numeric comparison - use available replicas
 			switch operator {
 			case ">":
 				conditionMet = availableReplicas > expectedValue && availableReplicas == currentReplicas
@@ -720,113 +772,519 @@ func verifyDeploymentReplicas(oc *exutil.CLI, deployment, namespace string, expe
 	return err == nil
 }
 
+// getAllPods returns all pod names in a namespace
+func getAllPods(namespace string) ([]string, error) {
+	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("no pods found in namespace %s", namespace)
+	}
+	podNames := make([]string, len(pods.Items))
+	for i, pod := range pods.Items {
+		podNames[i] = pod.Name
+	}
+	return podNames, nil
+}
+
+// getAllPodsWithLabel returns all pod names in a namespace matching a label selector
+func getAllPodsWithLabel(namespace, label string) ([]string, error) {
+	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: label})
+	if err != nil {
+		return nil, err
+	}
+
+	podNames := make([]string, len(pods.Items))
+	for i, pod := range pods.Items {
+		podNames[i] = pod.Name
+	}
+	return podNames, nil
+}
+
+// getPodNodeName returns the node name where a pod is running
+func getPodNodeName(namespace, podName string) (string, error) {
+	pod, err := k8sClient.CoreV1().Pods(namespace).Get(context.Background(), podName, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return pod.Spec.NodeName, nil
+}
+
+// getFirstWorkerNode returns the first worker node name
+func getFirstWorkerNode() (string, error) {
+	nodes, err := k8sClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: "node-role.kubernetes.io/worker"})
+	if err != nil {
+		return "", err
+	}
+	if len(nodes.Items) == 0 {
+		return "", fmt.Errorf("no worker nodes found")
+	}
+	return nodes.Items[0].Name, nil
+}
+
+// addLabelToNode adds a label to a node
+func addLabelToNode(nodeName, label, value string) error {
+	patch := fmt.Sprintf(`{"metadata":{"labels":{%q:%q}}}`, label, value)
+	_, err := k8sClient.CoreV1().Nodes().Patch(context.Background(), nodeName, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
+	return err
+}
+
+// deleteLabelFromNode removes a label from a node
+func deleteLabelFromNode(nodeName, label string) error {
+	patch := fmt.Sprintf(`{"metadata":{"labels":{%q:null}}}`, label)
+	_, err := k8sClient.CoreV1().Nodes().Patch(context.Background(), nodeName, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
+	return err
+}
+
+// setNamespacePrivileged sets pod security admission labels to privileged for a namespace
+func setNamespacePrivileged(namespace string) error {
+	patch := `{"metadata":{"labels":{"pod-security.kubernetes.io/enforce":"privileged","pod-security.kubernetes.io/audit":"privileged","pod-security.kubernetes.io/warn":"privileged","security.openshift.io/scc.podSecurityLabelSync":"false"}}}`
+	_, err := k8sClient.CoreV1().Namespaces().Patch(context.Background(), namespace, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
+	return err
+}
+
+// getNodeLabelValue gets a specific label value from a node
+func getNodeLabelValue(nodeName, labelName string) (string, error) {
+	node, err := k8sClient.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	value, ok := node.Labels[labelName]
+	if !ok || value == "" {
+		return "", fmt.Errorf("label %s not found on node %s", labelName, nodeName)
+	}
+	return value, nil
+}
+
+// isHypershiftHostedCluster checks if the cluster is a hypershift hosted cluster
+func isHypershiftHostedCluster() bool {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	if err != nil {
+		e2e.Logf("error getting infrastructure cluster: %v", err)
+		return false
+	}
+
+	topology, found := getNestedField(obj.Object, ".status.controlPlaneTopology")
+	if !found || topology == "" {
+		e2e.Logf("controlPlaneTopology not found")
+		return false
+	}
+
+	e2e.Logf("controlPlaneTopology is %s", topology)
+	return topology == "External"
+}
+
+// isTechPreviewNoUpgrade checks if the cluster has TechPreviewNoUpgrade feature set
+func isTechPreviewNoUpgrade() bool {
+	obj, err := getDynamicResource("featuregate", "cluster", "")
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false
+		}
+		e2e.Logf("error getting featuregate cluster: %v", err)
+		return false
+	}
+
+	featureSet, _ := getNestedField(obj.Object, ".spec.featureSet")
+	return featureSet == "TechPreviewNoUpgrade"
+}
+
+// getSubscriptionByPackageName finds subscription name by package name (spec.name field)
+func getSubscriptionByPackageName(namespace, packageName string) (string, error) {
+	gvr, _ := resolveGVR("subscription")
+	list, err := k8sDynClient.Resource(gvr).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	for _, item := range list.Items {
+		specName, _, _ := unstructured.NestedString(item.Object, "spec", "name")
+		if specName == packageName {
+			return item.GetName(), nil
+		}
+	}
+
+	return "", fmt.Errorf("subscription with package name %s not found in namespace %s", packageName, namespace)
+}
+
+// patchSubscriptionRemoveConfig removes spec.config from a subscription using JSON patch
+func patchSubscriptionRemoveConfig(namespace, subscriptionName string) error {
+	patch := `[{"op": "remove", "path": "/spec/config"}]`
+	return patchDynamicResource("subscription", subscriptionName, namespace, types.JSONPatchType, []byte(patch))
+}
+
+// getOAuthHTPasswdSecretName gets the htpasswd secret name from OAuth cluster config
+func getOAuthHTPasswdSecretName() (string, error) {
+	obj, err := getDynamicResource("oauth", "cluster", "")
+	if err != nil {
+		return "", err
+	}
+
+	providers, found, _ := unstructured.NestedSlice(obj.Object, "spec", "identityProviders")
+	if !found || len(providers) == 0 {
+		return "", nil
+	}
+	provider, ok := providers[0].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid identityProvider format")
+	}
+	secretName, _, _ := unstructured.NestedString(provider, "htpasswd", "fileData", "name")
+	return secretName, nil
+}
+
+// createSecretFromFile creates a secret from a file
+func createSecretFromFile(namespace, secretName, key, filePath string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: namespace},
+		Data:       map[string][]byte{key: data},
+	}
+	_, err = k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	return err
+}
+
+// extractSecretToFile extracts a secret's data to a file
+func extractSecretToFile(namespace, secretName, key, outputPath string) error {
+	secret, err := k8sClient.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(outputPath, secret.Data[key], 0o600)
+}
+
+// updateSecretFromFile updates a secret's data from a file
+func updateSecretFromFile(namespace, secretName, key, filePath string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+	secret, err := k8sClient.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+	secret.Data[key] = data
+	_, err = k8sClient.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+	return err
+}
+
+// patchOAuthAddHTPasswdIdentityProvider adds HTPasswd identity provider to OAuth cluster
+func patchOAuthAddHTPasswdIdentityProvider(secretName string) error {
+	patch := fmt.Sprintf(`[{"op": "add", "path": "/spec/identityProviders", "value": [{"htpasswd": {"fileData": {"name": "%s"}}, "mappingMethod": "claim", "name": "htpasswd", "type": "HTPasswd"}]}]`, secretName)
+	return patchDynamicResource("oauth", "cluster", "", types.JSONPatchType, []byte(patch))
+}
+
+// getServerURL gets the Kubernetes API server URL
+func getServerURL() (string, error) {
+	return k8sRestConfig.Host, nil
+}
+
+// getCurrentContext gets the current kubeconfig context name
+func getCurrentContext() (string, error) {
+	cmd := exec.Command("oc", "config", "current-context")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current context: %w", err)
+	}
+	return strings.TrimSpace(string(output)), nil
+}
+
+// getNodeArchitecture gets the architecture of the first node
+func getNodeArchitecture() (string, error) {
+	nodes, err := k8sClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return "", err
+	}
+	if len(nodes.Items) == 0 {
+		return "", fmt.Errorf("no nodes found")
+	}
+	return nodes.Items[0].Status.NodeInfo.Architecture, nil
+}
+
+// getPodNameWithLabel gets the first pod name matching a label selector
+func getPodNameWithLabel(namespace, labelSelector string) (string, error) {
+	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return "", err
+	}
+	if len(pods.Items) == 0 {
+		return "", fmt.Errorf("no pods found with label %s in namespace %s", labelSelector, namespace)
+	}
+	return pods.Items[0].Name, nil
+}
+
+// getServiceClusterIP gets the cluster IP of a service matching a label selector
+func getServiceClusterIP(namespace, labelSelector string) (string, error) {
+	svcs, err := k8sClient.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return "", err
+	}
+	if len(svcs.Items) == 0 {
+		return "", fmt.Errorf("no services found with label %s in namespace %s", labelSelector, namespace)
+	}
+	clusterIP := svcs.Items[0].Spec.ClusterIP
+	if clusterIP == "" {
+		return "", fmt.Errorf("no services found with label %s in namespace %s", labelSelector, namespace)
+	}
+	return clusterIP, nil
+}
+
+// execInPod executes a command in a pod
+func execInPod(namespace, podName string, command []string) (string, error) {
+	args := []string{"exec", "-n", namespace, podName, "--"}
+	args = append(args, command...)
+
+	cmd := exec.Command("oc", args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		e2e.Logf("stderr: %s", string(output))
+	}
+
+	return strings.TrimSpace(string(output)), err
+}
+
+// assertAllPodsToBeReady polls until all pods in namespace are ready
+func assertAllPodsToBeReady(namespace string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 4*time.Minute, false, func(ctx context.Context) (bool, error) {
+		pods, listErr := k8sClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+		if listErr != nil {
+			e2e.Logf("error listing pods: %v, will retry", listErr)
+			return false, nil
+		}
+
+		for i := range pods.Items {
+			pod := &pods.Items[i]
+			if pod.Status.Phase == corev1.PodSucceeded {
+				continue
+			}
+			ready := false
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady {
+					ready = cond.Status == corev1.ConditionTrue
+					break
+				}
+			}
+			if !ready {
+				return false, nil
+			}
+		}
+		return true, nil
+	})
+	o.Expect(err).NotTo(o.HaveOccurred())
+}
+
+// waitAndGetSpecificPodLogs polls until pod logs contain the filter string, returns logs file path
+func waitAndGetSpecificPodLogs(namespace, podName, filter string) (string, error) {
+	ctx := context.Background()
+	var podLogsPath string
+
+	err := wait.PollUntilContextTimeout(ctx, 20*time.Second, 10*time.Minute, false, func(context.Context) (bool, error) {
+		// Get pod logs
+		stream, err := k8sClient.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{}).Stream(ctx)
+		if err != nil {
+			e2e.Logf("unable to get pod (%s) logs: %v, will retry", podName, err)
+			return false, nil
+		}
+		defer stream.Close()
+		logsBytes, err := io.ReadAll(stream)
+		if err != nil {
+			e2e.Logf("unable to read pod (%s) logs: %v, will retry", podName, err)
+			return false, nil
+		}
+
+		logsContent := string(logsBytes)
+
+		// Check if filter matches
+		if !strings.Contains(logsContent, filter) {
+			e2e.Logf("filter %s not found in logs yet, will retry", filter)
+			return false, nil
+		}
+
+		// Save to temp file
+		tmpFile, err := os.CreateTemp("", "podLogs-*.txt")
+		if err != nil {
+			return false, err
+		}
+		defer tmpFile.Close()
+
+		_, err = tmpFile.WriteString(logsContent)
+		if err != nil {
+			return false, err
+		}
+
+		podLogsPath = tmpFile.Name()
+		return true, nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	absPath, err := filepath.Abs(podLogsPath)
+	e2e.Logf("pod logs with filter '%s' saved to %s", filter, absPath)
+	return absPath, err
+}
+
+// waitForNewPodLogs polls until log lines matching filter appear after the current time.
+// Uses SinceTime and TailLines to bound log fetches. Returns the full logs file path.
+func waitForNewPodLogs(namespace, podName, filter string) (string, error) {
+	sinceTime := metav1.Now()
+	e2e.Logf("Waiting for new pod logs since %s with filter %q", sinceTime.Format(time.RFC3339), filter)
+	var tailLines int64 = 50
+
+	err := wait.PollUntilContextTimeout(context.Background(), 20*time.Second, 10*time.Minute, false, func(ctx context.Context) (bool, error) {
+		stream, err := k8sClient.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{
+			SinceTime: &sinceTime,
+			TailLines: &tailLines,
+		}).Stream(ctx)
+		if err != nil {
+			e2e.Logf("unable to get pod (%s) logs: %v, will retry", podName, err)
+			return false, nil
+		}
+		defer stream.Close()
+		logsBytes, err := io.ReadAll(stream)
+		if err != nil {
+			e2e.Logf("unable to read pod (%s) logs: %v, will retry", podName, err)
+			return false, nil
+		}
+		if strings.Contains(string(logsBytes), filter) {
+			e2e.Logf("Found new log entries matching filter %q", filter)
+			return true, nil
+		}
+		e2e.Logf("Waiting for new log entries matching %q", filter)
+		return false, nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return waitAndGetSpecificPodLogs(namespace, podName, filter)
+}
+
 // get pod logs absolute path
-func getPodLogs(oc *exutil.CLI, namespace, podname string) (string, error) {
-	cargs := []string{"-n", namespace, podname}
-	var podLogs string
-	var err error
+func getPodLogs(namespace, podname string) (string, error) {
+	ctx := context.Background()
+	var logsContent string
 
 	// add polling as logs could be rotated
-	err = wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(_ context.Context) (bool, error) {
-		podLogs, err = oc.AsAdmin().WithoutNamespace().Run("logs").Args(cargs...).OutputToFile("podLogs.txt")
-
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 600*time.Second, false, func(_ context.Context) (bool, error) {
+		stream, err := k8sClient.CoreV1().Pods(namespace).GetLogs(podname, &corev1.PodLogOptions{}).Stream(ctx)
 		if err != nil {
-			e2e.Logf("unable to get the pod (%s) logs", podname)
+			e2e.Logf("unable to get the pod (%s) logs, retrying: %v", podname, err)
+			return false, nil
+		}
+		defer stream.Close()
+		logsBytes, err := io.ReadAll(stream)
+		if err != nil {
+			e2e.Logf("unable to read the pod (%s) logs: %v", podname, err)
 			return false, err
 		}
-		podLogsf, err := os.Stat(podLogs)
-
-		if err != nil {
-			return false, err
+		if len(logsBytes) == 0 {
+			return false, nil
 		}
-		return podLogsf.Size() > 0, nil
+		logsContent = string(logsBytes)
+		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("%s pod logs were not collected", podname))
+	assertWaitPollNoErr(err, fmt.Sprintf("%s pod logs were not collected", podname))
 
-	e2e.Logf("pod logs file is %s", podLogs)
-	return filepath.Abs(podLogs)
+	return logsContent, nil
 }
 
 // wait until NetworkAttachDefinition is Ready
-func checkNAD(oc *exutil.CLI, nad, ns string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-		nadOutput, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("net-attach-def", nad, "-n", ns).Output()
-		if err != nil {
-			// loop until NAD is found or until timeout
-			if strings.Contains(err.Error(), "not found") {
+func checkNAD(nad, ns string) {
+	ctx := context.Background()
+	err := wait.PollUntilContextTimeout(ctx, 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
+		_, getErr := getDynamicResource("net-attach-def", nad, ns)
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
 				return false, nil
 			}
-			return false, err
-		}
-		if !strings.Contains(nadOutput, nad) {
-			return false, nil
+			return false, getErr
 		}
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Network Attach Definition %s did not become Available", nad))
+	assertWaitPollNoErr(err, fmt.Sprintf("Network Attach Definition %s did not become Available", nad))
 }
 
 // wait until catalogSource is Ready
-func (r Resource) WaitUntilCatSrcReady(oc *exutil.CLI) {
+func (r Resource) WaitUntilCatSrcReady() {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 600*time.Second, false, func(context.Context) (done bool, err error) {
-		state, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("catalogsource", r.Name, "-n", r.Namespace, "-o", "jsonpath='{.status.connectionState.lastObservedState}'").Output()
-		if err != nil {
-			// loop until catalogSource is found or until timeout
-			if strings.Contains(err.Error(), "not found") {
-				return false, nil
-			}
-			return false, err
+		obj, getErr := getDynamicResource("catalogsource", r.Name, r.Namespace)
+		if getErr != nil {
+			return false, nil
 		}
-
-		if strings.Trim(state, "'") != "READY" {
+		state, _ := getNestedField(obj.Object, ".status.connectionState.lastObservedState")
+		if state != "READY" {
 			return false, nil
 		}
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("Catalog Source %s did not become Ready", r.Name))
+	assertWaitPollNoErr(err, fmt.Sprintf("Catalog Source %s did not become Ready", r.Name))
 }
 
 // check resource is fully deleted
-func checkResourceDeleted(oc *exutil.CLI, resourceType, resourceName, namespace string) {
-	resourceCheck := wait.PollUntilContextTimeout(context.Background(), 30*time.Second, 600*time.Second, false, func(context.Context) (bool, error) {
-		output, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args(resourceType, resourceName, "-n", namespace).Output()
-		if !strings.Contains(output, "NotFound") {
+func checkResourceDeleted(resourceType, resourceName, namespace string) {
+	ctx := context.Background()
+	resourceCheck := wait.PollUntilContextTimeout(ctx, 30*time.Second, 600*time.Second, false, func(context.Context) (bool, error) {
+		exists, err := checkResourceExists(resourceType, resourceName, namespace)
+		if err != nil {
+			return false, err
+		}
+		if exists {
 			return false, nil
 		}
 		return true, nil
 	})
-	compat_otp.AssertWaitPollNoErr(resourceCheck, fmt.Sprintf("found %s \"%s\" exist or not fully deleted", resourceType, resourceName))
+	assertWaitPollNoErr(resourceCheck, fmt.Sprintf("found %s \"%s\" exist or not fully deleted", resourceType, resourceName))
 }
 
 // delete a resource
-func deleteResource(oc *exutil.CLI, resourceType, resourceName, namespace string, optionalParameters ...string) {
-	cmdArgs := []string{resourceType, resourceName, "-n", namespace}
-	cmdArgs = append(cmdArgs, optionalParameters...)
-	err := oc.AsAdmin().WithoutNamespace().Run("delete").Args(cmdArgs...).Execute()
+func deleteResource(resourceType, resourceName, namespace string, optionalParameters ...string) {
+	err := deleteDynamicResource(resourceType, resourceName, namespace)
 	o.Expect(err).NotTo(o.HaveOccurred())
-	checkResourceDeleted(oc, resourceType, resourceName, namespace)
+	checkResourceDeleted(resourceType, resourceName, namespace)
 }
 
 // get kubeadmin token of the cluster
-func getKubeAdminToken(oc *exutil.CLI, kubeAdminPasswd, serverURL, currentContext string) string {
-	longinErr := oc.WithoutNamespace().Run("login").Args("-u", "kubeadmin", "-p", kubeAdminPasswd, serverURL).NotShowInfo().Execute()
-	o.Expect(longinErr).NotTo(o.HaveOccurred())
-	kubeadminToken, kubeadminTokenErr := oc.WithoutNamespace().Run("whoami").Args("-t").Output()
-	o.Expect(kubeadminTokenErr).NotTo(o.HaveOccurred())
+func getKubeAdminToken(kubeAdminPasswd, serverURL, currentContext string) string {
 
-	rollbackCtxErr := oc.WithoutNamespace().Run("config").Args("set", "current-context", currentContext).Execute()
-	o.Expect(rollbackCtxErr).NotTo(o.HaveOccurred())
+	loginCmd := exec.Command("oc", "login", "-u", "kubeadmin", "-p", kubeAdminPasswd, serverURL, "--insecure-skip-tls-verify=true")
+	loginOutput, loginErr := loginCmd.CombinedOutput()
+	if loginErr != nil {
+		e2e.Logf("oc login failed: %v, output: %s", loginErr, string(loginOutput))
+	}
+	o.Expect(loginErr).NotTo(o.HaveOccurred(), "oc login failed: %s", string(loginOutput))
+
+	whoamiCmd := exec.Command("oc", "whoami", "-t")
+	tokenBytes, tokenErr := whoamiCmd.Output()
+	o.Expect(tokenErr).NotTo(o.HaveOccurred(), "oc whoami -t failed")
+	kubeadminToken := strings.TrimSpace(string(tokenBytes))
+
 	return kubeadminToken
 }
 
 // get nginx pod name, IP and client IP
-func getClientServerInfo(oc *exutil.CLI, serverNS, clientNS, ipStackType string) (map[string]map[string]string, error) {
-	nginxPodName, err := compat_otp.GetAllPodsWithLabel(oc, serverNS, "app=nginx")
-	nginxPodIP, _ := getPodIP(oc, serverNS, nginxPodName[0], ipStackType)
+func getClientServerInfo(serverNS, clientNS, ipStackType string) (map[string]map[string]string, error) {
+	nginxPodNames, err := getAllPodsWithLabel(serverNS, "app=nginx")
+	o.Expect(err).NotTo(o.HaveOccurred())
+	o.Expect(len(nginxPodNames)).To(o.BeNumerically(">", 0))
 
-	clientPodIP, _ := getPodIP(oc, clientNS, "client", ipStackType)
+	nginxPodName := nginxPodNames[0]
+	nginxPodIP, _ := getPodIP(serverNS, nginxPodName, ipStackType)
 
-	serviceIP := getServiceIPv4(oc, serverNS, "nginx-service")
+	clientPodIP, _ := getPodIP(clientNS, "client", ipStackType)
+
+	serviceIP := getServiceIPv4(serverNS, "nginx-service")
 
 	clientServerMap := map[string]map[string]string{
 		"client": {
@@ -835,7 +1293,7 @@ func getClientServerInfo(oc *exutil.CLI, serverNS, clientNS, ipStackType string)
 		},
 		"server": {
 			"ip":   nginxPodIP,
-			"name": nginxPodName[0],
+			"name": nginxPodName,
 		},
 		"service": {
 			"ip":   serviceIP,
@@ -845,65 +1303,121 @@ func getClientServerInfo(oc *exutil.CLI, serverNS, clientNS, ipStackType string)
 	return clientServerMap, err
 }
 
-func doAction(oc *exutil.CLI, action string, asAdmin bool, withoutNamespace bool, parameters ...string) (string, error) {
-	if asAdmin && withoutNamespace {
-		return oc.AsAdmin().WithoutNamespace().Run(action).Args(parameters...).Output()
-	}
-	if asAdmin && !withoutNamespace {
-		return oc.AsAdmin().Run(action).Args(parameters...).Output()
-	}
-	if !asAdmin && withoutNamespace {
-		return oc.WithoutNamespace().Run(action).Args(parameters...).Output()
-	}
-	if !asAdmin && !withoutNamespace {
-		return oc.Run(action).Args(parameters...).Output()
-	}
-	return "", nil
-}
+func removeResource(asAdmin bool, withoutNamespace bool, parameters ...string) {
+	ctx := context.Background()
 
-func removeResource(oc *exutil.CLI, asAdmin bool, withoutNamespace bool, parameters ...string) {
-	output, err := doAction(oc, "delete", asAdmin, withoutNamespace, parameters...)
-	if err != nil && (strings.Contains(output, "NotFound") || strings.Contains(output, "No resources found")) {
+	// Parse parameters: first is resource type, second is resource name, rest are optional flags like -n namespace
+	if len(parameters) < 2 {
+		e2e.Logf("invalid parameters for removeResource: %v", parameters)
+		return
+	}
+
+	resourceType := parameters[0]
+	resourceName := parameters[1]
+	namespace := ""
+
+	// Check for -n namespace flag
+	for i := 2; i < len(parameters)-1; i++ {
+		if parameters[i] == "-n" {
+			namespace = parameters[i+1]
+			break
+		}
+	}
+
+	deleteErr := deleteDynamicResource(resourceType, resourceName, namespace)
+	if deleteErr != nil && apierrors.IsNotFound(deleteErr) {
 		e2e.Logf("the resource is deleted already")
 		return
 	}
-	o.Expect(err).NotTo(o.HaveOccurred())
+	o.Expect(deleteErr).NotTo(o.HaveOccurred())
 
-	err = wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 120*time.Second, false, func(_ context.Context) (bool, error) {
-		output, err := doAction(oc, "get", asAdmin, withoutNamespace, parameters...)
-		if err != nil && (strings.Contains(output, "NotFound") || strings.Contains(output, "No resources found")) {
-			e2e.Logf("the resource is delete successfully")
-			return true, nil
+	// Wait for resource to be deleted
+	err := wait.PollUntilContextTimeout(ctx, 3*time.Second, 120*time.Second, false, func(_ context.Context) (bool, error) {
+		_, getErr := getDynamicResource(resourceType, resourceName, namespace)
+		if getErr != nil {
+			if apierrors.IsNotFound(getErr) {
+				e2e.Logf("the resource is delete successfully")
+				return true, nil
+			}
+			return false, getErr
 		}
 		return false, nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("fail to delete resource %v", parameters))
+	assertWaitPollNoErr(err, fmt.Sprintf("fail to delete resource %v", parameters))
 }
 
-func execCommandInSpecificPod(oc *exutil.CLI, namespace string, podName string, command string) (string, error) {
+func execCommandInSpecificPod(namespace string, podName string, command string, container ...string) (string, error) {
 	e2e.Logf("The command is: %v", command)
-	command1 := []string{"-n", namespace, podName, "--", "bash", "-c", command}
-	msg, err := oc.AsAdmin().WithoutNamespace().Run("exec").Args(command1...).Output()
-	if err != nil {
-		e2e.Logf("Execute command failed with  err:%v  and output is %v.", err, msg)
-		return msg, err
+
+	args := []string{"exec", "-n", namespace, podName, "--", "bash", "-c", command}
+
+	// Add container name if specified
+	if len(container) > 0 && container[0] != "" {
+		args = []string{"exec", "-n", namespace, podName, "-c", container[0], "--", "bash", "-c", command}
 	}
-	o.Expect(err).NotTo(o.HaveOccurred())
-	return msg, nil
+
+	cmd := exec.Command("oc", args...)
+	output, err := cmd.Output()
+	if err != nil {
+		e2e.Logf("Execute command failed with err:%v and output is %v.", err, string(output))
+		return string(output), err
+	}
+	return strings.TrimSpace(string(output)), nil
 }
 
-func checkNetworkType(oc *exutil.CLI) string {
-	output, _ := oc.WithoutNamespace().AsAdmin().Run("get").Args("network.operator", "cluster", "-o=jsonpath={.spec.defaultNetwork.type}").Output()
-	return strings.ToLower(output)
+// debugNodeWithCommand executes a command on a node using oc debug node
+// The command is executed with chroot /host prefix automatically
+func debugNodeWithCommand(nodeName, command string) (string, error) {
+	// Use oc debug node command via shell
+	// The command format matches oc debug node/<nodename> -- chroot /host <command>
+	ctx := context.Background()
+
+	args := []string{
+		"debug",
+		fmt.Sprintf("node/%s", nodeName),
+		"-n", "default",
+		"--",
+		"chroot",
+		"/host",
+		"bash",
+		"-c",
+		command,
+	}
+
+	cmd := exec.CommandContext(ctx, "oc", args...)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return strings.TrimSpace(stdout.String()), fmt.Errorf("%w: stderr: %s", err, strings.TrimSpace(stderr.String()))
+	}
+
+	return strings.TrimSpace(stdout.String()), nil
 }
 
-func checkPlatform(oc *exutil.CLI) string {
-	output, _ := oc.WithoutNamespace().AsAdmin().Run("get").Args("infrastructure", "cluster", "-o=jsonpath={.status.platformStatus.type}").Output()
-	return strings.ToLower(output)
+func checkNetworkType() string {
+	obj, err := getDynamicResource("network.operator", "cluster", "")
+	if err != nil {
+		return ""
+	}
+	networkType, _ := getNestedField(obj.Object, ".spec.defaultNetwork.type")
+	return strings.ToLower(networkType)
 }
 
-func isPlatformSuitableForNMState(oc *exutil.CLI) bool {
-	platform := checkPlatform(oc)
+func checkPlatform() string {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	if err != nil {
+		return ""
+	}
+	platformType, _ := getNestedField(obj.Object, ".status.platformStatus.type")
+	return strings.ToLower(platformType)
+}
+
+func isPlatformSuitableForNMState() bool {
+	platform := checkPlatform()
 	if !strings.Contains(platform, "baremetal") && !strings.Contains(platform, "none") && !strings.Contains(platform, "vsphere") && !strings.Contains(platform, "openstack") {
 		e2e.Logf("Skipping for unsupported platform, not baremetal/vsphere/openstack!")
 		return false
@@ -939,4 +1453,133 @@ func verifyComponentsExist(componentsOutput string, componentsList []string) {
 		}
 		o.Expect(componentFound).Should(o.BeTrue(), fmt.Sprintf("%s should exist but was not found", component))
 	}
+}
+
+// patchFlowCollector applies a JSON patch to the cluster flowcollector
+func patchFlowCollector(jsonPatch string) error {
+	return patchDynamicResource("flowcollector", "cluster", "", types.JSONPatchType, []byte(jsonPatch))
+}
+
+// patchFlowCollectorMerge applies a merge patch to the cluster flowcollector
+func patchFlowCollectorMerge(mergePatch string) error {
+	return patchDynamicResource("flowcollector", "cluster", "", types.MergePatchType, []byte(mergePatch))
+}
+
+// scaleDeployment scales a deployment to the specified replica count
+func scaleDeployment(namespace, name string, replicas int32) error {
+	scale, err := k8sClient.AppsV1().Deployments(namespace).GetScale(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	scale.Spec.Replicas = replicas
+	_, err = k8sClient.AppsV1().Deployments(namespace).UpdateScale(context.Background(), name, scale, metav1.UpdateOptions{})
+	return err
+}
+
+// taintNode adds or updates a taint on a node
+func taintNode(nodeName, key, value, effect string) error {
+	ctx := context.Background()
+	node, err := k8sClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	newTaint := corev1.Taint{Key: key, Value: value, Effect: corev1.TaintEffect(effect)}
+	updated := false
+	for i, t := range node.Spec.Taints {
+		if t.Key == key {
+			node.Spec.Taints[i] = newTaint
+			updated = true
+			break
+		}
+	}
+	if !updated {
+		node.Spec.Taints = append(node.Spec.Taints, newTaint)
+	}
+	_, err = k8sClient.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	return err
+}
+
+// removeTaintFromNode removes a taint from a node by key
+func removeTaintFromNode(nodeName, key string) error {
+	ctx := context.Background()
+	node, err := k8sClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	var filtered []corev1.Taint
+	for _, t := range node.Spec.Taints {
+		if t.Key != key {
+			filtered = append(filtered, t)
+		}
+	}
+	node.Spec.Taints = filtered
+	_, err = k8sClient.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	return err
+}
+
+// getPodEnvValue gets an environment variable value from the first pod matching a label selector
+func getPodEnvValue(namespace, labelSelector, envName string) (string, error) {
+	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return "", err
+	}
+	if len(pods.Items) == 0 || len(pods.Items[0].Spec.Containers) == 0 {
+		return "", fmt.Errorf("no pods found with label %s in namespace %s", labelSelector, namespace)
+	}
+	for _, env := range pods.Items[0].Spec.Containers[0].Env {
+		if env.Name == envName {
+			return env.Value, nil
+		}
+	}
+	return "", fmt.Errorf("env variable %s not found", envName)
+}
+
+// getPodEnvByIndex gets environment variable value by index from the first pod matching a label selector
+func getPodEnvByIndex(namespace, labelSelector string, index int) (string, error) {
+	pods, err := k8sClient.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return "", err
+	}
+	if len(pods.Items) == 0 || len(pods.Items[0].Spec.Containers) == 0 {
+		return "", fmt.Errorf("no pods found with label %s in namespace %s", labelSelector, namespace)
+	}
+	envVars := pods.Items[0].Spec.Containers[0].Env
+	if index >= len(envVars) {
+		return "", fmt.Errorf("env index %d out of range or empty", index)
+	}
+	return envVars[index].Value, nil
+}
+
+// patchSubscription applies a JSON patch to a subscription
+func patchSubscription(namespace, name, jsonPatch string) error {
+	return patchDynamicResource("subscription", name, namespace, types.JSONPatchType, []byte(jsonPatch))
+}
+
+// labelNamespace adds or updates a label on a namespace
+func labelNamespace(namespace, key, value string) error {
+	patch := fmt.Sprintf(`{"metadata":{"labels":{%q:%q}}}`, key, value)
+	_, err := k8sClient.CoreV1().Namespaces().Patch(context.Background(), namespace, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
+	return err
+}
+
+// removeLabelFromNamespace removes a label from a namespace
+func removeLabelFromNamespace(namespace, key string) error {
+	patch := fmt.Sprintf(`{"metadata":{"labels":{%q:null}}}`, key)
+	_, err := k8sClient.CoreV1().Namespaces().Patch(context.Background(), namespace, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
+	return err
+}
+
+// assertWaitPollNoErr validates the result of Wait.Poll operations, expecting no error
+// Ported from openshift/origin test/extended/util/compat_otp/assert.go
+func assertWaitPollNoErr(e error, msg string) {
+	if e == nil {
+		return
+	}
+	var err error
+	if errors.Is(e, context.DeadlineExceeded) || e.Error() == "timed out waiting for the condition" {
+		err = fmt.Errorf("case: %v\nerror: %s", g.CurrentSpecReport().FullText(), msg)
+	} else {
+		err = fmt.Errorf("case: %v\nerror: %s", g.CurrentSpecReport().FullText(), e.Error())
+	}
+	o.Expect(err).NotTo(o.HaveOccurred())
 }
