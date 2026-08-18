@@ -1425,18 +1425,95 @@ func isPlatformSuitableForNMState() bool {
 	return true
 }
 
+// listManagedResources lists all netobserv-managed resources (services, deployments,
+// daemonsets, serviceaccounts, networkpolicies, configmaps, secrets) across all namespaces
+// and returns them in "type/name" format matching `oc get -o name` output.
+func listManagedResources() ([]string, error) {
+	ctx := context.Background()
+	selector := metav1.ListOptions{LabelSelector: "netobserv-managed=true"}
+	var names []string
+
+	svcs, err := k8sClient.CoreV1().Services("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range svcs.Items {
+		names = append(names, "service/"+s.Name)
+	}
+
+	deps, err := k8sClient.AppsV1().Deployments("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range deps.Items {
+		names = append(names, "deployment.apps/"+d.Name)
+	}
+
+	dss, err := k8sClient.AppsV1().DaemonSets("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range dss.Items {
+		names = append(names, "daemonset.apps/"+d.Name)
+	}
+
+	sas, err := k8sClient.CoreV1().ServiceAccounts("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range sas.Items {
+		names = append(names, "serviceaccount/"+s.Name)
+	}
+
+	nps, err := k8sClient.NetworkingV1().NetworkPolicies("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, n := range nps.Items {
+		names = append(names, "networkpolicy.networking.k8s.io/"+n.Name)
+	}
+
+	cms, err := k8sClient.CoreV1().ConfigMaps("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range cms.Items {
+		names = append(names, "configmap/"+c.Name)
+	}
+
+	secs, err := k8sClient.CoreV1().Secrets("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range secs.Items {
+		names = append(names, "secret/"+s.Name)
+	}
+
+	return names, nil
+}
+
+// listManagedPods lists all netobserv-managed pods across all namespaces
+// and returns them in "pod/name" format.
+func listManagedPods() ([]string, error) {
+	pods, err := k8sClient.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{LabelSelector: "netobserv-managed=true"})
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, p := range pods.Items {
+		names = append(names, "pod/"+p.Name)
+	}
+	return names, nil
+}
+
 // pollVerifyComponentsDeleted polls until all components in deleteList are gone and all in remainList still exist
-func pollVerifyComponentsDeleted(oc *exutil.CLI, deleteList, remainList []string) {
+func pollVerifyComponentsDeleted(deleteList, remainList []string) {
 	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 180*time.Second, false, func(context.Context) (bool, error) {
-		output, getErr := oc.AsAdmin().WithoutNamespace().Run("get").Args(
-			"service,deployment,daemonset,serviceaccount,networkpolicy,configmap,secret",
-			"-A", "-l", "netobserv-managed=true", "-o", "name",
-		).Output()
+		outputLines, getErr := listManagedResources()
 		if getErr != nil {
 			e2e.Logf("Error getting components: %v", getErr)
 			return false, nil
 		}
-		outputLines := strings.Split(strings.TrimSpace(output), "\n")
 		for _, component := range deleteList {
 			for _, line := range outputLines {
 				if strings.TrimSpace(line) == component {
