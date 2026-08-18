@@ -118,8 +118,6 @@ func init() {
 	for _, group := range []string{tagNodes, tagNamespaces, tagWorkloads} {
 		groupTrimmed := strings.TrimSuffix(group, "s")
 		labels := mapLabels[group]
-		dnsLabels := labels
-		dnsLabels = append(dnsLabels, "DnsFlagsResponseCode")
 		predefinedMetrics = append(predefinedMetrics, metricslatest.FlowMetricSpec{
 			MetricName: fmt.Sprintf("%s_dns_latency_seconds", groupTrimmed),
 			Type:       metricslatest.HistogramMetric,
@@ -128,10 +126,23 @@ func init() {
 			Filters: []metricslatest.MetricFilter{
 				{Field: "DnsId", MatchType: metricslatest.MatchPresence},
 			},
-			Labels:  dnsLabels,
+			Labels:  labels,
 			Divider: "1000", // ms => s
 			Buckets: latencyBuckets,
-			Charts:  dnsCharts(group),
+			Charts:  dnsLatencyCharts(group),
+		})
+		dnsLabels := labels
+		dnsLabels = append(dnsLabels, "DnsFlagsResponseCode")
+		dnsLabels = append(dnsLabels, "DnsName")
+		predefinedMetrics = append(predefinedMetrics, metricslatest.FlowMetricSpec{
+			MetricName: fmt.Sprintf("%s_dns_flows_total", groupTrimmed),
+			Type:       metricslatest.CounterMetric,
+			Help:       fmt.Sprintf("DNS flows per %s", groupTrimmed),
+			Filters: []metricslatest.MetricFilter{
+				{Field: "DnsId", MatchType: metricslatest.MatchPresence},
+			},
+			Labels: dnsLabels,
+			Charts: dnsCharts(group),
 		})
 	}
 

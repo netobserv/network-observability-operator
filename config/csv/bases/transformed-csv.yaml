@@ -319,6 +319,8 @@ spec:
             displayName: Server
           - path: agent.ebpf.metrics.server.port
             displayName: Port
+          - path: agent.ebpf.metrics.server.scrapeInterval
+            displayName: Scrape interval
           - path: agent.ebpf.sampling
             displayName: Sampling
           - path: consolePlugin.portNaming.enable
@@ -415,6 +417,8 @@ spec:
             displayName: Include list
           - path: processor.metrics.server.port
             displayName: Port
+          - path: processor.metrics.server.scrapeInterval
+            displayName: Scrape interval
           - path: processor.service
             displayName: Service
           - path: processor.service.providedCertificates
