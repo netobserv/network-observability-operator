@@ -193,7 +193,8 @@ func (flow Flowcollector) CreateFlowcollector() {
 		}
 	}
 
-	applyNsResourceFromTemplateByAdmin(flow.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(flow.Namespace, parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
 
 	flow.createRoleBindings()
 
