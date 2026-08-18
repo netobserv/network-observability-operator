@@ -28,7 +28,7 @@ type GVKInfo struct {
 	Obj     client.Object
 	Getter  func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (runtime.Object, error)
 	Watcher func(ctx context.Context, cl kubernetes.Interface, key client.ObjectKey) (watch.Interface, error)
-	Cleanup func(obj runtime.Object) runtime.Object
+	Cleanup func(obj runtime.Object)
 }
 
 var (
@@ -41,11 +41,10 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().ConfigMaps(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			cm := obj.(*corev1.ConfigMap)
 			cm.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			cm.BinaryData = nil
-			return cm
 		},
 	}
 	ClusterRoles = GVKInfo{
@@ -57,10 +56,9 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.RbacV1().ClusterRoles().Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			cr := obj.(*rbacv1.ClusterRole)
 			cr.SetManagedFields([]metav1.ManagedFieldsEntry{})
-			return cr
 		},
 	}
 	ClusterRoleBindings = GVKInfo{
@@ -72,10 +70,9 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.RbacV1().ClusterRoleBindings().Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			crb := obj.(*rbacv1.ClusterRoleBinding)
 			crb.SetManagedFields([]metav1.ManagedFieldsEntry{})
-			return crb
 		},
 	}
 	Daemonsets = GVKInfo{
@@ -87,11 +84,10 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.AppsV1().DaemonSets(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			ds := obj.(*appsv1.DaemonSet)
 			ds.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			ds.Status.Conditions = []appsv1.DaemonSetCondition{}
-			return ds
 		},
 	}
 	Deployments = GVKInfo{
@@ -103,11 +99,10 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.AppsV1().Deployments(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			dpl := obj.(*appsv1.Deployment)
 			dpl.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			dpl.Status.Conditions = []appsv1.DeploymentCondition{}
-			return dpl
 		},
 	}
 	HorizontalPodAutoscalers = GVKInfo{
@@ -119,12 +114,11 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.AutoscalingV2().HorizontalPodAutoscalers(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			hpa := obj.(*ascv2.HorizontalPodAutoscaler)
 			hpa.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			hpa.Status.CurrentMetrics = []ascv2.MetricStatus{}
 			hpa.Status.Conditions = []ascv2.HorizontalPodAutoscalerCondition{}
-			return hpa
 		},
 	}
 	Namespaces = GVKInfo{
@@ -136,11 +130,10 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().Namespaces().Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			ns := obj.(*corev1.Namespace)
 			ns.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			ns.Status.Conditions = []corev1.NamespaceCondition{}
-			return ns
 		},
 	}
 	NetworkPolicies = GVKInfo{
@@ -152,10 +145,9 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.NetworkingV1().NetworkPolicies(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			np := obj.(*networkingv1.NetworkPolicy)
 			np.SetManagedFields([]metav1.ManagedFieldsEntry{})
-			return np
 		},
 	}
 	Roles = GVKInfo{
@@ -167,10 +159,9 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.RbacV1().Roles(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			ro := obj.(*rbacv1.Role)
 			ro.SetManagedFields([]metav1.ManagedFieldsEntry{})
-			return ro
 		},
 	}
 	RoleBindings = GVKInfo{
@@ -182,10 +173,9 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.RbacV1().RoleBindings(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			rb := obj.(*rbacv1.RoleBinding)
 			rb.SetManagedFields([]metav1.ManagedFieldsEntry{})
-			return rb
 		},
 	}
 	Secrets = GVKInfo{
@@ -197,11 +187,10 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().Secrets(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			sc := obj.(*corev1.Secret)
 			sc.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			sc.StringData = nil
-			return sc
 		},
 	}
 	Services = GVKInfo{
@@ -213,12 +202,11 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().Services(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			sv := obj.(*corev1.Service)
 			sv.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			sv.Status.LoadBalancer.Ingress = []corev1.LoadBalancerIngress{}
 			sv.Status.Conditions = []metav1.Condition{}
-			return sv
 		},
 	}
 	ServiceAccounts = GVKInfo{
@@ -230,10 +218,9 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().ServiceAccounts(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			sa := obj.(*corev1.ServiceAccount)
 			sa.SetManagedFields([]metav1.ManagedFieldsEntry{})
-			return sa
 		},
 	}
 	Endpoints = GVKInfo{
@@ -246,13 +233,12 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.CoreV1().Endpoints(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
 			e := obj.(*corev1.Endpoints)
 			e.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			//nolint:staticcheck // SA1019: Endpoints is deprecated but used as fallback for k8s < 1.21
 			e.Subsets = []corev1.EndpointSubset{}
-			return e
 		},
 	}
 	EndpointSlices = GVKInfo{
@@ -264,12 +250,11 @@ var (
 			opts := metav1.ListOptions{FieldSelector: fields.OneTermEqualSelector(metav1.ObjectNameField, key.Name).String()}
 			return cl.DiscoveryV1().EndpointSlices(key.Namespace).Watch(ctx, opts)
 		},
-		Cleanup: func(obj runtime.Object) runtime.Object {
+		Cleanup: func(obj runtime.Object) {
 			e := obj.(*discoveryv1.EndpointSlice)
 			e.SetManagedFields([]metav1.ManagedFieldsEntry{})
 			e.Endpoints = []discoveryv1.Endpoint{}
 			e.Ports = []discoveryv1.EndpointPort{}
-			return e
 		},
 	}
 	NewLiveClient func(c *rest.Config) (kubernetes.Interface, error) = func(c *rest.Config) (kubernetes.Interface, error) {
