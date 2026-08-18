@@ -17,25 +17,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/iam/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
-)
-
-const (
-	minioNS        = "minio-aosqe"
-	minioSecret    = "minio-creds"
-	apiPath        = "/api/logs/v1/"
-	queryRangePath = "/loki/api/v1/query_range"
-	loNS           = "openshift-operators-redhat"
 )
 
 // s3Credential defines the s3 credentials
@@ -46,43 +38,31 @@ type s3Credential struct {
 	Endpoint        string // the endpoint of s3 service
 }
 
-func getAWSCredentialFromCluster(oc *exutil.CLI) s3Credential {
-	region, err := compat_otp.GetAWSClusterRegion(oc)
+func getAWSCredentialFromCluster() s3Credential {
+	region, err := getAWSClusterRegion()
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	dirname := "/tmp/" + oc.Namespace() + "-creds"
-	defer os.RemoveAll(dirname)
-	err = os.MkdirAll(dirname, 0777)
+	secret, err := k8sClient.CoreV1().Secrets("kube-system").Get(context.Background(), "aws-creds", metav1.GetOptions{})
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	_, err = oc.AsAdmin().WithoutNamespace().Run("extract").Args("secret/aws-creds", "-n", "kube-system", "--confirm", "--to="+dirname).Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-
-	accessKeyID, err := os.ReadFile(dirname + "/aws_access_key_id")
-	o.Expect(err).NotTo(o.HaveOccurred())
-	secretAccessKey, err := os.ReadFile(dirname + "/aws_secret_access_key")
-	o.Expect(err).NotTo(o.HaveOccurred())
-
-	cred := s3Credential{Region: region, AccessKeyID: string(accessKeyID), SecretAccessKey: string(secretAccessKey)}
+	cred := s3Credential{
+		Region:          region,
+		AccessKeyID:     string(secret.Data["aws_access_key_id"]),
+		SecretAccessKey: string(secret.Data["aws_secret_access_key"]),
+	}
 	return cred
 }
 
-func getMinIOCreds(oc *exutil.CLI, ns string) s3Credential {
-	dirname := "/tmp/" + oc.Namespace() + "-creds"
-	defer os.RemoveAll(dirname)
-	err := os.MkdirAll(dirname, 0777)
+func getMinIOCreds(ns string) s3Credential {
+	secret, err := k8sClient.CoreV1().Secrets(ns).Get(context.Background(), minioSecret, metav1.GetOptions{})
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	_, err = oc.AsAdmin().WithoutNamespace().Run("extract").Args("secret/"+minioSecret, "-n", ns, "--confirm", "--to="+dirname).Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
-
-	accessKeyID, err := os.ReadFile(dirname + "/access_key_id")
-	o.Expect(err).NotTo(o.HaveOccurred())
-	secretAccessKey, err := os.ReadFile(dirname + "/secret_access_key")
-	o.Expect(err).NotTo(o.HaveOccurred())
-
-	endpoint := "https://" + getRouteAddress(oc, ns, "minio")
-	return s3Credential{Endpoint: endpoint, AccessKeyID: string(accessKeyID), SecretAccessKey: string(secretAccessKey)}
+	endpoint := "https://" + getRouteAddress(ns, "minio")
+	return s3Credential{
+		Endpoint:        endpoint,
+		AccessKeyID:     string(secret.Data["access_key_id"]),
+		SecretAccessKey: string(secret.Data["secret_access_key"]),
+	}
 }
 
 func generateS3Config(cred s3Credential) aws.Config {
@@ -143,7 +123,7 @@ func createS3Bucket(client *s3.Client, bucketName, region string) error {
 		_, err = client.CreateBucket(context.TODO(), &s3.CreateBucketInput{Bucket: &bucketName})
 		return err
 	}
-	_, err = client.CreateBucket(context.TODO(), &s3.CreateBucketInput{Bucket: &bucketName, CreateBucketConfiguration: &types.CreateBucketConfiguration{LocationConstraint: types.BucketLocationConstraint(region)}})
+	_, err = client.CreateBucket(context.TODO(), &s3.CreateBucketInput{Bucket: &bucketName, CreateBucketConfiguration: &s3types.CreateBucketConfiguration{LocationConstraint: s3types.BucketLocationConstraint(region)}})
 	return err
 }
 
@@ -169,15 +149,15 @@ func emptyS3Bucket(client *s3.Client, bucketName string) error {
 
 	// Delete objects in the bucket
 	if len(objects.Contents) > 0 {
-		objectIdentifiers := make([]types.ObjectIdentifier, len(objects.Contents))
+		objectIdentifiers := make([]s3types.ObjectIdentifier, len(objects.Contents))
 		for i, object := range objects.Contents {
-			objectIdentifiers[i] = types.ObjectIdentifier{Key: object.Key}
+			objectIdentifiers[i] = s3types.ObjectIdentifier{Key: object.Key}
 		}
 
 		quiet := true
 		_, err = client.DeleteObjects(context.TODO(), &s3.DeleteObjectsInput{
 			Bucket: &bucketName,
-			Delete: &types.Delete{
+			Delete: &s3types.Delete{
 				Objects: objectIdentifiers,
 				Quiet:   &quiet,
 			},
@@ -196,35 +176,77 @@ func emptyS3Bucket(client *s3.Client, bucketName string) error {
 }
 
 // createSecretForAWSS3Bucket creates a secret for Loki to connect to s3 bucket
-func createSecretForAWSS3Bucket(oc *exutil.CLI, bucketName, secretName, ns string, cred s3Credential) error {
+func createSecretForAWSS3Bucket(bucketName, secretName, ns string, cred s3Credential) error {
 	if len(secretName) == 0 {
 		return fmt.Errorf("secret name shouldn't be empty")
 	}
 
 	endpoint := "https://s3." + cred.Region + ".amazonaws.com"
-	return oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", secretName, "--from-literal=access_key_id="+cred.AccessKeyID, "--from-literal=access_key_secret="+cred.SecretAccessKey, "--from-literal=region="+cred.Region, "--from-literal=bucketnames="+bucketName, "--from-literal=endpoint="+endpoint, "-n", ns).Execute()
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: ns,
+		},
+		StringData: map[string]string{
+			"access_key_id":     cred.AccessKeyID,
+			"access_key_secret": cred.SecretAccessKey,
+			"region":            cred.Region,
+			"bucketnames":       bucketName,
+			"endpoint":          endpoint,
+		},
+	}
+	_, err := k8sClient.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{})
+	return err
 }
 
-func createSecretForODFBucket(oc *exutil.CLI, bucketName, secretName, ns string) error {
+func createSecretForODFBucket(bucketName, secretName, ns string) error {
 	if len(secretName) == 0 {
 		return fmt.Errorf("secret name shouldn't be empty")
 	}
-	dirname := "/tmp/" + oc.Namespace() + "-creds"
-	err := os.MkdirAll(dirname, 0777)
-	o.Expect(err).NotTo(o.HaveOccurred())
-	defer os.RemoveAll(dirname)
-	_, err = oc.AsAdmin().WithoutNamespace().Run("extract").Args("secret/noobaa-admin", "-n", "openshift-storage", "--confirm", "--to="+dirname).Output()
-	o.Expect(err).NotTo(o.HaveOccurred())
+
+	ctx := context.Background()
+	noobaaSecret, err := k8sClient.CoreV1().Secrets("openshift-storage").Get(ctx, "noobaa-admin", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
 
 	endpoint := "http://s3.openshift-storage.svc:80"
-	return oc.AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", secretName, "--from-file=access_key_id="+dirname+"/AWS_ACCESS_KEY_ID", "--from-file=access_key_secret="+dirname+"/AWS_SECRET_ACCESS_KEY", "--from-literal=bucketnames="+bucketName, "--from-literal=endpoint="+endpoint, "-n", ns).Execute()
+
+	newSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: ns},
+		Data: map[string][]byte{
+			"access_key_id":     noobaaSecret.Data["AWS_ACCESS_KEY_ID"],
+			"access_key_secret": noobaaSecret.Data["AWS_SECRET_ACCESS_KEY"],
+		},
+		StringData: map[string]string{
+			"bucketnames": bucketName,
+			"endpoint":    endpoint,
+		},
+	}
+	_, err = k8sClient.CoreV1().Secrets(ns).Create(ctx, newSecret, metav1.CreateOptions{})
+	return err
 }
 
-func createSecretForMinIOBucket(oc *exutil.CLI, bucketName, secretName, ns string, cred s3Credential) error {
+func createSecretForMinIOBucket(bucketName, secretName, ns string, cred s3Credential) error {
 	if len(secretName) == 0 {
 		return fmt.Errorf("secret name shouldn't be empty")
 	}
-	return oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", secretName, "--from-literal=access_key_id="+cred.AccessKeyID, "--from-literal=access_key_secret="+cred.SecretAccessKey, "--from-literal=bucketnames="+bucketName, "--from-literal=endpoint="+cred.Endpoint, "-n", ns).Execute()
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: ns,
+		},
+		StringData: map[string]string{
+			"access_key_id":     cred.AccessKeyID,
+			"access_key_secret": cred.SecretAccessKey,
+			"bucketnames":       bucketName,
+			"endpoint":          cred.Endpoint,
+		},
+	}
+	_, err := k8sClient.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{})
+	return err
 }
 
 func getGCPProjectNumber(projectID string) (string, error) {
@@ -466,150 +488,192 @@ func removeServiceAccountFromGCP(name string) error {
 	return nil
 }
 
-func createSecretForGCSBucketWithSTS(oc *exutil.CLI, namespace, secretName, bucketName string) error {
-	return oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", "-n", namespace, secretName, "--from-literal=bucketname="+bucketName).Execute()
+func createSecretForGCSBucketWithSTS(namespace, secretName, bucketName string) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: namespace,
+		},
+		StringData: map[string]string{
+			"bucketname": bucketName,
+		},
+	}
+	_, err := k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	return err
 }
 
 // creates a secret for Loki to connect to gcs bucket
-func createSecretForGCSBucket(oc *exutil.CLI, bucketName, secretName, ns string) error {
+func createSecretForGCSBucket(bucketName, secretName, ns string) error {
 	if len(secretName) == 0 {
 		return fmt.Errorf("secret name shouldn't be empty")
 	}
 
 	// get gcp-credentials from env var GOOGLE_APPLICATION_CREDENTIALS
 	gcsCred := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	return oc.AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", secretName, "-n", ns, "--from-literal=bucketname="+bucketName, "--from-file=key.json="+gcsCred).Execute()
+	keyData, err := os.ReadFile(gcsCred)
+	if err != nil {
+		return err
+	}
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: ns},
+		Data:       map[string][]byte{"key.json": keyData},
+		StringData: map[string]string{"bucketname": bucketName},
+	}
+	_, err = k8sClient.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{})
+	return err
 }
 
 // creates a secret for Loki to connect to azure container
-func createSecretForAzureContainer(oc *exutil.CLI, bucketName, secretName, ns string) error {
-	environment := "AzureGlobal"
-	cloudName, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("infrastructure", "cluster", "-o=jsonpath={.status.platformStatus.azure.cloudName}").Output()
-	if err != nil {
-		return fmt.Errorf("can't get azure cluster type  %w", err)
-	}
-	if strings.ToLower(cloudName) == "azureusgovernmentcloud" {
-		environment = "AzureUSGovernment"
-	}
-	if strings.ToLower(cloudName) == "azurechinacloud" {
-		environment = "AzureChinaCloud"
-	}
-	if strings.ToLower(cloudName) == "azuregermancloud" {
-		environment = "AzureGermanCloud"
-	}
+func createSecretForAzureContainer(bucketName, secretName, ns string) error {
+	environment, _ := getStorageAccountURISuffixAndEnvForAzure()
 
-	accountName, accountKey, err1 := compat_otp.GetAzureStorageAccountFromCluster(oc)
+	accountName, accountKey, err1 := getAzureStorageAccountFromCluster()
 	if err1 != nil {
 		return fmt.Errorf("can't get azure storage account from cluster: %w", err1)
 	}
-	return oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", "-n", ns, secretName, "--from-literal=environment="+environment, "--from-literal=container="+bucketName, "--from-literal=account_name="+accountName, "--from-literal=account_key="+accountKey).Execute()
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: ns,
+		},
+		StringData: map[string]string{
+			"environment":  environment,
+			"container":    bucketName,
+			"account_name": accountName,
+			"account_key":  accountKey,
+		},
+	}
+	_, err := k8sClient.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{})
+	return err
 }
 
-func createSecretForSwiftContainer(oc *exutil.CLI, containerName, secretName, ns string, cred *compat_otp.OpenstackCredentials) error {
-	userID, domainID := compat_otp.GetOpenStackUserIDAndDomainID(cred)
-	err := oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", "-n", ns, secretName,
-		"--from-literal=auth_url="+cred.Clouds.Openstack.Auth.AuthURL,
-		"--from-literal=username="+cred.Clouds.Openstack.Auth.Username,
-		"--from-literal=user_domain_name="+cred.Clouds.Openstack.Auth.UserDomainName,
-		"--from-literal=user_domain_id="+domainID,
-		"--from-literal=user_id="+userID,
-		"--from-literal=password="+cred.Clouds.Openstack.Auth.Password,
-		"--from-literal=domain_id="+domainID,
-		"--from-literal=domain_name="+cred.Clouds.Openstack.Auth.UserDomainName,
-		"--from-literal=container_name="+containerName,
-		"--from-literal=project_id="+cred.Clouds.Openstack.Auth.ProjectID,
-		"--from-literal=project_name="+cred.Clouds.Openstack.Auth.ProjectName,
-		"--from-literal=project_domain_id="+domainID,
-		"--from-literal=project_domain_name="+cred.Clouds.Openstack.Auth.UserDomainName).Execute()
+func createSecretForSwiftContainer(containerName, secretName, ns string, cred *openstackCredentials) error {
+	userID, domainID := getOpenStackUserIDAndDomainID(cred)
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: ns,
+		},
+		StringData: map[string]string{
+			"auth_url":            cred.Clouds.Openstack.Auth.AuthURL,
+			"username":            cred.Clouds.Openstack.Auth.Username,
+			"user_domain_name":    cred.Clouds.Openstack.Auth.UserDomainName,
+			"user_domain_id":      domainID,
+			"user_id":             userID,
+			"password":            cred.Clouds.Openstack.Auth.Password,
+			"domain_id":           domainID,
+			"domain_name":         cred.Clouds.Openstack.Auth.UserDomainName,
+			"container_name":      containerName,
+			"project_id":          cred.Clouds.Openstack.Auth.ProjectID,
+			"project_name":        cred.Clouds.Openstack.Auth.ProjectName,
+			"project_domain_id":   domainID,
+			"project_domain_name": cred.Clouds.Openstack.Auth.UserDomainName,
+		},
+	}
+	_, err := k8sClient.CoreV1().Secrets(ns).Create(context.Background(), secret, metav1.CreateOptions{})
 	return err
 }
 
 // checkODF check if the ODF is installed in the cluster or not
 // here only checks the sc/ocs-storagecluster-ceph-rbd and svc/s3
-func checkODF(oc *exutil.CLI) bool {
-	svcFound := false
+func checkODF() bool {
 	expectedSC := []string{"openshift-storage.noobaa.io"}
-	var scInCluster []string
-	scs, err := oc.AdminKubeClient().StorageV1().StorageClasses().List(context.Background(), metav1.ListOptions{})
+
+	scList, err := k8sClient.StorageV1().StorageClasses().List(context.Background(), metav1.ListOptions{})
 	o.Expect(err).NotTo(o.HaveOccurred())
 
-	for _, sc := range scs.Items {
+	var scInCluster []string
+	for _, sc := range scList.Items {
 		scInCluster = append(scInCluster, sc.Name)
 	}
-
 	for _, s := range expectedSC {
 		if !contain(scInCluster, s) {
 			return false
 		}
 	}
 
-	_, err = oc.AdminKubeClient().CoreV1().Services("openshift-storage").Get(context.Background(), "s3", metav1.GetOptions{})
-	if err == nil {
-		svcFound = true
-	}
-	return svcFound
+	_, err = k8sClient.CoreV1().Services("openshift-storage").Get(context.Background(), "s3", metav1.GetOptions{})
+	return err == nil
 }
 
-func createObjectBucketClaim(oc *exutil.CLI, ns, name string) error {
+func createObjectBucketClaim(ns, name string) error {
 	template, _ := filePath.Abs("testdata/logging/odf/objectBucketClaim.yaml")
 	obc := Resource{"objectbucketclaims", name, ns}
 
-	err := obc.applyFromTemplate(oc, "-f", template, "-n", ns, "-p", "NAME="+name, "NAMESPACE="+ns)
+	err := obc.applyFromTemplate("-f", template, "-n", ns, "-p", "NAME="+name, "NAMESPACE="+ns)
 	if err != nil {
 		return err
 	}
-	_ = obc.WaitForResourceToAppear(oc)
-	_ = Resource{"objectbuckets", "obc-" + ns + "-" + name, ns}.WaitForResourceToAppear(oc)
-	assertResourceStatus(oc, "objectbucketclaims", name, ns, "{.status.phase}", "Bound")
+	_ = obc.WaitForResourceToAppear()
+	_ = Resource{"objectbuckets", "obc-" + ns + "-" + name, ns}.WaitForResourceToAppear()
+	assertResourceStatus("objectbucketclaims", name, ns, ".status.phase", "Bound")
 	return nil
 }
 
-func deleteObjectBucketClaim(oc *exutil.CLI, ns, name string) error {
+func deleteObjectBucketClaim(ns, name string) error {
 	obc := Resource{"objectbucketclaims", name, ns}
-	err := obc.clear(oc)
+
+	err := obc.clear()
 	if err != nil {
 		return err
 	}
-	return obc.WaitUntilResourceIsGone(oc)
+	return obc.WaitUntilResourceIsGone()
 }
 
 // checkMinIO
-func checkMinIO(oc *exutil.CLI, ns string) (bool, error) {
+func checkMinIO(ns string) (bool, error) {
 	podReady, svcFound := false, false
-	pod, err := oc.AdminKubeClient().CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{LabelSelector: "app=minio"})
+
+	pods, err := k8sClient.CoreV1().Pods(ns).List(context.Background(), metav1.ListOptions{LabelSelector: "app=minio"})
 	if err != nil {
 		return false, err
 	}
-	if len(pod.Items) > 0 && pod.Items[0].Status.Phase == "Running" {
+	if len(pods.Items) == 0 {
+		return false, fmt.Errorf("no resources found in %s namespace", ns)
+	}
+	if pods.Items[0].Status.Phase == corev1.PodRunning {
 		podReady = true
 	}
-	_, err = oc.AdminKubeClient().CoreV1().Services(ns).Get(context.Background(), "minio", metav1.GetOptions{})
-	if err == nil {
-		svcFound = true
+
+	_, err = k8sClient.CoreV1().Services(ns).Get(context.Background(), "minio", metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, fmt.Errorf("services \"minio\" not found")
+		}
+		return false, err
 	}
-	return podReady && svcFound, err
+	svcFound = true
+	return podReady && svcFound, nil
 }
 
-func useExtraObjectStorage(oc *exutil.CLI) string {
-	if checkODF(oc) {
+func useExtraObjectStorage() string {
+	if checkODF() {
 		e2e.Logf("use the existing ODF storage service")
 		return "odf"
 	}
-	ready, err := checkMinIO(oc, minioNS)
+	ready, err := checkMinIO(minioNS)
 	if ready {
 		e2e.Logf("use existing MinIO storage service")
 		return "minio"
 	}
-	if strings.Contains(err.Error(), "No resources found") || strings.Contains(err.Error(), "not found") {
+	if err != nil && (strings.Contains(err.Error(), "No resources found") || strings.Contains(err.Error(), "not found")) {
 		e2e.Logf("deploy MinIO and use this MinIO as storage service")
-		deployMinIO(oc)
+		deployMinIO()
 		return "minio"
 	}
 	return ""
 }
 
-func patchLokiOperatorWithAWSRoleArn(oc *exutil.CLI, subNamespace, roleArn string) {
-	roleArnPatchConfig := `{
+func patchLokiOperatorWithAWSRoleArn(subNamespace, roleArn string) {
+	// List subscriptions to find loki-operator
+	subName, err := getSubscriptionByPackageName(subNamespace, "loki-operator")
+	o.Expect(err).NotTo(o.HaveOccurred())
+	o.Expect(subName).ShouldNot(o.BeEmpty())
+
+	// Prepare patch
+	patchData := fmt.Sprintf(`{
 		"spec": {
 		  "config": {
 			"env": [
@@ -620,19 +684,17 @@ func patchLokiOperatorWithAWSRoleArn(oc *exutil.CLI, subNamespace, roleArn strin
 			]
 		  }
 		}
-	  }`
+	}`, roleArn)
 
-	subName, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", "-n", subNamespace, `-ojsonpath={.items[?(@.spec.name=="loki-operator")].metadata.name}`).Output()
+	err = patchDynamicResource("subscription", subName, subNamespace, types.MergePatchType, []byte(patchData))
 	o.Expect(err).NotTo(o.HaveOccurred())
-	o.Expect(subName).ShouldNot(o.BeEmpty())
-	err = oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("patch").Args("sub", subName, "-n", subNamespace, "-p", fmt.Sprintf(roleArnPatchConfig, roleArn), "--type=merge").Execute()
-	o.Expect(err).NotTo(o.HaveOccurred())
-	WaitForPodsReadyWithLabel(oc, loNS, "name=loki-operator-controller-manager")
+
+	WaitForPodsReadyWithLabel(loNS, "name=loki-operator-controller-manager")
 }
 
 // return the storage type per different platform
-func getStorageType(oc *exutil.CLI) string {
-	platform := compat_otp.CheckPlatform(oc)
+func getStorageType() string {
+	platform := checkPlatform()
 	switch platform {
 	case "aws":
 		{
@@ -652,7 +714,7 @@ func getStorageType(oc *exutil.CLI) string {
 		}
 	default:
 		{
-			return useExtraObjectStorage(oc)
+			return useExtraObjectStorage()
 		}
 	}
 }
@@ -666,24 +728,29 @@ func newS3Client(cfg aws.Config, usePathStyle ...bool) *s3.Client {
 	})
 }
 
-func getStorageClassName(oc *exutil.CLI) (string, error) {
-	scs, err := oc.AdminKubeClient().StorageV1().StorageClasses().List(context.Background(), metav1.ListOptions{})
+func getStorageClassName() (string, error) {
+	scList, err := k8sClient.StorageV1().StorageClasses().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
-	if len(scs.Items) == 0 {
+
+	if len(scList.Items) == 0 {
 		return "", fmt.Errorf("there is no storageclass in the cluster")
 	}
-	for _, sc := range scs.Items {
-		if sc.ObjectMeta.Annotations["storageclass.kubernetes.io/is-default-class"] == "true" {
+
+	// Find default storage class
+	for _, sc := range scList.Items {
+		if sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true" {
 			return sc.Name, nil
 		}
 	}
-	return scs.Items[0].Name, nil
+
+	// Return first storage class if no default
+	return scList.Items[0].Name, nil
 }
 
 // prepareResourcesForLokiStack creates buckets/containers in backend storage provider, and creates the secret for Loki to use
-func (l lokiStack) prepareResourcesForLokiStack(oc *exutil.CLI) error {
+func (l lokiStack) prepareResourcesForLokiStack() error {
 	var err error
 	if len(l.BucketName) == 0 {
 		return fmt.Errorf("the bucketName should not be empty")
@@ -692,11 +759,11 @@ func (l lokiStack) prepareResourcesForLokiStack(oc *exutil.CLI) error {
 	case "s3":
 		{
 			var cfg aws.Config
-			region, err := compat_otp.GetAWSClusterRegion(oc)
+			region, err := getAWSClusterRegion()
 			if err != nil {
 				return err
 			}
-			if compat_otp.IsWorkloadIdentityCluster(oc) {
+			if isWorkloadIdentityCluster() {
 				if !checkAWSCredentials() {
 					g.Skip("Skip since no AWS credetial! No Env AWS_SHARED_CREDENTIALS_FILE, Env CLUSTER_PROFILE_DIR  or $HOME/.aws/credentials file")
 				}
@@ -708,66 +775,62 @@ func (l lokiStack) prepareResourcesForLokiStack(oc *exutil.CLI) error {
 				iamClient := newIamClient(cfg)
 				stsClient := newStsClient(cfg)
 				awsAccountID, _ := getAwsAccount(stsClient)
-				oidcName, err := getOIDC(oc)
+				oidcName, err := getOIDC()
 				o.Expect(err).NotTo(o.HaveOccurred())
-				lokiIAMRoleName := l.Name + "-" + compat_otp.GetRandomString()
+				lokiIAMRoleName := l.Name + "-" + getRandomString()
 				roleArn := createIAMRoleForLokiSTSDeployment(iamClient, oidcName, awsAccountID, partition, l.Namespace, l.Name, lokiIAMRoleName)
 				os.Setenv("LOKI_ROLE_NAME_ON_STS", lokiIAMRoleName)
-				patchLokiOperatorWithAWSRoleArn(oc, loNS, roleArn)
-				createObjectStorageSecretOnAWSSTSCluster(oc, region, l.StorageSecret, l.BucketName, l.Namespace)
+				patchLokiOperatorWithAWSRoleArn(loNS, roleArn)
+				createObjectStorageSecretOnAWSSTSCluster(region, l.StorageSecret, l.BucketName, l.Namespace)
 			} else {
-				cred := getAWSCredentialFromCluster(oc)
+				cred := getAWSCredentialFromCluster()
 				cfg = generateS3Config(cred)
-				err = createSecretForAWSS3Bucket(oc, l.BucketName, l.StorageSecret, l.Namespace, cred)
+				err = createSecretForAWSS3Bucket(l.BucketName, l.StorageSecret, l.Namespace, cred)
 				o.Expect(err).NotTo(o.HaveOccurred())
 			}
-			client := newS3Client(cfg)
-			err = createS3Bucket(client, l.BucketName, region)
+			s3Client := newS3Client(cfg)
+			err = createS3Bucket(s3Client, l.BucketName, region)
 			if err != nil {
 				return err
 			}
 		}
 	case "azure":
 		{
-			if compat_otp.IsWorkloadIdentityCluster(oc) {
+			if isWorkloadIdentityCluster() {
 				if !readAzureCredentials() {
 					g.Skip("Azure Credentials not found. Skip case!")
 				} else {
-					performManagedIdentityAndSecretSetupForAzureWIF(oc, l.Name, l.Namespace, l.BucketName, l.StorageSecret)
+					performManagedIdentityAndSecretSetupForAzureWIF(l.Name, l.Namespace, l.BucketName, l.StorageSecret)
 				}
 			} else {
-				accountName, accountKey, err1 := compat_otp.GetAzureStorageAccountFromCluster(oc)
+				accountName, accountKey, err1 := getAzureStorageAccountFromCluster()
 				if err1 != nil {
 					return fmt.Errorf("can't get azure storage account from cluster: %w", err1)
 				}
-				client, err2 := compat_otp.NewAzureContainerClient(oc, accountName, accountKey, l.BucketName)
-				if err2 != nil {
-					return err2
-				}
-				err = compat_otp.CreateAzureStorageBlobContainer(client)
+				err = createAzureStorageBlobContainer(accountName, accountKey, l.BucketName)
 				if err != nil {
 					return err
 				}
-				err = createSecretForAzureContainer(oc, l.BucketName, l.StorageSecret, l.Namespace)
+				err = createSecretForAzureContainer(l.BucketName, l.StorageSecret, l.Namespace)
 			}
 		}
 	case "gcs":
 		{
-			projectID, errGetID := compat_otp.GetGcpProjectID(oc)
+			projectID, errGetID := getGcpProjectID()
 			o.Expect(errGetID).NotTo(o.HaveOccurred())
-			err = compat_otp.CreateGCSBucket(projectID, l.BucketName)
+			err = createGCSBucket(projectID, l.BucketName)
 			if err != nil {
 				return err
 			}
-			if compat_otp.IsWorkloadIdentityCluster(oc) {
-				clusterName := getInfrastructureName(oc)
+			if isWorkloadIdentityCluster() {
+				clusterName := getInfrastructureName()
 				gcsSAName := generateServiceAccountNameForGCS(clusterName)
 				os.Setenv("LOGGING_GCS_SERVICE_ACCOUNT_NAME", gcsSAName)
 				projectNumber, err1 := getGCPProjectNumber(projectID)
 				if err1 != nil {
 					return fmt.Errorf("can't get GCP project number: %w", err1)
 				}
-				poolID, err2 := getPoolID(oc)
+				poolID, err2 := getPoolID()
 				if err2 != nil {
 					return fmt.Errorf("can't get pool ID: %w", err2)
 				}
@@ -781,70 +844,71 @@ func (l lokiStack) prepareResourcesForLokiStack(oc *exutil.CLI) error {
 					return fmt.Errorf("can't add roles to the serviceaccount: %w", err4)
 				}
 
-				patchLokiOperatorOnGCPSTSforCCO(oc, loNS, projectNumber, poolID, sa.Email)
+				patchLokiOperatorOnGCPSTSforCCO(loNS, projectNumber, poolID, sa.Email)
 
-				err = createSecretForGCSBucketWithSTS(oc, l.Namespace, l.StorageSecret, l.BucketName)
+				err = createSecretForGCSBucketWithSTS(l.Namespace, l.StorageSecret, l.BucketName)
 			} else {
-				err = createSecretForGCSBucket(oc, l.BucketName, l.StorageSecret, l.Namespace)
+				err = createSecretForGCSBucket(l.BucketName, l.StorageSecret, l.Namespace)
 			}
 		}
 	case "swift":
 		{
-			cred, err1 := compat_otp.GetOpenStackCredentials(oc)
+			cred, err1 := getOpenStackCredentials()
 			o.Expect(err1).NotTo(o.HaveOccurred())
-			client := compat_otp.NewOpenStackClient(cred, "object-store")
-			err = compat_otp.CreateOpenStackContainer(client, l.BucketName)
+			swiftClient := newOpenStackClient(cred, "object-store")
+			err = createOpenStackContainer(swiftClient, l.BucketName)
 			if err != nil {
 				return err
 			}
-			err = createSecretForSwiftContainer(oc, l.BucketName, l.StorageSecret, l.Namespace, cred)
+			err = createSecretForSwiftContainer(l.BucketName, l.StorageSecret, l.Namespace, cred)
 		}
 	case "odf":
 		{
-			err = createObjectBucketClaim(oc, l.Namespace, l.BucketName)
+			err = createObjectBucketClaim(l.Namespace, l.BucketName)
 			if err != nil {
 				return err
 			}
-			err = createSecretForODFBucket(oc, l.BucketName, l.StorageSecret, l.Namespace)
+			err = createSecretForODFBucket(l.BucketName, l.StorageSecret, l.Namespace)
 		}
 	case "minio":
 		{
-			cred := getMinIOCreds(oc, minioNS)
+			cred := getMinIOCreds(minioNS)
 			cfg := generateS3Config(cred)
-			client := newS3Client(cfg, true)
-			err = createS3Bucket(client, l.BucketName, "")
+			s3Client := newS3Client(cfg, true)
+			err = createS3Bucket(s3Client, l.BucketName, "")
 			if err != nil {
 				return err
 			}
-			err = createSecretForMinIOBucket(oc, l.BucketName, l.StorageSecret, l.Namespace, cred)
+			err = createSecretForMinIOBucket(l.BucketName, l.StorageSecret, l.Namespace, cred)
 		}
 	}
 	return err
 }
 
-func (l lokiStack) removeObjectStorage(oc *exutil.CLI) {
+func (l lokiStack) removeObjectStorage() {
 	e2e.Logf("Remove Object Storage")
-	_ = Resource{"secret", l.StorageSecret, l.Namespace}.clear(oc)
+
+	_ = Resource{"secret", l.StorageSecret, l.Namespace}.clear()
 	var err error
 	switch l.StorageType {
 	case "s3":
 		{
 			var cfg aws.Config
-			if compat_otp.IsWorkloadIdentityCluster(oc) {
-				region, err := compat_otp.GetAWSClusterRegion(oc)
+			if isWorkloadIdentityCluster() {
+				region, err := getAWSClusterRegion()
 				o.Expect(err).NotTo(o.HaveOccurred())
 				cfg = readDefaultSDKExternalConfigurations(context.TODO(), region)
 				iamClient := newIamClient(cfg)
 				deleteIAMroleonAWS(iamClient, os.Getenv("LOKI_ROLE_NAME_ON_STS"))
 				os.Unsetenv("LOKI_ROLE_NAME_ON_STS")
-				subName, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("sub", "-n", loNS, `-ojsonpath={.items[?(@.spec.name=="loki-operator")].metadata.name}`).Output()
+				subName, err := getSubscriptionByPackageName(loNS, "loki-operator")
 				o.Expect(err).NotTo(o.HaveOccurred())
 				o.Expect(subName).ShouldNot(o.BeEmpty())
-				err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("sub", subName, "-n", loNS, "-p", `[{"op": "remove", "path": "/spec/config"}]`, "--type=json").Execute()
+				err = patchSubscriptionRemoveConfig(loNS, subName)
 				o.Expect(err).NotTo(o.HaveOccurred())
-				WaitForPodsReadyWithLabel(oc, loNS, "name=loki-operator-controller-manager")
+				WaitForPodsReadyWithLabel(loNS, "name=loki-operator-controller-manager")
 			} else {
-				cred := getAWSCredentialFromCluster(oc)
+				cred := getAWSCredentialFromCluster()
 				cfg = generateS3Config(cred)
 			}
 			client := newS3Client(cfg)
@@ -852,8 +916,8 @@ func (l lokiStack) removeObjectStorage(oc *exutil.CLI) {
 		}
 	case "azure":
 		{
-			if compat_otp.IsWorkloadIdentityCluster(oc) {
-				resourceGroup, err := getAzureResourceGroupFromCluster(oc)
+			if isWorkloadIdentityCluster() {
+				resourceGroup, err := getAzureResourceGroupFromCluster()
 				o.Expect(err).NotTo(o.HaveOccurred())
 				azureSubscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
 				cred := createNewDefaultAzureCredential()
@@ -861,16 +925,14 @@ func (l lokiStack) removeObjectStorage(oc *exutil.CLI) {
 				deleteAzureStorageAccount(cred, azureSubscriptionID, resourceGroup, os.Getenv("LOKI_OBJECT_STORAGE_STORAGE_ACCOUNT"))
 				os.Unsetenv("LOKI_OBJECT_STORAGE_STORAGE_ACCOUNT")
 			} else {
-				accountName, accountKey, err1 := compat_otp.GetAzureStorageAccountFromCluster(oc)
+				accountName, accountKey, err1 := getAzureStorageAccountFromCluster()
 				o.Expect(err1).NotTo(o.HaveOccurred())
-				client, err2 := compat_otp.NewAzureContainerClient(oc, accountName, accountKey, l.BucketName)
-				o.Expect(err2).NotTo(o.HaveOccurred())
-				err = compat_otp.DeleteAzureStorageBlobContainer(client)
+				err = deleteAzureStorageBlobContainer(accountName, accountKey, l.BucketName)
 			}
 		}
 	case "gcs":
 		{
-			if compat_otp.IsWorkloadIdentityCluster(oc) {
+			if isWorkloadIdentityCluster() {
 				sa := os.Getenv("LOGGING_GCS_SERVICE_ACCOUNT_NAME")
 				if sa == "" {
 					e2e.Logf("LOGGING_GCS_SERVICE_ACCOUNT_NAME is not set, no need to delete the serviceaccount")
@@ -881,10 +943,10 @@ func (l lokiStack) removeObjectStorage(oc *exutil.CLI) {
 						e2e.Logf("LOGGING_GCS_SERVICE_ACCOUNT_EMAIL is not set, no need to delete the policies")
 					} else {
 						os.Unsetenv("LOGGING_GCS_SERVICE_ACCOUNT_EMAIL")
-						projectID, errGetID := compat_otp.GetGcpProjectID(oc)
+						projectID, errGetID := getGcpProjectID()
 						o.Expect(errGetID).NotTo(o.HaveOccurred())
 						projectNumber, _ := getGCPProjectNumber(projectID)
-						poolID, _ := getPoolID(oc)
+						poolID, _ := getPoolID()
 						err = removePermissionsFromGCPServiceAccount(poolID, projectID, projectNumber, l.Namespace, l.Name, email)
 						o.Expect(err).NotTo(o.HaveOccurred())
 						err = removeServiceAccountFromGCP("projects/" + projectID + "/serviceAccounts/" + email)
@@ -892,22 +954,22 @@ func (l lokiStack) removeObjectStorage(oc *exutil.CLI) {
 					}
 				}
 			}
-			err = compat_otp.DeleteGCSBucket(l.BucketName)
+			err = deleteGCSBucket(l.BucketName)
 		}
 	case "swift":
 		{
-			cred, err1 := compat_otp.GetOpenStackCredentials(oc)
+			cred, err1 := getOpenStackCredentials()
 			o.Expect(err1).NotTo(o.HaveOccurred())
-			client := compat_otp.NewOpenStackClient(cred, "object-store")
-			err = compat_otp.DeleteOpenStackContainer(client, l.BucketName)
+			swiftClient := newOpenStackClient(cred, "object-store")
+			err = deleteOpenStackContainer(swiftClient, l.BucketName)
 		}
 	case "odf":
 		{
-			err = deleteObjectBucketClaim(oc, l.Namespace, l.BucketName)
+			err = deleteObjectBucketClaim(l.Namespace, l.BucketName)
 		}
 	case "minio":
 		{
-			cred := getMinIOCreds(oc, minioNS)
+			cred := getMinIOCreds(minioNS)
 			cfg := generateS3Config(cred)
 			client := newS3Client(cfg, true)
 			err = deleteS3Bucket(client, l.BucketName)
@@ -916,36 +978,47 @@ func (l lokiStack) removeObjectStorage(oc *exutil.CLI) {
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
-func deployMinIO(oc *exutil.CLI) {
+func deployMinIO() {
 	// create namespace
-	_, err := oc.AdminKubeClient().CoreV1().Namespaces().Get(context.Background(), minioNS, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		err = oc.AsAdmin().WithoutNamespace().Run("create").Args("namespace", minioNS).Execute()
-		o.Expect(err).NotTo(o.HaveOccurred())
+	_, err := k8sClient.CoreV1().Namespaces().Get(context.Background(), minioNS, metav1.GetOptions{})
+	if err != nil {
+		// Namespace doesn't exist, create it
+		_ = createNamespace(minioNS)
 	}
+
 	// create secret
-	_, err = oc.AdminKubeClient().CoreV1().Secrets(minioNS).Get(context.Background(), minioSecret, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		err = oc.AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", minioSecret, "-n", minioNS, "--from-literal=access_key_id="+getRandomString(), "--from-literal=secret_access_key=passwOOrd"+getRandomString()).Execute()
+	_, err = k8sClient.CoreV1().Secrets(minioNS).Get(context.Background(), minioSecret, metav1.GetOptions{})
+	if err != nil {
+		// Secret doesn't exist, create it
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      minioSecret,
+				Namespace: minioNS,
+			},
+			StringData: map[string]string{
+				"access_key_id":     getRandomString(),
+				"secret_access_key": "passwOOrd" + getRandomString(),
+			},
+		}
+		_, err = k8sClient.CoreV1().Secrets(minioNS).Create(context.Background(), secret, metav1.CreateOptions{})
 		o.Expect(err).NotTo(o.HaveOccurred())
 	}
+
 	// deploy minIO
 	deployTemplate, _ := filePath.Abs("testdata/logging/minIO/deploy.yaml")
-	deployFile, err := processTemplate(oc, "-n", minioNS, "-f", deployTemplate, "-p", "NAMESPACE="+minioNS, "NAME=minio", "SECRET_NAME="+minioSecret)
-	defer os.Remove(deployFile)
+	err = applyNsResourceFromTemplateByAdmin(minioNS, "-f", deployTemplate, "-p", "NAMESPACE="+minioNS, "NAME=minio", "SECRET_NAME="+minioSecret)
 	o.Expect(err).NotTo(o.HaveOccurred())
-	err = oc.AsAdmin().Run("apply").Args("-f", deployFile, "-n", minioNS).Execute()
-	o.Expect(err).NotTo(o.HaveOccurred())
+
 	// wait for minio to be ready
 	for _, rs := range []string{"deployment", "svc", "route"} {
-		_ = Resource{rs, "minio", minioNS}.WaitForResourceToAppear(oc)
+		_ = Resource{rs, "minio", minioNS}.WaitForResourceToAppear()
 	}
-	WaitForDeploymentPodsToBeReady(oc, minioNS, "minio")
+	WaitForDeploymentPodsToBeReady(minioNS, "minio")
 }
 
-func getPoolID(oc *exutil.CLI) (string, error) {
+func getPoolID() (string, error) {
 	// pool_id="$(oc get authentication cluster -o json | jq -r .spec.serviceAccountIssuer | sed 's/.*\/\([^\/]*\)-oidc/\1/')"
-	issuer, err := getOIDC(oc)
+	issuer, err := getOIDC()
 	if err != nil {
 		return "", err
 	}
@@ -954,22 +1027,20 @@ func getPoolID(oc *exutil.CLI) (string, error) {
 }
 
 // delete the objects in the cluster
-func (r Resource) clear(oc *exutil.CLI) error {
-	msg, err := oc.AsAdmin().WithoutNamespace().Run("delete").Args("-n", r.Namespace, r.Kind, r.Name).Output()
+func (r Resource) clear() error {
+	err := deleteDynamicResource(r.Kind, r.Name, r.Namespace)
 	if err != nil {
-		errstring := fmt.Sprintf("%v", msg)
-		if strings.Contains(errstring, "NotFound") || strings.Contains(errstring, "the server doesn't have a resource type") {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
 		return err
 	}
-	err = r.WaitUntilResourceIsGone(oc)
-	return err
+	return r.WaitUntilResourceIsGone()
 }
 
 // Patches Loki Operator running on a GCP WIF cluster. Operator is deployed with CCO mode after patching.
-func patchLokiOperatorOnGCPSTSforCCO(oc *exutil.CLI, namespace string, projectNumber string, poolID string, serviceAccount string) {
-	patchConfig := `{
+func patchLokiOperatorOnGCPSTSforCCO(namespace string, projectNumber string, poolID string, serviceAccount string) {
+	patchData := fmt.Sprintf(`{
     	"spec": {
         	"config": {
             	"env": [
@@ -992,9 +1063,10 @@ func patchLokiOperatorOnGCPSTSforCCO(oc *exutil.CLI, namespace string, projectNu
             	]
         	}
     	}
-	}`
+	}`, projectNumber, poolID, poolID, serviceAccount)
 
-	err := oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("patch").Args("sub", "loki-operator", "-n", namespace, "-p", fmt.Sprintf(patchConfig, projectNumber, poolID, poolID, serviceAccount), "--type=merge").Execute()
+	err := patchDynamicResource("subscription", "loki-operator", namespace, types.MergePatchType, []byte(patchData))
 	o.Expect(err).NotTo(o.HaveOccurred())
-	WaitForPodsReadyWithLabel(oc, loNS, "name=loki-operator-controller-manager")
+
+	WaitForPodsReadyWithLabel(loNS, "name=loki-operator-controller-manager")
 }

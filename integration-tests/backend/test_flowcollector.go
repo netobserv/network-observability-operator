@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 
 	filePath "path/filepath"
 	"strings"
@@ -12,7 +13,8 @@ import (
 
 	g "github.com/onsi/ginkgo/v2"
 	o "github.com/onsi/gomega"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 	e2eoutput "k8s.io/kubernetes/test/e2e/framework/pod/output"
@@ -22,15 +24,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 	defer g.GinkgoRecover()
 	var (
-		oc            = compat_otp.NewCLI("netobserv", compat_otp.KubeConfigPath())
-		networkingDir = filePath.Join(baseDir, "networking")
 		namespace     string
-		ipStackType   string
+		networkingDir = filePath.Join(baseDir, "networking")
 	)
 
 	g.BeforeEach(func() {
+		oc := NewCLI()
 		namespace = oc.Namespace()
-		ipStackType = checkIPStackType(oc)
 	})
 
 	g.It("Author:memodi-NonPreRelease-Longduration-Medium-60664-Medium-61482-Alerts-with-NetObserv [Serial][Slow]", func() {
@@ -43,71 +43,70 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			LokiEnable:      "false",
 			InstallDemoLoki: "false",
 		}
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		// verify configured alerts for flp
 		g.By("Get FLP Alert name and Alert Rules")
-		rules, err := getConfiguredAlertRules(oc, flpAlertRuleName, namespace)
+		rules, err := getConfiguredAlertRules(flpAlertRuleName, namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(rules).To(o.ContainSubstring("NetObservNoFlows"))
 		o.Expect(rules).To(o.ContainSubstring("NetObservLokiError"))
 
 		// verify configured alerts for ebpf-agent
 		g.By("Get EBPF Alert name and Alert Rules")
-		ebpfRules, err := getConfiguredAlertRules(oc, ebpfAlertRuleName, namespace+"-privileged")
+		ebpfRules, err := getConfiguredAlertRules(ebpfAlertRuleName, namespace+"-privileged")
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(ebpfRules).To(o.ContainSubstring("NetObservDroppedFlows"))
 
 		// verify disable alerts feature
 		g.By("Verify alerts can be disabled")
-		gen, err := getResourceGeneration(oc, "prometheusRule", flpAlertRuleName, namespace)
+		gen, err := getResourceGeneration("prometheusRule", flpAlertRuleName, namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		disableAlertPatchTemp := `[{"op": "$op", "path": "/spec/processor/metrics/disableAlerts", "value": ["NetObservLokiError"]}]`
 		disableAlertPatch := strings.Replace(disableAlertPatchTemp, "$op", "add", 1)
-		out, err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=json", "-p", disableAlertPatch).Output()
+		err = patchFlowCollector(disableAlertPatch)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(out).To(o.ContainSubstring("patched"))
 
-		waitForResourceGenerationUpdate(oc, "prometheusRule", flpAlertRuleName, "generation", gen, namespace)
-		rules, err = getConfiguredAlertRules(oc, flpAlertRuleName, namespace)
+		waitForResourceGenerationUpdate("prometheusRule", flpAlertRuleName, "generation", gen, namespace)
+		rules, err = getConfiguredAlertRules(flpAlertRuleName, namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(rules).To(o.ContainSubstring("NetObservNoFlows"))
 		o.Expect(rules).ToNot(o.ContainSubstring("NetObservLokiError"))
 
-		gen, err = getResourceGeneration(oc, "prometheusRule", flpAlertRuleName, namespace)
+		gen, err = getResourceGeneration("prometheusRule", flpAlertRuleName, namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		disableAlertPatch = strings.Replace(disableAlertPatchTemp, "$op", "remove", 1)
-		out, err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=json", "-p", disableAlertPatch).Output()
+		err = patchFlowCollector(disableAlertPatch)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(out).To(o.ContainSubstring("patched"))
-		waitForResourceGenerationUpdate(oc, "prometheusRule", flpAlertRuleName, "generation", gen, namespace)
-		rules, err = getConfiguredAlertRules(oc, flpAlertRuleName, namespace)
+		waitForResourceGenerationUpdate("prometheusRule", flpAlertRuleName, "generation", gen, namespace)
+		rules, err = getConfiguredAlertRules(flpAlertRuleName, namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(rules).To(o.ContainSubstring("NetObservNoFlows"))
 		o.Expect(rules).To(o.ContainSubstring("NetObservLokiError"))
 
 		g.By("delete flowcollector")
-		_ = flow.DeleteFlowcollector(oc)
+		_ = flow.DeleteFlowcollector()
 
 		// verify alert becomes pending.
 		// configure flowcollector with incorrect loki URL
-		// configure very low CacheMaxFlows to have ebpf alert triggered.
+		// configure very low CacheMaxFlows to have ebpf alert fired.
 		flow = Flowcollector{
-			Namespace:       namespace,
-			Template:        flowFixturePath,
-			CacheMaxFlows:   "100",
-			LokiEnable:      "true",
-			InstallDemoLoki: "false",
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			CacheMaxFlows:     "100",
+			InstallDemoLoki:   "false",
+			MonolithicLokiURL: "http://loki.no-ns.svc:3100",
 		}
 		g.By("Deploy flowcollector with incorrect loki URL and lower cacheMaxFlows value")
-		flow.CreateFlowcollector(oc)
+		flow.CreateFlowcollector()
 
-		g.By("Wait for alert to be pending")
-		waitForAlertToBePending(oc, "NetObservLokiError")
+		g.By("Wait for alerts to be pending")
+		waitForAlertToBePending("NetObservLokiError")
 	})
 
 	g.It("Author:memodi-Medium-63185-Verify NetOberv must-gather plugin [Serial]", func() {
+		SkipIfOCPBelow("v4.10")
 		mustgatherDir := "/tmp/must-gather-63185"
 		mustgatherImage := "quay.io/netobserv/must-gather"
 
@@ -119,14 +118,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			InstallDemoLoki: "false",
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		// Note: In older OCP versions, oc adm inspect outputs benign discovery errors that don't affect data collection.
 		g.By("Run must-gather command")
-		defer func() { _ = os.RemoveAll(mustgatherDir) }()
-		_, err := oc.AsAdmin().WithoutNamespace().Run("adm").Args("must-gather", "--image", mustgatherImage, "--dest-dir="+mustgatherDir).Output()
-		o.Expect(err).NotTo(o.HaveOccurred(), "must-gather command failed")
+		defer func() { _, _ = exec.Command("bash", "-c", "rm -rf "+mustgatherDir).Output() }()
+		cmd := exec.Command("oc", "adm", "must-gather", "--image", mustgatherImage, "--dest-dir="+mustgatherDir)
+		outputBytes, err := cmd.CombinedOutput()
+		output := string(outputBytes)
+		o.Expect(err).NotTo(o.HaveOccurred(), "must-gather command failed: %s", output)
 
 		g.By("Wait for must-gather directory to be populated")
 		var mustgatherLogsDir string
@@ -147,7 +148,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			e2e.Logf("Must-gather data collection completed")
 			return true, nil
 		})
-		compat_otp.AssertWaitPollNoErr(err, "must-gather data not populated within timeout")
+		assertWaitPollNoErr(err, "must-gather data not populated within timeout")
 
 		g.By("Verify operator namespace logs are scraped")
 		operatorLogsPattern := fmt.Sprintf("%s/namespaces/openshift-netobserv-operator/pods/netobserv-controller-manager-*/manager/manager/logs/current.log", mustgatherLogsDir)
@@ -158,7 +159,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Verify flowlogs-pipeline pod logs are scraped")
-		pods, err := compat_otp.GetAllPods(oc, namespace)
+		pods, err := getAllPods(namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		flpLogsPattern := fmt.Sprintf("%s/namespaces/%s/pods/%s/flowlogs-pipeline/flowlogs-pipeline/logs/current.log", mustgatherLogsDir, namespace, pods[0])
 		podlogs, err := filePath.Glob(flpLogsPattern)
@@ -168,7 +169,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Verify eBPF agent pod logs are scraped")
-		ebpfPods, err := compat_otp.GetAllPods(oc, namespace+"-privileged")
+		ebpfPods, err := getAllPods(namespace + "-privileged")
 		o.Expect(err).NotTo(o.HaveOccurred())
 		ebpfLogsPattern := fmt.Sprintf("%s/namespaces/%s/pods/%s/netobserv-ebpf-agent/netobserv-ebpf-agent/logs/current.log", mustgatherLogsDir, namespace+"-privileged", ebpfPods[0])
 		ebpfLogs, err := filePath.Glob(ebpfLogsPattern)
@@ -195,18 +196,17 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	})
 
 	g.It("Author:aramesha-NonPreRelease-Medium-72875-Verify nodeSelector and tolerations with netobserv components [Serial]", func() {
-
 		// verify tolerations
 		g.By("Get worker node of the cluster")
-		workerNode, err := compat_otp.GetFirstWorkerNode(oc)
+		workerNode, err := getFirstWorkerNode()
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Taint worker node")
 		defer func() {
-			err := oc.AsAdmin().WithoutNamespace().Run("adm").Args("taint", "node", workerNode, "netobserv-agent-", "--overwrite").Execute()
+			err := removeTaintFromNode(workerNode, "netobserv-agent")
 			o.Expect(err).NotTo(o.HaveOccurred())
 		}()
-		err = oc.AsAdmin().WithoutNamespace().Run("adm").Args("taint", "node", workerNode, "netobserv-agent=true:NoSchedule", "--overwrite").Execute()
+		err = taintNode(workerNode, "netobserv-agent", "true", "NoSchedule")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Deploy FlowCollector")
@@ -217,62 +217,66 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			InstallDemoLoki: "false",
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Add wrong toleration for eBPF spec for the taint netobserv-agent=false:NoSchedule")
 		patchValue := `{"scheduling":{"tolerations":[{"effect": "NoSchedule", "key": "netobserv-agent", "value": "false", "operator": "Equal"}]}}`
-		_, _ = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "-p", `[{"op": "replace", "path": "/spec/agent/ebpf/advanced", "value": `+patchValue+`}]`, "--type=json").Output()
+		err = patchFlowCollector(`[{"op": "replace", "path": "/spec/agent/ebpf/advanced", "value": ` + patchValue + `}]`)
+		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Ensure flowcollector is ready")
-		flow.WaitForFlowcollectorReady(oc)
+		flow.WaitForFlowcollectorReady()
 
 		g.By(fmt.Sprintf("Verify eBPF pod is not scheduled on the %s", workerNode))
-		eBPFPod, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("-n", flow.Namespace+"-privileged", "pods", "--field-selector", "spec.nodeName="+workerNode+"", "-o", "name").Output()
+		eBPFPods, err := k8sClient.CoreV1().Pods(flow.Namespace+"-privileged").List(context.Background(), metav1.ListOptions{FieldSelector: "spec.nodeName=" + workerNode})
 		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(eBPFPod).Should(o.BeEmpty())
+		o.Expect(eBPFPods.Items).Should(o.BeEmpty())
 
 		g.By("Add correct toleration for eBPF spec for the taint netobserv-agent=true:NoSchedule")
-		_ = flow.DeleteFlowcollector(oc)
-		flow.CreateFlowcollector(oc)
+		err = flow.DeleteFlowcollector()
+		o.Expect(err).NotTo(o.HaveOccurred())
+		flow.CreateFlowcollector()
 		patchValue = `{"scheduling":{"tolerations":[{"effect": "NoSchedule", "key": "netobserv-agent", "value": "true", "operator": "Equal"}]}}`
-		_, _ = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "-p", `[{"op": "replace", "path": "/spec/agent/ebpf/advanced", "value": `+patchValue+`}]`, "--type=json").Output()
+		err = patchFlowCollector(`[{"op": "replace", "path": "/spec/agent/ebpf/advanced", "value": ` + patchValue + `}]`)
+		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Ensure flowcollector is ready")
-		flow.WaitForFlowcollectorReady(oc)
+		flow.WaitForFlowcollectorReady()
 
 		g.By(fmt.Sprintf("Verify eBPF pod is scheduled on the node %s after applying toleration for taint netobserv-agent=true:NoSchedule", workerNode))
-		eBPFPod, err = oc.AsAdmin().WithoutNamespace().Run("get").Args("-n", flow.Namespace+"-privileged", "pods", "--field-selector", "spec.nodeName="+workerNode+"", "-o", "name").Output()
+		eBPFPods, err = k8sClient.CoreV1().Pods(flow.Namespace+"-privileged").List(context.Background(), metav1.ListOptions{FieldSelector: "spec.nodeName=" + workerNode})
 		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(eBPFPod).NotTo(o.BeEmpty())
+		o.Expect(eBPFPods.Items).NotTo(o.BeEmpty())
 
 		// verify nodeSelector
 		g.By("Add netobserv label to above worker node")
-		defer func() { _, _ = compat_otp.DeleteLabelFromNode(oc, workerNode, "test") }()
-		_, _ = compat_otp.AddLabelToNode(oc, workerNode, "netobserv-agent", "true")
+		defer func() { _ = deleteLabelFromNode(workerNode, "netobserv-agent") }()
+		err = addLabelToNode(workerNode, "netobserv-agent", "true")
+		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Patch flowcollector with nodeSelector for eBPF pods")
-		_ = flow.DeleteFlowcollector(oc)
-		flow.CreateFlowcollector(oc)
+		err = flow.DeleteFlowcollector()
+		o.Expect(err).NotTo(o.HaveOccurred())
+		flow.CreateFlowcollector()
 		patchValue = `{"scheduling":{"nodeSelector":{"netobserv-agent": "true"}}}`
-		_, _ = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "-p", `[{"op": "replace", "path": "/spec/agent/ebpf/advanced", "value": `+patchValue+`}]`, "--type=json").Output()
+		err = patchFlowCollector(`[{"op": "replace", "path": "/spec/agent/ebpf/advanced", "value": ` + patchValue + `}]`)
+		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Ensure flowcollector is ready")
-		flow.WaitForFlowcollectorReady(oc)
+		flow.WaitForFlowcollectorReady()
 
 		g.By("Verify all eBPF pods are deployed on the above worker node")
-		eBPFpods, err := compat_otp.GetAllPodsWithLabel(oc, flow.Namespace+"-privileged", "app=netobserv-ebpf-agent")
+		eBPFpods, err := getAllPodsWithLabel(flow.Namespace+"-privileged", "app=netobserv-ebpf-agent")
 		o.Expect(err).NotTo(o.HaveOccurred())
 		for _, pod := range eBPFpods {
-			nodeName, err := compat_otp.GetPodNodeName(oc, flow.Namespace+"-privileged", pod)
+			nodeName, err := getPodNodeName(flow.Namespace+"-privileged", pod)
 			o.Expect(err).NotTo(o.HaveOccurred())
 			o.Expect(nodeName).To(o.Equal(workerNode))
 		}
 	})
 
 	g.It("Author:osmakal-High-89198-Verify processor metrics configuration with includeList and additionalIncludeList [Serial]", func() {
-		namespace := oc.Namespace()
-
 		g.By("Deploy initial FlowCollector without additionalIncludeList")
 		flow := Flowcollector{
 			Namespace:       namespace,
@@ -280,18 +284,18 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			LokiEnable:      "false",
 			InstallDemoLoki: "false",
 		}
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for FlowCollector to reconcile")
-		flow.WaitForFlowcollectorReady(oc)
+		flow.WaitForFlowcollectorReady()
 
 		g.By("Wait for baseline metrics to be available")
 		time.Sleep(90 * time.Second)
 
 		// Capture baseline metrics (defaults only)
 		g.By("Query Prometheus for baseline netobserv_* metrics")
-		baselineMetrics, err := getAllNetobservMetricNames(oc)
+		baselineMetrics, err := getAllNetobservMetricNames()
 		o.Expect(err).NotTo(o.HaveOccurred(), "failed to query Prometheus for baseline")
 
 		e2e.Logf("Found %d baseline netobserv metrics in Prometheus", len(baselineMetrics))
@@ -305,19 +309,18 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Patch FlowCollector with additionalIncludeList")
 		additionalIncludeList := []string{"namespace_egress_bytes_total", "namespace_ingress_bytes_total"}
 		patch := `[{"op": "add", "path": "/spec/processor/metrics/additionalIncludeList", "value": ["namespace_egress_bytes_total", "namespace_ingress_bytes_total"]}]`
-		out, err := oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=json", "-p", patch).Output()
+		err = patchFlowCollector(patch)
 		o.Expect(err).NotTo(o.HaveOccurred(), "failed to patch FlowCollector")
-		o.Expect(out).To(o.ContainSubstring("patched"))
 
 		g.By("Wait for FlowCollector to reconcile after patch")
-		flow.WaitForFlowcollectorReady(oc)
+		flow.WaitForFlowcollectorReady()
 
 		g.By("Wait for updated metrics to be available")
 		time.Sleep(90 * time.Second)
 
 		// Get all metrics after patch
 		g.By("Query Prometheus for all netobserv_* metrics after patch")
-		allMetrics, err := getAllNetobservMetricNames(oc)
+		allMetrics, err := getAllNetobservMetricNames()
 		o.Expect(err).NotTo(o.HaveOccurred(), "failed to query Prometheus after patch")
 
 		e2e.Logf("Found %d netobserv metrics in Prometheus after patch", len(allMetrics))
@@ -352,7 +355,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			g.It("Author:aramesha-Critical-50504-Critical-72959-Verify flowlogs-pipeline and eBPF metrics and health [Serial]", func() {
 				var (
 					flpPromSM  = "flowlogs-pipeline-monitor"
-					namespace  = oc.Namespace()
 					eBPFPromSM = "ebpf-agent-svc-monitor"
 					curlLive   = "http://localhost:8080/live"
 				)
@@ -361,24 +363,25 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				flow := Flowcollector{
 					Namespace:              namespace,
 					Template:               flowFixturePath,
+					MonolithicLokiURL:      fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 					FLPMetricServerTLSType: "Disabled",
 				}
 
-				defer func() { _ = flow.DeleteFlowcollector(oc) }()
-				flow.CreateFlowcollector(oc)
+				defer func() { _ = flow.DeleteFlowcollector() }()
+				flow.CreateFlowcollector()
 
 				g.By("Verify flowlogs-pipeline metrics")
-				FLPpods, err := compat_otp.GetAllPodsWithLabel(oc, namespace, "app=flowlogs-pipeline")
+				FLPpods, err := getAllPodsWithLabel(namespace, "app=flowlogs-pipeline")
 				o.Expect(err).NotTo(o.HaveOccurred())
 
 				for _, pod := range FLPpods {
-					command := []string{"exec", "-n", namespace, pod, "--", "curl", "-s", curlLive}
-					output, err := oc.AsAdmin().WithoutNamespace().Run(command...).Args().Output()
+					command := []string{"curl", "-s", curlLive}
+					output, err := execInPod(namespace, pod, command)
 					o.Expect(err).NotTo(o.HaveOccurred())
 					o.Expect(output).To(o.Equal("{}"))
 				}
 
-				FLPtlsScheme, err := getMetricsScheme(oc, flpPromSM, flow.Namespace)
+				FLPtlsScheme, err := getMetricsScheme(flpPromSM, flow.Namespace)
 				o.Expect(err).NotTo(o.HaveOccurred())
 				FLPtlsScheme = strings.Trim(FLPtlsScheme, "'")
 				o.Expect(FLPtlsScheme).To(o.Equal("http"))
@@ -387,20 +390,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				time.Sleep(60 * time.Second)
 
 				g.By("Verify prometheus is able to scrape FLP metrics")
-				verifyFLPMetrics(oc)
+				verifyFLPMetrics()
 
 				g.By("Verify eBPF agent metrics")
-				eBPFpods, err := compat_otp.GetAllPodsWithLabel(oc, namespace, "app=netobserv-ebpf-agent")
-				o.Expect(err).NotTo(o.HaveOccurred())
-
-				for _, pod := range eBPFpods {
-					command := []string{"exec", "-n", namespace, pod, "--", "curl", "-s", curlLive}
-					output, err := oc.AsAdmin().WithoutNamespace().Run(command...).Args().Output()
-					o.Expect(err).NotTo(o.HaveOccurred())
-					o.Expect(output).To(o.Equal("{}"))
-				}
-
-				eBPFtlsScheme, err := getMetricsScheme(oc, eBPFPromSM, flow.Namespace+"-privileged")
+				eBPFtlsScheme, err := getMetricsScheme(eBPFPromSM, flow.Namespace+"-privileged")
 				o.Expect(err).NotTo(o.HaveOccurred())
 				eBPFtlsScheme = strings.Trim(eBPFtlsScheme, "'")
 				o.Expect(eBPFtlsScheme).To(o.Equal("http"))
@@ -409,7 +402,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				time.Sleep(60 * time.Second)
 
 				g.By("Verify prometheus is able to scrape eBPF metrics")
-				verifyEBPFMetrics(oc)
+				verifyEBPFMetrics()
 			})
 		})
 
@@ -420,25 +413,25 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 					flpPromSA  = "flowlogs-pipeline-prom"
 					eBPFPromSM = "ebpf-agent-svc-monitor"
 					eBPFPromSA = "ebpf-agent-svc-prom"
-					namespace  = oc.Namespace()
 				)
 
 				flow := Flowcollector{
 					Namespace:               namespace,
 					Template:                flowFixturePath,
+					MonolithicLokiURL:       fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 					EBPFMetricServerTLSType: "Auto",
 				}
 
-				defer func() { _ = flow.DeleteFlowcollector(oc) }()
-				flow.CreateFlowcollector(oc)
+				defer func() { _ = flow.DeleteFlowcollector() }()
+				flow.CreateFlowcollector()
 
 				g.By("Verify flowlogs-pipeline metrics")
-				FLPtlsScheme, err := getMetricsScheme(oc, flpPromSM, flow.Namespace)
+				FLPtlsScheme, err := getMetricsScheme(flpPromSM, flow.Namespace)
 				o.Expect(err).NotTo(o.HaveOccurred())
 				FLPtlsScheme = strings.Trim(FLPtlsScheme, "'")
 				o.Expect(FLPtlsScheme).To(o.Equal("https"))
 
-				FLPserverName, err := getMetricsServerName(oc, flpPromSM, flow.Namespace)
+				FLPserverName, err := getMetricsServerName(flpPromSM, flow.Namespace)
 				FLPserverName = strings.Trim(FLPserverName, "'")
 				o.Expect(err).NotTo(o.HaveOccurred())
 				FLPexpectedServerName := fmt.Sprintf("%s.%s.svc", flpPromSA, namespace)
@@ -448,26 +441,26 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				time.Sleep(60 * time.Second)
 
 				g.By("Verify prometheus is able to scrape FLP and Console metrics")
-				verifyFLPMetrics(oc)
+				verifyFLPMetrics()
 				query := fmt.Sprintf("process_start_time_seconds{namespace=\"%s\", job=\"netobserv-plugin-metrics\"}", namespace)
-				metrics, err := getMetric(oc, query)
+				metrics, err := getMetric(query)
 				o.Expect(err).NotTo(o.HaveOccurred())
 				o.Expect(popMetricValue(metrics)).Should(o.BeNumerically(">", 0))
 
 				g.By("Verify eBPF metrics")
-				eBPFtlsScheme, err := getMetricsScheme(oc, eBPFPromSM, flow.Namespace+"-privileged")
+				eBPFtlsScheme, err := getMetricsScheme(eBPFPromSM, flow.Namespace+"-privileged")
 				o.Expect(err).NotTo(o.HaveOccurred())
 				eBPFtlsScheme = strings.Trim(eBPFtlsScheme, "'")
 				o.Expect(eBPFtlsScheme).To(o.Equal("https"))
 
-				eBPFserverName, err := getMetricsServerName(oc, eBPFPromSM, flow.Namespace+"-privileged")
+				eBPFserverName, err := getMetricsServerName(eBPFPromSM, flow.Namespace+"-privileged")
 				eBPFserverName = strings.Trim(eBPFserverName, "'")
 				o.Expect(err).NotTo(o.HaveOccurred())
 				eBPFexpectedServerName := fmt.Sprintf("%s.%s.svc", eBPFPromSA, namespace+"-privileged")
 				o.Expect(eBPFserverName).To(o.Equal(eBPFexpectedServerName))
 
 				g.By("Verify prometheus is able to scrape eBPF agent metrics")
-				verifyEBPFMetrics(oc)
+				verifyEBPFMetrics()
 			})
 		})
 	})
@@ -479,10 +472,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ServerNS: "test-server-54929",
 			Template: serverTemplatePath,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServer.ServerNS)
-		err := testServer.createServer(oc)
+		defer deleteNamespace(testServer.ServerNS)
+		err := testServer.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServer.ServerNS)
+		assertAllPodsToBeReady(testServer.ServerNS)
 
 		clientTemplatePath := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 		testClient := TestClientTemplate{
@@ -492,21 +485,22 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template:   clientTemplatePath,
 		}
 
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClient.ClientNS)
-		err = testClient.createClient(oc)
+		defer deleteNamespace(testClient.ClientNS)
+		err = testClient.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClient.ClientNS)
+		assertAllPodsToBeReady(testClient.ClientNS)
 
 		startTime := time.Now()
 
 		g.By("Deploy FlowCollector")
 		flow := Flowcollector{
-			Namespace: namespace,
-			Template:  flowFixturePath,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("get flowlogs from loki")
 		lokilabels := Lokilabels{
@@ -520,7 +514,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		time.Sleep(120 * time.Second)
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords > 0")
 
@@ -529,10 +523,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		// verify inner metrics
 		query := fmt.Sprintf(`sum(rate(netobserv_workload_ingress_bytes_total{SrcK8S_Namespace="%s"}[1m]))`, testClient.ClientNS)
-		metrics := pollMetrics(oc, query)
+		metrics := pollMetrics(query)
 
-		// verify metric is between 240 and 360
-		o.Expect(metrics).Should(o.BeNumerically("~", 300, 60))
+		// verify metric is between 265 and 385
+		o.Expect(metrics).Should(o.BeNumerically("~", 325, 60))
 	})
 
 	g.It("Author:aramesha-NonPreRelease-Longduration-High-60701-Verify connection tracking [Serial]", func() {
@@ -545,10 +539,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template: serverTemplate,
 		}
 
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		clientTemplate := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 
@@ -558,21 +552,22 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template: clientTemplate,
 		}
 
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClientTemplate.ClientNS)
-		err = testClientTemplate.createClient(oc)
+		defer deleteNamespace(testClientTemplate.ClientNS)
+		err = testClientTemplate.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
+		assertAllPodsToBeReady(testClientTemplate.ClientNS)
 
 		g.By("Deploy FlowCollector with endConversations LogType")
 		flow := Flowcollector{
-			Namespace:       namespace,
-			Template:        flowFixturePath,
-			LogType:         "EndedConversations",
-			DeploymentModel: "Direct",
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			DeploymentModel:   "Direct",
+			LogType:           "EndedConversations",
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		// verify logs
 		g.By("Wait for a min before logs gets collected and written to loki")
@@ -587,16 +582,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify endConnection Records from loki")
-		endConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		endConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(endConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of endConnectionRecords > 0")
 		verifyConversationRecordTime(endConnectionRecords)
 
 		g.By("Deploy FlowCollector with Conversations LogType")
-		_ = flow.DeleteFlowcollector(oc)
+		_ = flow.DeleteFlowcollector()
 
 		flow.LogType = "Conversations"
-		flow.CreateFlowcollector(oc)
+		flow.CreateFlowcollector()
 
 		g.By("Wait for a min before logs gets collected and written to loki")
 		startTime = time.Now()
@@ -605,21 +600,21 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify NewConnection Records from loki")
 		lokilabels.RecordType = "newConnection"
 
-		newConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		newConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(newConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of newConnectionRecords > 0")
 		verifyConversationRecordTime(newConnectionRecords)
 
 		g.By("Verify HeartbeatConnection Records from loki")
 		lokilabels.RecordType = "heartbeat"
-		heartbeatConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		heartbeatConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(heartbeatConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of heartbeatConnectionRecords > 0")
 		verifyConversationRecordTime(heartbeatConnectionRecords)
 
 		g.By("Verify EndConnection Records from loki")
 		lokilabels.RecordType = "endConnection"
-		endConnectionRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		endConnectionRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(endConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of endConnectionRecords > 0")
 		verifyConversationRecordTime(endConnectionRecords)
@@ -628,21 +623,19 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	g.It("Author:aramesha-NonPreRelease-Critical-59746-NetObserv upgrade testing [Serial]", func() {
 		// Uninstall operator even if test fails/passes, then redeploy for subsequent tests
 		g.DeferCleanup(func() {
-			NO.uninstallOperator(oc)
-			oc.DeleteSpecifiedNamespaceAsAdmin(netobservNS)
-			err := Resource{"namespace", netobservNS, ""}.WaitUntilResourceIsGone(oc)
-			o.Expect(err).NotTo(o.HaveOccurred())
-			isHypershift := compat_otp.IsHypershiftHostedCluster(oc)
-			OperatorNS.DeployOperatorNamespace(oc)
-			catSrcErr := setupCatalogSource(oc, NOcatSrc, catSrcTemplate, imageDigest, catalogSource, isHypershift, &NOSource, &NO)
+			NO.uninstallOperator()
+			deleteNamespace(netobservNS)
+			OperatorNS.DeployOperatorNamespace()
+			isHypershift := isHypershiftHostedCluster()
+			catSrcErr := setupCatalogSource(NOcatSrc, catSrcTemplate, imageDigest, catalogSource, isHypershift, &NOSource, &NO)
 			o.Expect(catSrcErr).NotTo(o.HaveOccurred())
-			ensureNetObservOperatorDeployed(oc, NO, NOSource)
+			ensureNetObservOperatorDeployed(NO, NOSource)
 		})
 
 		g.By("Uninstall operator deployed by BeforeSuite and delete operator NS")
-		NO.uninstallOperator(oc)
-		oc.DeleteSpecifiedNamespaceAsAdmin(netobservNS)
-		err := Resource{"namespace", netobservNS, ""}.WaitUntilResourceIsGone(oc)
+		NO.uninstallOperator()
+		deleteNamespace(netobservNS)
+		err := Resource{"namespace", netobservNS, ""}.WaitUntilResourceIsGone()
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Deploy older version of netobserv operator")
@@ -653,41 +646,41 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		NOReleased := NO
 		NOReleased.CatalogSource = &NOReleasedSource
 
-		g.By(fmt.Sprintf("Subscribe operators to %s channel", NOReleasedSource.Channel))
-		OperatorNS.DeployOperatorNamespace(oc)
-		NOReleased.SubscribeOperator(oc)
-		// check if NO operator is deployed
-		WaitForPodsReadyWithLabel(oc, netobservNS, "app="+NO.OperatorName)
-		NOStatus, err := CheckOperatorStatus(oc, netobservNS, NOPackageName)
+		g.By(fmt.Sprintf("Subscribe operators to %s channel", NOSource.Channel))
+		OperatorNS.DeployOperatorNamespace()
+		NOReleased.SubscribeOperator()
+		WaitForPodsReadyWithLabel(netobservNS, "app="+NO.OperatorName)
+		NOStatus, err := CheckOperatorStatus(netobservNS, NOPackageName)
 		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("found err %v", err))
-		o.Expect((NOStatus)).To(o.BeTrue())
+		o.Expect(NOStatus).To(o.BeTrue())
 
 		// check if flowcollector API exists
-		flowcollectorAPIExists, err := isFlowCollectorAPIExists(oc)
+		flowcollectorAPIExists, err := isFlowCollectorAPIExists()
 		o.Expect((flowcollectorAPIExists)).To(o.BeTrue())
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Deploy FlowCollector")
 		flow := Flowcollector{
-			Namespace: namespace,
-			Template:  flowFixturePath,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Get NetObserv and components versions")
-		NOCSV, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[?(@.name=='OPERATOR_CONDITION_NAME')].value}").Output()
+		NOCSV, err := getPodEnvValue(netobservNS, "app=netobserv-operator", "OPERATOR_CONDITION_NAME")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		preUpgradeNOVersion := strings.Split(NOCSV, ".v")[1]
-		preUpgradeEBPFVersion, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[0].value}").Output()
+		preUpgradeEBPFVersion, err := getPodEnvByIndex(netobservNS, "app=netobserv-operator", 0)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		preUpgradeEBPFVersion = strings.Split(preUpgradeEBPFVersion, ":")[1]
-		preUpgradeFLPVersion, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[1].value}").Output()
+		preUpgradeFLPVersion, err := getPodEnvByIndex(netobservNS, "app=netobserv-operator", 1)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		preUpgradeFLPVersion = strings.Split(preUpgradeFLPVersion, ":")[1]
-		preUpgradePluginVersion, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[2].value}").Output()
+		preUpgradePluginVersion, err := getPodEnvByIndex(netobservNS, "app=netobserv-operator", 2)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		preUpgradePluginVersion = strings.Split(preUpgradePluginVersion, ":")[1]
 
@@ -695,34 +688,34 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		var catsrcErr error
 		if catalogSource != "" {
 			e2e.Logf("Using %s catalog", catalogSource)
-			catsrcErr = NOcatSrc.applyFromTemplate(oc, "-n", NOcatSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+NOcatSrc.Namespace, "IMAGE="+catalogSource)
+			catsrcErr = NOcatSrc.applyFromTemplate("-n", NOcatSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+NOcatSrc.Namespace, "IMAGE="+catalogSource)
 		} else {
 			e2e.Logf("Using default ystream catalog")
-			catsrcErr = NOcatSrc.applyFromTemplate(oc, "-n", NOcatSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+NOcatSrc.Namespace)
+			catsrcErr = NOcatSrc.applyFromTemplate("-n", NOcatSrc.Namespace, "-f", catSrcTemplate, "-p", "NAMESPACE="+NOcatSrc.Namespace)
 		}
 		o.Expect(catsrcErr).NotTo(o.HaveOccurred())
-		_, _ = oc.AsAdmin().WithoutNamespace().Run("patch").Args("subscription", "netobserv-operator", "-n", netobservNS, "-p", `[{"op": "replace", "path": "/spec/source", "value": `+NOcatSrc.Name+`}, {"op": "replace", "path": "/spec/sourceNamespace", "value": `+NOcatSrc.Namespace+`}]`, "--type=json").Output()
+		_ = patchSubscription(netobservNS, "netobserv-operator", `[{"op": "replace", "path": "/spec/source", "value": "`+NOcatSrc.Name+`"}, {"op": "replace", "path": "/spec/sourceNamespace", "value": "`+NOcatSrc.Namespace+`"}]`)
 
 		g.By("Wait for a min for operator upgrade")
 		time.Sleep(60 * time.Second)
 
-		WaitForPodsReadyWithLabel(oc, netobservNS, "app=netobserv-operator")
-		NOStatus, err = CheckOperatorStatus(oc, netobservNS, NOPackageName)
+		WaitForPodsReadyWithLabel(netobservNS, "app=netobserv-operator")
+		NOStatus, err = CheckOperatorStatus(netobservNS, NOPackageName)
 		o.Expect(err).NotTo(o.HaveOccurred(), fmt.Sprintf("found err %v", err))
 		o.Expect((NOStatus)).To(o.BeTrue())
 
 		g.By("Get NetObserv operator and components versions")
-		NOCSV, err = oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[?(@.name=='OPERATOR_CONDITION_NAME')].value}").Output()
+		NOCSV, err = getPodEnvValue(netobservNS, "app=netobserv-operator", "OPERATOR_CONDITION_NAME")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		postUpgradeNOVersion := strings.Split(NOCSV, ".v")[1]
-		postUpgradeEBPFVersion, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[0].value}").Output()
+		postUpgradeEBPFVersion, err := getPodEnvByIndex(netobservNS, "app=netobserv-operator", 0)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		postUpgradeEBPFVersion = strings.Split(postUpgradeEBPFVersion, ":")[1]
-		postUpgradeFLPVersion, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[1].value}").Output()
+		postUpgradeFLPVersion, err := getPodEnvByIndex(netobservNS, "app=netobserv-operator", 1)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		postUpgradeFLPVersion = strings.Split(postUpgradeFLPVersion, ":")[1]
-		postUpgradePluginVersion, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("pods", "-l", "app=netobserv-operator", "-n", netobservNS, "-o=jsonpath={.items[*].spec.containers[0].env[2].value}").Output()
+		postUpgradePluginVersion, err := getPodEnvByIndex(netobservNS, "app=netobserv-operator", 2)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		postUpgradePluginVersion = strings.Split(postUpgradePluginVersion, ":")[1]
 
@@ -738,7 +731,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		time.Sleep(60 * time.Second)
 
 		g.By("Get flowlogs from loki")
-		err = verifyMonolithicLokilogsTime(oc, flow.Namespace, startTime)
+		err = verifyMonolithicLokilogsTime(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 	})
 
@@ -750,38 +743,46 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			sctpClientPodname         = "sctpclient"
 		)
 
+		ipStackType := checkIPStackType()
+
 		g.By("install load-sctp-module in all workers")
-		prepareSCTPModule(oc)
+		prepareSCTPModule()
 
 		g.By("Create netobserv-sctp NS")
 		SCTPns := "netobserv-sctp-62989"
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(SCTPns)
-		oc.CreateSpecifiedNamespaceAsAdmin(SCTPns)
-		_ = compat_otp.SetNamespacePrivileged(oc, SCTPns)
+		defer deleteNamespace(SCTPns)
+		_ = createNamespace(SCTPns)
+		_ = setNamespacePrivileged(SCTPns)
 
 		g.By("create sctpClientPod")
-		createResourceFromFile(oc, SCTPns, sctpClientPodTemplatePath)
-		WaitForPodsReadyWithLabel(oc, SCTPns, "name=sctpclient")
+		createResourceFromFile(SCTPns, sctpClientPodTemplatePath)
+		WaitForPodsReadyWithLabel(SCTPns, "name=sctpclient")
 
 		g.By("create sctpServerPod")
-		createResourceFromFile(oc, SCTPns, sctpServerPodTemplatePath)
-		WaitForPodsReadyWithLabel(oc, SCTPns, "name=sctpserver")
+		createResourceFromFile(SCTPns, sctpServerPodTemplatePath)
+		WaitForPodsReadyWithLabel(SCTPns, "name=sctpserver")
 
 		g.By("Deploy FlowCollector")
 		flow := Flowcollector{
-			Namespace: namespace,
-			Template:  flowFixturePath,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("get primary IP address of sctpServerPod")
-		sctpServerPodIP, _ := getPodIP(oc, SCTPns, sctpServerPodname, ipStackType)
+		sctpServerPodIP, _ := getPodIP(SCTPns, sctpServerPodname, ipStackType)
 
 		g.By("sctpserver pod start to wait for sctp traffic")
-		cmd, _, _, _ := oc.AsAdmin().Run("exec").Args("-n", SCTPns, sctpServerPodname, "--", "/usr/bin/ncat", "-l", "30102", "--sctp").Background()
-		defer func() { _ = cmd.Process.Kill() }()
+		cmd := exec.Command("oc", "exec", "-n", SCTPns, sctpServerPodname, "--", "/usr/bin/ncat", "-l", "30102", "--sctp")
+		_ = cmd.Start()
+		defer func() {
+			if cmd.Process != nil {
+				_ = cmd.Process.Kill()
+			}
+		}()
 		time.Sleep(5 * time.Second)
 
 		g.By("check sctp process enabled in the sctp server pod")
@@ -813,7 +814,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify SCTP flows are seen on loki")
 		parameters := []string{"Proto=\"132\"", "DstPort=\"30102\""}
 
-		SCTPflows, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		SCTPflows, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(SCTPflows)).Should(o.BeNumerically(">", 0), "expected number of SCTP flows > 0")
 
@@ -835,7 +836,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Wait for a min before logs gets collected and written to loki")
 		time.Sleep(60 * time.Second)
 
-		ICMPflows, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		ICMPflows, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(ICMPflows)).Should(o.BeNumerically(">", 0), "expected number of ICMP flows > 0")
 
@@ -855,10 +856,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ServerNS: "test-server-68125",
 			Template: serverTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		clientTemplate := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 		testClientTemplate := TestClientTemplate{
@@ -866,31 +867,32 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ClientNS: "test-client-68125",
 			Template: clientTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClientTemplate.ClientNS)
-		err = testClientTemplate.createClient(oc)
+		defer deleteNamespace(testClientTemplate.ClientNS)
+		err = testClientTemplate.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
+		assertAllPodsToBeReady(testClientTemplate.ClientNS)
 
-		compat_otp.By("Check cluster network type")
-		networkType := compat_otp.CheckNetworkType(oc)
+		g.By("Check cluster network type")
+		networkType := checkNetworkType()
 		o.Expect(networkType).NotTo(o.BeEmpty())
 		if networkType == "ovnkubernetes" {
 			g.By("Deploy egressQoS for OVN CNI")
 			clientDSCPPath := filePath.Join(networkingDir, "test-client-DSCP.yaml")
 			egressQoSPath := filePath.Join(networkingDir, "egressQoS.yaml")
 			g.By("Deploy nginx client pod and egressQoS")
-			createResourceFromFile(oc, testClientTemplate.ClientNS, clientDSCPPath)
-			createResourceFromFile(oc, testClientTemplate.ClientNS, egressQoSPath)
+			createResourceFromFile(testClientTemplate.ClientNS, clientDSCPPath)
+			createResourceFromFile(testClientTemplate.ClientNS, egressQoSPath)
 		}
 
 		g.By("Deploy FlowCollector")
 		flow := Flowcollector{
-			Namespace: namespace,
-			Template:  flowFixturePath,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		// verify logs
 		g.By("Wait for a min before logs gets collected and written to loki")
@@ -906,7 +908,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		parameters := []string{"SrcK8S_Name=\"client\""}
 
 		g.By("Verify DSCP value=0")
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows > 0")
 		for _, r := range flowRecords {
@@ -921,19 +923,20 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			time.Sleep(60 * time.Second)
 
 			g.By("Verify DSCP value=59 for flows from DSCP client pod")
-			flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+			flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 			o.Expect(err).NotTo(o.HaveOccurred())
 			o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows with DSCP value 59 should be > 0")
 
 			g.By("Verify DSCP value=0 for flows from pods other than DSCP client pod in test-client namespace")
 			parameters = []string{"SrcK8S_Name=\"client\", Dscp=\"0\""}
 
-			flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+			flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 			o.Expect(err).NotTo(o.HaveOccurred())
 			o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows with DSCP value 0 should be > 0")
 		}
 
 		// Scenario3: Explicitly passing QoS value in ping command
+		ipStackType := checkIPStackType()
 		var destinationIP string
 		switch ipStackType {
 		case "ipv4single":
@@ -958,15 +961,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		time.Sleep(60 * time.Second)
 
 		g.By("Verify DSCP value=32")
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows with DSCP value 32 > 0")
 	})
 
 	g.It("Author:aramesha-NonPreRelease-High-69218-High-71291-Verify cluster ID and zone in multiCluster deployment [Serial]", func() {
 		g.By("Get clusterID of the cluster")
-		clusterID, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("clusterversion", "-o=jsonpath={.items[].spec.clusterID}").Output()
+		cvObj, err := getDynamicResource("clusterversion", "version", "")
 		o.Expect(err).NotTo(o.HaveOccurred())
+		clusterID, _ := getNestedField(cvObj.Object, ".spec.clusterID")
 		e2e.Logf("Cluster ID is %s", clusterID)
 
 		g.By("Deploy FlowCollector with multiCluster and addZone enabled")
@@ -975,10 +979,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			MultiClusterDeployment: "true",
 			AddZone:                "true",
 			Template:               flowFixturePath,
+			MonolithicLokiURL:      fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		// verify logs
 		g.By("Wait for a min before logs gets collected and written to loki")
@@ -990,7 +995,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			App:            "netobserv-flowcollector",
 			K8SClusterName: clusterID,
 		}
-		clusterIDFlowRecords, err := clusteridlabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		clusterIDFlowRecords, err := clusteridlabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(clusterIDFlowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows > 0")
 
@@ -1001,14 +1006,15 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			DstK8SType: "Node",
 		}
 
-		zoneFlowRecords, err := zonelabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		zoneFlowRecords, err := zonelabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
+		o.Expect(len(zoneFlowRecords)).Should(o.BeNumerically(">", 0), "expected zone flow records > 0")
 		for _, r := range zoneFlowRecords {
-			expectedSrcK8SZone, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("node/"+r.Flowlog.SrcK8SHostName, `-o=jsonpath={.metadata.labels.topology\.kubernetes\.io/zone}`).Output()
+			expectedSrcK8SZone, err := getNodeLabelValue(r.Flowlog.SrcK8SHostName, `topology.kubernetes.io/zone`)
 			o.Expect(err).NotTo(o.HaveOccurred())
 			o.Expect(r.Flowlog.SrcK8SZone).To(o.Equal(expectedSrcK8SZone))
 
-			expectedDstK8SZone, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("node/"+r.Flowlog.DstK8SHostName, `-o=jsonpath={.metadata.labels.topology\.kubernetes\.io/zone}`).Output()
+			expectedDstK8SZone, err := getNodeLabelValue(r.Flowlog.DstK8SHostName, `topology.kubernetes.io/zone`)
 			o.Expect(err).NotTo(o.HaveOccurred())
 			o.Expect(r.Flowlog.DstK8SZone).To(o.Equal(expectedDstK8SZone))
 		}
@@ -1021,10 +1027,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ServerNS: "test-server-73175",
 			Template: serverTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		clientTemplate := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 		testClientTemplate := TestClientTemplate{
@@ -1032,12 +1038,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ClientNS: "test-client-73175",
 			Template: clientTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClientTemplate.ClientNS)
-		err = testClientTemplate.createClient(oc)
+		defer deleteNamespace(testClientTemplate.ClientNS)
+		err = testClientTemplate.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
+		assertAllPodsToBeReady(testClientTemplate.ClientNS)
 
-		clientServiceInfo, err := getClientServerInfo(oc, testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
+		ipStackType := checkIPStackType()
+		clientServiceInfo, err := getClientServerInfo(testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		// Scenario 1:
@@ -1069,13 +1076,14 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		filter := string(config)
 
 		flow := Flowcollector{
-			Namespace:       namespace,
-			Template:        flowFixturePath,
-			EBPFFilterRules: filter,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			EBPFFilterRules:   filter,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Ping nginx pod from client pod")
 		startTime := time.Now()
@@ -1091,7 +1099,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify number of flows with on UDP Protcol with SrcPort 53 = 0")
 		lokilabels.AllowEmpty = true
 		lokiParams := []string{"Proto=\"17\"", "SrcPort=\"53\""}
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically("==", 0), "expected number of flows on UDP with SrcPort 53 = 0")
 		lokilabels.AllowEmpty = false
@@ -1101,7 +1109,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		lokilabels.DstK8SNamespace = testClientTemplate.ServerNS
 		lokiParams = []string{"SrcAddr=" + "\"" + clientServiceInfo["client"]["ip"] + "\"", "DstAddr=" + "\"" + clientServiceInfo["server"]["ip"] + "\""}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows from client pod to nginx pod > 0")
 
@@ -1114,7 +1122,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify flows from client pod to nginx-service > 0")
 		lokilabels.DstK8SType = "Service"
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows from client pod to nginx-service > 0")
 
@@ -1124,8 +1132,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify prometheus is able to scrape eBPF metrics")
-		verifyEBPFFilterMetrics(oc, "FilterAccept")
-		verifyEBPFFilterMetrics(oc, "FilterNoMatch")
+		verifyEBPFFilterMetrics("FilterAccept")
+		verifyEBPFFilterMetrics("FilterNoMatch")
 
 		// Scenario2:
 		// Accept only flows with drops
@@ -1142,11 +1150,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		o.Expect(err).ToNot(o.HaveOccurred())
 		filter = string(config)
 
-		_ = flow.DeleteFlowcollector(oc)
+		_ = flow.DeleteFlowcollector()
 		flow.EBPFPrivileged = "true"
 		flow.EBPFeatures = []string{"\"PacketDrop\""}
 		flow.EBPFFilterRules = filter
-		flow.CreateFlowcollector(oc)
+		flow.CreateFlowcollector()
 
 		g.By("Wait for a min before logs gets collected and written to loki")
 		startTime = time.Now()
@@ -1157,7 +1165,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 		lokiParams = []string{"Proto=\"6\""}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows with drops > 0")
 
@@ -1169,12 +1177,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	g.It("Author:memodi-Critical-53844-Sanity Test NetObserv [Serial]", func() {
 		g.By("Deploy FlowCollector")
 		flow := Flowcollector{
-			Namespace: namespace,
-			Template:  flowFixturePath,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for a min before logs gets collected and written to loki")
 		startTime := time.Now()
@@ -1185,7 +1194,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify flows are written to loki")
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows written to loki > 0")
 	})
@@ -1195,11 +1204,12 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		flow := Flowcollector{
 			Namespace:              namespace,
 			Template:               flowFixturePath,
+			MonolithicLokiURL:      fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 			EBPFCacheActiveTimeout: "30s",
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Deploy test server and client pods")
 		serverTemplate := filePath.Join(baseDir, "test-nginx-server_template.yaml")
@@ -1208,10 +1218,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template:  serverTemplate,
 			LargeBlob: "yes",
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		clientTemplate := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 		testClientTemplate := TestClientTemplate{
@@ -1220,10 +1230,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ObjectSize: "100M",
 			Template:   clientTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClientTemplate.ClientNS)
-		err = testClientTemplate.createClient(oc)
+		defer deleteNamespace(testClientTemplate.ClientNS)
+		err = testClientTemplate.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
+		assertAllPodsToBeReady(testClientTemplate.ClientNS)
 
 		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		startTime := time.Now()
@@ -1238,7 +1248,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify flows are written to loki")
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows written to loki > 0")
 
@@ -1265,18 +1275,22 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		filter := string(config)
 
 		flow := Flowcollector{
-			Namespace:       namespace,
-			Template:        flowFixturePath,
-			EBPFFilterRules: filter,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			EBPFFilterRules:   filter,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Ensure flowcollector is ready with Reject flowFilter")
-		flowPatch, err := oc.AsAdmin().Run("get").Args("flowcollector", "cluster", "-o", "jsonpath='{.spec.agent.ebpf.flowFilter.rules[0].action}'").Output()
+		fcObj, err := getDynamicResource("flowcollector", "cluster", "")
 		o.Expect(err).ToNot(o.HaveOccurred())
-		o.Expect(flowPatch).To(o.Equal(`'Reject'`))
+		rules, _, _ := unstructured.NestedSlice(fcObj.Object, "spec", "agent", "ebpf", "flowFilter", "rules")
+		o.Expect(rules).NotTo(o.BeEmpty())
+		rule0 := rules[0].(map[string]interface{})
+		o.Expect(rule0["action"]).To(o.Equal("Reject"))
 
 		g.By("Deploy custom metrics to detect SYN flooding")
 		customMetrics := CustomMetrics{
@@ -1284,16 +1298,18 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template:  SYNFloodMetricsPath,
 		}
 
-		curv, err := getResourceVersion(oc, "cm", "flowlogs-pipeline-config-dynamic", namespace)
+		curv, err := getResourceVersion("cm", "flowlogs-pipeline-config-dynamic", namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		customMetrics.createCustomMetrics(oc)
-		waitForResourceGenerationUpdate(oc, "cm", "flowlogs-pipeline-config-dynamic", "resourceVersion", curv, namespace)
+		customMetrics.createCustomMetrics()
+		waitForResourceGenerationUpdate("cm", "flowlogs-pipeline-config-dynamic", "resourceVersion", curv, namespace)
 
 		g.By("Deploy SYN flooding alert rule")
-		defer oc.AsAdmin().WithoutNamespace().Run("delete").Args("alertingrule.monitoring.openshift.io", "netobserv-syn-alerts", "-n", "openshift-monitoring")
-		configFile := compat_otp.ProcessTemplate(oc, "--ignore-unknown-parameters=true", "-f", SYNFloodAlertsPath, "-p", "Namespace=openshift-monitoring")
-		err = oc.AsAdmin().WithoutNamespace().Run("apply").Args("-f", configFile).Execute()
-		o.Expect(err).ToNot(o.HaveOccurred())
+		defer func() {
+			_ = deleteDynamicResource("alertingrule", "netobserv-syn-alerts", "openshift-monitoring")
+		}()
+		configFile, err := processTemplate("openshift-monitoring", "--ignore-unknown-parameters=true", "-f", SYNFloodAlertsPath, "-p", "Namespace=openshift-monitoring")
+		o.Expect(err).NotTo(o.HaveOccurred())
+		ApplyResourceFromFile("", configFile)
 
 		g.By("Deploy test client pod to induce SYN flooding")
 		template := filePath.Join(baseDir, "test-SYN-flood-client_template.yaml")
@@ -1302,10 +1318,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Template: template,
 		}
 
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testTemplate.ClientNS)
-		configFile = compat_otp.ProcessTemplate(oc, "--ignore-unknown-parameters=true", "-f", testTemplate.Template, "-p", "CLIENT_NS="+testTemplate.ClientNS)
-		err = oc.AsAdmin().WithoutNamespace().Run("create").Args("-f", configFile).Execute()
-		o.Expect(err).ToNot(o.HaveOccurred())
+		defer deleteNamespace(testTemplate.ClientNS)
+		configFile, err = processTemplate("", "--ignore-unknown-parameters=true", "-f", testTemplate.Template, "-p", "CLIENT_NS="+testTemplate.ClientNS)
+		o.Expect(err).NotTo(o.HaveOccurred())
+		ApplyResourceFromFile("", configFile)
 
 		g.By("Wait for a min before logs gets collected and written to loki")
 		startTime := time.Now()
@@ -1318,20 +1334,22 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify no flows with SYN_ACK TCP flag")
 		parameters := []string{"Flags=\"SYN_ACK\""}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		// Loop needed since even flows with flags SYN, ACK are matched
+		count := 0
 		for _, r := range flowRecords {
 			for _, f := range r.Flowlog.Flags {
-				o.Expect(f).ToNot(o.Equal("SYN_ACK"), "expected no flows with SYN_ACK TCPFlag")
+				o.Expect(f).ToNot(o.Equal("SYN_ACK"))
 			}
 		}
-		verifyEBPFFilterMetrics(oc, "FilterReject")
+		o.Expect(count).Should(o.BeNumerically("==", 0), "expected number of flows with SYN_ACK TCPFlag = 0")
+		verifyEBPFFilterMetrics("FilterReject")
 
 		g.By("Verify SYN flooding flows")
 		parameters = []string{"Flags=\"SYN\"", "DstAddr=\"192.168.1.159\""}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of SYN flows > 0")
 		for _, r := range flowRecords {
@@ -1339,17 +1357,17 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Wait for alerts to be pending")
-		waitForAlertToBePending(oc, "NetObserv-SYNFlood-out")
-		waitForAlertToBePending(oc, "NetObserv-SYNFlood-in")
+		waitForAlertToBePending("NetObserv-SYNFlood-out")
+		waitForAlertToBePending("NetObserv-SYNFlood-in")
 	})
 
 	g.It("Author:aramesha-NonPreRelease-Longduration-Medium-78480-NetObserv with sampling 50 [Serial][Slow]", func() {
 		g.By("Deploy DNS pods")
 		DNSTemplate := filePath.Join(baseDir, "DNS-pods.yaml")
 		DNSNamespace := "dns-traffic"
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(DNSNamespace)
-		ApplyResourceFromFile(oc, DNSNamespace, DNSTemplate)
-		compat_otp.AssertAllPodsToBeReady(oc, DNSNamespace)
+		defer deleteNamespace(DNSNamespace)
+		ApplyResourceFromFile(DNSNamespace, DNSTemplate)
+		assertAllPodsToBeReady(DNSNamespace)
 
 		g.By("Deploy test server and client pods")
 		servertemplate := filePath.Join(baseDir, "test-nginx-server_template.yaml")
@@ -1357,10 +1375,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ServerNS: "test-server-78480",
 			Template: servertemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		clientTemplate := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 		testClientTemplate := TestClientTemplate{
@@ -1368,22 +1386,23 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ClientNS: "test-client-78480",
 			Template: clientTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClientTemplate.ClientNS)
-		err = testClientTemplate.createClient(oc)
+		defer deleteNamespace(testClientTemplate.ClientNS)
+		err = testClientTemplate.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
+		assertAllPodsToBeReady(testClientTemplate.ClientNS)
 
 		g.By("Deploy FlowCollector with all features enabled with sampling 50")
 		flow := Flowcollector{
-			Namespace:      namespace,
-			EBPFPrivileged: "true",
-			EBPFeatures:    []string{"\"DNSTracking\", \"PacketDrop\", \"FlowRTT\", \"PacketTranslation\""},
-			Sampling:       "50",
-			Template:       flowFixturePath,
+			Namespace:         namespace,
+			EBPFPrivileged:    "true",
+			EBPFeatures:       []string{"\"DNSTracking\", \"PacketDrop\", \"FlowRTT\", \"PacketTranslation\""},
+			Sampling:          "50",
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for 4 mins before logs gets collected and written to loki")
 		startTime := time.Now()
@@ -1395,7 +1414,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify Packet Drop flows")
 		lokiParams := []string{"PktDropLatestState=\"TCP_INVALID_STATE\"", "Proto=\"6\""}
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of TCP Invalid State flows > 0")
 		for _, r := range flowRecords {
@@ -1405,7 +1424,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		lokiParams = []string{"PktDropLatestDropCause=\"SKB_DROP_REASON_NO_SOCKET\"", "Proto=\"6\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of No Socket TCP flows > 0")
 		for _, r := range flowRecords {
@@ -1416,7 +1435,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify flowRTT flows")
 		lokiParams = []string{"Proto=\"6\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of TCP flows > 0")
 		for _, r := range flowRecords {
@@ -1426,7 +1445,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify TCP DNS flows")
 		lokilabels.DstK8SNamespace = DNSNamespace
 		lokiParams = []string{"DnsFlagsResponseCode=\"NoError\"", "SrcPort=\"53\"", "DstK8S_Name=\"dnsutils1\"", "Proto=\"6\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of TCP DNS flows > 0")
 		for _, r := range flowRecords {
@@ -1435,7 +1454,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify UDP DNS flows")
 		lokiParams = []string{"DnsFlagsResponseCode=\"NoError\"", "SrcPort=\"53\"", "Proto=\"17\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of UDP DNS flows > 0")
 		for _, r := range flowRecords {
@@ -1451,7 +1470,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SOwnerName: "client",
 		}
 
-		clientServiceInfo, err := getClientServerInfo(oc, testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
+		ipStackType := checkIPStackType()
+		clientServiceInfo, err := getClientServerInfo(testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Verify PacketTranslation flows")
@@ -1464,15 +1484,15 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			fmt.Sprintf(`XlatSrcAddr="%s"`, clientServiceInfo["client"]["ip"]),
 			`XlatSrcK8S_Name="client"`,
 		}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of PacketTranslation flows > 0")
 
 		g.By("Verify eBPF feature metrics")
-		verifyEBPFFeatureMetrics(oc, "pktdropsmap")
-		verifyEBPFFeatureMetrics(oc, "additionalmap") // for RTT/IPSec map size
-		verifyEBPFFeatureMetrics(oc, "dnsmap")
-		verifyEBPFFeatureMetrics(oc, "xlatmap")
+		verifyEBPFFeatureMetrics("pktdropsmap")
+		verifyEBPFFeatureMetrics("additionalmap") // for RTT/IPSec map size
+		verifyEBPFFeatureMetrics("dnsmap")
+		verifyEBPFFeatureMetrics("xlatmap")
 	})
 
 	g.It("Author:aramesha-NonPreRelease-High-79015-Verify PacketTranslation feature [Serial]", func() {
@@ -1483,10 +1503,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ServiceType: "ClusterIP",
 			Template:    servertemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		clientTemplate := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 		testClientTemplate := TestClientTemplate{
@@ -1494,23 +1514,25 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ClientNS: "test-client-79015",
 			Template: clientTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClientTemplate.ClientNS)
-		err = testClientTemplate.createClient(oc)
+		defer deleteNamespace(testClientTemplate.ClientNS)
+		err = testClientTemplate.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
+		assertAllPodsToBeReady(testClientTemplate.ClientNS)
 
-		clientServiceInfo, err := getClientServerInfo(oc, testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
+		ipStackType := checkIPStackType()
+		clientServiceInfo, err := getClientServerInfo(testClientTemplate.ServerNS, testClientTemplate.ClientNS, ipStackType)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Deploy FlowCollector with PacketTranslation feature enabled")
 		flow := Flowcollector{
-			Namespace:   namespace,
-			EBPFeatures: []string{"\"PacketTranslation\""},
-			Template:    flowFixturePath,
+			Namespace:         namespace,
+			EBPFeatures:       []string{"\"PacketTranslation\""},
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		startTime := time.Now()
@@ -1534,7 +1556,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			fmt.Sprintf(`XlatSrcAddr="%s"`, clientServiceInfo["client"]["ip"]),
 			`XlatSrcK8S_Name="client"`,
 		}
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of PacketTranslation flows > 0")
 	})
@@ -1542,7 +1564,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	// NetworkEvents ebpf hook only supported for OCP >= 4.19
 	g.It("Author:memodi-NonPreRelease-Medium-77894-TechPreview Network Policies Correlation [Serial]", func() {
 		SkipIfOCPBelow("v4.19")
-		if !compat_otp.IsTechPreviewNoUpgrade(oc) {
+		if !isTechPreviewNoUpgrade() {
 			g.Skip("Skipping because the TechPreviewNoUpgrade is not enabled on the cluster.")
 		}
 
@@ -1552,10 +1574,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ServerNS: "test-server-77894",
 			Template: serverTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		client1Template := filePath.Join(baseDir, "test-nginx-client_template.yaml")
 		testClient1Template := TestClientTemplate{
@@ -1563,30 +1585,31 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ClientNS: "test-client1-77894",
 			Template: client1Template,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClient1Template.ClientNS)
-		err = testClient1Template.createClient(oc)
+		defer deleteNamespace(testClient1Template.ClientNS)
+		err = testClient1Template.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClient1Template.ClientNS)
+		assertAllPodsToBeReady(testClient1Template.ClientNS)
 
 		testClient2Template := TestClientTemplate{
 			ServerNS: testServerTemplate.ServerNS,
 			ClientNS: "test-client2-77894",
 			Template: client1Template,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClient2Template.ClientNS)
-		err = testClient2Template.createClient(oc)
+		defer deleteNamespace(testClient2Template.ClientNS)
+		err = testClient2Template.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClient2Template.ClientNS)
+		assertAllPodsToBeReady(testClient2Template.ClientNS)
 
 		// create flowcollector with NWEvents.
 		flow := Flowcollector{
-			Namespace:      namespace,
-			Template:       flowFixturePath,
-			EBPFeatures:    []string{"\"NetworkEvents\""},
-			EBPFPrivileged: "true",
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			EBPFeatures:       []string{"\"NetworkEvents\""},
+			EBPFPrivileged:    "true",
 		}
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for 60 secs before logs gets collected and written to loki")
 		time.Sleep(60 * time.Second)
@@ -1600,7 +1623,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 		lokiParams := []string{"FlowDirection!=1"}
 		lokilabels.SrcK8SNamespace = testClient1Template.ClientNS
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, time.Now().Add(-2*time.Minute), lokiParams...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, time.Now().Add(-2*time.Minute), lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords with 'flowDirection != 1' > 0")
 
@@ -1609,15 +1632,15 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		banpParameters := []string{"--ignore-unknown-parameters=true", "-p", "SERVER_NS=" + testClient1Template.ServerNS, "CLIENT1_NS=" + testClient1Template.ClientNS, "CLIENT2_NS=" + testClient2Template.ClientNS, "-f", banpTemplate}
 
 		// banp is a cluster scoped resource so passing empty string for NS arg.
-		defer deleteResource(oc, "banp", "default", "")
-		err = compat_otp.ApplyClusterResourceFromTemplateWithError(oc, banpParameters...)
+		defer deleteResource("banp", "default", "")
+		err = applyResourceFromTemplateByAdmin(banpParameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Wait for 60 secs before logs gets collected and written to loki")
 		time.Sleep(60 * time.Second)
 
 		g.By("check flows have NW Events")
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, time.Now().Add(-45*time.Second), lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, time.Now().Add(-45*time.Second), lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords with 'flowDirection != 1' > 0")
 		verifyNetworkEvents(flowRecords, Drop, "BaselineAdminNetworkPolicy", "Ingress")
@@ -1626,22 +1649,22 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		netpolTemplate := filePath.Join(baseDir, "networking", "networkPolicy.yaml")
 		netpolName := "allow-ingress"
 		netPolParameters := []string{"--ignore-unknown-parameters=true", "-p", "NAME=" + netpolName, "SERVER_NS=" + testClient1Template.ServerNS, "ALLOW_NS=" + testClient1Template.ClientNS, "-f", netpolTemplate}
-		defer deleteResource(oc, "netpol", netpolName, testClient1Template.ServerNS)
-		err = compat_otp.ApplyClusterResourceFromTemplateWithError(oc, netPolParameters...)
+		defer deleteResource("netpol", netpolName, testClient1Template.ServerNS)
+		err = applyResourceFromTemplateByAdmin(netPolParameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Wait for 60 secs before logs gets collected and written to loki")
 		time.Sleep(60 * time.Second)
 
 		g.By("check flows from server to client1")
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, time.Now().Add(-1*time.Minute), lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, time.Now().Add(-1*time.Minute), lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords with 'flowDirection != 1' > 0")
 		verifyNetworkEvents(flowRecords, AllowRelated, "NetworkPolicy", "Ingress")
 
 		g.By("check flows from server to client2")
 		lokilabels.SrcK8SNamespace = testClient2Template.ClientNS
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, time.Now().Add(-1*time.Minute), lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, time.Now().Add(-1*time.Minute), lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords with 'flowDirection != 1' > 0")
 		verifyNetworkEvents(flowRecords, Drop, "NetpolNamespace", "Ingress")
@@ -1650,22 +1673,22 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		anpTemplate := filePath.Join(baseDir, "networking", "adminnetworkPolicy.yaml")
 		anpName := "server-ns"
 		anpParameters := []string{"--ignore-unknown-parameters=true", "-p", "NAM=" + anpName, "SERVER_NS=" + testClient1Template.ServerNS, "ALLOW_NS=" + testClient2Template.ClientNS, "DENY_NS=" + testClient1Template.ClientNS, "-f", anpTemplate}
-		defer deleteResource(oc, "anp", anpName, "")
-		err = compat_otp.ApplyClusterResourceFromTemplateWithError(oc, anpParameters...)
+		defer deleteResource("anp", anpName, "")
+		err = applyResourceFromTemplateByAdmin(anpParameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Wait for 60 secs before logs gets collected and written to loki")
 		time.Sleep(60 * time.Second)
 
 		g.By("check flows from server to client2")
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, time.Now().Add(-1*time.Minute), lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, time.Now().Add(-1*time.Minute), lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords with 'flowDirection != 1' > 0")
 		verifyNetworkEvents(flowRecords, AllowRelated, "AdminNetworkPolicy", "Ingress")
 
 		g.By("check flows from server to client1")
 		lokilabels.SrcK8SNamespace = testClient1Template.ClientNS
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, time.Now().Add(-1*time.Minute), lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, time.Now().Add(-1*time.Minute), lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords with 'flowDirection != 1' > 0")
 		verifyNetworkEvents(flowRecords, Drop, "AdminNetworkPolicy", "Ingress")
@@ -1690,15 +1713,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		FLPFilter := string(config)
 
 		flow := Flowcollector{
-			Namespace:   namespace,
-			Template:    flowFixturePath,
-			Sampling:    "2",
-			EBPFeatures: []string{`"FlowRTT"`},
-			FLPFilters:  FLPFilter,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			Sampling:          "2",
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			EBPFeatures:       []string{`"FlowRTT"`},
+			FLPFilters:        FLPFilter,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		// verify logs
 		g.By("Wait for a min before logs gets collected and written to loki")
@@ -1711,7 +1735,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify number of flows > 0")
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows > 0")
 
@@ -1726,7 +1750,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	g.It("Author:aramesha-High-81677-Validate UDN with NetObserv [Serial]", func() {
 		SkipIfOCPBelow("v4.18")
 		var (
-			namespace           = oc.Namespace()
 			networkingUDNDir, _ = filePath.Abs("testdata/networking/udn")
 			udnPodTemplate      = filePath.Join(networkingUDNDir, "udn_test_pod_template.yaml")
 			matchLabelKey       = "test.io"
@@ -1738,22 +1761,23 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		)
 
 		g.By("Create three namespaces, 2 for CUDN, 1 for UDN")
-		defer deleteNamespace(oc, cudnNS[0])
-		defer deleteNamespace(oc, cudnNS[1])
-		oc.CreateSpecificNamespaceUDN(cudnNS[0])
-		oc.CreateSpecificNamespaceUDN(cudnNS[1])
+		defer deleteNamespace(cudnNS[0])
+		defer deleteNamespace(cudnNS[1])
+		createUDNNamespace(cudnNS[0])
+		createUDNNamespace(cudnNS[1])
 		for _, ns := range cudnNS {
-			defer func() {
-				_ = oc.AsAdmin().WithoutNamespace().Run("label").Args("ns", ns, fmt.Sprintf("%s-", matchLabelKey)).Execute()
-			}()
-			err := oc.AsAdmin().WithoutNamespace().Run("label").Args("ns", ns, fmt.Sprintf("%s=%s", matchLabelKey, matchValue)).Execute()
+			defer func(namespace string) {
+				_ = removeLabelFromNamespace(namespace, matchLabelKey)
+			}(ns)
+			err := labelNamespace(ns, matchLabelKey, matchValue)
 			o.Expect(err).NotTo(o.HaveOccurred())
 		}
 
-		defer deleteNamespace(oc, udnNS)
-		oc.CreateSpecificNamespaceUDN(udnNS)
+		defer deleteNamespace(udnNS)
+		createUDNNamespace(udnNS)
 
 		g.By("Deploy CUDN in CUDNns")
+		ipStackType := checkIPStackType()
 		var cidr, ipv4cidr, ipv6cidr string
 		if ipStackType == "ipv4single" {
 			cidr = "10.150.0.0/16"
@@ -1765,8 +1789,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				ipv6cidr = "2010:100:200::0/60"
 			}
 		}
-		defer removeResource(oc, true, true, "clusteruserdefinednetwork", cudnName)
-		_, err := applyCUDNtoMatchLabelNS(oc, matchLabelKey, matchValue, cudnName, ipv4cidr, ipv6cidr, cidr, "layer3")
+		defer removeResource(true, true, "clusteruserdefinednetwork", cudnName)
+		_, err := applyCUDNtoMatchLabelNS(matchLabelKey, matchValue, cudnName, ipv4cidr, ipv6cidr, cidr, "layer3")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Deploy UDN in UDNns")
@@ -1780,7 +1804,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				ipv6cidr = "2011:100:200::0/48"
 			}
 		}
-		createGeneralUDNCRD(oc, udnNS, udnName, ipv4cidr, ipv6cidr, cidr, "layer2")
+		createGeneralUDNCRD(udnNS, udnName, ipv4cidr, ipv6cidr, cidr, "layer2")
 
 		g.By("Deploy a pod in each CUDN namespace")
 		CUDNpods := make([]udnPodResource, 2)
@@ -1791,9 +1815,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				label:     "hello-pod",
 				template:  udnPodTemplate,
 			}
-			defer removeResource(oc, true, true, "pod", CUDNpods[i].name, "-n", CUDNpods[i].namespace)
-			CUDNpods[i].createUdnPod(oc)
-			compat_otp.AssertAllPodsToBeReady(oc, CUDNpods[i].namespace)
+			defer removeResource(true, true, "pod", CUDNpods[i].name, "-n", CUDNpods[i].namespace)
+			CUDNpods[i].createUdnPod()
+			assertAllPodsToBeReady(CUDNpods[i].namespace)
 		}
 
 		g.By("Deploy 2 pods in UDN namespace")
@@ -1805,43 +1829,44 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				label:     "hello-pod",
 				template:  udnPodTemplate,
 			}
-			defer removeResource(oc, true, true, "pod", UDNpods[j].name, "-n", UDNpods[j].namespace)
-			UDNpods[j].createUdnPod(oc)
+			defer removeResource(true, true, "pod", UDNpods[j].name, "-n", UDNpods[j].namespace)
+			UDNpods[j].createUdnPod()
 		}
-		compat_otp.AssertAllPodsToBeReady(oc, udnNS)
+		assertAllPodsToBeReady(udnNS)
 
 		g.By("Deploy FlowCollector with UDNMapping feature enabled with eBPF in privileged mode")
 		flow := Flowcollector{
-			Namespace:      namespace,
-			EBPFPrivileged: "true",
-			EBPFeatures:    []string{"\"UDNMapping\""},
-			Template:       flowFixturePath,
+			Namespace:         namespace,
+			EBPFPrivileged:    "true",
+			EBPFeatures:       []string{"\"UDNMapping\""},
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		startTime := time.Now()
 
 		g.By("Validate isolation from an UDN pod to a CUDN pod")
-		CurlPod2PodFailUDN(oc, udnNS, UDNpods[1].name, CUDNpods[0].namespace, CUDNpods[0].name)
+		CurlPod2PodFailUDN(udnNS, UDNpods[1].name, CUDNpods[0].namespace, CUDNpods[0].name)
 		//default network connectivity is isolated
-		CurlPod2PodFail(oc, udnNS, UDNpods[1].name, CUDNpods[0].namespace, CUDNpods[0].name, ipStackType)
+		CurlPod2PodFail(udnNS, UDNpods[1].name, CUDNpods[0].namespace, CUDNpods[0].name, ipStackType)
 
 		g.By("Validate isolation from a CUDN pod to an UDN pod")
-		CurlPod2PodFailUDN(oc, CUDNpods[1].namespace, CUDNpods[1].name, udnNS, UDNpods[1].name)
+		CurlPod2PodFailUDN(CUDNpods[1].namespace, CUDNpods[1].name, udnNS, UDNpods[1].name)
 		//default network connectivity is isolated
-		CurlPod2PodFail(oc, CUDNpods[1].namespace, CUDNpods[1].name, udnNS, UDNpods[1].name, ipStackType)
+		CurlPod2PodFail(CUDNpods[1].namespace, CUDNpods[1].name, udnNS, UDNpods[1].name, ipStackType)
 
 		g.By("Validate connection among CUDN pods")
-		CurlPod2PodPassUDN(oc, CUDNpods[0].namespace, CUDNpods[0].name, CUDNpods[1].namespace, CUDNpods[1].name)
+		CurlPod2PodPassUDN(CUDNpods[0].namespace, CUDNpods[0].name, CUDNpods[1].namespace, CUDNpods[1].name)
 		//default network connectivity is isolated
-		CurlPod2PodFail(oc, CUDNpods[0].namespace, CUDNpods[0].name, CUDNpods[1].namespace, CUDNpods[1].name, ipStackType)
+		CurlPod2PodFail(CUDNpods[0].namespace, CUDNpods[0].name, CUDNpods[1].namespace, CUDNpods[1].name, ipStackType)
 
 		g.By("Validate connection among UDN pods")
-		CurlPod2PodPassUDN(oc, udnNS, UDNpods[0].name, udnNS, UDNpods[1].name)
+		CurlPod2PodPassUDN(udnNS, UDNpods[0].name, udnNS, UDNpods[1].name)
 		//default network connectivity is isolated
-		CurlPod2PodFail(oc, udnNS, UDNpods[1].name, udnNS, UDNpods[0].name, ipStackType)
+		CurlPod2PodFail(udnNS, UDNpods[1].name, udnNS, UDNpods[0].name, ipStackType)
 
 		g.By("Wait for 3 mins before logs gets collected and written to loki")
 		time.Sleep(180 * time.Second)
@@ -1855,7 +1880,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SOwnerName: CUDNpods[0].name,
 		}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of CUDN flows > 0")
 		for _, r := range flowRecords {
@@ -1873,7 +1898,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SOwnerName: UDNpods[0].name,
 		}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of UDN flows > 0")
 		for _, r := range flowRecords {
@@ -1886,7 +1911,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	g.It("Author:aramesha-High-83022-Validate CUDN with Localnet [Serial]", func() {
 		SkipIfOCPBelow("v4.19")
 		var (
-			namespace                = oc.Namespace()
 			opNamespace              = "openshift-nmstate"
 			buildPruningBaseDir, _   = filePath.Abs("testdata/networking/nmstate")
 			testDataDirUDN, _        = filePath.Abs("testdata/networking/udn")
@@ -1901,10 +1925,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		)
 
 		g.By("Check the platform and network plugin type if it is suitable for running the test")
-		networkType := checkNetworkType(oc)
-		if !(isPlatformSuitableForNMState(oc)) || !strings.Contains(networkType, "ovn") {
+		networkType := checkNetworkType()
+		if !(isPlatformSuitableForNMState()) || !strings.Contains(networkType, "ovn") {
 			g.Skip("Skipping for unsupported platform or non-OVN network plugin type!")
 		}
+
 		nmstateCatsrc := Resource{"catalogsource", "redhat-operators", "openshift-marketplace"}
 		nmstateSource := CatalogSourceObjects{"stable", nmstateCatsrc.Name, nmstateCatsrc.Namespace}
 		NMS := SubscriptionObjects{
@@ -1915,24 +1940,24 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			OperatorGroup: filePath.Join(subscriptionDir, "singlenamespace-og.yaml"),
 			CatalogSource: &nmstateSource,
 		}
-		ensureOperatorDeployed(oc, NMS, nmstateSource, "name="+NMS.OperatorName)
+		ensureOperatorDeployed(NMS, nmstateSource, "name="+NMS.OperatorName)
 
-		workerNode, getNodeErr := compat_otp.GetFirstWorkerNode(oc)
+		workerNode, getNodeErr := getFirstWorkerNode()
 		o.Expect(getNodeErr).NotTo(o.HaveOccurred())
 		o.Expect(workerNode).NotTo(o.BeEmpty())
 
-		compat_otp.By("Create NMState CR")
+		g.By("Create NMState CR")
 		nmstateCR := nmstateCRResource{
 			name:     "nmstate",
 			template: nmstateCRTemplate,
 		}
-		defer deleteNMStateCR(oc, nmstateCR)
-		result, crErr := createNMStateCR(oc, nmstateCR, opNamespace)
-		compat_otp.AssertWaitPollNoErr(crErr, "create nmstate cr failed")
+		defer deleteNMStateCR(nmstateCR)
+		result, crErr := createNMStateCR(nmstateCR, opNamespace)
+		assertWaitPollNoErr(crErr, "create nmstate cr failed")
 		o.Expect(result).To(o.BeTrue())
 		e2e.Logf("SUCCESS - NMState CR Created")
 
-		compat_otp.By("Configure NNCP for creating OvnMapping NMstate Feature")
+		g.By("Configure NNCP for creating OvnMapping NMstate Feature")
 		ovnMappingPolicy := ovnMappingPolicyResource{
 			name:       "bridge-mapping-83022",
 			nodelabel:  nodeSelectLabel,
@@ -1941,59 +1966,61 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			bridge1:    "br-ex",
 			template:   ovnMappingPolicyTemplate,
 		}
-		defer deleteNNCP(oc, ovnMappingPolicy.name)
+		defer deleteNNCP(ovnMappingPolicy.name)
 		defer func() {
-			ovnmapping, deferErr := compat_otp.DebugNodeWithChroot(oc, workerNode, "ovs-vsctl", "get", "Open_vSwitch", ".", "external_ids:ovn-bridge-mappings")
+			ovnmapping, deferErr := debugNodeWithCommand(workerNode, "ovs-vsctl get Open_vSwitch . external_ids:ovn-bridge-mappings")
 			o.Expect(deferErr).NotTo(o.HaveOccurred())
 			if strings.Contains(ovnmapping, ovnMappingPolicy.localnet1) {
-				// ovs-vsctl can only use "set" to reserve some fields
-				_, err := compat_otp.DebugNodeWithChroot(oc, workerNode, "ovs-vsctl", "set", "Open_vSwitch", ".", "external_ids:ovn-bridge-mappings=\"physnet:br-ex\"")
+				_, err := debugNodeWithCommand(workerNode, "ovs-vsctl set Open_vSwitch . external_ids:ovn-bridge-mappings=\"physnet:br-ex\"")
 				o.Expect(err).NotTo(o.HaveOccurred())
 			}
 		}()
-		configErr3 := ovnMappingPolicy.configNNCP(oc)
+		configErr3 := ovnMappingPolicy.configNNCP()
 		o.Expect(configErr3).NotTo(o.HaveOccurred())
-		nncpErr3 := checkNNCPStatus(oc, ovnMappingPolicy.name, "Available")
-		compat_otp.AssertWaitPollNoErr(nncpErr3, fmt.Sprintf("%s policy applied failed", ovnMappingPolicy.name))
+		nncpErr3 := checkNNCPStatus(ovnMappingPolicy.name, "Available")
+		assertWaitPollNoErr(nncpErr3, fmt.Sprintf("%s policy applied failed", ovnMappingPolicy.name))
 
-		compat_otp.By("Create two namespaces and label them")
+		g.By("Create two namespaces and label them")
 		for _, ns := range cudnNS {
-			defer oc.DeleteSpecifiedNamespaceAsAdmin(ns)
-			oc.CreateSpecifiedNamespaceAsAdmin(ns)
-			err := oc.AsAdmin().WithoutNamespace().Run("label").Args("ns", ns, fmt.Sprintf("%s=%s", matchLabelKey, matchValue)).Execute()
+			defer deleteNamespace(ns)
+			err := createNamespace(ns)
+			o.Expect(err).NotTo(o.HaveOccurred())
+			err = labelNamespace(ns, matchLabelKey, matchValue)
 			o.Expect(err).NotTo(o.HaveOccurred())
 		}
 
-		compat_otp.By("Create secondary localnet CUDN")
-		defer removeResource(oc, true, true, "clusteruserdefinednetwork", secondaryCUDNName)
-		_, err := applyLocalnetCUDNtoMatchLabelNS(oc, matchLabelKey, matchValue, secondaryCUDNName, "mylocalnet", "192.168.100.0/24", "192.168.100.1/32", false)
+		g.By("Create secondary localnet CUDN")
+		defer removeResource(true, true, "clusteruserdefinednetwork", secondaryCUDNName)
+		_, err := applyLocalnetCUDNtoMatchLabelNS(matchLabelKey, matchValue, secondaryCUDNName, "mylocalnet", "192.168.100.0/24", "192.168.100.1/32", false)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
-		compat_otp.By("Deploy statefulset in both cudnNS")
+		g.By("Deploy statefulset in both cudnNS")
 		for _, ns := range cudnNS {
-			defer removeResource(oc, true, true, "statefulset", "hello", "-n", ns)
-			compat_otp.ApplyNsResourceFromTemplate(oc, ns, "-f", udnStatefulSetTemplate, "NETWORK_NAME="+secondaryCUDNName)
-			compat_otp.AssertAllPodsToBeReady(oc, ns)
+			defer removeResource(true, true, "statefulset", "hello", "-n", ns)
+			err := applyNsResourceFromTemplateByAdmin(ns, "-f", udnStatefulSetTemplate, "NETWORK_NAME="+secondaryCUDNName)
+			o.Expect(err).NotTo(o.HaveOccurred())
+			assertAllPodsToBeReady(ns)
 		}
 
 		g.By("Deploy FlowCollector with UDNMapping feature enabled with eBPF in privileged mode")
 		flow := Flowcollector{
-			Namespace:      namespace,
-			EBPFPrivileged: "true",
-			EBPFeatures:    []string{"\"UDNMapping\""},
-			Template:       flowFixturePath,
+			Namespace:         namespace,
+			EBPFPrivileged:    "true",
+			EBPFeatures:       []string{"\"UDNMapping\""},
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Validate connection among CUDN pods")
-		cudn1Pods, err := compat_otp.GetAllPods(oc, cudnNS[0])
+		cudn1Pods, err := getAllPods(cudnNS[0])
 		o.Expect(err).NotTo(o.HaveOccurred())
-		cudn2Pods, err := compat_otp.GetAllPods(oc, cudnNS[1])
+		cudn2Pods, err := getAllPods(cudnNS[1])
 		o.Expect(err).NotTo(o.HaveOccurred())
 		startTime := time.Now()
-		CurlPod2PodPassUDN(oc, cudnNS[0], cudn1Pods[0], cudnNS[1], cudn2Pods[0])
+		CurlPod2PodPassUDN(cudnNS[0], cudn1Pods[0], cudnNS[1], cudn2Pods[0])
 
 		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		time.Sleep(120 * time.Second)
@@ -2007,7 +2034,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SOwnerName: "hello",
 		}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of CUDN Localnet flows > 0")
 		for _, r := range flowRecords {
@@ -2029,16 +2056,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			Name:              "bpfman",
 			NamespaceTemplate: filePath.Join(bpfDir, "namespace.yaml"),
 		}
-		bpfCatSrc := Resource{"catsrc", "bpfman-konflux-fbc", bpfNS.Name}
+		bpfCatSrc := Resource{"catalogsource", "bpfman-konflux-fbc", bpfNS.Name}
 
 		g.By("Deploy bpfman konflux FBC and ImageDigestMirrorSet")
-		bpfNS.DeployOperatorNamespace(oc)
-		catsrcErr := bpfCatSrc.applyFromTemplate(oc, "-n", bpfNS.Name, "-f", bpfCatSrcTemplate, "-p", "NAMESPACE="+bpfNS.Name)
+		bpfNS.DeployOperatorNamespace()
+		catsrcErr := bpfCatSrc.applyFromTemplate("-n", bpfNS.Name, "-f", bpfCatSrcTemplate, "-p", "NAMESPACE="+bpfNS.Name)
 		o.Expect(catsrcErr).NotTo(o.HaveOccurred())
-		bpfCatSrc.WaitUntilCatSrcReady(oc)
-		ApplyResourceFromFile(oc, bpfNS.Name, bpfIDMS)
+		bpfCatSrc.WaitUntilCatSrcReady()
+		ApplyResourceFromFile(bpfNS.Name, bpfIDMS)
 
-		bpfChannel, err := getOperatorChannel(oc, bpfCatSrc.Name, "bpfman-operator")
+		bpfChannel, err := getOperatorChannel(bpfCatSrc.Name, "bpfman-operator")
 		if err != nil || bpfChannel == "" {
 			g.Skip("bpfman-operator channel not found, skip this case")
 		}
@@ -2053,26 +2080,27 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			CatalogSource: &bpfSource,
 		}
 
-		bpfExisting, err := CheckOperatorStatus(oc, BPF.Namespace, BPF.PackageName)
+		bpfExisting, err := CheckOperatorStatus(BPF.Namespace, BPF.PackageName)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		// Deploy eBPF manager operator if not present
 		if !bpfExisting {
-			ensureOperatorDeployed(oc, BPF, bpfSource, "name=bpfman-daemon")
+			ensureOperatorDeployed(BPF, bpfSource, "name=bpfman-daemon")
 		}
 
 		g.By("Deploy FlowCollector with PacketDrop and Ebpfmanager enabled")
 		flow := Flowcollector{
-			Namespace:   namespace,
-			EBPFeatures: []string{"\"PacketDrop\", \"EbpfManager\""},
-			Template:    flowFixturePath,
+			Namespace:         namespace,
+			EBPFeatures:       []string{"\"PacketDrop\", \"EbpfManager\""},
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
-		g.By("Wait for 4 mins before logs gets collected and written to loki")
+		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		startTime := time.Now()
-		time.Sleep(240 * time.Second)
+		time.Sleep(120 * time.Second)
 
 		lokilabels := Lokilabels{
 			App: "netobserv-flowcollector",
@@ -2080,7 +2108,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify Packet Drop flows")
 		lokiParams := []string{"PktDropLatestState=\"TCP_INVALID_STATE\"", "Proto=\"6\""}
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of TCP Invalid State flows > 0")
 		for _, r := range flowRecords {
@@ -2090,7 +2118,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		lokiParams = []string{"PktDropLatestDropCause=\"SKB_DROP_REASON_NO_SOCKET\"", "Proto=\"6\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of No Socket TCP flows > 0")
 		for _, r := range flowRecords {
@@ -2101,23 +2129,25 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 	})
 
 	g.It("Author:memodi-NonPreRelease-High-82637-Verify IPSec feature [Disruptive]", func() {
-		compat_otp.By("Check if IPSec is enabled in the cluster")
-		ipsecEnabled, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("networks.operator.openshift.io", "cluster", "-ojsonpath='{.spec.defaultNetwork.ovnKubernetesConfig.ipsecConfig.mode}'").Output()
+		SkipIfOCPBelow("v4.16")
+		g.By("Check if IPSec is enabled in the cluster")
+		netObj, err := getDynamicResource("network.operator", "cluster", "")
 		o.Expect(err).NotTo(o.HaveOccurred())
-		ipsecEnabled = strings.Trim(ipsecEnabled, "'")
+		ipsecEnabled, _, _ := unstructured.NestedString(netObj.Object, "spec", "defaultNetwork", "ovnKubernetesConfig", "ipsecConfig", "mode")
 		if ipsecEnabled != "Full" {
 			g.Skip("IPSec is not enabled in Full mode, skipping test")
 		}
 
 		g.By("Deploy FlowCollector IPSec enabled")
 		flow := Flowcollector{
-			Namespace:   namespace,
-			EBPFeatures: []string{"\"IPSec\""},
-			Template:    flowFixturePath,
+			Namespace:         namespace,
+			EBPFeatures:       []string{"\"IPSec\""},
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		startTime := time.Now()
@@ -2128,45 +2158,45 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 		g.By("Verify IPSec flows")
 		lokiParams := []string{"IPSecStatus=\"success\""}
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of IPSecStatus==success flows > 0")
-		metrics, err := getMetric(oc, "sum(netobserv_node_ipsec_flows_total{IPSecStatus=\"success\"})")
+		metrics, err := getMetric("sum(netobserv_node_ipsec_flows_total{IPSecStatus=\"success\"})")
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(popMetricValue(metrics)).Should(o.BeNumerically(">", 0))
 		o.Expect(err).NotTo(o.HaveOccurred())
-		verifyEBPFFeatureMetrics(oc, "additionalmap") // additionalMap for RTT/IPSec map size
+		verifyEBPFFeatureMetrics("additionalmap") // additionalMap for RTT/IPSec map size
 	})
 
 	g.It("Author:kapjain-NonPreRelease-Longduration-High-85953-Verify FlowCollector Service deployment model [Serial][Slow]", func() {
 		g.By("Deploy FlowCollector with Service deployment model")
 		flow := Flowcollector{
-			Namespace:       namespace,
-			DeploymentModel: "Service",
-			Template:        flowFixturePath,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for pods to fully start and emit startup logs")
 		time.Sleep(30 * time.Second)
 
 		g.By("Verify FLP logs show 'Starting GRPC server with TLS'")
-		FLPpods, err := compat_otp.GetAllPodsWithLabel(oc, flow.Namespace, "app=flowlogs-pipeline")
+		FLPpods, err := getAllPodsWithLabel(flow.Namespace, "app=flowlogs-pipeline")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Get FLP pod logs to check GRPC server startup message")
-		flpLogs, err := oc.AsAdmin().WithoutNamespace().Run("logs").Args("-n", flow.Namespace, FLPpods[0], "--tail=100").Output()
+		flpLogs, err := getPodLogs(flow.Namespace, FLPpods[0])
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(flpLogs).To(o.ContainSubstring("Starting GRPC server with TLS"), "FLP logs should contains 'Starting GRPC server with TLS'")
 
 		g.By("Verify agent logs show 'Starting GRPC client with TLS'")
-		agentPods, err := compat_otp.GetAllPodsWithLabel(oc, flow.Namespace+"-privileged", "app=netobserv-ebpf-agent")
+		agentPods, err := getAllPodsWithLabel(flow.Namespace+"-privileged", "app=netobserv-ebpf-agent")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Get agent pod logs to check GRPC client startup message")
-		agentLogs, err := oc.AsAdmin().WithoutNamespace().Run("logs").Args("-n", flow.Namespace+"-privileged", agentPods[0], "--tail=100").Output()
+		agentLogs, err := getPodLogs(flow.Namespace+"-privileged", agentPods[0])
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(agentLogs).To(o.ContainSubstring("Starting GRPC client with TLS"), "Agent logs should contains 'Starting GRPC client with TLS'")
 
@@ -2175,87 +2205,82 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		time.Sleep(60 * time.Second)
 
 		g.By("Get flowlogs from loki")
-		err = verifyMonolithicLokilogsTime(oc, flow.Namespace, startTime)
+		err = verifyMonolithicLokilogsTime(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Verify default FLP Deployment is created with 3 pods")
-		result := verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 3, "")
+		result := verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 3, "")
 		o.Expect(result).To(o.BeTrue(), "By default the replica count should be 3")
 
 		g.By("Verify Service is created with correct port configuration")
-		service, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("service", "flowlogs-pipeline", "-n", flow.Namespace, "-o", "jsonpath='{.spec.ports[0].port}'").Output()
+		svc, err := k8sClient.CoreV1().Services(flow.Namespace).Get(context.Background(), "flowlogs-pipeline", metav1.GetOptions{})
 		o.Expect(err).NotTo(o.HaveOccurred())
-		service = strings.Trim(service, "'")
-		o.Expect(service).To(o.Equal("2055"))
-
-		targetPort, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("service", "flowlogs-pipeline", "-n", flow.Namespace, "-o", "jsonpath='{.spec.ports[0].targetPort}'").Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		targetPort = strings.Trim(targetPort, "'")
-		o.Expect(targetPort).To(o.Equal("2055"))
+		o.Expect(fmt.Sprintf("%d", svc.Spec.Ports[0].Port)).To(o.Equal("2055"))
+		o.Expect(svc.Spec.Ports[0].TargetPort.String()).To(o.Equal("2055"))
 
 		// Test replica management with unmanagedReplicas: False by default
 		g.By("Verify deployment does not upscale when unmanagedReplicas is false or not set")
-		err = oc.AsAdmin().WithoutNamespace().Run("scale").Args("deployment", "flowlogs-pipeline", "-n", flow.Namespace, "--replicas=4").Execute()
+		err = scaleDeployment(flow.Namespace, "flowlogs-pipeline", 4)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 3, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 3, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should not scale when unmanagedReplicas is false or not set")
 
 		g.By("Verify deployment does not downscale when unmanagedReplicas is false or not set")
-		err = oc.AsAdmin().WithoutNamespace().Run("scale").Args("deployment", "flowlogs-pipeline", "-n", flow.Namespace, "--replicas=2").Execute()
+		err = scaleDeployment(flow.Namespace, "flowlogs-pipeline", 2)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 3, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 3, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should not scale when unmanagedReplicas is false or not set")
 
 		g.By("Verify deployment scales via consumerReplicas when unmanagedReplicas is false or not set - upscale to 4")
-		err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=merge", "-p", `{"spec":{"processor":{"consumerReplicas":4}}}`).Execute()
+		err = patchFlowCollectorMerge(`{"spec":{"processor":{"consumerReplicas":4}}}`)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 4, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 4, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should scale via consumerReplicas when unmanagedReplicas is false or not set")
 
 		g.By("Verify deployment scales via consumerReplicas when unmanagedReplicas is false or not set - downscale to 2")
-		err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=merge", "-p", `{"spec":{"processor":{"consumerReplicas":2}}}`).Execute()
+		err = patchFlowCollectorMerge(`{"spec":{"processor":{"consumerReplicas":2}}}`)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 2, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 2, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should scale via consumerReplicas when unmanagedReplicas is false or not set")
 
 		// Test replica management with unmanagedReplicas: True
 		g.By("Enable unmanagedReplicas and set consumerReplicas to 3")
-		err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=merge", "-p", `{"spec":{"processor":{"unmanagedReplicas":true,"consumerReplicas":3}}}`).Execute()
+		err = patchFlowCollectorMerge(`{"spec":{"processor":{"unmanagedReplicas":true,"consumerReplicas":3}}}`)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Verify deployment upscales when unmanagedReplicas is true")
-		err = oc.AsAdmin().WithoutNamespace().Run("scale").Args("deployment", "flowlogs-pipeline", "-n", flow.Namespace, "--replicas=4").Execute()
+		err = scaleDeployment(flow.Namespace, "flowlogs-pipeline", 4)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 4, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 4, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should scale when unmanagedReplicas is true")
 
 		g.By("Verify deployment downscales when unmanagedReplicas is true")
-		err = oc.AsAdmin().WithoutNamespace().Run("scale").Args("deployment", "flowlogs-pipeline", "-n", flow.Namespace, "--replicas=1").Execute()
+		err = scaleDeployment(flow.Namespace, "flowlogs-pipeline", 1)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 1, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 1, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should scale when unmanagedReplicas is true")
 
 		g.By("Verify consumerReplicas change does not scale deployment when unmanagedReplicas is true")
-		err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=merge", "-p", `{"spec":{"processor":{"consumerReplicas":4}}}`).Execute()
+		err = patchFlowCollectorMerge(`{"spec":{"processor":{"consumerReplicas":4}}}`)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 1, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 1, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should not scale via consumerReplicas when unmanagedReplicas is true")
 
 		g.By("Verify HPA scales the deployment when unmanagedReplicas is true")
 		hpaYAML := filePath.Join(baseDir, "flowlogs_pipeline_hpa_template.yaml")
-		hpaFile := compat_otp.ProcessTemplate(oc, "--ignore-unknown-parameters=true", "-f", hpaYAML, "-p", "NAMESPACE="+namespace)
-		defer func() {
-			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("hpa", "flowlogs-pipeline-hpa", "-n", flow.Namespace).Execute()
-		}()
-		err = oc.WithoutNamespace().Run("create").Args("-f", hpaFile).Execute()
+		hpaFile, err := processTemplate(namespace, "--ignore-unknown-parameters=true", "-f", hpaYAML, "-p", "NAMESPACE="+namespace)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 4, ">")
+		defer func() {
+			_ = k8sClient.AutoscalingV1().HorizontalPodAutoscalers(flow.Namespace).Delete(context.Background(), "flowlogs-pipeline-hpa", metav1.DeleteOptions{})
+		}()
+		ApplyResourceFromFile("", hpaFile)
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 4, ">")
 		o.Expect(result).To(o.BeTrue(), "HPA should scale deployment above 4 replicas when unmanagedReplicas is true")
 
 		g.By("Verify HPA does not scale deployment when unmanagedReplicas is false")
-		err = oc.AsAdmin().WithoutNamespace().Run("patch").Args("flowcollector", "cluster", "--type=merge", "-p", `{"spec":{"processor":{"unmanagedReplicas":false,"consumerReplicas":2}}}`).Execute()
+		err = patchFlowCollectorMerge(`{"spec":{"processor":{"unmanagedReplicas":false,"consumerReplicas":2}}}`)
 		o.Expect(err).NotTo(o.HaveOccurred())
-		result = verifyDeploymentReplicas(oc, "flowlogs-pipeline", flow.Namespace, 2, "")
+		result = verifyDeploymentReplicas("flowlogs-pipeline", flow.Namespace, 2, "")
 		o.Expect(result).To(o.BeTrue(), "Deployment should be reconciled to consumerReplicas=2 when unmanagedReplicas is false")
 	})
 
@@ -2265,27 +2290,28 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Deploy flowcollector")
 		gatewayAPITemplate := filePath.Join(baseDir, "gateway-api-template.yaml")
 		flow := Flowcollector{
-			Namespace: namespace,
-			Template:  flowFixturePath,
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Deploying Gateway API resources from template")
 		gatewayNS := "netobserv-gateway-test"
 		gatewayName := "test-gateway-owner"
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(gatewayNS)
-		err := applyResourceFromTemplateByAdmin(oc, "-f", gatewayAPITemplate)
+		defer deleteNamespace(gatewayNS)
+		err := applyResourceFromTemplateByAdmin("-f", gatewayAPITemplate)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Verifying Gateway Deployment exists")
 		// The Gateway controller creates a Deployment named gateway-name + gatewayclass-name
 		deploymentName := gatewayName + "-openshift-default"
-		WaitForDeploymentPodsToBeReady(oc, gatewayNS, deploymentName)
+		WaitForDeploymentPodsToBeReady(gatewayNS, deploymentName)
 
 		g.By("Verifying Pods are created by Gateway")
-		pods, err := compat_otp.GetAllPodsWithLabel(oc, gatewayNS, fmt.Sprintf("gateway.networking.k8s.io/gateway-name=%s", gatewayName))
+		pods, err := getAllPodsWithLabel(gatewayNS, fmt.Sprintf("gateway.networking.k8s.io/gateway-name=%s", gatewayName))
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(pods)).Should(o.BeNumerically(">", 0), "expected at least one Gateway pod")
 
@@ -2297,51 +2323,55 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SNamespace: "netobserv-gateway-test",
 		}
 		parameters := []string{"SrcK8S_OwnerType=\"Gateway\""}
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, parameters...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, parameters...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of Gateway Owner flows > 0")
 	})
 	g.It("Author:kapjain-Medium-88334-Pause Network Observability functions [Serial]", func() {
 		g.By("Create a FlowCollector")
 		flow := Flowcollector{
-			Namespace:       namespace,
-			Template:        flowFixturePath,
-			DeploymentModel: "Service",
-			SlicesEnable:    "true",
+			Namespace:         namespace,
+			Template:          flowFixturePath,
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			DeploymentModel:   "Service",
+			SlicesEnable:      "true",
 		}
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
-		flow.WaitForFlowcollectorReady(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Get all netobserv-managed components before pause (excluding pods with dynamic IDs)")
-		componentsBeforePause, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(
+		cmd := exec.Command("oc", "get",
 			"service,deployment,daemonset,serviceaccount,networkpolicy,configmap,secret",
-			"-A", "-l", "netobserv-managed=true", "-o", "name",
-		).Output()
+			"-A", "-l", "netobserv-managed=true", "-o", "name")
+		componentsBeforePauseBytes, err := cmd.Output()
+		componentsBeforePause := string(componentsBeforePauseBytes)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		e2e.Logf("Components before pause (stable names): %s", componentsBeforePause)
 
 		g.By("Pause the FlowCollector")
-		err = oc.AsAdmin().WithoutNamespace().Run("patch").Args(
-			"flowcollector", "cluster",
-			"--type=merge",
-			"-p", `{"spec":{"execution":{"mode":"OnHold"}}}`,
-		).Execute()
+		err = patchFlowCollectorMerge(`{"spec":{"execution":{"mode":"OnHold"}}}`)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
 		g.By("Wait for FlowCollector status to show 'on hold' message")
 		err = wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 150*time.Second, false, func(context.Context) (done bool, err error) {
-			onHoldConditions, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(
-				"flowcollector", "cluster",
-				"-o", `jsonpath={.status.conditions[?(@.message=="FlowCollector is on hold")]}`,
-			).Output()
-			if err != nil {
-				e2e.Logf("Error getting FlowCollector status: %v", err)
+			fcObj, getErr := getDynamicResource("flowcollector", "cluster", "")
+			if getErr != nil {
+				e2e.Logf("Error getting FlowCollector status: %v", getErr)
 				return false, nil
 			}
-			if onHoldConditions != "" {
-				e2e.Logf("FlowCollector status shows 'on hold'")
-				return true, nil
+			conditions, found, _ := unstructured.NestedSlice(fcObj.Object, "status", "conditions")
+			if !found {
+				e2e.Logf("Waiting for FlowCollector to show 'on hold' status...")
+				return false, nil
+			}
+			for _, c := range conditions {
+				cond, ok := c.(map[string]interface{})
+				if ok {
+					if msg, _ := cond["message"].(string); msg == "FlowCollector is on hold" {
+						e2e.Logf("FlowCollector status shows 'on hold'")
+						return true, nil
+					}
+				}
 			}
 			e2e.Logf("Waiting for FlowCollector to show 'on hold' status...")
 			return false, nil
@@ -2353,9 +2383,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		componentsShouldRemain := []string{
 			"configmap/grafana-dashboard-netobserv-health",
 			"configmap/netobserv-main",
-			"configmap/loki-config",
-			"deployment.apps/loki",
 			"service/loki",
+			"deployment.apps/loki",
+			"configmap/loki-config",
 		}
 		// Static plugin and network policy are only available on OCP 4.15+
 		if IsOCPVersionAtLeast("v4.15") {
@@ -2411,29 +2441,29 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Resume the FlowCollector")
 		resumeTime := time.Now()
-		err = oc.AsAdmin().WithoutNamespace().Run("patch").Args(
-			"flowcollector", "cluster",
-			"--type=merge",
-			"-p", `{"spec":{"execution":{"mode":"Running"}}}`,
-		).Execute()
+		err = patchFlowCollectorMerge(`{"spec":{"execution":{"mode":"Running"}}}`)
 		o.Expect(err).NotTo(o.HaveOccurred())
-
-		g.By("Wait for FlowCollector to be ready")
-		flow.WaitForFlowcollectorReady(oc)
 
 		g.By("Verify no 'on hold' message in FlowCollector status")
-		onHoldConditionsAfterResume, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(
-			"flowcollector", "cluster",
-			"-o", `jsonpath={.status.conditions[?(@.message=="FlowCollector is on hold")]}`,
-		).Output()
-		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(onHoldConditionsAfterResume).Should(o.BeEmpty())
+		fcResumeObj, errResume := getDynamicResource("flowcollector", "cluster", "")
+		o.Expect(errResume).NotTo(o.HaveOccurred())
+		resumeConditions, _, _ := unstructured.NestedSlice(fcResumeObj.Object, "status", "conditions")
+		onHoldFound := false
+		for _, c := range resumeConditions {
+			cond, ok := c.(map[string]interface{})
+			if ok {
+				if msg, _ := cond["message"].(string); msg == "FlowCollector is on hold" {
+					onHoldFound = true
+				}
+			}
+		}
+		o.Expect(onHoldFound).Should(o.BeFalse())
 
 		g.By("Wait for a min before logs gets collected and written to loki after resume")
 		time.Sleep(60 * time.Second)
 
 		g.By("Verify flows are being created in Loki after resume")
-		err = verifyMonolithicLokilogsTime(oc, flow.Namespace, resumeTime)
+		err = verifyMonolithicLokilogsTime(flow.MonolithicLokiURL, resumeTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 	})
 
@@ -2444,10 +2474,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ServerNS: "test-server-88455",
 			Template: servertemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testServerTemplate.ServerNS)
-		err := testServerTemplate.createServer(oc)
+		defer deleteNamespace(testServerTemplate.ServerNS)
+		err := testServerTemplate.createServer()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testServerTemplate.ServerNS)
+		assertAllPodsToBeReady(testServerTemplate.ServerNS)
 
 		clientTemplate := filePath.Join(baseDir, "test-tls-client_template.yaml")
 		testClientTemplate := TestClientTemplate{
@@ -2455,20 +2485,21 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			ClientNS: "test-client-88455",
 			Template: clientTemplate,
 		}
-		defer oc.DeleteSpecifiedNamespaceAsAdmin(testClientTemplate.ClientNS)
-		err = testClientTemplate.createClient(oc)
+		defer deleteNamespace(testClientTemplate.ClientNS)
+		err = testClientTemplate.createClient()
 		o.Expect(err).NotTo(o.HaveOccurred())
-		compat_otp.AssertAllPodsToBeReady(oc, testClientTemplate.ClientNS)
+		assertAllPodsToBeReady(testClientTemplate.ClientNS)
 
 		g.By("Deploy FlowCollector with TLS Tracking feature enabled")
 		flow := Flowcollector{
-			Namespace:   namespace,
-			EBPFeatures: []string{"\"TLSTracking\""},
-			Template:    flowFixturePath,
+			Namespace:         namespace,
+			EBPFeatures:       []string{"\"TLSTracking\""},
+			MonolithicLokiURL: fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
+			Template:          flowFixturePath,
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Wait for a min before logs gets collected and written to loki")
 		startTime := time.Now()
@@ -2484,7 +2515,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify HTTP flows")
 		lokiParams := []string{"Proto=\"6\"", "SrcPort=\"80\""}
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTP flows > 0")
 		// Verify TLS fields are not populated
@@ -2494,7 +2525,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify HTTPS flows with TLSVersion 1.3")
 		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.3\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.3 > 0")
 		// Verify TLS 1.3 fields
@@ -2506,7 +2537,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify HTTPS flows with TLSVersion 1.2")
 		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.2\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.2 > 0")
 		// Verify TLS 1.2 fields
@@ -2518,7 +2549,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify HTTPS flows with TLSVersion 1.1")
 		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.1\""}
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(oc, flow.Namespace, startTime, lokiParams...)
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.1 > 0")
 		// Verify TLS 1.1 fields
@@ -2529,17 +2560,16 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify TLS metrics")
-		verifyTLSMetrics(oc, "TLSVersion")
-		verifyTLSMetrics(oc, "TLSCipherSuite")
-		verifyTLSMetrics(oc, "TLSGroup")
+		verifyTLSMetrics("TLSVersion")
+		verifyTLSMetrics("TLSCipherSuite")
+		verifyTLSMetrics("TLSGroup")
 
-		g.By("Wait for TLSInsecureVersion alert to be active")
-		waitForAlertToBePending(oc, "TLSInsecureVersion_PerSrcNamespaceWarning")
+		g.By("Wait for TLSInsecureVersion alert to be pending")
+		waitForAlertToBePending("TLSInsecureVersion_PerSrcNamespaceWarning")
 
 		g.By("Verify TLS alert has expected labels")
-		alertLabels, err := getAlertLabels(oc, "TLSInsecureVersion_PerSrcNamespaceWarning")
+		alertLabels, err := getAlertLabels("TLSInsecureVersion_PerSrcNamespaceWarning")
 		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(alertLabels).NotTo(o.BeNil())
 		o.Expect(alertLabels).To(o.HaveKeyWithValue("severity", "warning"))
 		o.Expect(alertLabels).To(o.HaveKeyWithValue("netobserv", "true"))
 	})
@@ -2564,10 +2594,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Deploy cert-manager Operator")
 		// check if cert-manager Operator exists
-		certManagerExisting, err := CheckOperatorStatus(oc, certManager.Namespace, certManager.PackageName)
+		certManagerExisting, err := CheckOperatorStatus(certManager.Namespace, certManager.PackageName)
 		o.Expect(err).NotTo(o.HaveOccurred())
 
-		certManagerChannel, err := getOperatorChannel(oc, certManagerCatalog, certManagerPackageName)
+		certManagerChannel, err := getOperatorChannel(certManagerCatalog, certManagerPackageName)
 		if err != nil || certManagerChannel == "" {
 			g.Skip("cert-manager channel not found, skipping test")
 		}
@@ -2579,85 +2609,84 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				Name:              certManagerNS,
 				NamespaceTemplate: filePath.Join(subscriptionDir, "namespace.yaml"),
 			}
-			certManagerNSObj.DeployOperatorNamespace(oc)
+			certManagerNSObj.DeployOperatorNamespace()
 
-			ensureOperatorDeployed(oc, certManager, certManagerSource, "name=cert-manager-operator")
+			ensureOperatorDeployed(certManager, certManagerSource, "name=cert-manager-operator")
 		}
 
 		defer func() {
 			if !certManagerExisting {
-				certManager.uninstallOperator(oc)
-				oc.DeleteSpecifiedNamespaceAsAdmin(certManagerNS)
+				certManager.uninstallOperator()
+				deleteNamespace(certManagerNS)
 			}
 		}()
 
 		g.By("Wait for cert-manager CRDs to be available")
 		err = wait.PollUntilContextTimeout(context.Background(), 5*time.Second, 180*time.Second, false, func(context.Context) (done bool, err error) {
-			issuerCRD, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("crd", "issuers.cert-manager.io").Output()
-			certCRD, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("crd", "certificates.cert-manager.io").Output()
-			if strings.Contains(issuerCRD, "issuers.cert-manager.io") && strings.Contains(certCRD, "certificates.cert-manager.io") {
+			_, issuerErr := getDynamicResource("crd", "issuers.cert-manager.io", "")
+			_, certErr := getDynamicResource("crd", "certificates.cert-manager.io", "")
+			if issuerErr == nil && certErr == nil {
 				e2e.Logf("cert-manager CRDs are available")
 				return true, nil
 			}
 			e2e.Logf("Waiting for cert-manager CRDs to be available...")
 			return false, nil
 		})
-		compat_otp.AssertWaitPollNoErr(err, "cert-manager CRDs did not become available")
+		assertWaitPollNoErr(err, "cert-manager CRDs did not become available")
+
+		g.By("Wait for cert-manager webhook to be ready")
+		waitUntilDeploymentReady("cert-manager-webhook", "cert-manager")
 
 		g.By("Create certificates using cert-manager")
-		certFile := compat_otp.ProcessTemplate(oc, "--ignore-unknown-parameters=true", "-f", certTemplatePath, "-p", "Namespace="+namespace)
+		certFile, err := processTemplate(namespace, "--ignore-unknown-parameters=true", "-f", certTemplatePath, "-p", "Namespace="+namespace)
+		o.Expect(err).NotTo(o.HaveOccurred())
 		// Retry apply because cert-manager webhook may not be ready immediately after CRDs appear
 		err = wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 300*time.Second, true, func(context.Context) (done bool, err error) {
-			applyErr := oc.AsAdmin().WithoutNamespace().Run("apply").Args("-f", certFile, "-n", namespace).Execute()
+			applyCmd := exec.Command("oc", "apply", "-f", certFile, "-n", namespace)
+			output, applyErr := applyCmd.CombinedOutput()
 			if applyErr != nil {
-				e2e.Logf("Waiting for cert-manager webhook to be ready: %v", applyErr)
+				e2e.Logf("Waiting for cert-manager webhook to be ready: %s", string(output))
 				return false, nil
 			}
 			return true, nil
 		})
 		o.Expect(err).NotTo(o.HaveOccurred())
 		defer func() {
-			_ = oc.AsAdmin().WithoutNamespace().Run("delete").Args("-f", certFile, "-n", namespace).Execute()
+			_ = exec.Command("oc", "delete", "-f", certFile, "-n", namespace).Run()
 		}()
 
 		g.By("Wait for certificate secrets to be created")
 		err = wait.PollUntilContextTimeout(context.Background(), 30*time.Second, 300*time.Second, false, func(context.Context) (done bool, err error) {
-			_, err = oc.AsAdmin().WithoutNamespace().Run("get").Args("secret", "prov-netobserv-ca-secret", "-n", namespace).Output()
-			if err != nil {
-				return false, nil
-			}
-			_, err = oc.AsAdmin().WithoutNamespace().Run("get").Args("secret", "prov-flowlogs-pipeline-cert", "-n", namespace).Output()
-			if err != nil {
-				return false, nil
-			}
-			_, err = oc.AsAdmin().WithoutNamespace().Run("get").Args("secret", "prov-ebpf-agent-cert", "-n", namespace).Output()
-			if err != nil {
-				return false, nil
+			for _, secretName := range []string{"prov-netobserv-ca-secret", "prov-flowlogs-pipeline-cert", "prov-ebpf-agent-cert"} {
+				_, getErr := k8sClient.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
+				if getErr != nil {
+					return false, nil
+				}
 			}
 			return true, nil
 		})
-		compat_otp.AssertWaitPollNoErr(err, "certificate secrets did not become available")
+		assertWaitPollNoErr(err, "certificate secrets did not become available")
 
-		g.By("Deploy FlowCollector in Service mode with Provided TLS certificates")
+		g.By("Deploy FlowCollector with Provided TLS certificates")
 		flow := Flowcollector{
 			Namespace:                   namespace,
 			Template:                    flowFixturePath,
-			DeploymentModel:             "Service",
 			ServiceTLSType:              "Provided",
 			ServiceCASecretName:         "prov-netobserv-ca-secret",
 			ServiceServerCertSecretName: "prov-flowlogs-pipeline-cert",
 			ServiceClientCertSecretName: "prov-ebpf-agent-cert",
+			MonolithicLokiURL:           fmt.Sprintf("http://loki.%s.svc:3100/", namespace),
 		}
 
-		defer func() { _ = flow.DeleteFlowcollector(oc) }()
-		flow.CreateFlowcollector(oc)
+		defer func() { _ = flow.DeleteFlowcollector() }()
+		flow.CreateFlowcollector()
 
 		g.By("Verify eBPF agent is using mTLS")
-		ebpfPods, err := compat_otp.GetAllPods(oc, namespace+"-privileged")
+		ebpfPods, err := getAllPods(namespace + "-privileged")
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(ebpfPods)).Should(o.BeNumerically(">", 0), "No eBPF agent pods found")
 
-		ebpfLogs, err := oc.AsAdmin().WithoutNamespace().Run("logs").Args("-n", namespace+"-privileged", ebpfPods[0]).Output()
+		ebpfLogs, err := getPodLogs(namespace+"-privileged", ebpfPods[0])
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(ebpfLogs).To(o.ContainSubstring("Starting GRPC client with mTLS"), "eBPF agent logs should show mTLS is enabled")
 
@@ -2666,8 +2695,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		time.Sleep(60 * time.Second)
 
 		g.By("Verify flow logs are being stored in Loki using verifyLokilogsTime")
-		err = verifyMonolithicLokilogsTime(oc, flow.Namespace, startTime)
+		err = verifyMonolithicLokilogsTime(flow.MonolithicLokiURL, startTime)
 		o.Expect(err).NotTo(o.HaveOccurred())
 	})
-	// Add future NetObserv + demoLoki test-cases here
+	//Add future NetObserv + Loki test-cases here
 })

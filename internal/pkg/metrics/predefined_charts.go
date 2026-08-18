@@ -116,6 +116,29 @@ func dnsCharts(group string) []metricslatest.Chart {
 			Type:          metricslatest.ChartTypeSingleStat,
 			SectionName:   "",
 			DashboardName: mainDashboard,
+			Title:         "DNS error rate",
+			Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC{DnsFlagsResponseCode!="NoError"}[2m]))`}},
+		},
+	}
+	return append(charts, chartVariantsFor(&metricslatest.Chart{
+		Type:          metricslatest.ChartTypeStackArea,
+		SectionName:   sectionName,
+		DashboardName: mainDashboard,
+		Title:         "DNS error rate",
+		Queries: []metricslatest.Query{{
+			PromQL: `sum(rate($METRIC{DnsFlagsResponseCode!="NoError",$FILTERS}[2m])) by (DnsFlagsResponseCode,$LABELS)`,
+			Legend: "$LEGEND, {{ DnsFlagsResponseCode }}",
+		}},
+	}, group, "")...)
+}
+
+func dnsLatencyCharts(group string) []metricslatest.Chart {
+	sectionName := "DNS"
+	charts := []metricslatest.Chart{
+		{
+			Type:          metricslatest.ChartTypeSingleStat,
+			SectionName:   "",
+			DashboardName: mainDashboard,
 			Title:         "DNS latency",
 			Unit:          metricslatest.UnitSeconds,
 			Queries: []metricslatest.Query{
@@ -124,13 +147,6 @@ func dnsCharts(group string) []metricslatest.Chart {
 					Legend: "p99",
 				},
 			},
-		},
-		{
-			Type:          metricslatest.ChartTypeSingleStat,
-			SectionName:   "",
-			DashboardName: mainDashboard,
-			Title:         "DNS error rate",
-			Queries:       []metricslatest.Query{{PromQL: `sum(rate($METRIC_count{DnsFlagsResponseCode!="NoError"}[2m]))`}},
 		},
 	}
 	charts = append(charts, chartVariantsFor(&metricslatest.Chart{
@@ -160,16 +176,7 @@ func dnsCharts(group string) []metricslatest.Chart {
 		},
 	}, group, "ms")...)
 
-	return append(charts, chartVariantsFor(&metricslatest.Chart{
-		Type:          metricslatest.ChartTypeStackArea,
-		SectionName:   sectionName,
-		DashboardName: mainDashboard,
-		Title:         "DNS error rate",
-		Queries: []metricslatest.Query{{
-			PromQL: `sum(rate($METRIC_count{DnsFlagsResponseCode!="NoError",$FILTERS}[2m])) by (DnsFlagsResponseCode,$LABELS)`,
-			Legend: "$LEGEND, {{ DnsFlagsResponseCode }}",
-		}},
-	}, group, "")...)
+	return charts
 }
 
 func netpolCharts(group string) []metricslatest.Chart {

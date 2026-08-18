@@ -5,17 +5,27 @@ import (
 	filePath "path/filepath"
 )
 
+const (
+	netobservNS   = "openshift-netobserv-operator"
+	NOPackageName = "netobserv-operator"
+
+	minioNS        = "minio-aosqe"
+	minioSecret    = "minio-creds"
+	apiPath        = "/api/logs/v1/"
+	queryRangePath = "/loki/api/v1/query_range"
+	loNS           = "openshift-operators-redhat"
+)
+
 var (
-	// NetObserv Operator variables
-	NOcatSrc = Resource{"catsrc", "netobserv-konflux-fbc", netobservNS}
+	oc = &CLI{}
+
+	NOcatSrc = Resource{"catalogsource", "netobserv-konflux-fbc", netobservNS}
 	NOSource = CatalogSourceObjects{"stable", NOcatSrc.Name, NOcatSrc.Namespace}
 
-	// Template directories
 	baseDir, _      = filePath.Abs("testdata")
 	subscriptionDir = filePath.Join(baseDir, "subscription")
 	flowFixturePath = filePath.Join(baseDir, "flowcollector_v1beta2_template.yaml")
 
-	// Operator namespace object
 	OperatorNS = OperatorNamespace{
 		Name:              netobservNS,
 		NamespaceTemplate: filePath.Join(subscriptionDir, "namespace.yaml"),
@@ -31,5 +41,13 @@ var (
 
 	imageDigest    = filePath.Join(subscriptionDir, "image-digest-mirror-set.yaml")
 	catSrcTemplate = filePath.Join(subscriptionDir, "catalog-source.yaml")
-	catalogSource  = os.Getenv("MULTISTAGE_PARAM_OVERRIDE_NETOBSERV_CS_IMAGE")
+
+	// Environment variables for test configuration
+	catalogSource      = os.Getenv("MULTISTAGE_PARAM_OVERRIDE_NETOBSERV_CS_IMAGE")
+	deleteNamespaceEnv = os.Getenv("DELETE_NAMESPACE")
+	dumpEventsEnv      = os.Getenv("DUMP_EVENTS_ON_FAILURE")
+	e2eRunTags         = os.Getenv("E2E_RUN_TAGS")
+	junitReportFile    = os.Getenv("JUNIT_REPORT_FILE")
+	kubeAdminPasswd    = os.Getenv("QE_KUBEADMIN_PASSWORD")
+	kubeconfigPath     = os.Getenv("KUBECONFIG")
 )

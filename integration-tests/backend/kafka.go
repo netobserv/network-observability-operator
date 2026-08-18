@@ -3,13 +3,9 @@ package e2etests
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
-
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -51,7 +47,7 @@ type KafkaUser struct {
 }
 
 // deploys default Kafka
-func (kafka *Kafka) deployKafka(oc *exutil.CLI) {
+func (kafka *Kafka) deployKafka() {
 	e2e.Logf("Deploy Default Kafka")
 	parameters := []string{"--ignore-unknown-parameters=true", "-f", kafka.Template, "-p", "NAMESPACE=" + kafka.Namespace}
 
@@ -59,19 +55,21 @@ func (kafka *Kafka) deployKafka(oc *exutil.CLI) {
 		parameters = append(parameters, "NAME="+kafka.Name)
 	}
 
-	compat_otp.ApplyNsResourceFromTemplate(oc, kafka.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(kafka.Namespace, parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // deploys Kafka Metrics
-func (kafkaMetrics *KafkaMetrics) deployKafkaMetrics(oc *exutil.CLI) {
+func (kafkaMetrics *KafkaMetrics) deployKafkaMetrics() {
 	e2e.Logf("Deploy Kafka metrics")
 	parameters := []string{"--ignore-unknown-parameters=true", "-f", kafkaMetrics.Template, "-p", "NAMESPACE=" + kafkaMetrics.Namespace}
 
-	compat_otp.ApplyNsResourceFromTemplate(oc, kafkaMetrics.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(kafkaMetrics.Namespace, parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // creates a Kafka topic
-func (kafkaTopic *KafkaTopic) deployKafkaTopic(oc *exutil.CLI) {
+func (kafkaTopic *KafkaTopic) deployKafkaTopic() {
 	e2e.Logf("Create Kafka topic")
 	parameters := []string{"--ignore-unknown-parameters=true", "-f", kafkaTopic.Template, "-p", "NAMESPACE=" + kafkaTopic.Namespace}
 
@@ -83,11 +81,12 @@ func (kafkaTopic *KafkaTopic) deployKafkaTopic(oc *exutil.CLI) {
 		parameters = append(parameters, "TOPIC="+kafkaTopic.TopicName)
 	}
 
-	compat_otp.ApplyNsResourceFromTemplate(oc, kafkaTopic.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(kafkaTopic.Namespace, parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // creates a Kafka nodePool
-func (kafkaNodePool *KafkaNodePool) deployKafkaNodePool(oc *exutil.CLI) {
+func (kafkaNodePool *KafkaNodePool) deployKafkaNodePool() {
 	e2e.Logf("Create Kafka nodePool")
 	parameters := []string{"--ignore-unknown-parameters=true", "-f", kafkaNodePool.Template, "-p", "NAMESPACE=" + kafkaNodePool.Namespace}
 
@@ -99,11 +98,12 @@ func (kafkaNodePool *KafkaNodePool) deployKafkaNodePool(oc *exutil.CLI) {
 		parameters = append(parameters, "NODEPOOL="+kafkaNodePool.NodePoolName)
 	}
 
-	compat_otp.ApplyNsResourceFromTemplate(oc, kafkaNodePool.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(kafkaNodePool.Namespace, parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // deploys KafkaUser
-func (kafkaUser *KafkaUser) deployKafkaUser(oc *exutil.CLI) {
+func (kafkaUser *KafkaUser) deployKafkaUser() {
 	e2e.Logf("Create Kafka User")
 	parameters := []string{"--ignore-unknown-parameters=true", "-f", kafkaUser.Template, "-p", "NAMESPACE=" + kafkaUser.Namespace}
 
@@ -115,73 +115,66 @@ func (kafkaUser *KafkaUser) deployKafkaUser(oc *exutil.CLI) {
 		parameters = append(parameters, "NAME="+kafkaUser.Name)
 	}
 
-	compat_otp.ApplyNsResourceFromTemplate(oc, kafkaUser.Namespace, parameters...)
+	err := applyNsResourceFromTemplateByAdmin(kafkaUser.Namespace, parameters...)
+	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // deletes kafkaUser
-func (k *KafkaUser) deleteKafkaUser(oc *exutil.CLI) {
+func (k *KafkaUser) deleteKafkaUser() {
 	e2e.Logf("Deleting Kafka user")
-	command := []string{"kafkauser", k.UserName, "-n", k.Namespace}
-	_, err := oc.AsAdmin().WithoutNamespace().Run("delete").Args(command...).Output()
+	err := deleteDynamicResource("kafkauser", k.UserName, k.Namespace)
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // deletes kafkaTopic
-func (kafkaTopic *KafkaTopic) deleteKafkaTopic(oc *exutil.CLI) {
+func (kafkaTopic *KafkaTopic) deleteKafkaTopic() {
 	e2e.Logf("Deleting Kafka topic")
-	command := []string{"kafkatopic", kafkaTopic.TopicName, "-n", kafkaTopic.Namespace}
-	_, err := oc.AsAdmin().WithoutNamespace().Run("delete").Args(command...).Output()
+	err := deleteDynamicResource("kafkatopic", kafkaTopic.TopicName, kafkaTopic.Namespace)
+	o.Expect(err).NotTo(o.HaveOccurred())
+	topic := Resource{"kafkatopic", kafkaTopic.TopicName, kafkaTopic.Namespace}
+	err = topic.WaitUntilResourceIsGone()
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // deletes kafkaNodePool
-func (kafkaNodePool *KafkaNodePool) deleteKafkaNodePool(oc *exutil.CLI) {
+func (kafkaNodePool *KafkaNodePool) deleteKafkaNodePool() {
 	e2e.Logf("Deleting KafkaNodePool")
-	command := []string{"kafkaNodePool", kafkaNodePool.NodePoolName, "-n", kafkaNodePool.Namespace}
-	_, err := oc.AsAdmin().WithoutNamespace().Run("delete").Args(command...).Output()
+	err := deleteDynamicResource("kafkanodepool", kafkaNodePool.NodePoolName, kafkaNodePool.Namespace)
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // deletes kafka
-func (kafka *Kafka) deleteKafka(oc *exutil.CLI) {
+func (kafka *Kafka) deleteKafka() {
 	e2e.Logf("Deleting Kafka")
-	command := []string{"kafka", kafka.Name, "-n", kafka.Namespace}
-	_, err := oc.AsAdmin().WithoutNamespace().Run("delete").Args(command...).Output()
+	err := deleteDynamicResource("kafka", kafka.Name, kafka.Namespace)
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
 // Poll to wait for kafka to be ready
-func waitForKafkaReady(oc *exutil.CLI, kafkaName string, kafkaNS string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 6*time.Second, 360*time.Second, false, func(context.Context) (done bool, err error) {
-		command := []string{"kafka", kafkaName, "-n", kafkaNS, `-o=jsonpath={.status.conditions[*].type}`}
-		output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(command...).Output()
-		if err != nil {
-			e2e.Logf("kafka status ready error: %v", err)
-			return false, err
+func waitForKafkaReady(kafkaName string, kafkaNS string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 6*time.Second, 360*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		obj, getErr := getDynamicResource("kafka", kafkaName, kafkaNS)
+		if getErr != nil {
+			e2e.Logf("kafka status ready error: %v", getErr)
+			return false, nil
 		}
-		if strings.Contains(output, "Ready") {
-			return true, nil
-		}
-		return false, nil
+		condStatus, _, _ := getConditionStatus(obj, "Ready")
+		return condStatus == "True", nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("resource kafka/%s did not appear", kafkaName))
+	assertWaitPollNoErr(err, fmt.Sprintf("resource kafka/%s did not appear", kafkaName))
 }
 
 // Poll to wait for kafka Topic to be ready
-func waitForKafkaTopicReady(oc *exutil.CLI, kafkaTopicName string, kafkaTopicNS string) {
-	err := wait.PollUntilContextTimeout(context.Background(), 6*time.Second, 360*time.Second, false, func(context.Context) (done bool, err error) {
-		command := []string{"kafkaTopic", kafkaTopicName, "-n", kafkaTopicNS, `-o=jsonpath='{.status.conditions[*].type}'`}
-		output, err := oc.AsAdmin().WithoutNamespace().Run("get").Args(command...).Output()
-		if err != nil {
-			e2e.Logf("kafka Topic status ready error: %v", err)
-			return false, err
+func waitForKafkaTopicReady(kafkaTopicName string, kafkaTopicNS string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 6*time.Second, 360*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		obj, getErr := getDynamicResource("kafkatopic", kafkaTopicName, kafkaTopicNS)
+		if getErr != nil {
+			e2e.Logf("kafka Topic status ready error: %v", getErr)
+			return false, nil
 		}
-		status := strings.Replace(output, "'", "", 2)
-		e2e.Logf("Waiting for kafka status %s", status)
-		if status == "Ready" {
-			return true, nil
-		}
-		return false, nil
+		condStatus, _, _ := getConditionStatus(obj, "Ready")
+		e2e.Logf("Waiting for kafka topic status %s", condStatus)
+		return condStatus == "True", nil
 	})
-	compat_otp.AssertWaitPollNoErr(err, fmt.Sprintf("resource kafkaTopic/%s did not appear", kafkaTopicName))
+	assertWaitPollNoErr(err, fmt.Sprintf("resource kafkaTopic/%s did not appear", kafkaTopicName))
 }

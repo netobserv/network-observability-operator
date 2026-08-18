@@ -155,6 +155,7 @@ func TestMergeMetricsConfiguration_DefaultWithFeatures(t *testing.T) {
 	cfs, _ := validatePipelineConfig(t, scm, dcm)
 	names := getSortedMetricsNames(cfs.Parameters[5].Encode.Prom.Metrics)
 	assert.Equal([]string{
+		"namespace_dns_flows_total",
 		"namespace_dns_latency_seconds",
 		"namespace_drop_packets_total",
 		"namespace_flows_total",

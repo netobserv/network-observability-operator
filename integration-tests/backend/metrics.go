@@ -10,8 +10,7 @@ import (
 	"time"
 
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
-	compat_otp "github.com/openshift/origin/test/extended/util/compat_otp"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
@@ -44,9 +43,9 @@ type metric struct {
 	Value []interface{} `json:"value"`
 }
 
-func getMetric(oc *exutil.CLI, query string) ([]metric, error) {
-	bearerToken := getSAToken(oc, "prometheus-k8s", "openshift-monitoring")
-	promRoute := "https://" + getRouteAddress(oc, "openshift-monitoring", "prometheus-k8s")
+func getMetric(query string) ([]metric, error) {
+	bearerToken := getSAToken("prometheus-k8s", "openshift-monitoring")
+	promRoute := "https://" + getRouteAddress("openshift-monitoring", "prometheus-k8s")
 	res, err := queryPrometheus(promRoute, query, bearerToken)
 	if err != nil {
 		return []metric{}, err
@@ -104,11 +103,11 @@ func popMetricValue(metrics []metric) float64 {
 }
 
 // polls any prometheus metrics
-func pollMetrics(oc *exutil.CLI, promQuery string) float64 {
+func pollMetrics(promQuery string) float64 {
 	var metricsVal float64
 	e2e.Logf("Query is %s", promQuery)
 	err := wait.PollUntilContextTimeout(context.Background(), 60*time.Second, 600*time.Second, false, func(context.Context) (bool, error) {
-		metrics, err := getMetric(oc, promQuery)
+		metrics, err := getMetric(promQuery)
 		if err != nil {
 			return false, err
 		}
@@ -119,31 +118,30 @@ func pollMetrics(oc *exutil.CLI, promQuery string) float64 {
 		return metricsVal > 0, nil
 	})
 
-	msg := fmt.Sprintf("%s did not return valid metrics in 600 seconds", promQuery)
-	compat_otp.AssertWaitPollNoErr(err, msg)
+	assertWaitPollNoErr(err, fmt.Sprintf("%s did not return valid metrics in 600 seconds", promQuery))
 	return metricsVal
 }
 
 // verify FLP metrics
-func verifyFLPMetrics(oc *exutil.CLI) {
+func verifyFLPMetrics() {
 	query := "sum(netobserv_ingest_flows_processed)"
-	pollMetrics(oc, query)
+	pollMetrics(query)
 	query = "sum(netobserv_loki_sent_entries_total)"
-	pollMetrics(oc, query)
+	pollMetrics(query)
 }
 
 // verify eBPF metrics
-func verifyEBPFMetrics(oc *exutil.CLI) {
+func verifyEBPFMetrics() {
 	query := "sum(netobserv_agent_exported_batch_total)"
-	pollMetrics(oc, query)
+	pollMetrics(query)
 	query = "sum(netobserv_agent_evictions_total)"
-	pollMetrics(oc, query)
+	pollMetrics(query)
 }
 
 // verify eBPF filter metrics
-func verifyEBPFFilterMetrics(oc *exutil.CLI, reason string) {
+func verifyEBPFFilterMetrics(reason string) {
 	query := fmt.Sprintf(`100 * sum(rate(netobserv_agent_filtered_flows_total{reason="%s"}[1m])) / sum(rate(netobserv_agent_filtered_flows_total[1m]))`, reason)
-	metrics := pollMetrics(oc, query)
+	metrics := pollMetrics(query)
 	switch reason {
 	case "FilterAccept":
 		// Expected to be around 1
@@ -158,37 +156,61 @@ func verifyEBPFFilterMetrics(oc *exutil.CLI, reason string) {
 }
 
 // verify eBPF feature metrics
-func verifyEBPFFeatureMetrics(oc *exutil.CLI, feature string) {
+func verifyEBPFFeatureMetrics(feature string) {
 	query := fmt.Sprintf(`sum(rate(netobserv_agent_buffer_size{name="%s"}[1m]))`, feature)
-	metrics := pollMetrics(oc, query)
+	metrics := pollMetrics(query)
 	// making sure it's simply greater than 0 because we don't know the deteministic value to expect.
 	o.Expect(metrics).Should(o.BeNumerically(">", 0), fmt.Sprintf("%s metrics is 0", feature))
 }
 
 // verify TLS metrics with specified label
-func verifyTLSMetrics(oc *exutil.CLI, field string) {
+func verifyTLSMetrics(field string) {
 	query := fmt.Sprintf(`sum(netobserv_namespace_tls_flows_total{%s!=""})`, field)
-	metrics := pollMetrics(oc, query)
+	metrics := pollMetrics(query)
 	o.Expect(metrics).Should(o.BeNumerically(">", 0), fmt.Sprintf("TLS metrics with %s label should be > 0", field))
 }
 
-func getMetricsScheme(oc *exutil.CLI, servicemonitor string, namespace string) (string, error) {
-	out, err := oc.AsAdmin().Run("get").Args("servicemonitor", servicemonitor, "-n", namespace, "-o", "jsonpath='{.spec.endpoints[].scheme}'").Output()
-	return out, err
+func getMetricsScheme(servicemonitor string, namespace string) (string, error) {
+	obj, err := getDynamicResource("servicemonitor", servicemonitor, namespace)
+	if err != nil {
+		return "", err
+	}
+	endpoints, found, _ := unstructured.NestedSlice(obj.Object, "spec", "endpoints")
+	if !found || len(endpoints) == 0 {
+		return "", fmt.Errorf("no endpoints found in servicemonitor %s", servicemonitor)
+	}
+	ep, ok := endpoints[0].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid endpoint format")
+	}
+	scheme, _ := ep["scheme"].(string)
+	return scheme, nil
 }
 
-func getMetricsServerName(oc *exutil.CLI, servicemonitor string, namespace string) (string, error) {
-	out, err := oc.AsAdmin().Run("get").Args("servicemonitor", servicemonitor, "-n", namespace, "-o", "jsonpath='{.spec.endpoints[].tlsConfig.serverName}'").Output()
-	return out, err
+func getMetricsServerName(servicemonitor string, namespace string) (string, error) {
+	obj, err := getDynamicResource("servicemonitor", servicemonitor, namespace)
+	if err != nil {
+		return "", err
+	}
+	endpoints, found, _ := unstructured.NestedSlice(obj.Object, "spec", "endpoints")
+	if !found || len(endpoints) == 0 {
+		return "", fmt.Errorf("no endpoints found in servicemonitor %s", servicemonitor)
+	}
+	ep, ok := endpoints[0].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("invalid endpoint format")
+	}
+	serverName, _, _ := unstructured.NestedString(ep, "tlsConfig", "serverName")
+	return serverName, nil
 }
 
 // getAllNetobservMetricNames queries Prometheus for all netobserv flow metrics and returns their names
 // Flow metrics are those controlled by includeList/additionalIncludeList configuration
 // (node_*, workload_*, namespace_*), excluding operational metrics (agent_*, ingest_*, etc.)
-func getAllNetobservMetricNames(oc *exutil.CLI) ([]string, error) {
+func getAllNetobservMetricNames() ([]string, error) {
 	// Query for flow metrics only (node_, workload_, namespace_ prefixes)
 	query := `{__name__=~"netobserv_(node|workload|namespace)_.*"}`
-	metrics, err := getMetric(oc, query)
+	metrics, err := getMetric(query)
 	if err != nil {
 		return nil, err
 	}

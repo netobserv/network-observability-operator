@@ -3,6 +3,7 @@ package e2etests
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,13 +15,42 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
-	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	azblobv2 "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/google/uuid"
 	o "github.com/onsi/gomega"
-	exutil "github.com/openshift/origin/test/extended/util"
 	"github.com/tidwall/gjson"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	e2e "k8s.io/kubernetes/test/e2e/framework"
 )
+
+func getAzureStorageAccountFromCluster() (string, string, error) {
+	deploy, err := k8sClient.AppsV1().Deployments("openshift-image-registry").Get(context.Background(), "image-registry", metav1.GetOptions{})
+	if err != nil {
+		return "", "", err
+	}
+	var accountName string
+	for _, c := range deploy.Spec.Template.Spec.Containers {
+		for _, env := range c.Env {
+			if env.Name == "REGISTRY_STORAGE_AZURE_ACCOUNTNAME" {
+				accountName = env.Value
+				break
+			}
+		}
+	}
+	if accountName == "" {
+		return "", "", fmt.Errorf("REGISTRY_STORAGE_AZURE_ACCOUNTNAME not found on image-registry deployment")
+	}
+
+	secret, err := k8sClient.CoreV1().Secrets("openshift-image-registry").Get(context.Background(), "image-registry-private-configuration", metav1.GetOptions{})
+	if err != nil {
+		return accountName, "", err
+	}
+
+	return accountName, string(secret.Data["REGISTRY_STORAGE_AZURE_ACCOUNTKEY"]), nil
+}
 
 // To read Azure subscription json file from local disk.
 // Also injects ENV vars needed to perform certain operations on Managed Identities.
@@ -162,15 +192,29 @@ func createStorageAccountOnAzure(defaultAzureCred *azidentity.DefaultAzureCreden
 	return storageAccountName
 }
 
-func getAzureResourceGroupFromCluster(oc *exutil.CLI) (string, error) {
-	resourceGroup, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("infrastructures", "cluster", "-o=jsonpath={.status.platformStatus.azure.resourceGroupName}").Output()
-	return resourceGroup, err
+func getAzureResourceGroupFromCluster() (string, error) {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	if err != nil {
+		return "", err
+	}
+
+	resourceGroup, found := getNestedField(obj.Object, ".status.platformStatus.azure.resourceGroupName")
+	if !found || resourceGroup == "" {
+		return "", fmt.Errorf("failed to get resource group name: empty value")
+	}
+
+	return resourceGroup, nil
 }
 
 // Returns the Azure environment and storage account URI suffixes
-func getStorageAccountURISuffixAndEnvForAzure(oc *exutil.CLI) (string, string) {
-	// To return account URI suffix and env
-	cloudName, _ := oc.AsAdmin().WithoutNamespace().Run("get").Args("infrastructure", "cluster", "-o=jsonpath={.status.platformStatus.azure.cloudName}").Output()
+func getStorageAccountURISuffixAndEnvForAzure() (string, string) {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	if err != nil {
+		return "AzureGlobal", ".blob.core.windows.net"
+	}
+
+	cloudName, _ := getNestedField(obj.Object, ".status.platformStatus.azure.cloudName")
+
 	storageAccountURISuffix := ".blob.core.windows.net"
 	environment := "AzureGlobal"
 	// Currently we don't have template support for STS/WIF on Azure Government
@@ -192,7 +236,7 @@ func getStorageAccountURISuffixAndEnvForAzure(oc *exutil.CLI) (string, string) {
 
 // Creates a blob container under the provided storageAccount
 func createBlobContaineronAzure(defaultAzureCred *azidentity.DefaultAzureCredential, storageAccountName, storageAccountURISuffix, containerName string) {
-	blobServiceClient, err := azblob.NewClient(fmt.Sprintf("https://%s%s", storageAccountName, storageAccountURISuffix), defaultAzureCred, nil)
+	blobServiceClient, err := azblobv2.NewClient(fmt.Sprintf("https://%s%s", storageAccountName, storageAccountURISuffix), defaultAzureCred, nil)
 	o.Expect(err).NotTo(o.HaveOccurred())
 	_, err = blobServiceClient.CreateContainer(context.Background(), containerName, nil)
 	o.Expect(err).NotTo(o.HaveOccurred())
@@ -200,8 +244,20 @@ func createBlobContaineronAzure(defaultAzureCred *azidentity.DefaultAzureCredent
 }
 
 // Creates Loki object storage secret required on Azure STS/WIF clusters
-func createLokiObjectStorageSecretForWIF(oc *exutil.CLI, lokiStackNS, objectStorageSecretName, environment, containerName, storageAccountName string) error {
-	return oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("create").Args("secret", "generic", "-n", lokiStackNS, objectStorageSecretName, "--from-literal=environment="+environment, "--from-literal=container="+containerName, "--from-literal=account_name="+storageAccountName).Execute()
+func createLokiObjectStorageSecretForWIF(lokiStackNS, objectStorageSecretName, environment, containerName, storageAccountName string) error {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      objectStorageSecretName,
+			Namespace: lokiStackNS,
+		},
+		StringData: map[string]string{
+			"environment":  environment,
+			"container":    containerName,
+			"account_name": storageAccountName,
+		},
+	}
+	_, err := k8sClient.CoreV1().Secrets(lokiStackNS).Create(context.Background(), secret, metav1.CreateOptions{})
+	return err
 }
 
 // Deletes a storage account in Microsoft Azure
@@ -230,9 +286,28 @@ func deleteManagedIdentityOnAzure(defaultAzureCred *azidentity.DefaultAzureCrede
 	}
 }
 
+// getAzureCloudStorageURISuffix returns the blob storage URI suffix based on cloud type
+func getAzureCloudStorageURISuffix() string {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	if err != nil {
+		e2e.Logf("error getting infrastructure cluster: %v", err)
+		return ".blob.core.windows.net"
+	}
+
+	cloudName, _ := getNestedField(obj.Object, ".status.platformStatus.azure.cloudName")
+	if strings.ToLower(cloudName) == "azureusgovernmentcloud" {
+		return ".blob.core.usgovcloudapi.net"
+	}
+	// Add other clouds as needed:
+	// "azurechinacloud" -> ".blob.core.chinacloudapi.cn"
+	// "azuregermancloud" -> ".blob.core.cloudapi.de"
+
+	return ".blob.core.windows.net" // AzurePublicCloud default
+}
+
 // patches CLIENT_ID, SUBSCRIPTION_ID, TENANT_ID AND REGION into Loki subscription on Azure WIF clusters
-func patchLokiConfigIntoLokiSubscription(oc *exutil.CLI, azureSubscriptionID, identityClientID, region string) {
-	patchConfig := `{
+func patchLokiConfigIntoLokiSubscription(azureSubscriptionID, identityClientID, region string) {
+	patchData := fmt.Sprintf(`{
 		"spec": {
 			"config": {
 				"env": [
@@ -255,20 +330,21 @@ func patchLokiConfigIntoLokiSubscription(oc *exutil.CLI, azureSubscriptionID, id
 				]
 			}
 		}
-	}`
+	}`, identityClientID, os.Getenv("AZURE_TENANT_ID"), azureSubscriptionID, region)
 
-	err := oc.NotShowInfo().AsAdmin().WithoutNamespace().Run("patch").Args("sub", "loki-operator", "-n", loNS, "-p", fmt.Sprintf(patchConfig, identityClientID, os.Getenv("AZURE_TENANT_ID"), azureSubscriptionID, region), "--type=merge").Execute()
+	err := patchDynamicResource("subscription", "loki-operator", loNS, types.MergePatchType, []byte(patchData))
 	o.Expect(err).NotTo(o.HaveOccurred(), "Patching Loki Operator failed...")
-	WaitForPodsReadyWithLabel(oc, "openshift-operators-redhat", "name=loki-operator-controller-manager")
+
+	WaitForPodsReadyWithLabel("openshift-operators-redhat", "name=loki-operator-controller-manager")
 }
 
 // Performs creation of Managed Identity, Associated Federated credentials, Role assignment to the managed identity and object storage creation on Azure
-func performManagedIdentityAndSecretSetupForAzureWIF(oc *exutil.CLI, lokistackName, lokiStackNS, azureContainerName, lokiStackStorageSecretName string) {
-	region, err := getAzureClusterRegion(oc)
+func performManagedIdentityAndSecretSetupForAzureWIF(lokistackName, lokiStackNS, azureContainerName, lokiStackStorageSecretName string) {
+	region, err := getAzureClusterRegion()
 	o.Expect(err).NotTo(o.HaveOccurred())
-	serviceAccountIssuer, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("authentication.config", "cluster", "-o=jsonpath={.spec.serviceAccountIssuer}").Output()
+	serviceAccountIssuer, err := getOIDC()
 	o.Expect(err).NotTo(o.HaveOccurred())
-	resourceGroup, err := getResourceGroupOnAzure(oc)
+	resourceGroup, err := getResourceGroupOnAzure()
 	o.Expect(err).NotTo(o.HaveOccurred())
 
 	azureSubscriptionID := os.Getenv("AZURE_SUBSCRIPTION_ID")
@@ -278,20 +354,121 @@ func performManagedIdentityAndSecretSetupForAzureWIF(oc *exutil.CLI, lokistackNa
 	createFederatedCredentialforLoki(cred, azureSubscriptionID, lokistackName, lokistackName, lokiStackNS, "openshift-logging-"+lokistackName, serviceAccountIssuer, resourceGroup)
 	createFederatedCredentialforLoki(cred, azureSubscriptionID, lokistackName, lokistackName+"-ruler", lokiStackNS, "openshift-logging-"+lokistackName+"-ruler", serviceAccountIssuer, resourceGroup)
 	createRoleAssignmentForManagedIdentity(cred, azureSubscriptionID, identityPrincipalID)
-	patchLokiConfigIntoLokiSubscription(oc, azureSubscriptionID, identityClientID, region)
+	patchLokiConfigIntoLokiSubscription(azureSubscriptionID, identityClientID, region)
 	storageAccountName := createStorageAccountOnAzure(cred, azureSubscriptionID, resourceGroup, region)
-	environment, storageAccountURISuffix := getStorageAccountURISuffixAndEnvForAzure(oc)
+	environment, storageAccountURISuffix := getStorageAccountURISuffixAndEnvForAzure()
 	createBlobContaineronAzure(cred, storageAccountName, storageAccountURISuffix, azureContainerName)
-	err = createLokiObjectStorageSecretForWIF(oc, lokiStackNS, lokiStackStorageSecretName, environment, azureContainerName, storageAccountName)
+	err = createLokiObjectStorageSecretForWIF(lokiStackNS, lokiStackStorageSecretName, environment, azureContainerName, storageAccountName)
 	o.Expect(err).NotTo(o.HaveOccurred())
 }
 
-func getResourceGroupOnAzure(oc *exutil.CLI) (string, error) {
-	resourceGroup, err := oc.AsAdmin().WithoutNamespace().Run("get").Args("infrastructures", "cluster", "-o=jsonpath={.status.platformStatus.azure.resourceGroupName}").Output()
-	return resourceGroup, err
+func getResourceGroupOnAzure() (string, error) {
+	obj, err := getDynamicResource("infrastructures", "cluster", "")
+	if err != nil {
+		return "", err
+	}
+
+	resourceGroup, found := getNestedField(obj.Object, ".status.platformStatus.azure.resourceGroupName")
+	if !found || resourceGroup == "" {
+		return "", fmt.Errorf("failed to get resource group name: empty value")
+	}
+
+	return resourceGroup, nil
 }
 
 // Get region/location of cluster running on Azure Cloud
-func getAzureClusterRegion(oc *exutil.CLI) (string, error) {
-	return oc.AsAdmin().WithoutNamespace().Run("get").Args("node", `-ojsonpath={.items[].metadata.labels.topology\.kubernetes\.io/region}`).Output()
+func getAzureClusterRegion() (string, error) {
+	nodes, err := k8sClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return "", err
+	}
+	if len(nodes.Items) == 0 {
+		return "", fmt.Errorf("no nodes found")
+	}
+
+	region := nodes.Items[0].Labels["topology.kubernetes.io/region"]
+	if region == "" {
+		return "", fmt.Errorf("region label not found on node")
+	}
+
+	return region, nil
+}
+
+// newAzureContainerClient initializes a new azure blob container client
+func newAzureContainerClient(accountName, accountKey, azContainerName string) (azblob.ContainerURL, error) {
+	storageAccountURISuffix := getAzureCloudStorageURISuffix()
+	u, _ := url.Parse(fmt.Sprintf("https://%s%s", accountName, storageAccountURISuffix))
+	credential, err := azblob.NewSharedKeyCredential(accountName, accountKey)
+	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+	serviceURL := azblob.NewServiceURL(*u, p)
+	return serviceURL.NewContainerURL(azContainerName), err
+}
+
+// createAzureStorageBlobContainer creates azure storage container
+func createAzureStorageBlobContainer(accountName, accountKey, containerName string) error {
+	container, err := newAzureContainerClient(accountName, accountKey, containerName)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// check if the container exists or not
+	// if exists, then remove the blobs in the container, if not, create the container
+	_, err = container.GetProperties(ctx, azblob.LeaseAccessConditions{})
+	message := fmt.Sprintf("%v", err)
+	if strings.Contains(message, "ContainerNotFound") {
+		_, err = container.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
+		return err
+	}
+	return emptyAzureBlobContainer(container)
+}
+
+// deleteAzureStorageBlobContainer deletes azure storage container
+func deleteAzureStorageBlobContainer(accountName, accountKey, containerName string) error {
+	container, err := newAzureContainerClient(accountName, accountKey, containerName)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	err = emptyAzureBlobContainer(container)
+	if err != nil {
+		return err
+	}
+	_, err = container.Delete(ctx, azblob.ContainerAccessConditions{})
+	if err != nil {
+		return fmt.Errorf("error deleting container: %v", err)
+	}
+	e2e.Logf("Azure storage container is deleted")
+	return nil
+}
+
+// emptyAzureBlobContainer removes all the files in azure storage container
+func emptyAzureBlobContainer(container azblob.ContainerURL) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for marker := (azblob.Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
+		// Get a result segment starting with the blob indicated by the current Marker.
+		listBlob, err := container.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{})
+		if err != nil {
+			return fmt.Errorf("error listing blobs in container: %v", err)
+		}
+
+		// IMPORTANT: ListBlobs returns the start of the next segment; you MUST use this to get
+		// the next segment (after processing the current result segment).
+		marker = listBlob.NextMarker
+
+		// Process the blobs returned in this result segment (if the segment is empty, the loop body won't execute)
+		for _, blobInfo := range listBlob.Segment.BlobItems {
+			blobURL := container.NewBlockBlobURL(blobInfo.Name)
+			_, err := blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
+			if err != nil {
+				return fmt.Errorf("error deleting blob %s: %v", blobInfo.Name, err)
+			}
+		}
+	}
+	e2e.Logf("deleted all blob items in the container.")
+	return nil
 }
