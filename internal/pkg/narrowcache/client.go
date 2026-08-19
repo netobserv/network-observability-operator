@@ -81,28 +81,32 @@ func (c *Client) getAndCreateWatchIfNeeded(ctx context.Context, info GVKInfo, gv
 	// Live query
 	rlog := log.FromContext(ctx).WithName("narrowcache").WithValues("objKey", objKey)
 	rlog.Info("Cache miss, doing live query")
-	fetched, err := info.Getter(ctx, c.liveClient, key)
-	if err != nil {
-		return nil, objKey, err
-	}
-
-	// Create watch for later calls
-	w, err := info.Watcher(ctx, c.liveClient, key)
-	if err != nil {
-		return nil, objKey, err
-	}
-
-	// Store fetched object
-	obj := info.Cleanup(fetched)
-	err = c.setToCache(objKey, obj)
+	fetched, w, err := c.fetchAndWatch(ctx, objKey, info, key)
 	if err != nil {
 		return nil, objKey, err
 	}
 
 	// Start updating goroutine
-	go c.updateCache(ctx, objKey, w)
+	go c.updateCache(ctx, objKey, info, key, w)
 
-	return fetched.(client.Object), objKey, nil
+	return fetched, objKey, nil
+}
+
+func (c *Client) fetchAndWatch(ctx context.Context, cacheKey string, info GVKInfo, objKey client.ObjectKey) (client.Object, watch.Interface, error) {
+	fetched, err := info.Getter(ctx, c.liveClient, objKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	w, err := info.Watcher(ctx, c.liveClient, objKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	info.Cleanup(fetched)
+	if err := c.setToCache(cacheKey, fetched); err != nil {
+		w.Stop()
+		return nil, nil, err
+	}
+	return fetched.(client.Object), w, nil
 }
 
 // "Terrible hack" cc directxman12 / sigs.k8s.io/controller-runtime/pkg/cache/internal/cache_reader.go
@@ -121,12 +125,12 @@ func copyInto(obj runtime.Object, out client.Object) error {
 	return nil
 }
 
-func (c *Client) updateCache(ctx context.Context, key string, watcher watch.Interface) {
+func (c *Client) updateCache(ctx context.Context, cacheKey string, info GVKInfo, objKey client.ObjectKey, watcher watch.Interface) {
 	rlog := log.FromContext(ctx).WithName("narrowcache")
 	defer func() {
 		watcher.Stop()
-		rlog.WithValues("key", key).Info("Watch terminated. Clearing cache entry.")
-		c.clearEntryByKey(key)
+		rlog.WithValues("key", cacheKey).Info("Watch terminated. Clearing cache entry.")
+		c.clearEntryByKey(cacheKey)
 	}()
 
 	for {
@@ -135,17 +139,32 @@ func (c *Client) updateCache(ctx context.Context, key string, watcher watch.Inte
 			return
 		case watchEvent, ok := <-watcher.ResultChan():
 			if !ok {
-				return
+				// Watch channel closed (normal API timeout). Re-establish the watch
+				// to avoid losing handlers and missing subsequent events.
+				rlog.WithValues("key", cacheKey).Info("Watch channel closed, re-establishing")
+				watcher.Stop()
+
+				obj, newWatcher, err := c.fetchAndWatch(ctx, cacheKey, info, objKey)
+				if err != nil {
+					rlog.WithValues("key", cacheKey).Error(err, "Failed to re-establish watch")
+					return
+				}
+
+				// Notify handlers so controllers re-check current state
+				c.callHandlers(ctx, cacheKey, watch.Event{Type: watch.Modified, Object: obj})
+
+				watcher = newWatcher
+				continue
 			}
-			rlog.WithValues("key", key, "event type", watchEvent.Type).Info("Event received")
+			rlog.WithValues("key", cacheKey, "event type", watchEvent.Type).Info("Event received")
 			if watchEvent.Type == watch.Added || watchEvent.Type == watch.Modified {
-				if err := c.setToCache(key, watchEvent.Object); err != nil {
-					rlog.WithValues("key", key).Error(err, "Error while updating cache")
+				if err := c.setToCache(cacheKey, watchEvent.Object); err != nil {
+					rlog.WithValues("key", cacheKey).Error(err, "Error while updating cache")
 				}
 			} else if watchEvent.Type == watch.Deleted {
-				c.removeFromCache(key)
+				c.removeFromCache(cacheKey)
 			}
-			c.callHandlers(ctx, key, watchEvent)
+			c.callHandlers(ctx, cacheKey, watchEvent)
 		}
 	}
 }

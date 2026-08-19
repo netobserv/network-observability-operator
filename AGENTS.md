@@ -22,7 +22,11 @@ Best practices for AI coding agents on NetObserv Operator.
 
 **Key Directories:**
 - `api/flowcollector/v1beta2/`: CRD definitions
-- `internal/controller/`: Reconciliation logic
+- `internal/controller/`: Reconciliation logic (main controller, static
+  controller, per-component sub-reconcilers)
+- `internal/pkg/narrowcache/`: Custom cache layer — watches only explicitly
+  requested objects instead of full GVKs, to limit memory in large clusters.
+  All controllers use it (via the manager client).
 - `config/`: Kustomize manifests
 - `docs/`: FlowCollector spec, architecture
 
@@ -39,7 +43,7 @@ if flowCollector.Name != constants.FlowCollectorName {
 ### 🚨 Backward Compatibility
 FlowCollector v1beta2 is stable:
 - ✅ Add optional fields, use `+optional` marker; defaults can be set either through OpenAPI or directly hardcoded, depending on how likely it is to change them in the future (a future change of OpenAPI-based default is ignored on installed operators being upgraded).
-- ❌ Never remove/rename fields or change types
+- ❌ Never remove/rename fields or change types. Deprecate them if necessary.
 
 ### 🚨 Bundle Updates Required
 After CRD/CSV changes: `make update-bundle`.
@@ -48,7 +52,7 @@ Generated files are:
 - Everything in `./bundles`
 - CRD references in `./docs` (e.g. `flowcollector-flows-netobserv-io-v1beta2` and `FlowCollector.md`)
 
-Do not manually edit any of those generated files, modify the source instead (e.g. `./config` (Kustomize) or in-code `kubebuilder` markers for CRD OpenAPI and bundle rbac).
+Do not manually edit any of those generated files, modify the source instead (e.g. `./config` (Kustomize) or in-code `kubebuilder` markers for CRD OpenAPI and bundle rbac). After running `make update-bundle`, the changes must be included in the commit.
 
 ### 🚨 Image References
 Never hardcode. Use env vars:
@@ -121,6 +125,12 @@ Files to modify:
 3. Rebuild: Changes are embedded at compile time via go:embed
 Note: Static config changes require operator rebuild/redeploy.
 ```
+
+### Controller Watch Patterns
+Any controller that creates Deployments or DaemonSets must watch them
+(e.g. `Owns(&appsv1.Deployment{})`) so it re-reconciles when their status
+changes. Without this, the controller will never detect that a resource
+became ready. See `flowcollector_controller.go` for the reference pattern.
 
 ## Code Review Checklist
 
