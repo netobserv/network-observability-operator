@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	osv1 "github.com/openshift/api/console/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -156,6 +157,10 @@ func PrometheusRuleChanged(old, n *monitoringv1.PrometheusRule, report *ChangeRe
 	// Note: DeepDerivative misses changes in Spec.Groups.Rules (covered by test "Expecting PrometheusRule to exist and be updated")
 	return report.Check("PrometheusRule spec changed", !deepEqual(n.Spec, old.Spec)) ||
 		report.Check("PrometheusRule labels changed", !IsSubSet(old.Labels, n.Labels))
+}
+
+func ConsolePluginChanged(old, n *osv1.ConsolePlugin, report *ChangeReport) bool {
+	return report.Check("ConsolePlugin spec changed", !deepDerivative(n.Spec, old.Spec))
 }
 
 // FindContainer searches in pod containers one that matches the provided name

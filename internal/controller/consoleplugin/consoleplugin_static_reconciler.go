@@ -86,7 +86,7 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.StaticPluginName)
 
-		if err = r.reconcilePlugin(ctx, &builder, &desired.Spec, constants.StaticPluginName, "NetObserv static plugin"); err != nil {
+		if err = r.reconcilePlugin(ctx, &builder, constants.StaticPluginName, "NetObserv static plugin"); err != nil {
 			return err
 		}
 
