@@ -48,33 +48,6 @@ var (
 	})
 )
 
-func ReconcileClusterRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv1.ClusterRoleBinding) error {
-	actual := rbacv1.ClusterRoleBinding{}
-	if err := cl.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name}, &actual); err != nil {
-		if errors.IsNotFound(err) {
-			return cl.CreateOwned(ctx, desired)
-		}
-		return fmt.Errorf("can't reconcile ClusterRoleBinding %s: %w", desired.Name, err)
-	}
-	if helper.IsSubSet(actual.Labels, desired.Labels) &&
-		actual.RoleRef == desired.RoleRef &&
-		reflect.DeepEqual(actual.Subjects, desired.Subjects) {
-		if actual.RoleRef != desired.RoleRef {
-			// Roleref cannot be updated deleting and creating a new rolebinding
-			log := log.FromContext(ctx)
-			log.Info("Deleting old ClusterRoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
-			err := cl.Delete(ctx, &actual)
-			if err != nil {
-				log.Error(err, "error deleting old ClusterRoleBinding", "Namespace", actual.GetNamespace(), "Name", actual.GetName())
-			}
-			return cl.CreateOwned(ctx, desired)
-		}
-		// cluster role binding already reconciled. Exiting
-		return nil
-	}
-	return cl.UpdateIfOwned(ctx, &actual, desired)
-}
-
 func ReconcileRoleBinding(ctx context.Context, cl *helper.Client, desired *rbacv1.RoleBinding) error {
 	actual := rbacv1.RoleBinding{}
 	if err := cl.Get(ctx, types.NamespacedName{Name: desired.ObjectMeta.Name, Namespace: desired.ObjectMeta.Namespace}, &actual); err != nil {

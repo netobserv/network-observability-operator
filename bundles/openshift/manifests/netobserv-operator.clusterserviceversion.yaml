@@ -717,7 +717,6 @@ spec:
           - configmaps
           - namespaces
           - persistentvolumeclaims
-          - secrets
           - serviceaccounts
           - services
           verbs:
@@ -782,14 +781,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - apps
-          resources:
-          - replicasets
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
           - autoscaling
           resources:
           - horizontalpodautoscalers
@@ -843,16 +834,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - coordination.k8s.io
-          resources:
-          - leases
-          verbs:
-          - create
-          - get
-          - list
-          - update
-          - watch
-        - apiGroups:
           - discovery.k8s.io
           resources:
           - endpointslices
@@ -891,15 +872,6 @@ spec:
           - patch
           - update
         - apiGroups:
-          - k8s.ovn.org
-          resources:
-          - clusteruserdefinednetworks
-          - userdefinednetworks
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
           - loki.grafana.com
           resources:
           - lokistacks
@@ -907,20 +879,6 @@ spec:
           - get
           - list
           - watch
-        - apiGroups:
-          - loki.grafana.com
-          resourceNames:
-          - logs
-          resources:
-          - network
-          verbs:
-          - create
-        - apiGroups:
-          - metrics.k8s.io
-          resources:
-          - pods
-          verbs:
-          - create
         - apiGroups:
           - monitoring.coreos.com
           resources:
@@ -966,7 +924,6 @@ spec:
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
-          - clusterrolebindings
           - rolebindings
           verbs:
           - create
@@ -982,7 +939,6 @@ spec:
           verbs:
           - create
           - list
-          - update
           - watch
         - apiGroups:
           - security.openshift.io
@@ -992,6 +948,14 @@ spec:
           - securitycontextconstraints
           verbs:
           - use
+        - apiGroups:
+          - security.openshift.io
+          resourceNames:
+          - netobserv-ebpf-agent
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - update
         - apiGroups:
           - authentication.k8s.io
           resources:

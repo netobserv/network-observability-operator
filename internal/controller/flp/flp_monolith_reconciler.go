@@ -31,9 +31,6 @@ type monolithReconciler struct {
 	staticConfigMap  *corev1.ConfigMap
 	dynamicConfigMap *corev1.ConfigMap
 	rbConfigWatcher  *rbacv1.RoleBinding
-	rbHostNetwork    *rbacv1.ClusterRoleBinding
-	rbLokiWriter     *rbacv1.ClusterRoleBinding
-	rbInformers      *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
 }
@@ -49,9 +46,6 @@ func newMonolithReconciler(cmn *reconcilers.Instance) *monolithReconciler {
 		staticConfigMap:  cmn.Managed.NewConfigMap(monoConfigMap),
 		dynamicConfigMap: cmn.Managed.NewConfigMap(monoDynConfigMap),
 		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(monoShortName, constants.ConfigWatcherRole)),
-		rbHostNetwork:    cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.HostNetworkRole)),
-		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.LokiWriterRole)),
-		rbInformers:      cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(monoShortName, constants.FLPInformersRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(monoServiceMonitor)
@@ -248,38 +242,6 @@ func (r *monolithReconciler) reconcilePermissions(ctx context.Context, builder *
 	if !r.Managed.Exists(r.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
-
-	// Host network
-	if r.ClusterInfo.IsOpenShift() && builder.desired.UseHostNetwork() {
-		r.rbHostNetwork = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.HostNetworkRole)
-		if err := r.ReconcileClusterRoleBinding(ctx, r.rbHostNetwork); err != nil {
-			return err
-		}
-	} else {
-		r.Managed.TryDelete(ctx, r.rbHostNetwork)
-	}
-
-	// Loki writer
-	if builder.desired.UseLoki() && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
-		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.LokiWriterRole)
-		if err := r.ReconcileClusterRoleBinding(ctx, r.rbLokiWriter); err != nil {
-			return err
-		}
-	} else {
-		r.Managed.TryDelete(ctx, r.rbLokiWriter)
-	}
-
-	// Informers - when centralized informers are disabled, flowlogs-pipeline needs direct K8s API access
-	if !builder.desired.Processor.IsInformerCacheProxyEnabled() {
-		// Local informers mode - grant K8s API permissions to flowlogs-pipeline ServiceAccount
-		r.rbInformers = resources.GetClusterRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.FLPInformersRole)
-		if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformers); err != nil {
-			return err
-		}
-	} else {
-		// Centralized informers mode - permissions handled by flowlogs-pipeline-informers ServiceAccount
-		r.Managed.TryDelete(ctx, r.rbInformers)
-	}
 
 	// Config watcher
 	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, monoShortName, monoName, monoName, constants.ConfigWatcherRole, true)

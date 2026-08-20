@@ -11,14 +11,14 @@ package manager
 // Operator reads ClusterVersions for cluster info, and Network config for configured CIDRs (cluster-scope resources)
 //+kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions;networks,verbs=get;list;watch
 
-// Operator needs to create namespaces, services, service accounts, CM, secrets, PVC in a user-defined namespace
-//+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps;persistentvolumeclaims;secrets,verbs=get;list;watch;create;update;patch;delete
+// Operator needs to create namespaces, services, service accounts, CM, PVC in a user-defined namespace
+//+kubebuilder:rbac:groups=core,resources=namespaces;services;serviceaccounts;configmaps;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 
 // Operator reads Endpoint and EndpointSlices for APIServer IP (for netpol and subnet config), default namespace
 //+kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch
 //+kubebuilder:rbac:groups=discovery.k8s.io,resources=endpointslices,verbs=get;list;watch
 
-// Transitive: operator needs to grant pods and nodes read permission to FLP in a user-defined namespace
+// Operator reads pods and nodes info for cluster info & self health
 //+kubebuilder:rbac:groups=core,resources=pods;nodes;endpoints,verbs=get;list;watch
 
 // Operator fires events to signal degraded status (cluster-scope)
@@ -28,11 +28,8 @@ package manager
 // Also needed transitively for FLP (read)
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets,verbs=get;list;watch;create;update;patch;delete
 
-// Transitive: operator needs to grant RS read permission to FLP in a user-defined namespace
-//+kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
-
 // Operator needs to create roles and cluster roles for granting transitive rights to its workloads
-//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings;rolebindings,verbs=get;list;create;delete;update;watch
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;create;delete;update;watch
 
 // Operator needs to patch Console CR (cluster scope)
 //+kubebuilder:rbac:groups=operator.openshift.io,resources=consoles,verbs=get;list;patch;watch
@@ -44,7 +41,8 @@ package manager
 //+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=hostnetwork,verbs=use
 
 // Operator needs to create SCC for its workloads in a user-defined namespace
-//+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=list;create;update;watch
+//+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=create;list;watch
+//+kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,resourceNames=netobserv-ebpf-agent,verbs=update
 
 // Operator needs to get API services for available API discovery (cluster scope)
 //+kubebuilder:rbac:groups=apiregistration.k8s.io,resources=apiservices,verbs=list;get;watch
@@ -52,14 +50,8 @@ package manager
 // Operator needs to create monitoring resources for its workloads in a user-defined namespace
 //+kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors;prometheusrules,verbs=get;create;delete;update;patch;list;watch
 
-// Transitive: operator needs to grant network logs creation permission to FLP in a user-defined namespace
-//+kubebuilder:rbac:groups=loki.grafana.com,resources=network,resourceNames=logs,verbs=create
-
 // Operator needs to read LokiStack status in a user-defined namespace
 //+kubebuilder:rbac:groups=loki.grafana.com,resources=lokistacks,verbs=get;list;watch
-
-// Transitive: operator needs to grant POST query permission for Thanos queries to the web console, any namespace
-//+kubebuilder:rbac:groups=metrics.k8s.io,resources=pods,verbs=create
 
 // Operator needs to create network policies for its workloads in a user-defined namespace
 //+kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
@@ -76,8 +68,3 @@ package manager
 
 // (deprecated) Operator to create HPA for its workloads in a user-defined namespace
 //+kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=create;delete;patch;update;get;watch;list
-
-// Transitive: operator needs to grant UDN read permission to FLP at the cluster scope
-//+kubebuilder:rbac:groups=k8s.ovn.org,resources=userdefinednetworks;clusteruserdefinednetworks,verbs=get;list;watch
-
-//+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update

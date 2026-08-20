@@ -6,7 +6,6 @@ import (
 	"time"
 
 	osv1 "github.com/openshift/api/console/v1"
-	securityv1 "github.com/openshift/api/security/v1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
@@ -66,9 +65,6 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 		Owns(&corev1.Service{}, reconcilers.UpdateOrDeleteOnlyPred).
 		Owns(&corev1.ServiceAccount{}, reconcilers.UpdateOrDeleteOnlyPred)
 
-	if mgr.ClusterInfo.IsOpenShift() {
-		builder.Owns(&securityv1.SecurityContextConstraints{}, reconcilers.UpdateOrDeleteOnlyPred)
-	}
 	if mgr.ClusterInfo.HasConsolePlugin() {
 		builder.Owns(&osv1.ConsolePlugin{}, reconcilers.UpdateOrDeleteOnlyPred)
 	}
@@ -96,7 +92,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 		return nil, err
 	}
 	r.ctrl = ctrl
-	r.watcher = watchers.NewWatcher(ctrl)
+	r.watcher = watchers.NewWatcher(ctrl, mgr.Config.Namespace)
 
 	return nil, nil
 }

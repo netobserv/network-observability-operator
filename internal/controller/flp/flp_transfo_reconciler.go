@@ -32,8 +32,6 @@ type transformerReconciler struct {
 	staticConfigMap  *corev1.ConfigMap
 	dynamicConfigMap *corev1.ConfigMap
 	rbConfigWatcher  *rbacv1.RoleBinding
-	rbLokiWriter     *rbacv1.ClusterRoleBinding
-	rbInformers      *rbacv1.ClusterRoleBinding
 	serviceMonitor   *monitoringv1.ServiceMonitor
 	prometheusRule   *monitoringv1.PrometheusRule
 }
@@ -49,8 +47,6 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 		staticConfigMap:  cmn.Managed.NewConfigMap(transfoConfigMap),
 		dynamicConfigMap: cmn.Managed.NewConfigMap(transfoDynConfigMap),
 		rbConfigWatcher:  cmn.Managed.NewRB(resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole)),
-		rbLokiWriter:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.LokiWriterRole)),
-		rbInformers:      cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(transfoShortName, constants.FLPInformersRole)),
 	}
 	if cmn.ClusterInfo.HasSvcMonitor() {
 		rec.serviceMonitor = cmn.Managed.NewServiceMonitor(transfoServiceMonitor)
@@ -244,28 +240,6 @@ func (r *transformerReconciler) reconcilePermissions(ctx context.Context, builde
 	if !r.Managed.Exists(r.serviceAccount) {
 		return r.CreateOwned(ctx, builder.serviceAccount())
 	} // We only configure name, update is not needed for now
-
-	// Loki writer
-	if builder.desired.UseLoki() && builder.desired.Loki.Mode == flowslatest.LokiModeLokiStack {
-		r.rbLokiWriter = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.LokiWriterRole)
-		if err := r.ReconcileClusterRoleBinding(ctx, r.rbLokiWriter); err != nil {
-			return err
-		}
-	} else {
-		r.Managed.TryDelete(ctx, r.rbLokiWriter)
-	}
-
-	// Informers - when centralized informers are disabled, flowlogs-pipeline needs direct K8s API access
-	if !builder.desired.Processor.IsInformerCacheProxyEnabled() {
-		// Local informers mode - grant K8s API permissions to flowlogs-pipeline ServiceAccount
-		r.rbInformers = resources.GetClusterRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.FLPInformersRole)
-		if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformers); err != nil {
-			return err
-		}
-	} else {
-		// Centralized informers mode - permissions handled by flowlogs-pipeline-informers ServiceAccount
-		r.Managed.TryDelete(ctx, r.rbInformers)
-	}
 
 	// Config watcher
 	r.rbConfigWatcher = resources.GetRoleBinding(r.Namespace, transfoShortName, transfoName, transfoName, constants.ConfigWatcherRole, true)

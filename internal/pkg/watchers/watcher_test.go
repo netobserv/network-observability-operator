@@ -134,7 +134,7 @@ func initWatcher(t *testing.T) *Watcher {
 	b := ctrl.NewControllerManagedBy(m).Named("ctrl-" + string(uuid.NewUUID())).For(&corev1.Pod{})
 	ctrl, err := b.Build(&fakeReconcile{})
 	assert.NoError(t, err)
-	return NewWatcher(ctrl)
+	return NewWatcher(ctrl, "netobserv")
 }
 
 func setupClients(t *testing.T, clientMock client.Client, liveClient kubernetes.Interface) helper.Client {

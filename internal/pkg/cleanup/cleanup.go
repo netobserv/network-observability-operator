@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -15,32 +14,8 @@ var (
 	// For instance, with any object that was renamed between two releases of the operator:
 	// The old version with a different name could therefore remain on the cluster after an upgrade.
 	cleanupList = []cleanupItem{
-		// Old role bindings (1.8 and before)
-		{
-			ref:         client.ObjectKey{Name: "netobserv-plugin"},
-			placeholder: &rbacv1.ClusterRoleBinding{},
-			namespaced:  false,
-		},
-		{
-			ref:         client.ObjectKey{Name: "flowlogs-pipeline-ingester-role-mono"},
-			placeholder: &rbacv1.ClusterRoleBinding{},
-			namespaced:  false,
-		},
-		{
-			ref:         client.ObjectKey{Name: "flowlogs-pipeline-transformer-role-mono"},
-			placeholder: &rbacv1.ClusterRoleBinding{},
-			namespaced:  false,
-		},
-		{
-			ref:         client.ObjectKey{Name: "flowlogs-pipeline-ingester-role"},
-			placeholder: &rbacv1.ClusterRoleBinding{},
-			namespaced:  false,
-		},
-		{
-			ref:         client.ObjectKey{Name: "flowlogs-pipeline-transformer-role"},
-			placeholder: &rbacv1.ClusterRoleBinding{},
-			namespaced:  false,
-		},
+		// Set here any resource to delete between version N and N+1
+		// (older ones can be removed, as there is no verion jumps between operator upgrades)
 	}
 	// Need to run only once, at operator startup, this is not part of the reconcile loop
 	didRun = false

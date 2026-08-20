@@ -6,17 +6,14 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	sliceslatest "github.com/netobserv/netobserv-operator/api/flowcollectorslice/v1alpha1"
 	metricslatest "github.com/netobserv/netobserv-operator/api/flowmetrics/v1alpha1"
-	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
-	"github.com/netobserv/netobserv-operator/internal/pkg/resources"
 )
 
 const (
@@ -28,7 +25,6 @@ type informerReconciler struct {
 	*reconcilers.Instance
 	deployment     *appsv1.Deployment
 	serviceAccount *corev1.ServiceAccount
-	rbInformer     *rbacv1.ClusterRoleBinding
 }
 
 func newInformerReconciler(cmn *reconcilers.Instance) *informerReconciler {
@@ -36,7 +32,6 @@ func newInformerReconciler(cmn *reconcilers.Instance) *informerReconciler {
 		Instance:       cmn,
 		deployment:     cmn.Managed.NewDeployment(informerName),
 		serviceAccount: cmn.Managed.NewServiceAccount(informerName),
-		rbInformer:     cmn.Managed.NewCRB(resources.GetClusterRoleBindingName(informerShortName, constants.FLPInformersRole)),
 	}
 	return &rec
 }
@@ -79,11 +74,6 @@ func (r *informerReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return fmt.Errorf("failed to reconcile service account: %w", err)
 	}
 
-	// Reconcile RBAC
-	if err := r.reconcilePermissions(ctx); err != nil {
-		return fmt.Errorf("failed to reconcile permissions: %w", err)
-	}
-
 	// Reconcile Deployment
 	if err := r.reconcileDeployment(ctx, &builder); err != nil {
 		return fmt.Errorf("failed to reconcile deployment: %w", err)
@@ -99,14 +89,6 @@ func (r *informerReconciler) reconcileServiceAccount(ctx context.Context, builde
 			return fmt.Errorf("failed to create service account: %w", err)
 		}
 	} // We only configure name, update is not needed for now
-	return nil
-}
-
-func (r *informerReconciler) reconcilePermissions(ctx context.Context) error {
-	r.rbInformer = resources.GetClusterRoleBinding(r.Namespace, informerShortName, informerName, informerName, constants.FLPInformersRole)
-	if err := r.ReconcileClusterRoleBinding(ctx, r.rbInformer); err != nil {
-		return fmt.Errorf("failed to reconcile cluster role binding: %w", err)
-	}
 	return nil
 }
 

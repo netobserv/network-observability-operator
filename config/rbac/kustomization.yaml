@@ -14,4 +14,6 @@ resources:
 - metrics_role.yaml
 - metrics_role_binding.yaml
 - component_roles.yaml
+- component_role_bindings.yaml
+- secret_role.yaml
 - flowcollector_viewer_role.yaml

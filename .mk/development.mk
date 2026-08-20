@@ -138,12 +138,22 @@ undeploy-prometheus: ## Undeploy prometheus.
 get-related-images:
 	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" --list
 
+ifeq ("true", "$(DOWNSTREAM)")
+AGENT_IMAGE=registry.redhat.io/network-observability/network-observability-ebpf-agent-rhel9:$(VERSION)
+FLP_IMAGE=registry.redhat.io/network-observability/network-observability-flowlogs-pipeline-rhel9:$(VERSION)
+PLUGIN_IMAGE=registry.redhat.io/network-observability/network-observability-console-plugin-rhel9:$(VERSION)
+else
+AGENT_IMAGE=$(IMAGE_REGISTRY)/$(USER)/netobserv-ebpf-agent:$(VERSION)
+FLP_IMAGE=$(IMAGE_REGISTRY)/$(USER)/flowlogs-pipeline:$(VERSION)
+PLUGIN_IMAGE=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
+endif
+
 .PHONY: set-agent-image
 set-agent-image:
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT=$(IMAGE_REGISTRY)/$(USER)/netobserv-ebpf-agent:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_EBPF_AGENT=$(AGENT_IMAGE)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) ebpf-agent RELATED_IMAGE_EBPF_AGENT $(IMAGE_REGISTRY)/$(USER)/netobserv-ebpf-agent:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) ebpf-agent RELATED_IMAGE_EBPF_AGENT $(AGENT_IMAGE)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -153,9 +163,9 @@ endif
 .PHONY: set-flp-image
 set-flp-image:
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE=$(IMAGE_REGISTRY)/$(USER)/flowlogs-pipeline:$(VERSION)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_FLOWLOGS_PIPELINE=$(FLP_IMAGE)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) flowlogs-pipeline RELATED_IMAGE_FLOWLOGS_PIPELINE $(IMAGE_REGISTRY)/$(USER)/flowlogs-pipeline:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) flowlogs-pipeline RELATED_IMAGE_FLOWLOGS_PIPELINE $(FLP_IMAGE)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager
@@ -165,12 +175,12 @@ endif
 .PHONY: set-plugin-image
 set-plugin-image:
 ifeq ("", "$(CSV)")
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_WEB_CONSOLE=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
-	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_WEB_CONSOLE_PF5=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
-	kubectl set image deployment/netobserv-plugin-static netobserv-plugin-static=$(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION) -n $(NAMESPACE)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_WEB_CONSOLE=$(PLUGIN_IMAGE)
+	kubectl set env -n $(NAMESPACE) deployment netobserv-controller-manager -c "manager" RELATED_IMAGE_WEB_CONSOLE_PF5=$(PLUGIN_IMAGE)
+	kubectl set image deployment/netobserv-plugin-static netobserv-plugin-static=$(PLUGIN_IMAGE) -n $(NAMESPACE)
 else
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_WEB_CONSOLE $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
-	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin-pf5 RELATED_IMAGE_WEB_CONSOLE_PF5 $(IMAGE_REGISTRY)/$(USER)/network-observability-console-plugin:$(VERSION)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin RELATED_IMAGE_WEB_CONSOLE $(PLUGIN_IMAGE)
+	./hack/swap-image-csv.sh $(CSV) $(OPERATOR_NS) console-plugin-pf5 RELATED_IMAGE_WEB_CONSOLE_PF5 $(PLUGIN_IMAGE)
 endif
 	@echo -e "\n==> Redeploying..."
 	kubectl rollout status -n $(OPERATOR_NS) --timeout=60s deployment netobserv-controller-manager

@@ -191,6 +191,38 @@ A couple of settings deserve special attention:
 
 - To enable availability zones awareness, set `spec.processor.addZone` to `true`.
 
+### Permissions for Loki and Kafka
+
+For security reasons, the operator does not have cluster-wide permissions to read secrets. When the operator needs to access a secret, such as a TLS certificate, you need to grant that permission explicitly. This happens when you configure Kafka with TLS or mTLS, or when you use the Loki operator with `LokiStack` installed in a separate namespace.
+
+#### Kafka with TLS / mTLS
+
+The commands below assume using NetObserv default namespaces (`netobserv` and `netobserv-privileged`). If you configured a different namespace in FlowCollector `spec.namespace`, adapt those commands accordingly. In the `--serviceaccount=XXX:netobserv-controller-manager` command line argument, `XXX` refers to the namespace where the operator is installed, and potentially differs from FlowCollector `spec.namespace`.
+
+- If the Kafka TLS certificates are already in NetObserv main namespace:
+
+```bash
+kubectl create rolebinding secret-watcher -n netobserv --clusterrole=netobserv-secret-watcher --serviceaccount=netobserv:netobserv-controller-manager
+kubectl create rolebinding secret-creator -n netobserv-privileged --clusterrole=netobserv-secret-creator --serviceaccount=netobserv:netobserv-controller-manager
+```
+
+- If the Kafka TLS certificates are in a different namespace:
+
+```bash
+kubectl create rolebinding secret-watcher -n <kafka-namespace> --clusterrole=netobserv-secret-watcher --serviceaccount=netobserv:netobserv-controller-manager
+kubectl create rolebinding secret-creator -n netobserv --clusterrole=netobserv-secret-creator --serviceaccount=netobserv:netobserv-controller-manager
+kubectl create rolebinding secret-creator -n netobserv-privileged --clusterrole=netobserv-secret-creator --serviceaccount=netobserv:netobserv-controller-manager
+```
+
+#### Loki Operator
+
+Considering you installed `LokiStack` in a different namespace:
+
+```bash
+kubectl create rolebinding secret-watcher -n <lokistack-namespace> --clusterrole=netobserv-secret-watcher --serviceaccount=netobserv:netobserv-controller-manager
+kubectl create rolebinding secret-creator -n netobserv --clusterrole=netobserv-secret-creator --serviceaccount=netobserv:netobserv-controller-manager
+```
+
 ### Metrics
 
 More information on Prometheus metrics is available in a dedicated page: [Metrics.md](./docs/Metrics.md).

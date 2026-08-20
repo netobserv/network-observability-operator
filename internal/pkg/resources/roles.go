@@ -10,10 +10,6 @@ func GetRoleBindingName(shortName string, ref constants.RoleName) string {
 	return string(ref) + "-" + shortName
 }
 
-func GetClusterRoleBindingName(shortName string, ref constants.ClusterRoleName) string {
-	return string(ref) + "-" + shortName
-}
-
 func GetRoleBinding(namespace, shortName, app, sa string, ref constants.RoleName, fromClusterRole bool) *rbacv1.RoleBinding {
 	roleKind := "Role"
 	if fromClusterRole {
@@ -31,25 +27,6 @@ func GetRoleBinding(namespace, shortName, app, sa string, ref constants.RoleName
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
 			Kind:     roleKind,
-			Name:     string(ref),
-		},
-		Subjects: []rbacv1.Subject{{
-			Kind:      "ServiceAccount",
-			Name:      sa,
-			Namespace: namespace,
-		}},
-	}
-}
-
-func GetClusterRoleBinding(namespace, shortName, app, sa string, ref constants.ClusterRoleName) *rbacv1.ClusterRoleBinding {
-	return &rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   string(ref) + "-" + shortName,
-			Labels: map[string]string{"app": app},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
 			Name:     string(ref),
 		},
 		Subjects: []rbacv1.Subject{{
