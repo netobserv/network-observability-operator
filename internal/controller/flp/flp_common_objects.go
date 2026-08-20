@@ -164,7 +164,10 @@ func podTemplate(
 	args := []string{
 		fmt.Sprintf(`--config=%s/%s`, configPath, configFile),
 	}
-	addK8sCacheArgs(desired, vols, certSecretName, &args)
+
+	if desired.Processor.IsInformerCacheProxyEnabled() {
+		addK8sCacheArgs(desired, vols, certSecretName, &args)
+	}
 
 	// Extract volumes and mounts AFTER all volume modifications are done
 	volumeMounts := vols.AppendMounts([]corev1.VolumeMount{{
@@ -289,10 +292,6 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 
 // addK8sCacheArgs adds k8scache server arguments for centralized informers
 func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Builder, certSecretName string, args *[]string) {
-	if desired.Processor.InformerCacheProxy == nil || desired.Processor.InformerCacheProxy.Enabled == nil || !*desired.Processor.InformerCacheProxy.Enabled {
-		return
-	}
-
 	*args = append(*args,
 		fmt.Sprintf("--k8scache.port=%d", desired.Processor.GetK8sCachePort()),
 		"--k8scache.address=0.0.0.0",
@@ -322,7 +321,7 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 	}
 
 	if serverCert != nil {
-		certPath, keyPath := vols.AddCertificate(serverCert, "svc-certs")
+		certPath, keyPath := vols.AddCertificate(serverCert, "k8scache-certs")
 		*args = append(*args,
 			"--k8scache.tls-enabled=true",
 			fmt.Sprintf("--k8scache.tls-cert-path=%s", certPath),
