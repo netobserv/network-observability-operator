@@ -287,7 +287,8 @@ func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, conf
 		}
 	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
 		svcConfig := b.desired.Processor.Service
-		if !b.desired.UseKafka() && svcConfig != nil && svcConfig.TLSType == flowslatest.TLSProvided && svcConfig.ProvidedCertificates != nil {
+		if !b.desired.UseKafka() && svcConfig != nil && svcConfig.TLSType == flowslatest.TLSProvided &&
+			svcConfig.ProvidedCertificates != nil && svcConfig.ProvidedCertificates.CAFile != nil {
 			// In monolith mode, k8scache shares the service. When service TLS is Provided,
 			// the service-ca auto cert won't exist — use the provided CA instead.
 			caFile = svcConfig.ProvidedCertificates.CAFile

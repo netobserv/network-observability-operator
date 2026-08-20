@@ -869,6 +869,11 @@ func TestK8sCacheAutoTLSWithServiceProvidedTLS(t *testing.T) {
 				CertFile: "tls.crt",
 				CertKey:  "tls.key",
 			},
+			CAFile: &flowslatest.FileReference{
+				Type: flowslatest.RefTypeSecret,
+				Name: "my-provided-ca",
+				File: "ca.crt",
+			},
 		},
 	}
 
@@ -923,4 +928,135 @@ func TestK8sCacheAutoTLSWithServiceAutoTLS(t *testing.T) {
 		}
 	}
 	assert.True(foundVolume, "k8scache-certs volume should exist")
+}
+
+func TestK8sCacheAutoTLSWithServiceProvidedTLSNilCAFile(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.DeploymentModel = flowslatest.DeploymentModelDirect
+	cfg.Processor.InformerCacheProxy = &flowslatest.FlowCollectorInformerCacheProxy{
+		Enabled: ptr.To(true),
+	}
+	cfg.Processor.Service = &flowslatest.ProcessorServiceConfig{
+		TLSType: flowslatest.TLSProvided,
+		ProvidedCertificates: &flowslatest.ClientServerTLS{
+			ServerCert: &flowslatest.CertificateReference{
+				Type:     flowslatest.RefTypeSecret,
+				Name:     "my-provided-cert",
+				CertFile: "tls.crt",
+				CertKey:  "tls.key",
+			},
+			// CAFile intentionally nil
+		},
+	}
+
+	b := monoBuilder(ns, &cfg)
+	ds := b.daemonSet(annotate("digest"))
+
+	// k8scache-certs should still use the provided server cert
+	foundCertVolume := false
+	for _, vol := range ds.Spec.Template.Spec.Volumes {
+		if vol.Name == "k8scache-certs" {
+			foundCertVolume = true
+			assert.Equal("my-provided-cert", vol.Secret.SecretName)
+		}
+	}
+	assert.True(foundCertVolume, "k8scache-certs volume should exist")
+
+	container := ds.Spec.Template.Spec.Containers[0]
+	assert.Contains(container.Args, "--k8scache.tls-enabled=true")
+}
+
+func TestK8sCacheInformerTLSWithServiceProvidedTLS(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.DeploymentModel = flowslatest.DeploymentModelDirect
+	cfg.Processor.InformerCacheProxy = &flowslatest.FlowCollectorInformerCacheProxy{
+		Enabled: ptr.To(true),
+	}
+	cfg.Processor.Service = &flowslatest.ProcessorServiceConfig{
+		TLSType: flowslatest.TLSProvided,
+		ProvidedCertificates: &flowslatest.ClientServerTLS{
+			ServerCert: &flowslatest.CertificateReference{
+				Type:     flowslatest.RefTypeSecret,
+				Name:     "my-provided-cert",
+				CertFile: "tls.crt",
+				CertKey:  "tls.key",
+			},
+			CAFile: &flowslatest.FileReference{
+				Type: flowslatest.RefTypeSecret,
+				Name: "my-provided-ca",
+				File: "ca.crt",
+			},
+		},
+	}
+
+	loki := helper.NewLokiConfig(&cfg.Loki, "any")
+	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
+	b := newInformerBuilder(info.NewInstance(image, status.Instance{}), &cfg)
+	dep, err := b.deployment()
+	assert.NoError(err)
+
+	// Informer should use the provided CA, not openshift-service-ca.crt
+	foundCA := false
+	for _, vol := range dep.Spec.Template.Spec.Volumes {
+		if vol.Name == "k8scache-server-ca" {
+			foundCA = true
+			assert.NotNil(vol.Secret, "k8scache-server-ca should be a Secret")
+			assert.Equal("my-provided-ca", vol.Secret.SecretName,
+				"informer should use the provided CA to verify k8scache server cert")
+		}
+	}
+	assert.True(foundCA, "k8scache-server-ca volume should exist")
+
+	container := dep.Spec.Template.Spec.Containers[0]
+	assert.Contains(container.Args, "--tls-enabled=true")
+}
+
+func TestK8sCacheInformerTLSWithServiceProvidedTLSNilCAFile(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.DeploymentModel = flowslatest.DeploymentModelDirect
+	cfg.Processor.InformerCacheProxy = &flowslatest.FlowCollectorInformerCacheProxy{
+		Enabled: ptr.To(true),
+	}
+	cfg.Processor.Service = &flowslatest.ProcessorServiceConfig{
+		TLSType: flowslatest.TLSProvided,
+		ProvidedCertificates: &flowslatest.ClientServerTLS{
+			ServerCert: &flowslatest.CertificateReference{
+				Type:     flowslatest.RefTypeSecret,
+				Name:     "my-provided-cert",
+				CertFile: "tls.crt",
+				CertKey:  "tls.key",
+			},
+			// CAFile intentionally nil — informer should fall back to default CA
+		},
+	}
+
+	loki := helper.NewLokiConfig(&cfg.Loki, "any")
+	info := reconcilers.Common{Namespace: ns, Loki: &loki, ClusterInfo: &cluster.Info{}}
+	b := newInformerBuilder(info.NewInstance(image, status.Instance{}), &cfg)
+	dep, err := b.deployment()
+	assert.NoError(err)
+
+	// With nil CAFile, informer should fall back to default CA (netobserv-ca in non-OpenShift)
+	foundCA := false
+	for _, vol := range dep.Spec.Template.Spec.Volumes {
+		if vol.Name == "k8scache-server-ca" {
+			foundCA = true
+			assert.NotNil(vol.ConfigMap, "k8scache-server-ca should fall back to a ConfigMap")
+			assert.Equal("netobserv-ca", vol.ConfigMap.Name,
+				"informer should fall back to default CA when provided CAFile is nil")
+		}
+	}
+	assert.True(foundCA, "k8scache-server-ca volume should exist (fallback)")
+
+	container := dep.Spec.Template.Spec.Containers[0]
+	assert.Contains(container.Args, "--tls-enabled=true")
 }

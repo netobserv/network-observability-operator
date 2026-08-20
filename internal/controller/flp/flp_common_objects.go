@@ -292,8 +292,10 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 }
 
 // addK8sCacheArgs adds k8scache server arguments for centralized informers.
-// svcTLSConfig should be non-nil when the k8scache shares a Kubernetes Service with the main
-// FLP endpoint (monolith mode); nil when k8scache has its own service (transformer mode).
+// In monolith mode, k8scache shares a Kubernetes Service with the main FLP endpoint, so when
+// the service TLS is Provided and k8scache TLS defaults to Auto, the service-ca auto cert
+// won't be created. In that case, k8scache reuses the provided service certificates.
+// In transformer mode (svcTLSConfig=nil), k8scache has its own independent service and cert.
 func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Builder, certSecretName string, svcTLSConfig *flowslatest.ProcessorServiceConfig, args *[]string) {
 	*args = append(*args,
 		fmt.Sprintf("--k8scache.port=%d", desired.Processor.GetK8sCachePort()),
