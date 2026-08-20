@@ -109,9 +109,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability with Kafka", g.Ordered
 		kafkaUser.deployKafkaUser()
 
 		g.By("Check if Kafka and Kafka topic are ready")
+		// wait for KafkaNodePool, Kafka and KafkaTopic to be ready
 		WaitForPodsReadyWithLabel(kafka.Namespace, "strimzi.io/pool-name=kafka-pool")
 		waitForKafkaReady(kafka.Name, kafka.Namespace)
 		waitForKafkaTopicReady(kafkaTopic.TopicName, kafkaTopic.Namespace)
+
+		g.By("Create secret-watcher RoleBinding in Kafka namespace")
+		createSecretWatcherRB(kafkaNs)
 	})
 
 	g.AfterAll(func() {

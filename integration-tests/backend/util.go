@@ -1425,34 +1425,120 @@ func isPlatformSuitableForNMState() bool {
 	return true
 }
 
-// verifyComponentsDeleted verifies that specified components are NOT present in the output (exact line match)
-func verifyComponentsDeleted(componentsOutput string, componentsList []string) {
-	outputLines := strings.Split(strings.TrimSpace(componentsOutput), "\n")
-	for _, component := range componentsList {
-		componentFound := false
-		for _, line := range outputLines {
-			if strings.TrimSpace(line) == component {
-				componentFound = true
-				break
-			}
-		}
-		o.Expect(componentFound).Should(o.BeFalse(), fmt.Sprintf("%s should be deleted but was found", component))
+// listManagedResources lists all netobserv-managed resources (services, deployments,
+// daemonsets, serviceaccounts, networkpolicies, configmaps, secrets) across all namespaces
+// and returns them in "type/name" format matching `oc get -o name` output.
+func listManagedResources() ([]string, error) {
+	ctx := context.Background()
+	selector := metav1.ListOptions{LabelSelector: "netobserv-managed=true"}
+	var names []string
+
+	svcs, err := k8sClient.CoreV1().Services("").List(ctx, selector)
+	if err != nil {
+		return nil, err
 	}
+	for _, s := range svcs.Items {
+		names = append(names, "service/"+s.Name)
+	}
+
+	deps, err := k8sClient.AppsV1().Deployments("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range deps.Items {
+		names = append(names, "deployment.apps/"+d.Name)
+	}
+
+	dss, err := k8sClient.AppsV1().DaemonSets("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range dss.Items {
+		names = append(names, "daemonset.apps/"+d.Name)
+	}
+
+	sas, err := k8sClient.CoreV1().ServiceAccounts("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range sas.Items {
+		names = append(names, "serviceaccount/"+s.Name)
+	}
+
+	nps, err := k8sClient.NetworkingV1().NetworkPolicies("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, n := range nps.Items {
+		names = append(names, "networkpolicy.networking.k8s.io/"+n.Name)
+	}
+
+	cms, err := k8sClient.CoreV1().ConfigMaps("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range cms.Items {
+		names = append(names, "configmap/"+c.Name)
+	}
+
+	secs, err := k8sClient.CoreV1().Secrets("").List(ctx, selector)
+	if err != nil {
+		return nil, err
+	}
+	for _, s := range secs.Items {
+		names = append(names, "secret/"+s.Name)
+	}
+
+	return names, nil
 }
 
-// verifyComponentsExist verifies that specified components ARE present in the output (exact line match)
-func verifyComponentsExist(componentsOutput string, componentsList []string) {
-	outputLines := strings.Split(strings.TrimSpace(componentsOutput), "\n")
-	for _, component := range componentsList {
-		componentFound := false
-		for _, line := range outputLines {
-			if strings.TrimSpace(line) == component {
-				componentFound = true
-				break
+// listManagedPods lists all netobserv-managed pods across all namespaces
+// and returns them in "pod/name" format.
+func listManagedPods() ([]string, error) {
+	pods, err := k8sClient.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{LabelSelector: "netobserv-managed=true"})
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, p := range pods.Items {
+		names = append(names, "pod/"+p.Name)
+	}
+	return names, nil
+}
+
+// pollVerifyComponentsDeleted polls until all components in deleteList are gone and all in remainList still exist
+func pollVerifyComponentsDeleted(deleteList, remainList []string) {
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, 180*time.Second, false, func(context.Context) (bool, error) {
+		outputLines, getErr := listManagedResources()
+		if getErr != nil {
+			e2e.Logf("Error getting components: %v", getErr)
+			return false, nil
+		}
+		for _, component := range deleteList {
+			for _, line := range outputLines {
+				if strings.TrimSpace(line) == component {
+					e2e.Logf("Component %s still present, waiting for deletion...", component)
+					return false, nil
+				}
 			}
 		}
-		o.Expect(componentFound).Should(o.BeTrue(), fmt.Sprintf("%s should exist but was not found", component))
-	}
+		for _, component := range remainList {
+			found := false
+			for _, line := range outputLines {
+				if strings.TrimSpace(line) == component {
+					found = true
+					break
+				}
+			}
+			if !found {
+				e2e.Logf("Expected component %s not found yet, retrying...", component)
+				return false, nil
+			}
+		}
+		e2e.Logf("All components verified: deleted=%d, remaining=%d", len(deleteList), len(remainList))
+		return true, nil
+	})
+	o.Expect(err).NotTo(o.HaveOccurred(), "timed out waiting for components to be deleted after pause")
 }
 
 // patchFlowCollector applies a JSON patch to the cluster flowcollector
