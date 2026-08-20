@@ -128,6 +128,16 @@ rules:
       - update
       - watch
   - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - get
+      - list
+      - update
+      - watch
+  - apiGroups:
       - discovery.k8s.io
     resources:
       - endpointslices
@@ -165,6 +175,23 @@ rules:
       - get
       - patch
       - update
+  - apiGroups:
+      - frrk8s.metallb.io
+    resources:
+      - frrconfigurations
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - k8s.ovn.org
+    resources:
+      - clusteruserdefinednetworks
+      - userdefinednetworks
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - loki.grafana.com
     resources:
