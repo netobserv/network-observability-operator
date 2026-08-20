@@ -887,6 +887,12 @@ func TestK8sCacheAutoTLSWithServiceProvidedTLS(t *testing.T) {
 	}
 	assert.True(foundVolume, "k8scache-certs volume should exist")
 
+	// Verify k8scache-client-ca volume should NOT exist (Auto, not AutoMTLS)
+	for _, vol := range ds.Spec.Template.Spec.Volumes {
+		assert.NotEqual("k8scache-client-ca", vol.Name,
+			"k8scache-client-ca volume should not exist when k8scache TLS is Auto (not AutoMTLS)")
+	}
+
 	// Verify k8scache TLS args are set
 	container := ds.Spec.Template.Spec.Containers[0]
 	assert.Contains(container.Args, "--k8scache.tls-enabled=true")

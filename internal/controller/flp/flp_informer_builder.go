@@ -286,12 +286,19 @@ func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, conf
 			caFile = config.TLS.ProvidedCertificates.CAFile
 		}
 	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
-		// Auto mode: use service-ca in OpenShift
-		caConfigMapName := "netobserv-ca"
-		if b.ClusterInfo.IsOpenShift() {
-			caConfigMapName = "openshift-service-ca.crt"
+		svcConfig := b.desired.Processor.Service
+		if !b.desired.UseKafka() && svcConfig != nil && svcConfig.TLSType == flowslatest.TLSProvided && svcConfig.ProvidedCertificates != nil {
+			// In monolith mode, k8scache shares the service. When service TLS is Provided,
+			// the service-ca auto cert won't exist — use the provided CA instead.
+			caFile = svcConfig.ProvidedCertificates.CAFile
+		} else {
+			// Auto mode: use service-ca in OpenShift
+			caConfigMapName := "netobserv-ca"
+			if b.ClusterInfo.IsOpenShift() {
+				caConfigMapName = "openshift-service-ca.crt"
+			}
+			caFile = helper.DefaultCAReference(caConfigMapName, "")
 		}
-		caFile = helper.DefaultCAReference(caConfigMapName, "")
 
 		if tlsType == flowslatest.TLSAutoMTLS {
 			// Auto-mTLS: use cert-manager generated client certificate

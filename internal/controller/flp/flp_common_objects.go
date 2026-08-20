@@ -320,7 +320,9 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 			// In monolith mode, k8scache shares the service. When service TLS is Provided,
 			// the service-ca auto cert won't be created — use the provided service certs instead.
 			serverCert = svcTLSConfig.ProvidedCertificates.ServerCert
-			caFile = svcTLSConfig.ProvidedCertificates.CAFile
+			if tlsType == flowslatest.TLSAutoMTLS {
+				caFile = svcTLSConfig.ProvidedCertificates.CAFile
+			}
 		} else {
 			serverCert = helper.DefaultCertificateReference(certSecretName, "")
 			if tlsType == flowslatest.TLSAutoMTLS {
