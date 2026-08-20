@@ -129,7 +129,11 @@ func main() {
 	}
 	setupLog.Info("Starting " + appVersion)
 
-	config := readConfigFromEnv()
+	config, err := readConfigFromEnv()
+	if err != nil {
+		setupLog.Error(err, "error while reading config from env")
+		os.Exit(1)
+	}
 	if err := config.Validate(); err != nil {
 		setupLog.Error(err, "unable to start the manager")
 		os.Exit(1)
@@ -231,19 +235,23 @@ func defaultStringEnv(env, def string) string {
 	return def
 }
 
-func maybeBoolEnv(env string) *bool {
+func maybeBoolEnv(env string) (*bool, error) {
 	if v := os.Getenv(env); v != "" {
 		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
 		b, err := strconv.ParseBool(v)
 		if err != nil {
-			return nil
+			return nil, fmt.Errorf("invalid %s value %q: %w", env, v, err)
 		}
-		return ptr.To(b)
+		return ptr.To(b), nil
 	}
-	return nil
+	return nil, nil
 }
 
-func readConfigFromEnv() *manager.Config {
+func readConfigFromEnv() (*manager.Config, error) {
+	deployNetpol, err := maybeBoolEnv("OPERATOR_NETWORK_POLICY")
+	if err != nil {
+		return nil, err
+	}
 	return &manager.Config{
 		Vendor:                constants.Vendor(os.Getenv("VENDOR")),
 		EBPFAgentImage:        defaultStringEnv("RELATED_IMAGE_EBPF_AGENT", "quay.io/netobserv/netobserv-ebpf-agent:main"),
@@ -257,6 +265,6 @@ func readConfigFromEnv() *manager.Config {
 		StaticPluginConfig: manager.StaticPluginConfig{
 			InheritTolerationFromSubscription: os.Getenv("STATIC_PLUGIN_INHERIT_TOLERATION_SUBSCRIPTION"),
 		},
-		DeployOperatorNetworkPolicy: maybeBoolEnv("OPERATOR_NETWORK_POLICY"),
-	}
+		DeployOperatorNetworkPolicy: deployNetpol,
+	}, nil
 }
