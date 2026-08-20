@@ -850,3 +850,71 @@ func TestToleration(t *testing.T) {
 	assert.Len(ds.Spec.Template.Spec.Tolerations, 1)
 	assert.Equal(corev1.Toleration{Operator: "Exists"}, ds.Spec.Template.Spec.Tolerations[0])
 }
+
+func TestK8sCacheAutoTLSWithServiceProvidedTLS(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.DeploymentModel = flowslatest.DeploymentModelDirect
+	cfg.Processor.InformerCacheProxy = &flowslatest.FlowCollectorInformerCacheProxy{
+		Enabled: ptr.To(true),
+	}
+	cfg.Processor.Service = &flowslatest.ProcessorServiceConfig{
+		TLSType: flowslatest.TLSProvided,
+		ProvidedCertificates: &flowslatest.ClientServerTLS{
+			ServerCert: &flowslatest.CertificateReference{
+				Type:     flowslatest.RefTypeSecret,
+				Name:     "my-provided-cert",
+				CertFile: "tls.crt",
+				CertKey:  "tls.key",
+			},
+		},
+	}
+
+	b := monoBuilder(ns, &cfg)
+	ds := b.daemonSet(annotate("digest"))
+
+	// k8scache-certs volume should reference the provided cert, not the auto cert
+	foundVolume := false
+	for _, vol := range ds.Spec.Template.Spec.Volumes {
+		if vol.Name == "k8scache-certs" {
+			foundVolume = true
+			assert.NotNil(vol.Secret, "k8scache-certs volume should be a Secret")
+			assert.Equal("my-provided-cert", vol.Secret.SecretName,
+				"k8scache should use the provided service cert, not the auto cert")
+		}
+	}
+	assert.True(foundVolume, "k8scache-certs volume should exist")
+
+	// Verify k8scache TLS args are set
+	container := ds.Spec.Template.Spec.Containers[0]
+	assert.Contains(container.Args, "--k8scache.tls-enabled=true")
+}
+
+func TestK8sCacheAutoTLSWithServiceAutoTLS(t *testing.T) {
+	assert := assert.New(t)
+
+	ns := "namespace"
+	cfg := getConfig()
+	cfg.DeploymentModel = flowslatest.DeploymentModelDirect
+	cfg.Processor.InformerCacheProxy = &flowslatest.FlowCollectorInformerCacheProxy{
+		Enabled: ptr.To(true),
+	}
+	// Service TLS defaults to Auto (nil means Auto)
+
+	b := monoBuilder(ns, &cfg)
+	ds := b.daemonSet(annotate("digest"))
+
+	// k8scache-certs volume should reference the auto cert (flowlogs-pipeline-cert)
+	foundVolume := false
+	for _, vol := range ds.Spec.Template.Spec.Volumes {
+		if vol.Name == "k8scache-certs" {
+			foundVolume = true
+			assert.NotNil(vol.Secret, "k8scache-certs volume should be a Secret")
+			assert.Equal("flowlogs-pipeline-cert", vol.Secret.SecretName,
+				"k8scache should use the auto cert when service TLS is Auto")
+		}
+	}
+	assert.True(foundVolume, "k8scache-certs volume should exist")
+}

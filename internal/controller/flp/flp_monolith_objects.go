@@ -68,6 +68,7 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 		&b.volumes,
 		netType,
 		monoCertSecretName,
+		b.desired.Processor.Service,
 		annotations,
 	)
 	return &appsv1.DaemonSet{
@@ -99,6 +100,7 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 		&b.volumes,
 		svc,
 		monoCertSecretName,
+		b.desired.Processor.Service,
 		annotations,
 	)
 	replicas := b.desired.Processor.GetFLPReplicas()

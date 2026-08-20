@@ -100,6 +100,7 @@ func podTemplate(
 	vols *volumes.Builder,
 	netType flowNetworkType,
 	certSecretName string,
+	svcTLSConfig *flowslatest.ProcessorServiceConfig,
 	annotations map[string]string,
 ) corev1.PodTemplateSpec {
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
@@ -166,7 +167,7 @@ func podTemplate(
 	}
 
 	if desired.Processor.IsInformerCacheProxyEnabled() {
-		addK8sCacheArgs(desired, vols, certSecretName, &args)
+		addK8sCacheArgs(desired, vols, certSecretName, svcTLSConfig, &args)
 	}
 
 	// Extract volumes and mounts AFTER all volume modifications are done
@@ -290,8 +291,10 @@ func metricsSettings(desired *flowslatest.FlowCollectorSpec, vol *volumes.Builde
 	return metricsSettings
 }
 
-// addK8sCacheArgs adds k8scache server arguments for centralized informers
-func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Builder, certSecretName string, args *[]string) {
+// addK8sCacheArgs adds k8scache server arguments for centralized informers.
+// svcTLSConfig should be non-nil when the k8scache shares a Kubernetes Service with the main
+// FLP endpoint (monolith mode); nil when k8scache has its own service (transformer mode).
+func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Builder, certSecretName string, svcTLSConfig *flowslatest.ProcessorServiceConfig, args *[]string) {
 	*args = append(*args,
 		fmt.Sprintf("--k8scache.port=%d", desired.Processor.GetK8sCachePort()),
 		"--k8scache.address=0.0.0.0",
@@ -313,10 +316,16 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 			caFile = desired.Processor.InformerCacheProxy.TLS.ProvidedCertificates.CAFile
 		}
 	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
-		// Auto mode: use service-ca certificate for the k8scache service
-		serverCert = helper.DefaultCertificateReference(certSecretName, "")
-		if tlsType == flowslatest.TLSAutoMTLS {
-			caFile = helper.DefaultCAReference("netobserv-ca", "")
+		if svcTLSConfig != nil && svcTLSConfig.TLSType == flowslatest.TLSProvided && svcTLSConfig.ProvidedCertificates != nil {
+			// In monolith mode, k8scache shares the service. When service TLS is Provided,
+			// the service-ca auto cert won't be created — use the provided service certs instead.
+			serverCert = svcTLSConfig.ProvidedCertificates.ServerCert
+			caFile = svcTLSConfig.ProvidedCertificates.CAFile
+		} else {
+			serverCert = helper.DefaultCertificateReference(certSecretName, "")
+			if tlsType == flowslatest.TLSAutoMTLS {
+				caFile = helper.DefaultCAReference("netobserv-ca", "")
+			}
 		}
 	}
 
