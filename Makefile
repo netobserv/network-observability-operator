@@ -546,8 +546,8 @@ related-release-notes: ## Grab release notes for related components (to be inser
 # Update helm templates
 .PHONY: helm-update
 helm-update: YQ ## Update helm template
-	sed -i -r 's/^appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
-	sed -i -r 's/^version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
+	$(SED) -i -r 's/^appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
+	$(SED) -i -r 's/^version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
 	$(YQ) -i '.ebpfAgent.version="v$(BUNDLE_VERSION)"' helm/values.yaml
 	$(YQ) -i '.flowlogsPipeline.version="v$(BUNDLE_VERSION)"' helm/values.yaml
 	$(YQ) -i '.consolePlugin.version="v$(BUNDLE_VERSION)"' helm/values.yaml
