@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 # Use gsed on macOS if available (BSD sed doesn't support -i without backup extension)
-SED=$(command -v gsed 2>/dev/null || echo sed)
+SED=${SED:-$(command -v gsed 2>/dev/null || echo sed)}
 
 mkdir -p _tmp
 
 # Copy and edit CRDs
 for crd in "flows.netobserv.io_flowcollectors.yaml" "flows.netobserv.io_flowmetrics.yaml" "flows.netobserv.io_flowcollectorslices.yaml"; do
   cp "bundles/k8s/manifests/$crd" helm/crds
-  $SED -i -r 's/(`[^`]*\{\{[^`]*`)/{{\1}}/g' helm/crds/$crd # escape "{{" for helm
+  $SED -i -E 's/(`[^`]*\{\{[^`]*`)/{{\1}}/g' helm/crds/$crd # escape "{{" for helm
   yq -i 'del(.spec.conversion)' helm/crds/$crd
   yq -i 'del(.spec.versions[] | select(.deprecated == true))' helm/crds/$crd
   $SED -i '1s/^/# Auto-generated from helm-update.sh\n/' helm/crds/$crd
