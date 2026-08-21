@@ -311,35 +311,9 @@ func (b *informerBuilder) service() *corev1.Service {
 }
 
 // addTLSArgs configures TLS arguments for informers client
-func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, config *flowslatest.FlowCollectorInformerCacheProxy) {
-	tlsType := config.GetTLSType()
-
-	if tlsType == flowslatest.TLSDisabled {
-		return
-	}
-
-	var clientCert *flowslatest.CertificateReference
-	var caFile *flowslatest.FileReference
-
-	if tlsType == flowslatest.TLSProvided {
-		// Manual mode: user provides certificates
-		if config.TLS != nil && config.TLS.ProvidedCertificates != nil {
-			clientCert = config.TLS.ProvidedCertificates.ClientCert
-			caFile = config.TLS.ProvidedCertificates.CAFile
-		}
-	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
-		// Auto mode: use service-ca in OpenShift
-		caConfigMapName := "netobserv-ca"
-		if b.ClusterInfo.IsOpenShift() {
-			caConfigMapName = "openshift-service-ca.crt"
-		}
-		caFile = helper.DefaultCAReference(caConfigMapName, "")
-
-		if tlsType == flowslatest.TLSAutoMTLS {
-			// Auto-mTLS: use cert-manager generated client certificate
-			clientCert = helper.DefaultCertificateReference("flowlogs-pipeline-informers-k8scache-client-cert", "")
-		}
-	}
+func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, proxy *flowslatest.FlowCollectorInformerCacheProxy) {
+	svcConfig := helper.InformerTLSAsServiceConfig(proxy)
+	caFile, clientCert := helper.GetServiceClientTLSConfig(svcConfig, "flowlogs-pipeline-informers-k8scache-client-cert", b.ClusterInfo.IsOpenShift())
 
 	// Enable TLS and add server CA for verification
 	if caFile != nil {
@@ -357,9 +331,11 @@ func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, conf
 		)
 	}
 
-	// Set TLS server name for certificate verification
-	// Informers connect to processor pods by IP, but TLS certificates contain DNS names.
-	// k8scache always has its own dedicated service, regardless of deployment model
-	serviceName := fmt.Sprintf("%s.%s.svc", k8sCacheServiceName, b.Namespace)
-	*args = append(*args, fmt.Sprintf("--tls-server-name=%s", serviceName))
+	if caFile != nil || clientCert != nil {
+		// Set TLS server name for certificate verification
+		// Informers connect to processor pods by IP, but TLS certificates contain DNS names.
+		// k8scache always has its own dedicated service, regardless of deployment model
+		serviceName := fmt.Sprintf("%s.%s.svc", k8sCacheServiceName, b.Namespace)
+		*args = append(*args, fmt.Sprintf("--tls-server-name=%s", serviceName))
+	}
 }
