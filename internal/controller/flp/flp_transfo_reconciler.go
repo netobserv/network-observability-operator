@@ -25,7 +25,6 @@ import (
 type transformerReconciler struct {
 	*reconcilers.Instance
 	deployment       *appsv1.Deployment
-	service          *corev1.Service
 	promService      *corev1.Service
 	hpa              *ascv2.HorizontalPodAutoscaler
 	serviceAccount   *corev1.ServiceAccount
@@ -40,7 +39,6 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 	rec := transformerReconciler{
 		Instance:         cmn,
 		deployment:       cmn.Managed.NewDeployment(transfoName),
-		service:          cmn.Managed.NewService(transfoName),
 		promService:      cmn.Managed.NewService(constants.FLPTransfoMetricsSvcName),
 		hpa:              cmn.Managed.NewHPA(transfoName),
 		serviceAccount:   cmn.Managed.NewServiceAccount(transfoName),
@@ -113,9 +111,6 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
 		return err
 	}
-
-	// Clean up legacy k8scache service (now managed by informer reconciler)
-	r.Managed.TryDelete(ctx, r.service)
 
 	err = r.reconcilePrometheusService(ctx, &builder)
 	if err != nil {
