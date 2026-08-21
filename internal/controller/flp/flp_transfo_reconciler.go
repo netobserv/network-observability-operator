@@ -114,10 +114,8 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 		return err
 	}
 
-	// Reconcile k8scache service for informers communication (only when informers enabled)
-	if err := r.reconcileService(ctx, &builder, &desired.Spec); err != nil {
-		return err
-	}
+	// Clean up legacy k8scache service (now managed by informer reconciler)
+	r.Managed.TryDelete(ctx, r.service)
 
 	err = r.reconcilePrometheusService(ctx, &builder)
 	if err != nil {
@@ -193,24 +191,6 @@ func (r *transformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *fl
 		&desiredFLP.KafkaConsumerAutoscaler,
 		&report,
 	)
-}
-
-func (r *transformerReconciler) reconcileService(ctx context.Context, builder *transfoBuilder, desired *flowslatest.FlowCollectorSpec) error {
-	report := helper.NewChangeReport("FLP k8scache service")
-	defer report.LogIfNeeded(ctx)
-
-	// Only create k8scache service when centralized informers are enabled
-	informersEnabled := desired.Processor.IsInformerCacheProxyEnabled()
-
-	if informersEnabled {
-		if err := r.ReconcileService(ctx, r.service, builder.service(), &report); err != nil {
-			return err
-		}
-	} else {
-		// Delete service if informers are disabled
-		r.Managed.TryDelete(ctx, r.service)
-	}
-	return nil
 }
 
 func (r *transformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {

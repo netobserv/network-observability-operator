@@ -64,6 +64,10 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 		Name:      informerName,
 		Namespace: operatorNamespace,
 	}
+	k8sCacheServiceKey := types.NamespacedName{
+		Name:      "flowlogs-pipeline-k8scache",
+		Namespace: operatorNamespace,
+	}
 	rbKeyConfigWatcherMono := types.NamespacedName{Name: resources.GetRoleBindingName(monoShortName, constants.ConfigWatcherRole), Namespace: operatorNamespace}
 	rbKeyConfigWatcherTransfo := types.NamespacedName{Name: resources.GetRoleBindingName(transfoShortName, constants.ConfigWatcherRole), Namespace: operatorNamespace}
 
@@ -162,16 +166,21 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 				}, &cm)
 			}, timeout, interval).Should(Succeed())
 
-			By("Expecting to create the flowlogs-pipeline Service, even in Direct mode, because informers are enabled")
-			svc := v1.Service{}
+			By("Not expecting the monolith Service in Direct mode (k8scache has its own service)")
 			Eventually(func() error {
-				return k8sClient.Get(ctx, flpKey1, &svc)
+				return k8sClient.Get(ctx, flpKey1, &v1.Service{})
+			}, timeout, interval).ShouldNot(Succeed())
+
+			By("Expecting the dedicated k8scache Service to be created by the informer reconciler")
+			k8sCacheSvc := v1.Service{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, k8sCacheServiceKey, &k8sCacheSvc)
 			}, timeout, interval).Should(Succeed())
-			Expect(svc.Spec.Ports).To(HaveLen(1))
-			Expect(svc.Spec.Ports[0].Name).To(Equal("k8scache"))
+			Expect(k8sCacheSvc.Spec.Ports).To(HaveLen(1))
+			Expect(k8sCacheSvc.Spec.Ports[0].Name).To(Equal("k8scache"))
 			if env == test.EnvOpenShift {
-				By("Expecting the Service to request a serving certificate for the k8scache TLS server")
-				Expect(svc.Annotations[constants.OpenShiftCertificateAnnotation]).To(Equal("flowlogs-pipeline-cert"))
+				By("Expecting the k8scache Service to request a serving certificate")
+				Expect(k8sCacheSvc.Annotations[constants.OpenShiftCertificateAnnotation]).To(Equal("flowlogs-pipeline-k8scache-cert"))
 			}
 		})
 
@@ -297,14 +306,20 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &appsv1.Deployment{})
 			}, timeout, interval).Should(Succeed())
 
-			By("Expecting transformer service to be created for k8scache (informers enabled)")
-			svc := v1.Service{}
-			Eventually(func() interface{} {
-				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &svc)
+			By("Not expecting transformer service (k8scache has its own dedicated service)")
+			Eventually(func() error {
+				return k8sClient.Get(ctx, flpKeyKafkaTransformer, &v1.Service{})
+			}, timeout, interval).ShouldNot(Succeed())
+
+			By("Expecting the k8scache service to target transformer pods in Kafka mode")
+			k8sCacheSvc := v1.Service{}
+			Eventually(func() error {
+				return k8sClient.Get(ctx, k8sCacheServiceKey, &k8sCacheSvc)
 			}, timeout, interval).Should(Succeed())
-			Expect(svc.Spec.Ports).Should(HaveLen(1))
-			Expect(svc.Spec.Ports[0].Name).Should(Equal("k8scache"))
-			Expect(svc.Spec.Ports[0].Port).Should(Equal(flowslatest.DefaultK8sCachePort))
+			Expect(k8sCacheSvc.Spec.Ports).Should(HaveLen(1))
+			Expect(k8sCacheSvc.Spec.Ports[0].Name).Should(Equal("k8scache"))
+			Expect(k8sCacheSvc.Spec.Ports[0].Port).Should(Equal(flowslatest.DefaultK8sCachePort))
+			Expect(k8sCacheSvc.Spec.Selector["app"]).Should(Equal(constants.FLPTransfoName))
 
 			By("Expecting to create transformer flowlogs-pipeline role binding")
 			rb1 := rbacv1.RoleBinding{}

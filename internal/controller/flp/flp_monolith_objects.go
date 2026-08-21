@@ -67,8 +67,6 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 		b.desired,
 		&b.volumes,
 		netType,
-		monoCertSecretName,
-		b.desired.Processor.Service,
 		annotations,
 	)
 	return &appsv1.DaemonSet{
@@ -99,8 +97,6 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 		b.desired,
 		&b.volumes,
 		svc,
-		monoCertSecretName,
-		b.desired.Processor.Service,
 		annotations,
 	)
 	replicas := b.desired.Processor.GetFLPReplicas()
@@ -184,21 +180,9 @@ func (b *monolithBuilder) service() *corev1.Service {
 			TargetPort: intstr.FromInt32(port),
 		})
 	}
-	// Only expose k8scache port when centralized informers are enabled
-	if b.desired.Processor.IsInformerCacheProxyEnabled() {
-		k8scachePort := b.desired.Processor.GetK8sCachePort()
-		svc.Spec.Ports = append(svc.Spec.Ports, corev1.ServicePort{
-			Name:       "k8scache",
-			Port:       k8scachePort,
-			Protocol:   corev1.ProtocolTCP,
-			TargetPort: intstr.FromInt32(k8scachePort),
-		})
-	}
 	if b.info.ClusterInfo.IsOpenShift() && (b.desired.Processor.Service == nil || b.desired.Processor.Service.TLSType == flowslatest.TLSAuto) {
 		svc.Annotations[constants.OpenShiftCertificateAnnotation] = monoCertSecretName
 	}
-	// Note: k8scache TLS Auto mode reuses the same service-ca certificate (monoCertSecretName)
-	// since both ports are on the same service with the same DNS name
 	return &svc
 }
 
