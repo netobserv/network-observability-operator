@@ -23,7 +23,7 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
 	"github.com/netobserv/netobserv-operator/internal/pkg/metrics"
-	"github.com/netobserv/netobserv-operator/internal/pkg/resources"
+	"github.com/netobserv/netobserv-operator/internal/pkg/roles"
 )
 
 type Reconciler struct {
@@ -115,7 +115,7 @@ func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired 
 		}
 	}
 
-	binding := resources.GetExposeMetricsRoleBinding(ns)
+	binding := roles.GetExposeMetricsRoleBinding(ns)
 	if err := reconcilers.ReconcileRoleBinding(ctx, clh, binding); err != nil {
 		return err
 	}

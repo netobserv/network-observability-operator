@@ -6,7 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type ClusterRoleName string
 type RoleName string
 
 const (
