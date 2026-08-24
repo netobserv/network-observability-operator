@@ -147,8 +147,8 @@ github.com/netobserv/flowlogs-pipeline v1.12.0-community h1:+RDxtVHY//wOqHh3Q+Xq
 github.com/netobserv/flowlogs-pipeline v1.12.0-community/go.mod h1:rLbF9BWm9s7EXpUXF7fztfrikvrIu1mzEOy/UPqZlLM=
 github.com/netobserv/netobserv-ebpf-agent v1.11.5-community.0.20260625084536-cd2c2a1fa4fb h1:KNMbRuD5wtb8UQhdXRQi+DKl9Y5TPCF2vwExBay3k2o=
 github.com/netobserv/netobserv-ebpf-agent v1.11.5-community.0.20260625084536-cd2c2a1fa4fb/go.mod h1:NXh7mtzpv7mLu6H7q+hKCfM8ETVjYu8EgxFX2RLoFQg=
-github.com/onsi/ginkgo/v2 v2.32.0 h1:Hw7s2pVrQo/8Yz5N77qdnpHaoc+c6cC9WIV1Jce+J6E=
-github.com/onsi/ginkgo/v2 v2.32.0/go.mod h1:+aXOY+vzZ5mu2iI2HpTZUPmM//oQfsNFX6gU9kNcA44=
+github.com/onsi/ginkgo/v2 v2.32.1 h1:6tlvcDm/3sE8lGJbZ4+d4mO3RLy24/tQWOFzVSQNIfw=
+github.com/onsi/ginkgo/v2 v2.32.1/go.mod h1:+aXOY+vzZ5mu2iI2HpTZUPmM//oQfsNFX6gU9kNcA44=
 github.com/onsi/gomega v1.42.1 h1:iN1rCUX+44NZ1Dc97MPoeFYbFR0vh8zxoxMFwKdyZ6I=
 github.com/onsi/gomega v1.42.1/go.mod h1:REff/hsDsodHoKlWsP2mAPhu1+5/6hVYNf9rIEBpeSg=
 github.com/openshift/api v0.0.0-20250707164913-2cd5821c9080 h1:WIcPdcyEm4eaUz9fSI5RjGb7i6K0O1p20to1F/rwa/A=
