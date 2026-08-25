@@ -244,6 +244,10 @@ kubectl create clusterrolebinding netobserv-hostnetwork-custom \
 kubectl create clusterrolebinding netobserv-tokenreview-custom \
   --clusterrole=netobserv-token-review \
   --serviceaccount=<namespace>:netobserv-plugin
+
+kubectl create clusterrolebinding netobserv-flowcollector-viewer-role-custom \
+  --clusterrole=netobserv-flowcollector-viewer-role \
+  --serviceaccount=<namespace>:netobserv-plugin
 ```
 
 ### Metrics
