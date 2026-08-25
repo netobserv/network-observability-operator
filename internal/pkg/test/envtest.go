@@ -179,12 +179,13 @@ func PrepareEnvTest(env Environment, controllers []manager.Registerer, opNamespa
 	}
 
 	managerConfig := manager.Config{
-		EBPFAgentImage:        "quay.io/netobserv/netobserv-ebpf-agent:test",
-		FlowlogsPipelineImage: "quay.io/netobserv/flowlogs-pipeline:test",
-		WebConsoleImage:       "quay.io/netobserv/network-observability-console-plugin:test",
-		WebConsolePF4Image:    "quay.io/netobserv/network-observability-console-plugin:test-pf4",
-		WebConsolePF5Image:    "quay.io/netobserv/network-observability-console-plugin:test-pf5",
-		Namespace:             opNamespace,
+		EBPFAgentImage:           "quay.io/netobserv/netobserv-ebpf-agent:test",
+		FlowlogsPipelineImage:    "quay.io/netobserv/flowlogs-pipeline:test",
+		WebConsoleImage:          "quay.io/netobserv/network-observability-console-plugin:test",
+		WebConsolePF4Image:       "quay.io/netobserv/network-observability-console-plugin:test-pf4",
+		WebConsolePF5Image:       "quay.io/netobserv/network-observability-console-plugin:test-pf5",
+		Namespace:                opNamespace,
+		DefaultOperandsNamespace: "netobserv",
 	}
 	if env == EnvOpenShift {
 		managerConfig.Vendor = constants.VendorOpenShift
