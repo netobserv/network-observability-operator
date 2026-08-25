@@ -50,7 +50,7 @@ func addAllowedNamespaces(np *networkingv1.NetworkPolicy, in, out []string) {
 }
 
 func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager, cni flowslatest.NetworkType, apiServerIPs []string) (types.NamespacedName, *networkingv1.NetworkPolicy) {
-	ns := desired.Spec.GetNamespace()
+	ns := helper.GetOperandsNamespace(&desired.Spec, mgr.Config)
 
 	name := types.NamespacedName{Name: netpolName, Namespace: ns}
 	if cni == flowslatest.OpenShiftSDN || !desired.Spec.DeployNetworkPolicy(cni != "") {
@@ -215,7 +215,7 @@ func buildMainNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Man
 }
 
 func buildPrivilegedNetworkPolicy(desired *flowslatest.FlowCollector, mgr *manager.Manager, cni flowslatest.NetworkType) (types.NamespacedName, *networkingv1.NetworkPolicy) {
-	mainNs := desired.Spec.GetNamespace()
+	mainNs := helper.GetOperandsNamespace(&desired.Spec, mgr.Config)
 	privNs := mainNs + constants.EBPFPrivilegedNSSuffix
 
 	name := types.NamespacedName{Name: netpolName, Namespace: privNs}

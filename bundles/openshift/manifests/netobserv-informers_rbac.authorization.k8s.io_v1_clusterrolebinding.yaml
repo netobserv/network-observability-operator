@@ -10,10 +10,10 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: flowlogs-pipeline
-  namespace: netobserv
+  namespace: openshift-network-observability
 - kind: ServiceAccount
   name: flowlogs-pipeline-transformer
-  namespace: netobserv
+  namespace: openshift-network-observability
 - kind: ServiceAccount
   name: flowlogs-pipeline-informers
-  namespace: netobserv
+  namespace: openshift-network-observability
