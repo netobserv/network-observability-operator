@@ -195,7 +195,7 @@ github.com/netobserv/flowlogs-pipeline/pkg/config
 github.com/netobserv/flowlogs-pipeline/pkg/dsl
 github.com/netobserv/flowlogs-pipeline/pkg/utils
 github.com/netobserv/flowlogs-pipeline/pkg/utils/filters
-# github.com/netobserv/netobserv-ebpf-agent v1.11.5-community.0.20260625084536-cd2c2a1fa4fb
+# github.com/netobserv/netobserv-ebpf-agent v1.12.0-community
 ## explicit; go 1.25.7
 github.com/netobserv/netobserv-ebpf-agent/pkg/config
 github.com/netobserv/netobserv-ebpf-agent/pkg/maps
