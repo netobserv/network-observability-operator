@@ -2671,6 +2671,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		defer func() { _ = flow.DeleteFlowcollector() }()
 		flow.CreateFlowcollector()
 
+		g.By("Verify dedicated k8scache service exists with its own serving certificate")
+		k8sCacheSvc, err := k8sClient.CoreV1().Services(namespace).Get(context.Background(), "flowlogs-pipeline-k8scache", metav1.GetOptions{})
+		o.Expect(err).NotTo(o.HaveOccurred(), "dedicated k8scache service should be created by the informer reconciler")
+		o.Expect(k8sCacheSvc.Annotations).To(o.HaveKeyWithValue("service.beta.openshift.io/serving-cert-secret-name", "flowlogs-pipeline-k8scache-cert"))
+
 		g.By("Verify eBPF agent is using mTLS")
 		ebpfPods, err := getAllPods(namespace + "-privileged")
 		o.Expect(err).NotTo(o.HaveOccurred())

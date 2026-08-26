@@ -23,6 +23,18 @@ func DefaultCAReference(name, namespace string) *flowslatest.FileReference {
 	}
 }
 
+// InformerTLSAsServiceConfig converts an InformerCacheProxyTLSConfig to a ProcessorServiceConfig
+// so that the shared GetServiceServerTLSConfig / GetServiceClientTLSConfig helpers can be reused.
+func InformerTLSAsServiceConfig(proxy *flowslatest.FlowCollectorInformerCacheProxy) *flowslatest.ProcessorServiceConfig {
+	if proxy == nil || proxy.TLS == nil {
+		return &flowslatest.ProcessorServiceConfig{TLSType: flowslatest.TLSAuto}
+	}
+	return &flowslatest.ProcessorServiceConfig{
+		TLSType:              proxy.TLS.Type,
+		ProvidedCertificates: proxy.TLS.ProvidedCertificates,
+	}
+}
+
 // GetServiceClientTLSConfig returns configs for [ca, client cert]
 func GetServiceClientTLSConfig(desired *flowslatest.ProcessorServiceConfig, defaultSecretName string, isOpenShift bool) (*flowslatest.FileReference, *flowslatest.CertificateReference) {
 	if desired != nil && desired.TLSType != flowslatest.TLSAuto && desired.TLSType != flowslatest.TLSAutoMTLS {

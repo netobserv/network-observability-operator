@@ -17,6 +17,11 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/volumes"
 )
 
+const (
+	k8sCacheServiceName    = "flowlogs-pipeline-k8scache"
+	k8sCacheCertSecretName = k8sCacheServiceName + "-cert"
+)
+
 type informerBuilder struct {
 	*reconcilers.Instance
 	desired *flowslatest.FlowCollectorSpec
@@ -268,36 +273,47 @@ func (b *informerBuilder) serviceAccount() *corev1.ServiceAccount {
 	}
 }
 
+// service creates a dedicated k8scache Service that targets processor (FLP) pods.
+// This service is always separate from the main FLP service so that its certificates
+// are driven entirely by the informerCacheProxy config, without special cases per deployment model.
+func (b *informerBuilder) service() *corev1.Service {
+	processorApp := monoName
+	if b.desired.UseKafka() {
+		processorApp = transfoName
+	}
+	svc := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      k8sCacheServiceName,
+			Namespace: b.Namespace,
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     k8sCacheServiceName,
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"app": processorApp},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "k8scache",
+					Port:       b.desired.Processor.GetK8sCachePort(),
+					Protocol:   corev1.ProtocolTCP,
+					TargetPort: intstr.FromInt32(b.desired.Processor.GetK8sCachePort()),
+				},
+			},
+		},
+	}
+	if b.desired.Processor.InformerCacheProxy.UsesOpenShiftServiceCA(b.ClusterInfo.IsOpenShift()) {
+		svc.Annotations = map[string]string{
+			constants.OpenShiftCertificateAnnotation: k8sCacheCertSecretName,
+		}
+	}
+	return &svc
+}
+
 // addTLSArgs configures TLS arguments for informers client
-func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, config *flowslatest.FlowCollectorInformerCacheProxy) {
-	tlsType := config.GetTLSType()
-
-	if tlsType == flowslatest.TLSDisabled {
-		return
-	}
-
-	var clientCert *flowslatest.CertificateReference
-	var caFile *flowslatest.FileReference
-
-	if tlsType == flowslatest.TLSProvided {
-		// Manual mode: user provides certificates
-		if config.TLS != nil && config.TLS.ProvidedCertificates != nil {
-			clientCert = config.TLS.ProvidedCertificates.ClientCert
-			caFile = config.TLS.ProvidedCertificates.CAFile
-		}
-	} else if tlsType == flowslatest.TLSAuto || tlsType == flowslatest.TLSAutoMTLS {
-		// Auto mode: use service-ca in OpenShift
-		caConfigMapName := "netobserv-ca"
-		if b.ClusterInfo.IsOpenShift() {
-			caConfigMapName = "openshift-service-ca.crt"
-		}
-		caFile = helper.DefaultCAReference(caConfigMapName, "")
-
-		if tlsType == flowslatest.TLSAutoMTLS {
-			// Auto-mTLS: use cert-manager generated client certificate
-			clientCert = helper.DefaultCertificateReference("flowlogs-pipeline-informers-k8scache-client-cert", "")
-		}
-	}
+func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, proxy *flowslatest.FlowCollectorInformerCacheProxy) {
+	svcConfig := helper.InformerTLSAsServiceConfig(proxy)
+	caFile, clientCert := helper.GetServiceClientTLSConfig(svcConfig, "flowlogs-pipeline-informers-k8scache-client-cert", b.ClusterInfo.IsOpenShift())
 
 	// Enable TLS and add server CA for verification
 	if caFile != nil {
@@ -315,14 +331,11 @@ func (b *informerBuilder) addTLSArgs(args *[]string, vols *volumes.Builder, conf
 		)
 	}
 
-	// Set TLS server name for certificate verification
-	// Informers connect to processor pods by IP, but TLS certificates contain DNS names.
-	// Use the correct service name based on deployment model
-	var serviceName string
-	if b.desired.UseKafka() {
-		serviceName = fmt.Sprintf("%s.%s.svc", transfoName, b.Namespace)
-	} else {
-		serviceName = fmt.Sprintf("%s.%s.svc", monoName, b.Namespace)
+	if caFile != nil || clientCert != nil {
+		// Set TLS server name for certificate verification
+		// Informers connect to processor pods by IP, but TLS certificates contain DNS names.
+		// k8scache always has its own dedicated service, regardless of deployment model
+		serviceName := fmt.Sprintf("%s.%s.svc", k8sCacheServiceName, b.Namespace)
+		*args = append(*args, fmt.Sprintf("--tls-server-name=%s", serviceName))
 	}
-	*args = append(*args, fmt.Sprintf("--tls-server-name=%s", serviceName))
 }

@@ -24,6 +24,7 @@ const (
 type informerReconciler struct {
 	*reconcilers.Instance
 	deployment     *appsv1.Deployment
+	service        *corev1.Service
 	serviceAccount *corev1.ServiceAccount
 }
 
@@ -31,6 +32,7 @@ func newInformerReconciler(cmn *reconcilers.Instance) *informerReconciler {
 	rec := informerReconciler{
 		Instance:       cmn,
 		deployment:     cmn.Managed.NewDeployment(informerName),
+		service:        cmn.Managed.NewService(k8sCacheServiceName),
 		serviceAccount: cmn.Managed.NewServiceAccount(informerName),
 	}
 	return &rec
@@ -74,6 +76,12 @@ func (r *informerReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return fmt.Errorf("failed to reconcile service account: %w", err)
 	}
 
+	// Reconcile k8scache Service (targets processor pods, managed here so certificates
+	// are always driven by informerCacheProxy config regardless of deployment model)
+	if err := r.reconcileService(ctx, &builder); err != nil {
+		return fmt.Errorf("failed to reconcile k8scache service: %w", err)
+	}
+
 	// Reconcile Deployment
 	if err := r.reconcileDeployment(ctx, &builder); err != nil {
 		return fmt.Errorf("failed to reconcile deployment: %w", err)
@@ -90,6 +98,12 @@ func (r *informerReconciler) reconcileServiceAccount(ctx context.Context, builde
 		}
 	} // We only configure name, update is not needed for now
 	return nil
+}
+
+func (r *informerReconciler) reconcileService(ctx context.Context, builder *informerBuilder) error {
+	report := helper.NewChangeReport("k8scache Service")
+	defer report.LogIfNeeded(ctx)
+	return r.ReconcileService(ctx, r.service, builder.service(), &report)
 }
 
 func (r *informerReconciler) reconcileDeployment(ctx context.Context, builder *informerBuilder) error {

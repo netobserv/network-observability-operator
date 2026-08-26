@@ -25,7 +25,6 @@ import (
 type transformerReconciler struct {
 	*reconcilers.Instance
 	deployment       *appsv1.Deployment
-	service          *corev1.Service
 	promService      *corev1.Service
 	hpa              *ascv2.HorizontalPodAutoscaler
 	serviceAccount   *corev1.ServiceAccount
@@ -40,7 +39,6 @@ func newTransformerReconciler(cmn *reconcilers.Instance) *transformerReconciler 
 	rec := transformerReconciler{
 		Instance:         cmn,
 		deployment:       cmn.Managed.NewDeployment(transfoName),
-		service:          cmn.Managed.NewService(transfoName),
 		promService:      cmn.Managed.NewService(constants.FLPTransfoMetricsSvcName),
 		hpa:              cmn.Managed.NewHPA(transfoName),
 		serviceAccount:   cmn.Managed.NewServiceAccount(transfoName),
@@ -111,11 +109,6 @@ func (r *transformerReconciler) reconcile(ctx context.Context, desired *flowslat
 	}
 
 	if err := r.reconcilePermissions(ctx, &builder); err != nil {
-		return err
-	}
-
-	// Reconcile k8scache service for informers communication (only when informers enabled)
-	if err := r.reconcileService(ctx, &builder, &desired.Spec); err != nil {
 		return err
 	}
 
@@ -193,24 +186,6 @@ func (r *transformerReconciler) reconcileHPA(ctx context.Context, desiredFLP *fl
 		&desiredFLP.KafkaConsumerAutoscaler,
 		&report,
 	)
-}
-
-func (r *transformerReconciler) reconcileService(ctx context.Context, builder *transfoBuilder, desired *flowslatest.FlowCollectorSpec) error {
-	report := helper.NewChangeReport("FLP k8scache service")
-	defer report.LogIfNeeded(ctx)
-
-	// Only create k8scache service when centralized informers are enabled
-	informersEnabled := desired.Processor.IsInformerCacheProxyEnabled()
-
-	if informersEnabled {
-		if err := r.ReconcileService(ctx, r.service, builder.service(), &report); err != nil {
-			return err
-		}
-	} else {
-		// Delete service if informers are disabled
-		r.Managed.TryDelete(ctx, r.service)
-	}
-	return nil
 }
 
 func (r *transformerReconciler) reconcilePrometheusService(ctx context.Context, builder *transfoBuilder) error {

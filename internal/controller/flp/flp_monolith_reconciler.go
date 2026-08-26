@@ -165,11 +165,10 @@ func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, newD
 }
 
 // reconcileOrDeleteService reconciles the FLP Service, or deletes it when it's not needed:
-// in Direct mode, agents reach FLP directly (hostNetwork/hostPort), so no Service is needed...
-// unless centralized informers are enabled, in which case we still need a Service to expose
-// the k8scache port and trigger serving-cert generation.
+// in Direct mode, agents reach FLP directly (hostNetwork/hostPort), so no Service is needed.
+// k8scache has its own dedicated service managed by the informer reconciler.
 func (r *monolithReconciler) reconcileOrDeleteService(ctx context.Context, desired *flowslatest.FlowCollectorSpec, builder *monolithBuilder) error {
-	if desired.UseHostNetwork() && !desired.Processor.IsInformerCacheProxyEnabled() {
+	if desired.UseHostNetwork() {
 		r.Managed.TryDelete(ctx, r.service)
 		return nil
 	}

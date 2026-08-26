@@ -5,7 +5,6 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	sliceslatest "github.com/netobserv/netobserv-operator/api/flowcollectorslice/v1alpha1"
@@ -24,7 +23,6 @@ const (
 	transfoDynConfigMap   = transfoName + "-config-dynamic"
 	transfoServiceMonitor = transfoName + "-monitor"
 	transfoPromRule       = transfoName + "-alert"
-	transfoCertSecretName = transfoName + "-cert"
 )
 
 type transfoBuilder struct {
@@ -64,8 +62,8 @@ func (b *transfoBuilder) deployment(annotations map[string]string) *appsv1.Deplo
 		b.desired,
 		&b.volumes,
 		pull,
-		transfoCertSecretName,
 		annotations,
+		b.info.ClusterInfo.IsOpenShift(),
 	)
 	replicas := b.desired.Processor.GetFLPReplicas()
 	return &appsv1.Deployment{
@@ -188,42 +186,4 @@ func (b *transfoBuilder) prometheusRule(rules []monitoringv1.Rule) *monitoringv1
 		transfoName,
 		b.version,
 	)
-}
-
-// service creates a Service for k8scache (informers communication)
-// This service is only needed when centralized informers are enabled
-func (b *transfoBuilder) service() *corev1.Service {
-	svc := corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      transfoName,
-			Namespace: b.info.Namespace,
-			Labels: map[string]string{
-				"part-of": constants.OperatorName,
-				"app":     transfoName,
-				"version": b.version,
-			},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: map[string]string{"app": transfoName},
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "k8scache",
-					Port:       b.desired.Processor.GetK8sCachePort(),
-					Protocol:   corev1.ProtocolTCP,
-					TargetPort: intstr.FromInt32(b.desired.Processor.GetK8sCachePort()),
-				},
-			},
-		},
-	}
-	// In OpenShift with TLS Auto mode, request service-ca to generate certificate
-	// This certificate will be used by the k8scache gRPC server
-	if b.desired.Processor.InformerCacheProxy.UsesOpenShiftServiceCA(b.info.ClusterInfo.IsOpenShift()) {
-		if svc.Annotations == nil {
-			svc.Annotations = make(map[string]string)
-		}
-		svc.Annotations[constants.OpenShiftCertificateAnnotation] = transfoCertSecretName
-	}
-	// Note: k8scache TLS Auto mode generates a service-ca certificate (transfoCertSecretName)
-	// for the transformer service DNS name
-	return &svc
 }

@@ -29,6 +29,7 @@ SED ?= sed
 else
 SED ?= gsed
 endif
+export SED
 
 # Port-forward (for loki/grafana deployments)
 PORT_FWD ?= true
@@ -75,7 +76,7 @@ endif
 
 # If we don't want to set bundle date (upon bundle update call), store current date
 ifneq ("$(BUNDLE_SET_DATE)", "true")
-	BUNDLE_STORED_DATE = $(shell grep "createdAt:" $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r 's/^.*createdAt:[ ]*(.*)/\1/')
+	BUNDLE_STORED_DATE = $(shell grep "createdAt:" $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | $(SED) -E 's/^.*createdAt:[ ]*(.*)/\1/')
 endif
 
 # Image URL to use all building/pushing image targets
@@ -404,11 +405,11 @@ uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube
 
 set-manager-images: kustomize ## Update image references
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMAGE}
-	$(SED) -i -r '/RELATED_IMAGE_EBPF_AGENT$$/{ n; s~value:.+$$~value: quay.io/netobserv/netobserv-ebpf-agent:$(BPF_VERSION)~}' ./config/manager/manager.yaml
-	$(SED) -i -r '/RELATED_IMAGE_FLOWLOGS_PIPELINE$$/{ n; s~value:.+$$~value: quay.io/netobserv/flowlogs-pipeline:$(FLP_VERSION)~}' ./config/manager/manager.yaml
-	$(SED) -i -r '/RELATED_IMAGE_WEB_CONSOLE$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)~}' ./config/manager/manager.yaml
-	$(SED) -i -r '/RELATED_IMAGE_WEB_CONSOLE_PF4$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf4~}' ./config/manager/manager.yaml
-	$(SED) -i -r '/RELATED_IMAGE_WEB_CONSOLE_PF5$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf5~}' ./config/manager/manager.yaml
+	$(SED) -i -E '/RELATED_IMAGE_EBPF_AGENT$$/{ n; s~value:.+$$~value: quay.io/netobserv/netobserv-ebpf-agent:$(BPF_VERSION)~}' ./config/manager/manager.yaml
+	$(SED) -i -E '/RELATED_IMAGE_FLOWLOGS_PIPELINE$$/{ n; s~value:.+$$~value: quay.io/netobserv/flowlogs-pipeline:$(FLP_VERSION)~}' ./config/manager/manager.yaml
+	$(SED) -i -E '/RELATED_IMAGE_WEB_CONSOLE$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)~}' ./config/manager/manager.yaml
+	$(SED) -i -E '/RELATED_IMAGE_WEB_CONSOLE_PF4$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf4~}' ./config/manager/manager.yaml
+	$(SED) -i -E '/RELATED_IMAGE_WEB_CONSOLE_PF5$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)-pf5~}' ./config/manager/manager.yaml
 
 deploy: BPF_VERSION=main
 deploy: FLP_VERSION=main
@@ -416,11 +417,11 @@ deploy: PLG_VERSION=main
 deploy: kustomize set-manager-images ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | kubectl apply --server-side --force-conflicts -f -
 	kubectl get ns openshift-netobserv-operator || kubectl create ns openshift-netobserv-operator
-	cat $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl apply --server-side --force-conflicts -f -
+	cat $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | $(SED) -E "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | $(SED) -E "s/placeholder/openshift-netobserv-operator/" | kubectl apply --server-side --force-conflicts -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/openshift | kubectl --ignore-not-found=true delete -f - || true
-	cat $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | sed -r "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | sed -r "s/placeholder/openshift-netobserv-operator/" | kubectl --ignore-not-found=true delete -f - || true
+	cat $(BUNDLE_OUT)/manifests/netobserv-operator.clusterserviceversion.yaml | $(SED) -E "s/operators.coreos.com\/v1/operators.coreos.com\/v1alpha1/" | $(SED) -E "s/placeholder/openshift-netobserv-operator/" | kubectl --ignore-not-found=true delete -f - || true
 
 run: fmt lint ## Run a controller from your host.
 	go run ./main.go
@@ -429,7 +430,7 @@ run: fmt lint ## Run a controller from your host.
 
 .PHONY: bundle-nogen
 bundle-nogen: YQ OPSDK kustomize set-manager-images ## Generate final bundle files, without prior code/doc generation.
-	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(VERSION)/~g' $(BUNDLE_CONFIG)/description.md
+	$(SED) -i -E 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(VERSION)/~g' $(BUNDLE_CONFIG)/description.md
 	rm -r $(BUNDLE_OUT)/manifests || true
 	rm -r $(BUNDLE_OUT)/metadata || true
 # Dissociate kustomize builds csv, samples and the rest, because they don't share exactly the same properties (like namespace injection)
@@ -459,7 +460,7 @@ bundle: generate bundle-nogen ## Generate final bundle files, including prior co
 
 .PHONY: update-bundle
 update-bundle: ## Prepare clean bundles to be commited
-	$(SED) -i -r 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(BUNDLE_VERSION)/~g' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
+	$(SED) -i -E 's~netobserv-operator/blob/[^/]+/~netobserv-operator/blob/$(BUNDLE_VERSION)/~g' ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml
 	cp ./config/csv/bases/netobserv-operator.clusterserviceversion.yaml ./config/csv/bases/transformed-csv.yaml
 	hack/crd2csvSpecDesc.sh v1beta2
 	$(MAKE) bundle VERSION=$(BUNDLE_VERSION) IMAGE_ORG=netobserv
@@ -531,13 +532,13 @@ test-workflow: ## Run some tests on this Makefile and the github workflow
 related-release-notes: ## Grab release notes for related components (to be inserted in operator's release note upstream, cf RELEASE.md)
 	echo -e "## Related components\n\n" > /tmp/related.md
 	echo -e "<details><summary><b>eBPF Agent</b></summary>\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/netobserv-ebpf-agent/releases/tags/$(BPF_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/netobserv-ebpf-agent/releases/tags/$(BPF_VERSION) | jq -r .body | xargs -0 printf "%b" | $(SED) -E "s/##/###/" >> /tmp/related.md
 	echo -e "</details>\n" >> /tmp/related.md
 	echo -e "<details><summary><b>Flowlogs-Pipeline</b></summary>\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/flowlogs-pipeline/releases/tags/$(FLP_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/flowlogs-pipeline/releases/tags/$(FLP_VERSION) | jq -r .body | xargs -0 printf "%b" | $(SED) -E "s/##/###/" >> /tmp/related.md
 	echo -e "</details>\n" >> /tmp/related.md
 	echo -e "<details><summary><b>Web Console</b></summary>\n\n" >> /tmp/related.md
-	curl -s  https://api.github.com/repos/netobserv/netobserv-web-console/releases/tags/$(PLG_VERSION) | jq -r .body | xargs -0 printf "%b" | sed -r "s/##/###/" >> /tmp/related.md
+	curl -s  https://api.github.com/repos/netobserv/netobserv-web-console/releases/tags/$(PLG_VERSION) | jq -r .body | xargs -0 printf "%b" | $(SED) -E "s/##/###/" >> /tmp/related.md
 	echo -e "</details>\n" >> /tmp/related.md
 	wl-copy < /tmp/related.md
 	cat /tmp/related.md
@@ -546,8 +547,8 @@ related-release-notes: ## Grab release notes for related components (to be inser
 # Update helm templates
 .PHONY: helm-update
 helm-update: YQ ## Update helm template
-	sed -i -r 's/^appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
-	sed -i -r 's/^version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
+	$(SED) -i -E 's/^appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
+	$(SED) -i -E 's/^version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
 	$(YQ) -i '.ebpfAgent.version="v$(BUNDLE_VERSION)"' helm/values.yaml
 	$(YQ) -i '.flowlogsPipeline.version="v$(BUNDLE_VERSION)"' helm/values.yaml
 	$(YQ) -i '.consolePlugin.version="v$(BUNDLE_VERSION)"' helm/values.yaml
