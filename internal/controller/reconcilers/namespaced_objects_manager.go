@@ -160,8 +160,12 @@ func (m *NamespacedObjectManager) TryDelete(ctx context.Context, obj client.Obje
 		log.Info("DELETING "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
 		err := m.client.Delete(ctx, obj)
 		if err != nil {
-			log.Error(err, "Failed to delete old "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
-			return err
+			// Ignore NotFound errors - object may have been deleted concurrently
+			err = client.IgnoreNotFound(err)
+			if err != nil {
+				log.Error(err, "Failed to delete old "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+				return err
+			}
 		}
 	}
 	return nil
