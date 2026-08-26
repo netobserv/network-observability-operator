@@ -133,7 +133,9 @@ func ReconcileHPA(ctx context.Context, ci *Instance, old, n *ascv2.HorizontalPod
 			return ci.UpdateIfOwned(ctx, old, n)
 		}
 	} else {
-		ci.Managed.TryDelete(ctx, old)
+		if err := ci.Managed.TryDelete(ctx, old); err != nil {
+			return err
+		}
 	}
 	return nil
 }

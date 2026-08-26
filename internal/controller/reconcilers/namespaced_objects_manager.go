@@ -2,6 +2,7 @@ package reconcilers
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -119,7 +120,7 @@ func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
 		objLog := ref.kind + "/" + ref.name
 		err := m.client.Get(ctx, types.NamespacedName{Name: ref.name, Namespace: m.Namespace}, ref.placeholder)
 		if err != nil {
-			if errors.IsNotFound(err) {
+			if apierrors.IsNotFound(err) {
 				notFound = append(notFound, objLog)
 			} else {
 				log.Error(err, "Failed to get "+objLog)
@@ -141,14 +142,18 @@ func (m *NamespacedObjectManager) FetchAll(ctx context.Context) error {
 }
 
 // TryDeleteAll is an helper function that tries to delete all managed objects previously loaded using FetchAll.
-func (m *NamespacedObjectManager) TryDeleteAll(ctx context.Context) {
+func (m *NamespacedObjectManager) TryDeleteAll(ctx context.Context) error {
+	var errs []error
 	for _, obj := range m.managedObjects {
-		m.TryDelete(ctx, obj.placeholder)
+		if err := m.TryDelete(ctx, obj.placeholder); err != nil {
+			errs = append(errs, err)
+		}
 	}
+	return errors.Join(errs...)
 }
 
 // TryDelete is an helper function that tries to delete the provided object previously loaded using FetchAll.
-func (m *NamespacedObjectManager) TryDelete(ctx context.Context, obj client.Object) {
+func (m *NamespacedObjectManager) TryDelete(ctx context.Context, obj client.Object) error {
 	if m.Exists(obj) {
 		log := log.FromContext(ctx)
 		kind := reflect.TypeOf(obj).String()
@@ -156,8 +161,10 @@ func (m *NamespacedObjectManager) TryDelete(ctx context.Context, obj client.Obje
 		err := m.client.Delete(ctx, obj)
 		if err != nil {
 			log.Error(err, "Failed to delete old "+kind, "Namespace", obj.GetNamespace(), "Name", obj.GetName())
+			return err
 		}
 	}
+	return nil
 }
 
 // Exists returns true if the provided object isn't nil and was successfully fetched previously with FetchAll

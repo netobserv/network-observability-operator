@@ -56,16 +56,14 @@ func (r *informerReconciler) reconcile(ctx context.Context, desired *flowslatest
 
 	if desired.Spec.OnHold() {
 		r.Status.SetUnused("FlowCollector is on hold")
-		r.Managed.TryDeleteAll(ctx)
-		return nil
+		return r.Managed.TryDeleteAll(ctx)
 	}
 
 	// Check if informers are enabled (default: false)
 	if !desired.Spec.Processor.IsInformerCacheProxyEnabled() {
 		// Informers disabled - cleanup resources and use local informers mode
 		r.Status.SetUnused("Centralized informers disabled - using local informers mode")
-		r.Managed.TryDeleteAll(ctx)
-		return nil
+		return r.Managed.TryDeleteAll(ctx)
 	}
 
 	// Informers enabled - proceed with reconciliation

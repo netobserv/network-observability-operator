@@ -99,7 +99,9 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 		}
 	} else {
 		// delete any existing owned object
-		r.Managed.TryDeleteAll(ctx)
+		if err := r.Managed.TryDeleteAll(ctx); err != nil {
+			return err
+		}
 	}
 
 	return nil
