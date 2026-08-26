@@ -5,9 +5,11 @@ import (
 
 	osv1 "github.com/openshift/api/console/v1"
 	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -66,6 +68,12 @@ func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable boo
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 				Enable:   ptr.To(enable),
 				LogLevel: "info",
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse("10m"),
+						corev1.ResourceMemory: resource.MustParse("64Mi"),
+					},
+				},
 				Advanced: &flowslatest.AdvancedPluginConfig{
 					Register:   ptr.To(true),
 					Scheduling: sched,
