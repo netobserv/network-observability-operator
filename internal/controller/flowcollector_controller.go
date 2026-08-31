@@ -81,7 +81,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 				if labels != nil && labels["netobserv"] == "true" {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 				}
-				return []reconcile.Request{}
+				return nil
 			}),
 		)
 		log.Info("PrometheusRule CRD detected, watching for netobserv=true rules")

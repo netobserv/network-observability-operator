@@ -83,10 +83,16 @@ func AllowToLokiStack(spec *flowslatest.FlowCollectorSpec) networkingv1.NetworkP
 	peer := PeerInNamespace(spec.Loki.LokiStack.Namespace)
 	return networkingv1.NetworkPolicyEgressRule{
 		To: []networkingv1.NetworkPolicyPeer{peer},
-		Ports: []networkingv1.NetworkPolicyPort{{
-			Protocol: ptr.To(corev1.ProtocolTCP),
-			Port:     ptr.To(intstr.FromInt(3100)),
-		}},
+		Ports: []networkingv1.NetworkPolicyPort{
+			{
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(intstr.FromInt(8080)),
+			},
+			{
+				Protocol: ptr.To(corev1.ProtocolTCP),
+				Port:     ptr.To(intstr.FromInt(3100)),
+			},
+		},
 	}
 }
 

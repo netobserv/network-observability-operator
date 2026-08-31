@@ -2,6 +2,7 @@ package helper
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -28,6 +29,8 @@ func UnmanagedClient(cl client.Client) Client {
 	}
 }
 
+// NewControllerClientHelper creates a client wrapper that considers the controller (aka operator) deployment as the owner of all managed resources.
+// Ownership does not apply to cluster-scope resources.
 func NewControllerClientHelper(ctx context.Context, ns string, c client.Client) (*Client, error) {
 	dpl, err := getControllerDeployment(ctx, ns, c)
 	if err != nil {
@@ -37,14 +40,15 @@ func NewControllerClientHelper(ctx context.Context, ns string, c client.Client) 
 		Client: c,
 		SetOwnerReference: func(obj client.Object) error {
 			// can't apply ownership on cluster wide objects such as ClusterRole
-			if obj.GetNamespace() == "" {
-				return nil
+			if obj.GetNamespace() != ns {
+				return fmt.Errorf("cannot set owner controller-based owner reference on a non-namespaced resource, or a resource in a different namespace; want=%s, got=%s", ns, obj.GetNamespace())
 			}
 			return controllerutil.SetControllerReference(dpl, obj, c.Scheme(), controllerutil.WithBlockOwnerDeletion(false))
 		},
 	}, nil
 }
 
+// NewFlowCollectorClientHelper creates a client wrapper that considers FlowCollector as the owner of all managed resources.
 func NewFlowCollectorClientHelper(ctx context.Context, c client.Client) (*Client, *flowslatest.FlowCollector, error) {
 	fc, err := getFlowCollector(ctx, c)
 	if err != nil || fc == nil {
@@ -168,4 +172,9 @@ func getControllerDeployment(ctx context.Context, ns string, c client.Client) (*
 		return nil, err
 	}
 	return dpl, nil
+}
+
+func IsOperatorOwned(opns string, obj client.Object) bool {
+	refs := obj.GetOwnerReferences()
+	return len(refs) > 0 && refs[0].APIVersion == "apps/v1" && refs[0].Kind == "Deployment" && refs[0].Name == constants.ControllerName && obj.GetNamespace() == opns
 }

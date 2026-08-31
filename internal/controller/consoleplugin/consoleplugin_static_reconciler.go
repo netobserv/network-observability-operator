@@ -3,8 +3,10 @@ package consoleplugin
 import (
 	"context"
 
+	osv1 "github.com/openshift/api/console/v1"
 	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
@@ -90,7 +92,7 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.StaticPluginName)
 
-		if err = r.reconcilePlugin(ctx, &builder, constants.StaticPluginName, "NetObserv static plugin"); err != nil {
+		if err = r.reconcileStaticPlugin(ctx, &builder, constants.StaticPluginName); err != nil {
 			return err
 		}
 
@@ -110,6 +112,39 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 		r.Managed.TryDeleteAll(ctx)
 	}
 
+	return nil
+}
+
+func (r *StaticReconciler) reconcileStaticPlugin(ctx context.Context, builder *builder, name string) error {
+	report := helper.NewChangeReport("ConsolePlugin")
+	defer report.LogIfNeeded(ctx)
+
+	oldPlg := osv1.ConsolePlugin{}
+	pluginExists := true
+	err := r.Get(ctx, types.NamespacedName{Name: name}, &oldPlg)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			pluginExists = false
+		} else {
+			return err
+		}
+	}
+
+	// Check if objects need update
+	consolePlugin := builder.consolePlugin(name, "NetObserv static plugin")
+	if !pluginExists {
+		// Using Create instead of CreateOwned, because ConsolePlugin being a cluster-scope resource, it cannot receive the operator deployment as an owner
+		if err := r.Create(ctx, consolePlugin); err != nil {
+			return err
+		}
+	} else if helper.ConsolePluginChanged(&oldPlg, consolePlugin, &report) {
+		// Using Update instead of UpdateIfOwned, because ConsolePlugin being a cluster-scope resource, it cannot receive the operator deployment as an owner
+		consolePlugin.SetResourceVersion(oldPlg.GetResourceVersion())
+		helper.AddManagedLabel(consolePlugin)
+		if err := r.Update(ctx, consolePlugin); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

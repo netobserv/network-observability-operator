@@ -100,7 +100,7 @@ func (w *Watcher) watch(ctx context.Context, cl *narrowcache.Client, kind flowsl
 				// Trigger FlowCollector reconcile
 				return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 			}
-			return []reconcile.Request{}
+			return nil
 		}),
 	)
 	if err != nil {

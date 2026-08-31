@@ -3,33 +3,25 @@ package static
 import (
 	"context"
 	"fmt"
-	"time"
 
 	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"k8s.io/apimachinery/pkg/util/wait"
+	appsv1 "k8s.io/api/apps/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/consoleplugin"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
-	"github.com/netobserv/netobserv-operator/internal/pkg/retry"
 )
 
 var (
-	retryBackoff = wait.Backoff{
-		Steps:    6,
-		Duration: 2 * time.Second,
-		Factor:   2,
-		Jitter:   0.1,
-	}
 	clog = log.Log.WithName("static-controller")
 )
 
@@ -48,9 +40,25 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 		status: mgr.Status.ForComponent(status.StaticController),
 	}
 
+	// This controller runs unconditionally (not bound to FlowCollector), and uses the operator Deployment as a trigger.
 	b := ctrl.NewControllerManagedBy(mgr).
-		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
-		Named("StaticController")
+		Named("StaticController").
+		Watches(
+			&appsv1.Deployment{},
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
+				if o.GetNamespace() == mgr.Config.Namespace && o.GetName() == constants.ControllerName {
+					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+				}
+				return nil
+			}),
+			reconcilers.IgnoreStatusChange,
+		).
+		Watches(
+			&networkingv1.NetworkPolicy{},
+			&handler.EnqueueRequestForObject{},
+			reconcilers.OperatorOwned(mgr.Config.Namespace),
+			reconcilers.IgnoreStatusChange,
+		)
 	if mgr.Config.StaticPluginConfig.InheritTolerationFromSubscription != "" {
 		b = b.Watches(
 			&olm.Subscription{},
@@ -58,29 +66,12 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 				if o.GetNamespace() == mgr.Config.Namespace && o.GetName() == mgr.Config.StaticPluginConfig.InheritTolerationFromSubscription {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 				}
-				return []reconcile.Request{}
+				return nil
 			}),
 			reconcilers.IgnoreStatusChange,
 		)
 	}
-	// Return initReconcile as a post-create hook
-	return r.initReconcile, b.Complete(&r)
-}
-
-func (r *Controller) initReconcile(ctx context.Context) error {
-	attempt := 0
-	err := retry.OnError(ctx, retryBackoff, func(error) bool { return true }, func() error {
-		attempt++
-		if _, err := r.Reconcile(ctx, ctrl.Request{}); err != nil {
-			clog.WithValues("attempt", attempt, "error", err).Info("Initial reconcile: attempt failed")
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed initial reconcile, all attempts failed: %w", err)
-	}
-	return nil
+	return nil, b.Complete(&r)
 }
 
 // Reconcile is the controller entry point for reconciling current state with desired state.
@@ -91,6 +82,7 @@ func (r *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 	commit := r.status.Reset()
 	defer commit(ctx, r.Client)
 
+	// Create operator-owning client wrapper
 	scp, err := helper.NewControllerClientHelper(ctx, r.mgr.Config.Namespace, r.Client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to get controller client: %w", err)
