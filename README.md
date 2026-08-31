@@ -306,7 +306,7 @@ Since `FlowCollector v1beta2`, NetObserv is automatically configured with multi-
 To give flow logs access to a `test` user, run:
 
 ```bash
-oc adm policy add-cluster-role-to-user netobserv-loki-reader test
+kubectl create clusterrolebinding loki-reader-test --clusterrole=netobserv-loki-reader --user=test
 ```
 
 More information about multi-tenancy can be found on [this page](https://github.com/netobserv/documents/blob/main/multitenancy.md).
