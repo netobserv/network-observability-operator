@@ -66,14 +66,9 @@ func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable boo
 				Enable: r.managerConfig.DeployOperatorNetworkPolicy,
 			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
-				Enable:   ptr.To(enable),
-				LogLevel: "info",
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("10m"),
-						corev1.ResourceMemory: resource.MustParse("64Mi"),
-					},
-				},
+				Enable:    ptr.To(enable),
+				LogLevel:  "info",
+				Resources: buildStaticPluginResources(r.cfg),
 				Advanced: &flowslatest.AdvancedPluginConfig{
 					Register:   ptr.To(true),
 					Scheduling: sched,
@@ -81,6 +76,32 @@ func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable boo
 			},
 		},
 	})
+}
+
+func buildStaticPluginResources(cfg *manager.StaticPluginConfig) corev1.ResourceRequirements {
+	cpuRequest := cfg.CPURequest
+	if cpuRequest == "" {
+		cpuRequest = "10m"
+	}
+	memoryRequest := cfg.MemoryRequest
+	if memoryRequest == "" {
+		memoryRequest = "64Mi"
+	}
+	requests := corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse(cpuRequest),
+		corev1.ResourceMemory: resource.MustParse(memoryRequest),
+	}
+	limits := corev1.ResourceList{}
+	if cfg.CPULimit != "" {
+		limits[corev1.ResourceCPU] = resource.MustParse(cfg.CPULimit)
+	}
+	if cfg.MemoryLimit != "" {
+		limits[corev1.ResourceMemory] = resource.MustParse(cfg.MemoryLimit)
+	}
+	return corev1.ResourceRequirements{
+		Requests: requests,
+		Limits:   limits,
+	}
 }
 
 // Reconcile is the reconciler entry point to reconcile the static plugin state with the desired configuration
