@@ -2,6 +2,7 @@ package consoleplugin
 
 import (
 	"context"
+	"fmt"
 
 	osv1 "github.com/openshift/api/console/v1"
 	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -59,6 +60,10 @@ func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable boo
 		}
 	}
 
+	resources, err := buildStaticPluginResources(&r.managerConfig.StaticPluginConfig)
+	if err != nil {
+		return fmt.Errorf("building static plugin resources: %w", err)
+	}
 	// Fake a FlowCollector to create console plugin and expose forms
 	return r.reconcileStatic(ctx, &flowslatest.FlowCollector{
 		Spec: flowslatest.FlowCollectorSpec{
@@ -68,7 +73,7 @@ func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable boo
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 				Enable:    ptr.To(enable),
 				LogLevel:  "info",
-				Resources: buildStaticPluginResources(r.cfg),
+				Resources: resources,
 				Advanced: &flowslatest.AdvancedPluginConfig{
 					Register:   ptr.To(true),
 					Scheduling: sched,
@@ -78,7 +83,7 @@ func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable boo
 	})
 }
 
-func buildStaticPluginResources(cfg *manager.StaticPluginConfig) corev1.ResourceRequirements {
+func buildStaticPluginResources(cfg *manager.StaticPluginConfig) (corev1.ResourceRequirements, error) {
 	cpuRequest := cfg.CPURequest
 	if cpuRequest == "" {
 		cpuRequest = "10m"
@@ -87,21 +92,38 @@ func buildStaticPluginResources(cfg *manager.StaticPluginConfig) corev1.Resource
 	if memoryRequest == "" {
 		memoryRequest = "64Mi"
 	}
+
+	cpuQty, err := resource.ParseQuantity(cpuRequest)
+	if err != nil {
+		return corev1.ResourceRequirements{}, fmt.Errorf("invalid CPU request %q: %w", cpuRequest, err)
+	}
+	memoryQty, err := resource.ParseQuantity(memoryRequest)
+	if err != nil {
+		return corev1.ResourceRequirements{}, fmt.Errorf("invalid memory request %q: %w", memoryRequest, err)
+	}
 	requests := corev1.ResourceList{
-		corev1.ResourceCPU:    resource.MustParse(cpuRequest),
-		corev1.ResourceMemory: resource.MustParse(memoryRequest),
+		corev1.ResourceCPU:    cpuQty,
+		corev1.ResourceMemory: memoryQty,
 	}
 	limits := corev1.ResourceList{}
 	if cfg.CPULimit != "" {
-		limits[corev1.ResourceCPU] = resource.MustParse(cfg.CPULimit)
+		cpuLimit, err := resource.ParseQuantity(cfg.CPULimit)
+		if err != nil {
+			return corev1.ResourceRequirements{}, fmt.Errorf("invalid CPU limit %q: %w", cfg.CPULimit, err)
+		}
+		limits[corev1.ResourceCPU] = cpuLimit
 	}
 	if cfg.MemoryLimit != "" {
-		limits[corev1.ResourceMemory] = resource.MustParse(cfg.MemoryLimit)
+		memoryLimit, err := resource.ParseQuantity(cfg.MemoryLimit)
+		if err != nil {
+			return corev1.ResourceRequirements{}, fmt.Errorf("invalid memory limit %q: %w", cfg.MemoryLimit, err)
+		}
+		limits[corev1.ResourceMemory] = memoryLimit
 	}
 	return corev1.ResourceRequirements{
 		Requests: requests,
 		Limits:   limits,
-	}
+	}, nil
 }
 
 // Reconcile is the reconciler entry point to reconcile the static plugin state with the desired configuration
