@@ -258,6 +258,57 @@ func TestBuildRules_DisableTakesPrecedence(t *testing.T) {
 	assert.Empty(t, rules)
 }
 
+func TestDNSNxDomainPromql(t *testing.T) {
+	variant := flowslatest.HealthRuleVariant{
+		GroupBy: flowslatest.GroupByNamespace,
+		Thresholds: flowslatest.HealthRuleThresholds{
+			Warning: "5",
+			Info:    "2",
+		},
+	}
+	healthRules, err := buildHealthRulesForVariant(flowslatest.HealthRuleDNSNxDomain, flowslatest.ModeAlert, &variant, []string{"namespace_dns_flows_total"})
+	assert.NoError(t, err)
+
+	var builtRules []*monitoringv1.Rule
+	for _, hr := range healthRules {
+		mr, err := hr.Build()
+		assert.NoError(t, err)
+		if mr != nil {
+			builtRules = append(builtRules, mr)
+		}
+	}
+	assert.NotEmpty(t, builtRules)
+	for _, mr := range builtRules {
+		assert.Contains(t, mr.Expr.StrVal, "netobserv_namespace_dns_flows_total{")
+		assert.Contains(t, mr.Expr.StrVal, `DnsFlagsResponseCode="NXDomain"`)
+	}
+}
+
+func TestDNSErrorsPromql(t *testing.T) {
+	variant := flowslatest.HealthRuleVariant{
+		GroupBy: flowslatest.GroupByNamespace,
+		Thresholds: flowslatest.HealthRuleThresholds{
+			Warning: "10",
+		},
+	}
+	healthRules, err := buildHealthRulesForVariant(flowslatest.HealthRuleDNSErrors, flowslatest.ModeAlert, &variant, []string{"namespace_dns_flows_total"})
+	assert.NoError(t, err)
+
+	var builtRules []*monitoringv1.Rule
+	for _, hr := range healthRules {
+		mr, err := hr.Build()
+		assert.NoError(t, err)
+		if mr != nil {
+			builtRules = append(builtRules, mr)
+		}
+	}
+	assert.NotEmpty(t, builtRules)
+	for _, mr := range builtRules {
+		assert.Contains(t, mr.Expr.StrVal, "netobserv_namespace_dns_flows_total{")
+		assert.Contains(t, mr.Expr.StrVal, `DnsFlagsResponseCode!~"NoError|NXDomain"`)
+	}
+}
+
 func TestLatencyPromql(t *testing.T) {
 	variant := flowslatest.HealthRuleVariant{
 		GroupBy: flowslatest.GroupByNamespace,
