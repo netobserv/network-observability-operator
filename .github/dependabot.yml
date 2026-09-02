@@ -20,7 +20,7 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      - dependency-name: "docker.io/library/golang"
+      - dependency-name: "library/golang"
 
   - package-ecosystem: "github-actions"
     directory: "/"
