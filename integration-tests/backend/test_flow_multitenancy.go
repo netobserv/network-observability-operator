@@ -147,17 +147,17 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 
 		g.By("Create secret-watcher RoleBinding in LokiStack namespace")
 		createSecretWatcherRB(lokiStackNS)
-	})
 
-	g.AfterAll(func() {
-		if ls != nil {
-			ls.removeLokiStack()
-			ls.removeObjectStorage()
-		}
-		if !Lokiexisting {
-			LO.uninstallOperator()
-		}
-		deleteNamespace(lokiStackNS)
+		g.DeferCleanup(func() {
+			if ls != nil {
+				ls.removeLokiStack()
+				ls.removeObjectStorage()
+			}
+			if !Lokiexisting {
+				LO.uninstallOperator()
+			}
+			deleteNamespace(lokiStackNS)
+		})
 	})
 
 	g.BeforeEach(func() {

@@ -975,7 +975,9 @@ func (l lokiStack) removeObjectStorage() {
 			err = deleteS3Bucket(client, l.BucketName)
 		}
 	}
-	o.Expect(err).NotTo(o.HaveOccurred())
+	if err != nil {
+		e2e.Logf("WARNING: failed to clean up object storage for bucket %s: %v", l.BucketName, err)
+	}
 }
 
 func deployMinIO() {
