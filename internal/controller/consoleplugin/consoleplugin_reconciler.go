@@ -105,7 +105,7 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 		}
 
 		if hasPluginAPI {
-			if err = r.reconcilePlugin(ctx, &builder, constants.PluginName, "NetObserv plugin"); err != nil {
+			if err = r.reconcilePlugin(ctx, &builder, constants.PluginName); err != nil {
 				return err
 			}
 		}
@@ -182,7 +182,7 @@ func (r *CPReconciler) reconcilePermissions(ctx context.Context, builder *builde
 	return nil
 }
 
-func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, name, displayName string) error {
+func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, name string) error {
 	report := helper.NewChangeReport("ConsolePlugin")
 	defer report.LogIfNeeded(ctx)
 
@@ -198,7 +198,7 @@ func (r *CPReconciler) reconcilePlugin(ctx context.Context, builder *builder, na
 	}
 
 	// Check if objects need update
-	consolePlugin := builder.consolePlugin(name, displayName)
+	consolePlugin := builder.consolePlugin(name, "NetObserv plugin")
 	if !pluginExists {
 		if err := r.CreateOwned(ctx, consolePlugin); err != nil {
 			return err

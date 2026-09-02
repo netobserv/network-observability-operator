@@ -62,7 +62,7 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 				if o.GetNamespace() == r.currentNamespace {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 				}
-				return []reconcile.Request{}
+				return nil
 			}),
 			reconcilers.IgnoreStatusChange,
 		).

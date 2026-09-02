@@ -11,6 +11,7 @@ import (
 
 	"github.com/netobserv/netobserv-operator/internal/controller/networkpolicy"
 	"github.com/netobserv/netobserv-operator/internal/controller/networkpolicy/envtest"
+	"github.com/netobserv/netobserv-operator/internal/controller/static"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
 )
@@ -36,15 +37,15 @@ func TestAPIsOpenShift(t *testing.T) {
 // this way we make sure that both test sub-suites are executed serially
 var _ = Describe("Networkpolicy Controller - OpenShift", Ordered, Serial, func() {
 	ctxGetter := func() (context.Context, client.Client) { return ctx, k8sClient }
-	envtest.ControllerSpecs(ctxGetter)
+	envtest.ControllerSpecs(env, ctxGetter)
 })
 
 var _ = BeforeSuite(func() {
 	ctx, k8sClient, suiteContext = test.PrepareEnvTest(
 		env,
-		[]manager.Registerer{networkpolicy.Start},
+		[]manager.Registerer{static.Start, networkpolicy.Start},
 		"main-namespace",
-		[]string{"other-namespace"},
+		[]string{"other-namespace", "main-namespace-privileged"},
 		"../../..",
 	)
 })

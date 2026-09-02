@@ -8481,11 +8481,15 @@ configuration, you can disable it and install your own instead.<br/>
         <td><b>enable</b></td>
         <td>boolean</td>
         <td>
-          Deploys network policies on the namespaces used by NetObserv (main and privileged).
+          Deploys network policies on the namespaces used by NetObserv operands (main and privileged).
 These network policies better isolate the NetObserv components to prevent undesired connections from and to them.
 Because it cannot be tested with all CNIs, this option is only enabled by default when NetObserv runs in a known
 supported environment, and it is disabled by default otherwise.
 When disabled, it is highly recommended to create network policies manually, to prevent undesired accesses.
+This setting is for operands only, and does not control the Operator network policy, which is covered by the `OPERATOR_NETWORK_POLICY`
+environment variable.
+If the operator and the operands are deployed in the same namespace, this setting is ignored, and only `OPERATOR_NETWORK_POLICY` controls
+whether or not any policy is installed.
 More information: https://github.com/netobserv/netobserv-operator/blob/main/docs/NetworkPolicy.md.<br/>
         </td>
         <td>false</td>

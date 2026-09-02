@@ -3,7 +3,11 @@ package consoleplugin
 import (
 	"context"
 
+	osv1 "github.com/openshift/api/console/v1"
 	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	networkingv1 "k8s.io/api/networking/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -11,15 +15,18 @@ import (
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
+	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
+	"github.com/netobserv/netobserv-operator/internal/pkg/netpol"
 )
 
 type StaticReconciler struct {
 	CPReconciler
-	cfg *manager.StaticPluginConfig
+	managerConfig *manager.Config
+	netpol        *networkingv1.NetworkPolicy
 }
 
-func NewStaticReconciler(cmn *reconcilers.Instance, cfg *manager.StaticPluginConfig) StaticReconciler {
+func NewStaticReconciler(cmn *reconcilers.Instance, cfg *manager.Config) StaticReconciler {
 	return StaticReconciler{
 		CPReconciler: CPReconciler{
 			Instance:       cmn,
@@ -27,19 +34,41 @@ func NewStaticReconciler(cmn *reconcilers.Instance, cfg *manager.StaticPluginCon
 			service:        cmn.Managed.NewService(constants.StaticPluginName),
 			serviceAccount: cmn.Managed.NewServiceAccount(constants.StaticPluginName),
 		},
-		cfg: cfg,
+		netpol:        cmn.Managed.NewNetworkPolicy(constants.StaticPluginName),
+		managerConfig: cfg,
 	}
 }
 
 func (r *StaticReconciler) ReconcileStaticPlugin(ctx context.Context, enable bool) error {
+	// Retrieve toleration from subscription
+	var sched *flowslatest.SchedulingConfig
+	subName := r.managerConfig.StaticPluginConfig.InheritTolerationFromSubscription
+	if subName != "" {
+		sub := olm.Subscription{}
+		if err := r.Client.Get(ctx, types.NamespacedName{Name: subName, Namespace: r.Namespace}, &sub); err != nil {
+			return err
+		}
+		if sub.Spec != nil && sub.Spec.Config != nil {
+			sched = &flowslatest.SchedulingConfig{
+				Tolerations:  sub.Spec.Config.Tolerations,
+				NodeSelector: sub.Spec.Config.NodeSelector,
+				Affinity:     sub.Spec.Config.Affinity,
+			}
+		}
+	}
+
 	// Fake a FlowCollector to create console plugin and expose forms
 	return r.reconcileStatic(ctx, &flowslatest.FlowCollector{
 		Spec: flowslatest.FlowCollectorSpec{
+			NetworkPolicy: flowslatest.NetworkPolicy{
+				Enable: r.managerConfig.DeployOperatorNetworkPolicy,
+			},
 			ConsolePlugin: flowslatest.FlowCollectorConsolePlugin{
 				Enable:   ptr.To(enable),
 				LogLevel: "info",
 				Advanced: &flowslatest.AdvancedPluginConfig{
-					Register: ptr.To(true),
+					Register:   ptr.To(true),
+					Scheduling: sched,
 				},
 			},
 		},
@@ -59,34 +88,11 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 
 	if r.ClusterInfo.HasConsolePlugin() {
 		r.checkAutoPatch(ctx, desired, constants.StaticPluginName)
-	}
-
-	if r.ClusterInfo.HasConsolePlugin() {
-		// Retrieve toleration
-		if r.cfg.InheritTolerationFromSubscription != "" {
-			sub := olm.Subscription{}
-			if err = r.Client.Get(
-				ctx,
-				types.NamespacedName{Name: r.cfg.InheritTolerationFromSubscription, Namespace: r.Namespace},
-				&sub,
-			); err != nil {
-				return err
-			}
-			if sub.Spec != nil && sub.Spec.Config != nil {
-				desired.Spec.ConsolePlugin.Advanced.Scheduling = &flowslatest.SchedulingConfig{
-					Tolerations:  sub.Spec.Config.Tolerations,
-					NodeSelector: sub.Spec.Config.NodeSelector,
-					Affinity:     sub.Spec.Config.Affinity,
-				}
-			} else {
-				desired.Spec.ConsolePlugin.Advanced.Scheduling = nil
-			}
-		}
 
 		// Create object builder
 		builder := newBuilder(r.Instance, &desired.Spec, constants.StaticPluginName)
 
-		if err = r.reconcilePlugin(ctx, &builder, constants.StaticPluginName, "NetObserv static plugin"); err != nil {
+		if err = r.reconcileStaticPlugin(ctx, &builder, constants.StaticPluginName); err != nil {
 			return err
 		}
 
@@ -97,10 +103,90 @@ func (r *StaticReconciler) reconcileStatic(ctx context.Context, desired *flowsla
 		if err = r.reconcileServices(ctx, &builder, constants.StaticPluginName); err != nil {
 			return err
 		}
+
+		if err = r.reconcileNetpol(ctx, desired); err != nil {
+			return err
+		}
 	} else {
 		// delete any existing owned object
 		r.Managed.TryDeleteAll(ctx)
 	}
 
 	return nil
+}
+
+func (r *StaticReconciler) reconcileStaticPlugin(ctx context.Context, builder *builder, name string) error {
+	report := helper.NewChangeReport("ConsolePlugin")
+	defer report.LogIfNeeded(ctx)
+
+	oldPlg := osv1.ConsolePlugin{}
+	pluginExists := true
+	err := r.Get(ctx, types.NamespacedName{Name: name}, &oldPlg)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			pluginExists = false
+		} else {
+			return err
+		}
+	}
+
+	// Check if objects need update
+	consolePlugin := builder.consolePlugin(name, "NetObserv static plugin")
+	if !pluginExists {
+		// Using Create instead of CreateOwned, because ConsolePlugin being a cluster-scope resource, it cannot receive the operator deployment as an owner
+		if err := r.Create(ctx, consolePlugin); err != nil {
+			return err
+		}
+	} else if helper.ConsolePluginChanged(&oldPlg, consolePlugin, &report) {
+		// Using Update instead of UpdateIfOwned, because ConsolePlugin being a cluster-scope resource, it cannot receive the operator deployment as an owner
+		consolePlugin.SetResourceVersion(oldPlg.GetResourceVersion())
+		helper.AddManagedLabel(consolePlugin)
+		if err := r.Update(ctx, consolePlugin); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *StaticReconciler) reconcileNetpol(ctx context.Context, desired *flowslatest.FlowCollector) error {
+	cni, err := r.ClusterInfo.GetCNI()
+	if err != nil {
+		return err
+	}
+
+	if !flowslatest.ShouldInstallNetworkPolicy(desired.Spec.NetworkPolicy.Enable, cni) {
+		r.Managed.TryDelete(ctx, r.netpol)
+		return nil
+	}
+
+	ingress := []networkingv1.NetworkPolicyIngressRule{
+		netpol.AllowFromOpenShiftConsole(&desired.Spec.ConsolePlugin),
+	}
+
+	policy := &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.StaticPluginName,
+			Namespace: r.Namespace,
+			Labels: map[string]string{
+				"part-of": constants.OperatorName,
+				"app":     constants.StaticPluginName,
+			},
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PolicyTypes: []networkingv1.PolicyType{
+				networkingv1.PolicyTypeIngress,
+				networkingv1.PolicyTypeEgress,
+			},
+			PodSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": constants.StaticPluginName,
+				},
+			},
+			Ingress: ingress,
+			Egress:  nil,
+		},
+	}
+	nsname := helper.NamespacedName(policy)
+
+	return reconcilers.ReconcileNetworkPolicy(ctx, &r.Client, nsname, policy)
 }

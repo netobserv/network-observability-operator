@@ -37,6 +37,8 @@ type Info struct {
 	cni                         flowslatest.NetworkType
 	nbNodes                     uint16
 	hasPromServiceDiscoveryRole bool
+	apiServerIPs                []string
+	apiServerPorts              []int32
 	ready                       bool
 	readinessLock               sync.RWMutex
 	dcl                         discoveryClient
@@ -184,6 +186,8 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 	var cni flowslatest.NetworkType
 	var nbNodes uint16
 	var hasPromServiceDiscoveryRole bool
+	var apiServerIPs []string
+	var apiServerPorts []int32
 	if c.IsOpenShift() {
 		// Fetch cluster ID, version and CNI
 		cversion, err := c.livecl.getClusterVersion(ctx)
@@ -204,6 +208,20 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 			return fmt.Errorf("could not fetch Network resource: %w", err)
 		}
 		cni = flowslatest.NetworkType(network.Spec.NetworkType)
+	}
+	if c.HasEndpointSlices() {
+		var err error
+		apiServerIPs, apiServerPorts, err = c.livecl.getAPIServerIPsFromEndpointSlices(ctx)
+		if err != nil {
+			log.FromContext(ctx).Error(err, "failed to get API server endpoint IPs from EndpointSlices")
+		}
+	} else {
+		// Fallback to Endpoints API (core/v1, deprecated but widely available)
+		var err error
+		apiServerIPs, apiServerPorts, err = c.livecl.getAPIServerIPsFromEndpoints(ctx)
+		if err != nil {
+			log.FromContext(ctx).Error(err, "failed to get API server endpoint IPs from Endpoints")
+		}
 	}
 	if c.HasSvcMonitor() && c.HasEndpointSlices() {
 		// Check whether servicemonitor spec.serviceDiscoveryRole exists
@@ -229,13 +247,15 @@ func (c *Info) fetchClusterInfo(ctx context.Context) error {
 			cni = guessCNIFromSystemDS(ds.Items)
 		}
 	}
-	c.setInfo(id, openShiftVersion, cni, nbNodes, hasPromServiceDiscoveryRole)
+	c.setInfo(id, openShiftVersion, cni, nbNodes, hasPromServiceDiscoveryRole, apiServerIPs, apiServerPorts)
 	log.FromContext(ctx).Info("Cluster info fetched",
 		"id", id,
 		"openShiftVersion", openShiftVersion,
 		"cni", cni,
 		"nbNodes", nbNodes,
 		"hasPromServiceDiscoveryRole", hasPromServiceDiscoveryRole,
+		"apiServerIPs", apiServerIPs,
+		"apiServerPorts", apiServerPorts,
 	)
 
 	return nil
@@ -261,7 +281,7 @@ func guessCNIFromSystemDS(ds []appsv1.DaemonSet) flowslatest.NetworkType {
 	return ""
 }
 
-func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni flowslatest.NetworkType, nbNodes uint16, hasPromServiceDiscoveryRole bool) {
+func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni flowslatest.NetworkType, nbNodes uint16, hasPromServiceDiscoveryRole bool, apiServerIPs []string, apiServerPorts []int32) {
 	c.readinessLock.Lock()
 	defer c.readinessLock.Unlock()
 	c.id = id
@@ -269,26 +289,12 @@ func (c *Info) setInfo(id string, openShiftVersion *semver.Version, cni flowslat
 	c.cni = cni
 	c.nbNodes = nbNodes
 	c.hasPromServiceDiscoveryRole = hasPromServiceDiscoveryRole
-	c.ready = true
-}
-
-// Mock shouldn't be used except for testing
-func (c *Info) Mock(v string, cni flowslatest.NetworkType, apis ...APIName) {
-	if c.apisMap == nil {
-		c.apisMap = make(map[APIName]bool)
+	if len(apiServerIPs) > 0 {
+		c.apiServerIPs = apiServerIPs
 	}
-	if v == "" {
-		// No OpenShift
-		c.apisMap[OCPSecurity] = false
-		c.openShiftVersion = nil
-	} else {
-		c.apisMap[OCPSecurity] = true
-		c.openShiftVersion = semver.New(v)
+	if len(apiServerPorts) > 0 {
+		c.apiServerPorts = apiServerPorts
 	}
-	for _, api := range apis {
-		c.apisMap[api] = true
-	}
-	c.cni = cni
 	c.ready = true
 }
 
@@ -330,6 +336,22 @@ func (c *Info) GetNbNodes() (uint16, error) {
 
 func (c *Info) HasPromServiceDiscoveryRole() bool {
 	return c.hasPromServiceDiscoveryRole
+}
+
+func (c *Info) GetAPIServerIPs() []string {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
+	copied := make([]string, len(c.apiServerIPs))
+	copy(copied, c.apiServerIPs)
+	return copied
+}
+
+func (c *Info) GetAPIServerPorts() []int32 {
+	c.readinessLock.RLock()
+	defer c.readinessLock.RUnlock()
+	copied := make([]int32, len(c.apiServerPorts))
+	copy(copied, c.apiServerPorts)
+	return copied
 }
 
 func (c *Info) IsOpenShiftVersionLessThan(v string) (bool, string, error) {

@@ -7,7 +7,6 @@ import (
 	"net"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
-	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	configv1 "github.com/openshift/api/config/v1"
 	operatorv1 "github.com/openshift/api/operator/v1"
@@ -45,25 +44,22 @@ func (r *Reconciler) getOpenShiftSubnets(ctx context.Context) ([]flowslatest.Sub
 	}
 
 	// API server
-	if apiserverIPs, err := cluster.GetAPIServerEndpointIPs(ctx, r, r.mgr.ClusterInfo); err == nil {
-		// Check if this isn't already an IP covered in Services or Machines subnets
-		for _, ip := range apiserverIPs {
-			if parsed := net.ParseIP(ip); parsed != nil {
-				var alreadyCovered bool
-				for _, cidr := range svcMachineCIDRs {
-					if cidr.Contains(parsed) {
-						alreadyCovered = true
-						break
-					}
-				}
-				if !alreadyCovered {
-					cidr := helper.IPToCIDR(ip)
-					services = append(services, cidr)
+	apiserverIPs := r.mgr.ClusterInfo.GetAPIServerIPs()
+	// Check if this isn't already an IP covered in Services or Machines subnets
+	for _, ip := range apiserverIPs {
+		if parsed := net.ParseIP(ip); parsed != nil {
+			var alreadyCovered bool
+			for _, cidr := range svcMachineCIDRs {
+				if cidr.Contains(parsed) {
+					alreadyCovered = true
+					break
 				}
 			}
+			if !alreadyCovered {
+				cidr := helper.IPToCIDR(ip)
+				services = append(services, cidr)
+			}
 		}
-	} else {
-		errs = append(errs, fmt.Errorf("can't get API server endpoint IPs: %w", err))
 	}
 
 	// Additional OVN subnets

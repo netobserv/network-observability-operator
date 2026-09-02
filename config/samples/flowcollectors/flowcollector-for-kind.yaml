@@ -3,8 +3,6 @@ kind: FlowCollector
 metadata:
   name: cluster
 spec:
-  networkPolicy:
-    enable: false
   agent:
     ebpf:
       imagePullPolicy: Always

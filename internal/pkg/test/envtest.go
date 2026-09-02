@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -172,12 +173,13 @@ func PrepareEnvTest(env Environment, controllers []manager.Registerer, opNamespa
 	}
 
 	managerConfig := manager.Config{
-		EBPFAgentImage:        "quay.io/netobserv/netobserv-ebpf-agent:test",
-		FlowlogsPipelineImage: "quay.io/netobserv/flowlogs-pipeline:test",
-		WebConsoleImage:       "quay.io/netobserv/network-observability-console-plugin:test",
-		WebConsolePF4Image:    "quay.io/netobserv/network-observability-console-plugin:test-pf4",
-		WebConsolePF5Image:    "quay.io/netobserv/network-observability-console-plugin:test-pf5",
-		Namespace:             opNamespace,
+		EBPFAgentImage:              "quay.io/netobserv/netobserv-ebpf-agent:test",
+		FlowlogsPipelineImage:       "quay.io/netobserv/flowlogs-pipeline:test",
+		WebConsoleImage:             "quay.io/netobserv/network-observability-console-plugin:test",
+		WebConsolePF4Image:          "quay.io/netobserv/network-observability-console-plugin:test-pf4",
+		WebConsolePF5Image:          "quay.io/netobserv/network-observability-console-plugin:test-pf5",
+		Namespace:                   opNamespace,
+		DeployOperatorNetworkPolicy: ptr.To(true),
 	}
 	if env == EnvOpenShift {
 		managerConfig.Vendor = constants.VendorOpenShift

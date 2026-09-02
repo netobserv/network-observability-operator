@@ -51,7 +51,7 @@ func GetExposeMetricsRoleBinding(ns string) *rbacv1.RoleBinding {
 		Subjects: []rbacv1.Subject{{
 			Kind:      "ServiceAccount",
 			Name:      constants.MonitoringServiceAccount,
-			Namespace: constants.MonitoringNamespace,
+			Namespace: constants.OpenShiftMonitoringNamespace,
 		}},
 	}
 }

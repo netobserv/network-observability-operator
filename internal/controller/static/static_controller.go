@@ -3,37 +3,29 @@ package static
 import (
 	"context"
 	"fmt"
-	"time"
 
 	olm "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	"k8s.io/apimachinery/pkg/util/wait"
+	appsv1 "k8s.io/api/apps/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/consoleplugin"
 	"github.com/netobserv/netobserv-operator/internal/controller/constants"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
-	"github.com/netobserv/netobserv-operator/internal/pkg/retry"
 )
 
 var (
-	retryBackoff = wait.Backoff{
-		Steps:    6,
-		Duration: 2 * time.Second,
-		Factor:   2,
-		Jitter:   0.1,
-	}
 	clog = log.Log.WithName("static-controller")
 )
 
-type Reconciler struct {
+type Controller struct {
 	client.Client
 	mgr    *manager.Manager
 	status status.Instance
@@ -42,15 +34,31 @@ type Reconciler struct {
 func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, error) {
 	log := log.FromContext(ctx)
 	log.Info("Starting Static controller")
-	r := Reconciler{
+	r := Controller{
 		Client: mgr.Client,
 		mgr:    mgr,
 		status: mgr.Status.ForComponent(status.StaticController),
 	}
 
+	// This controller runs unconditionally (not bound to FlowCollector), and uses the operator Deployment as a trigger.
 	b := ctrl.NewControllerManagedBy(mgr).
-		For(&flowslatest.FlowCollector{}, reconcilers.IgnoreStatusChange).
-		Named("staticPlugin")
+		Named("StaticController").
+		Watches(
+			&appsv1.Deployment{},
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, o client.Object) []reconcile.Request {
+				if o.GetNamespace() == mgr.Config.Namespace && o.GetName() == constants.ControllerName {
+					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
+				}
+				return nil
+			}),
+			reconcilers.IgnoreStatusChange,
+		).
+		Watches(
+			&networkingv1.NetworkPolicy{},
+			&handler.EnqueueRequestForObject{},
+			reconcilers.OperatorOwned(mgr.Config.Namespace),
+			reconcilers.IgnoreStatusChange,
+		)
 	if mgr.Config.StaticPluginConfig.InheritTolerationFromSubscription != "" {
 		b = b.Watches(
 			&olm.Subscription{},
@@ -58,38 +66,27 @@ func Start(ctx context.Context, mgr *manager.Manager) (manager.PostCreateHook, e
 				if o.GetNamespace() == mgr.Config.Namespace && o.GetName() == mgr.Config.StaticPluginConfig.InheritTolerationFromSubscription {
 					return []reconcile.Request{{NamespacedName: constants.FlowCollectorName}}
 				}
-				return []reconcile.Request{}
+				return nil
 			}),
 			reconcilers.IgnoreStatusChange,
 		)
 	}
-	// Return initReconcile as a post-create hook
-	return r.initReconcile, b.Complete(&r)
-}
-
-func (r *Reconciler) initReconcile(ctx context.Context) error {
-	attempt := 0
-	err := retry.OnError(ctx, retryBackoff, func(error) bool { return true }, func() error {
-		attempt++
-		if _, err := r.Reconcile(ctx, ctrl.Request{}); err != nil {
-			clog.WithValues("attempt", attempt, "error", err).Info("Initial reconcile: attempt failed")
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed initial reconcile, all attempts failed: %w", err)
-	}
-	return nil
+	return nil, b.Complete(&r)
 }
 
 // Reconcile is the controller entry point for reconciling current state with desired state.
 // It manages the controller status at a high level. Business logic is delegated into `reconcile`.
-func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
+func (r *Controller) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result, error) {
 	ctx = log.IntoContext(ctx, clog)
 
 	commit := r.status.Reset()
 	defer commit(ctx, r.Client)
+
+	// Create operator-owning client wrapper
+	scp, err := helper.NewControllerClientHelper(ctx, r.mgr.Config.Namespace, r.Client)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed to get controller client: %w", err)
+	}
 
 	if r.mgr.ClusterInfo.HasConsolePlugin() {
 		// Only deploy static plugin on OpenShift 4.15+
@@ -100,15 +97,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		} else if !supported {
 			clog.Info("Skipping static plugin reconciler (OpenShift version < 4.15)")
 		} else {
-			scp, err := helper.NewControllerClientHelper(ctx, r.mgr.Config.Namespace, r.Client)
-			if err != nil {
-				return ctrl.Result{}, fmt.Errorf("failed to get controller deployment: %w", err)
-			}
-			ri, err := r.newDefaultReconcilerInstance(scp)
-			if err != nil {
-				return ctrl.Result{}, r.status.Error("ConsolePluginImageError", fmt.Errorf("failed to resolve console plugin image: %w", err))
-			}
-			staticPluginReconciler := consoleplugin.NewStaticReconciler(ri, &r.mgr.Config.StaticPluginConfig)
+			ri := r.newDefaultReconcilerInstance(scp, r.mgr.Config.ResolveWebConsoleImage(r.mgr.ClusterInfo))
+			staticPluginReconciler := consoleplugin.NewStaticReconciler(ri, r.mgr.Config)
 			if err := staticPluginReconciler.ReconcileStaticPlugin(ctx, true); err != nil {
 				clog.Error(err, "Static plugin reconcile failure")
 				// Set status failure unless it was already set
@@ -120,11 +110,21 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 		}
 	}
 
+	opReconciler := newOperatorReconciler(
+		r.newDefaultReconcilerInstance(scp, ""),
+		r.mgr.Config,
+	)
+	if err := opReconciler.reconcile(ctx); err != nil {
+		clog.Error(err, "Operator network policy reconcile failure")
+		r.status.SetFailure("OperatorNetworkPolicyError", err.Error())
+		return ctrl.Result{}, err
+	}
+
 	r.status.SetReady()
 	return ctrl.Result{}, nil
 }
 
-func (r *Reconciler) newDefaultReconcilerInstance(clh *helper.Client) (*reconcilers.Instance, error) {
+func (r *Controller) newDefaultReconcilerInstance(clh *helper.Client, image string) *reconcilers.Instance {
 	// force default namespace
 	reconcilersInfo := reconcilers.Common{
 		Client:      *clh,
@@ -134,11 +134,11 @@ func (r *Reconciler) newDefaultReconcilerInstance(clh *helper.Client) (*reconcil
 		Loki:        &helper.LokiConfig{},
 		Vendor:      r.mgr.Config.Vendor,
 	}
-	cpImage, err := r.mgr.Config.ResolveWebConsoleImage(r.mgr.ClusterInfo)
-	if err != nil {
-		return nil, err
+	var images map[reconcilers.ImageRef]string
+	if image != "" {
+		images = map[reconcilers.ImageRef]string{
+			reconcilers.MainImage: image,
+		}
 	}
-	return reconcilersInfo.NewInstance(map[reconcilers.ImageRef]string{
-		reconcilers.MainImage: cpImage,
-	}, r.status), nil
+	return reconcilersInfo.NewInstance(images, r.status)
 }

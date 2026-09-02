@@ -9,6 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	ascv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -106,6 +107,12 @@ func (m *NamespacedObjectManager) NewRB(name string) *rbacv1.RoleBinding {
 	rb := rbacv1.RoleBinding{}
 	m.AddManagedObject(name, &rb)
 	return &rb
+}
+
+func (m *NamespacedObjectManager) NewNetworkPolicy(name string) *networkingv1.NetworkPolicy {
+	np := networkingv1.NetworkPolicy{}
+	m.AddManagedObject(name, &np)
+	return &np
 }
 
 // FetchAll fetches all managed objects (registered using AddManagedObject) in the current namespace.

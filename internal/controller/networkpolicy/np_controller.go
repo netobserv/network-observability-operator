@@ -11,7 +11,6 @@ import (
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
 	"github.com/netobserv/netobserv-operator/internal/controller/reconcilers"
-	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
@@ -75,29 +74,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, _ ctrl.Request) (ctrl.Result
 
 // Returns true if policies are enabled
 func (r *Reconciler) reconcile(ctx context.Context, clh *helper.Client, desired *flowslatest.FlowCollector) (bool, error) {
-	l := log.FromContext(ctx)
-
-	cni, err := r.mgr.ClusterInfo.GetCNI()
-	if err != nil {
-		return false, err
-	}
-
-	// Get API server endpoint IPs for network policy
-	var apiServerIPs []string
-	if r.mgr.ClusterInfo.IsOpenShift() {
-		apiServerIPs, err = cluster.GetAPIServerEndpointIPs(ctx, r.Client, r.mgr.ClusterInfo)
-		if err != nil {
-			l.Error(err, "Failed to get API server endpoint IPs")
-			return false, fmt.Errorf("cannot determine API server endpoint IPs: %w", err)
-		}
-	}
-
-	npName, desiredNp := buildMainNetworkPolicy(desired, r.mgr, cni, apiServerIPs)
+	npName, desiredNp := buildMainNetworkPolicy(desired, r.mgr)
 	if err := reconcilers.ReconcileNetworkPolicy(ctx, clh, npName, desiredNp); err != nil {
 		return false, err
 	}
 
-	privilegedNpName, desiredPrivilegedNp := buildPrivilegedNetworkPolicy(desired, r.mgr, cni)
+	privilegedNpName, desiredPrivilegedNp := buildPrivilegedNetworkPolicy(desired, r.mgr)
 	if err := reconcilers.ReconcileNetworkPolicy(ctx, clh, privilegedNpName, desiredPrivilegedNp); err != nil {
 		return false, err
 	}

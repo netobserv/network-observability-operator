@@ -24,6 +24,7 @@ import (
 	"fmt"
 	_ "net/http/pprof"
 	"os"
+	"strconv"
 
 	bpfmaniov1alpha1 "github.com/bpfman/bpfman-operator/apis/v1alpha1"
 	lokiv1 "github.com/grafana/loki/operator/apis/loki/v1"
@@ -42,6 +43,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	apiregv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -127,7 +129,11 @@ func main() {
 	}
 	setupLog.Info("Starting " + appVersion)
 
-	config := readConfigFromEnv()
+	config, err := readConfigFromEnv()
+	if err != nil {
+		setupLog.Error(err, "error while reading config from env")
+		os.Exit(1)
+	}
 	if err := config.Validate(); err != nil {
 		setupLog.Error(err, "unable to start the manager")
 		os.Exit(1)
@@ -221,6 +227,7 @@ func main() {
 		os.Exit(1)
 	}
 }
+
 func defaultStringEnv(env, def string) string {
 	if v := os.Getenv(env); v != "" {
 		return v
@@ -228,7 +235,23 @@ func defaultStringEnv(env, def string) string {
 	return def
 }
 
-func readConfigFromEnv() *manager.Config {
+func maybeBoolEnv(env string) (*bool, error) {
+	if v := os.Getenv(env); v != "" {
+		// Use ParseBool to allow common variants ("true", "True", "1"...) and ignore non-bools
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			return nil, fmt.Errorf("invalid %s value %q: %w", env, v, err)
+		}
+		return ptr.To(b), nil
+	}
+	return nil, nil
+}
+
+func readConfigFromEnv() (*manager.Config, error) {
+	deployNetpol, err := maybeBoolEnv("OPERATOR_NETWORK_POLICY")
+	if err != nil {
+		return nil, err
+	}
 	return &manager.Config{
 		Vendor:                constants.Vendor(os.Getenv("VENDOR")),
 		EBPFAgentImage:        defaultStringEnv("RELATED_IMAGE_EBPF_AGENT", "quay.io/netobserv/netobserv-ebpf-agent:main"),
@@ -242,5 +265,6 @@ func readConfigFromEnv() *manager.Config {
 		StaticPluginConfig: manager.StaticPluginConfig{
 			InheritTolerationFromSubscription: os.Getenv("STATIC_PLUGIN_INHERIT_TOLERATION_SUBSCRIPTION"),
 		},
-	}
+		DeployOperatorNetworkPolicy: deployNetpol,
+	}, nil
 }
