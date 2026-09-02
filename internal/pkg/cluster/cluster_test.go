@@ -15,10 +15,20 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apix "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 )
+
+// fastStartupBackoff replaces the production startup retry backoff with a near-instant one so
+// retry-related tests don't sleep for the real ~40s window. Returns a restore func.
+func fastStartupBackoff() func() {
+	orig := startupRetryBackoff
+	startupRetryBackoff = wait.Backoff{Duration: time.Millisecond, Factor: 1.0, Steps: 5}
+	return func() { startupRetryBackoff = orig }
+}
 
 func TestIsOpenShiftVersionLessThan(t *testing.T) {
 	info := Info{openShiftVersion: semver.New("4.14.9"), ready: true}
@@ -93,12 +103,29 @@ func TestGetCRDProperty(t *testing.T) {
 }
 
 // Mock discovery client for testing
-type mockDiscoveryClient struct {
+type mockResponse struct {
 	resources []*metav1.APIResourceList
 	err       error
 }
 
+type mockDiscoveryClient struct {
+	resources []*metav1.APIResourceList
+	err       error
+	// sequence, when set, returns a different response per call (last entry repeats). Used to
+	// simulate a transient failure that recovers on a later retry.
+	sequence []mockResponse
+	calls    int
+}
+
 func (m *mockDiscoveryClient) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+	m.calls++
+	if len(m.sequence) > 0 {
+		i := m.calls - 1
+		if i >= len(m.sequence) {
+			i = len(m.sequence) - 1
+		}
+		return nil, m.sequence[i].resources, m.sequence[i].err
+	}
 	return nil, m.resources, m.err
 }
 
@@ -169,9 +196,11 @@ func TestFetchAvailableAPIs_NonOpenShift(t *testing.T) {
 	assert.True(t, info.HasEndpointSlices())
 }
 
-// TestFetchAvailableAPIs_CriticalAPIFailed tests the bug fix:
-// When OpenShift SCC API discovery fails, the operator should fail fast
+// TestFetchAvailableAPIs_CriticalAPIFailed tests that a persistent critical-API discovery failure
+// still eventually returns an error (after the bounded startup retries are exhausted), so we never
+// proceed unable to tell whether we run on OpenShift.
 func TestFetchAvailableAPIs_CriticalAPIFailed(t *testing.T) {
+	defer fastStartupBackoff()()
 	info := &Info{}
 
 	// Mock partial discovery failure where security.openshift.io API fails
@@ -193,10 +222,47 @@ func TestFetchAvailableAPIs_CriticalAPIFailed(t *testing.T) {
 
 	err := info.fetchAvailableAPIs(context.Background())
 
-	// This is the fix: should return error instead of silently continuing
+	// After retries are exhausted, should return the critical error instead of silently continuing
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "critical API discovery failed")
+	assert.ErrorIs(t, err, errCriticalAPIDiscovery)
 	assert.Contains(t, err.Error(), "OpenShift")
+	// Should have retried more than once before giving up
+	assert.Greater(t, mockDcl.calls, 1, "startup discovery should retry a transient critical failure")
+}
+
+// TestFetchAvailableAPIs_CriticalAPIRecoversAfterRetry tests the CrashLoopBackOff fix:
+// a transient security.openshift.io unavailability (e.g. while the apiserver rolls out after a TLS
+// profile change) must be retried and recovered from, without crashing the operator.
+func TestFetchAvailableAPIs_CriticalAPIRecoversAfterRetry(t *testing.T) {
+	defer fastStartupBackoff()()
+	info := &Info{}
+
+	failResp := mockResponse{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("console.openshift.io/v1", "consoleplugins"),
+			// security.openshift.io transiently missing
+		},
+		err: &discovery.ErrGroupDiscoveryFailed{
+			Groups: map[schema.GroupVersion]error{
+				{Group: "security.openshift.io", Version: "v1"}: fmt.Errorf("the server was unable to return a response in the time allotted"),
+			},
+		},
+	}
+	okResp := mockResponse{
+		resources: []*metav1.APIResourceList{
+			makeAPIResourceList("console.openshift.io/v1", "consoleplugins"),
+			makeAPIResourceList("security.openshift.io/v1", "securitycontextconstraints"),
+		},
+	}
+	// Fail the first two discovery attempts, then recover.
+	mockDcl := &mockDiscoveryClient{sequence: []mockResponse{failResp, failResp, okResp}}
+	info.dcl = mockDcl
+
+	err := info.fetchAvailableAPIs(context.Background())
+
+	assert.NoError(t, err, "should recover once the critical API becomes available")
+	assert.True(t, info.IsOpenShift(), "Should detect OpenShift after recovery")
+	assert.Equal(t, 3, mockDcl.calls, "should have retried until the API recovered")
 }
 
 // TestFetchAvailableAPIs_NonCriticalAPIFailed tests that non-critical API failures are tolerated
@@ -667,4 +733,68 @@ func TestFetchClusterInfo_CNI_Kindnet(t *testing.T) {
 	err := info.fetchClusterInfo(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, flowslatest.Kindnet, info.cni)
+}
+
+var testAPIServerGR = schema.GroupResource{Group: "config.openshift.io", Resource: "apiservers"}
+
+// Regression: during an apiserver rollout (e.g. after a TLS profile change) the boot-time
+// TLS profile fetch times out; the shared retry helper must retry instead of exiting and
+// crashlooping. Exercised here through the TLS profile fetch path.
+func TestRetryStartupAPICall_RetriesTransientThenSucceeds(t *testing.T) {
+	defer fastStartupBackoff()()
+
+	want := &configv1.TLSSecurityProfile{Type: configv1.TLSProfileModernType}
+	calls := 0
+	fetch := func(_ context.Context) (*configv1.TLSSecurityProfile, error) {
+		calls++
+		if calls < 3 {
+			return nil, k8serrors.NewServerTimeout(testAPIServerGR, "get", 1)
+		}
+		return want, nil
+	}
+
+	got, err := retryStartupAPICall(context.Background(), "TLS profile fetch", isTransientAPIError, fetch)
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+	assert.Equal(t, 3, calls)
+}
+
+func TestRetryStartupAPICall_FailsFastOnPermanentError(t *testing.T) {
+	defer fastStartupBackoff()()
+
+	calls := 0
+	fetch := func(_ context.Context) (*configv1.TLSSecurityProfile, error) {
+		calls++
+		return nil, k8serrors.NewForbidden(testAPIServerGR, "cluster", errors.New("nope"))
+	}
+
+	_, err := retryStartupAPICall(context.Background(), "TLS profile fetch", isTransientAPIError, fetch)
+	require.Error(t, err)
+	assert.True(t, k8serrors.IsForbidden(err))
+	assert.Equal(t, 1, calls, "permanent errors must not be retried")
+}
+
+func TestRetryStartupAPICall_ExhaustsRetriesReturnsLastErr(t *testing.T) {
+	defer fastStartupBackoff()()
+
+	calls := 0
+	fetch := func(_ context.Context) (*configv1.TLSSecurityProfile, error) {
+		calls++
+		return nil, k8serrors.NewServiceUnavailable("rolling out")
+	}
+
+	_, err := retryStartupAPICall(context.Background(), "TLS profile fetch", isTransientAPIError, fetch)
+	require.Error(t, err)
+	assert.True(t, k8serrors.IsServiceUnavailable(err), "should surface the underlying transient error, not the generic wait timeout")
+	assert.Equal(t, 5, calls, "should retry up to the backoff step count")
+}
+
+func TestIsTransientAPIError(t *testing.T) {
+	assert.False(t, isTransientAPIError(nil))
+	assert.True(t, isTransientAPIError(k8serrors.NewServerTimeout(testAPIServerGR, "get", 1)))
+	assert.True(t, isTransientAPIError(k8serrors.NewServiceUnavailable("x")))
+	assert.True(t, isTransientAPIError(k8serrors.NewInternalError(errors.New("x"))))
+	assert.True(t, isTransientAPIError(context.DeadlineExceeded))
+	assert.False(t, isTransientAPIError(k8serrors.NewForbidden(testAPIServerGR, "cluster", errors.New("x"))))
+	assert.False(t, isTransientAPIError(errors.New("some permanent error")))
 }

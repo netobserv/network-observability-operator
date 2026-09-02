@@ -52,6 +52,18 @@ spec:
             drop:
               - ALL
           readOnlyRootFilesystem: true
+        # Suspends the liveness/readiness probes until /healthz first responds. Startup API
+        # discovery may block for several minutes while the control-plane rolls out after an
+        # APIServer TLS security profile change (see startupAPIDiscoveryBackoff in
+        # internal/pkg/cluster/cluster.go); without this the liveness probe would kill the
+        # container before the health server comes up. Budget (30 x 10s = 5 min) must stay
+        # >= the startup discovery retry window.
+        startupProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          periodSeconds: 10
+          failureThreshold: 30
         livenessProbe:
           httpGet:
             path: /healthz

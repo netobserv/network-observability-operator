@@ -812,6 +812,9 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		}
 	}
 
+	// Add TLS configuration from OpenShift TLS profile
+	config = helper.AppendTLSEnvVars(config, c.TLSConfig)
+
 	return config, nil
 }
 

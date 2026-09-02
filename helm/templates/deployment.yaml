@@ -47,6 +47,15 @@ spec:
               value: '{{ .Values.operator.installNetworkPolicy }}'
           image: '{{ .Values.operator.image }}:{{ .Values.operator.version }}'
           imagePullPolicy: Always
+          # Suspends liveness/readiness until /healthz is up, so startup API discovery can block
+          # for several minutes during a control-plane rollout (APIServer TLS profile change)
+          # without the container being killed. Budget must stay >= startupAPIDiscoveryBackoff.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            periodSeconds: 10
+            failureThreshold: 30
           livenessProbe:
             httpGet:
               path: /healthz

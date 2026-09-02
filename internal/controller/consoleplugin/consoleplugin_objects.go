@@ -246,7 +246,7 @@ func (b *builder) podTemplate(name, cmDigest string) *corev1.PodTemplateSpec {
 				ImagePullPolicy: corev1.PullPolicy(b.desired.ConsolePlugin.ImagePullPolicy),
 				Resources:       *b.desired.ConsolePlugin.Resources.DeepCopy(),
 				VolumeMounts:    b.volumes.AppendMounts(volumeMounts),
-				Env:             []corev1.EnvVar{constants.EnvNoHTTP2},
+				Env:             helper.AppendTLSEnvVars([]corev1.EnvVar{constants.EnvNoHTTP2}, b.info.TLSConfig),
 				Args:            args,
 				SecurityContext: helper.ContainerDefaultSecurityContext(),
 			}},

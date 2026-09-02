@@ -223,6 +223,7 @@ func (r *Reconciler) newCommonInfo(clh *helper.Client, ns string, loki *helper.L
 		Watcher:     r.watcher,
 		Loki:        loki,
 		Vendor:      r.mgr.Config.Vendor,
+		TLSConfig:   r.mgr.ClusterInfo.GetComponentTLSConfig(),
 	}
 }
 

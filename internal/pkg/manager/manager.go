@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
@@ -19,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 type Registerer func(context.Context, *Manager) (PostCreateHook, error)
@@ -42,6 +44,37 @@ func NewManager(
 
 	log := log.FromContext(ctx)
 	log.Info("Creating manager")
+
+	// Step 1: Create discovery client (used by cluster.Info)
+	dc, err := discovery.NewDiscoveryClientForConfig(kcfg)
+	if err != nil {
+		return nil, fmt.Errorf("can't instantiate discovery client: %w", err)
+	}
+
+	// Step 2: Create cluster.Info (discovers APIs; fetches TLS profile on OpenShift)
+	log.Info("Discovering APIs")
+	info, postCreate, err := cluster.NewInfo(ctx, kcfg, dc)
+	if err != nil {
+		return nil, fmt.Errorf("can't collect cluster info: %w", err)
+	}
+	flowslatest.CurrentClusterInfo = info
+
+	// Step 3: Configure TLS for metrics and webhook servers
+	tlsCfg := info.GetTLSConfig()
+	applyTLSProfile := func(c *tls.Config) {
+		c.MinVersion = tlsCfg.MinVersion
+		c.CipherSuites = tlsCfg.CipherSuites
+		c.CurvePreferences = tlsCfg.CurvePreferences
+	}
+
+	if opts.Metrics.TLSOpts == nil {
+		opts.Metrics.TLSOpts = []func(*tls.Config){}
+	}
+	opts.Metrics.TLSOpts = append(opts.Metrics.TLSOpts, applyTLSProfile)
+
+	if ws, ok := opts.WebhookServer.(*webhook.DefaultServer); ok {
+		ws.Options.TLSOpts = append(ws.Options.TLSOpts, applyTLSProfile)
+	}
 
 	narrowCache := narrowcache.NewConfig(kcfg,
 		narrowcache.ConfigMaps,
@@ -68,6 +101,7 @@ func NewManager(
 		},
 	}
 
+	// Step 4: Create controller-runtime manager with configured options
 	internalManager, err := ctrl.NewManager(kcfg, *opts)
 	if err != nil {
 		return nil, err
@@ -80,17 +114,9 @@ func NewManager(
 	statusMgr := status.NewManager()
 	statusMgr.SetEventRecorder(internalManager.GetEventRecorderFor("flowcollector-controller")) //nolint:staticcheck
 
-	log.Info("Discovering APIs")
-	dc, err := discovery.NewDiscoveryClientForConfig(kcfg)
-	if err != nil {
-		return nil, fmt.Errorf("can't instantiate discovery client: %w", err)
-	}
-	info, postCreate, err := cluster.NewInfo(ctx, kcfg, dc, func() { statusMgr.Sync(ctx, client) })
-	if err != nil {
-		return nil, fmt.Errorf("can't collect cluster info: %w", err)
-	}
+	// Update cluster.Info's onRefresh callback now that we have the real client
+	info.SetOnRefresh(func() { statusMgr.Sync(ctx, client) })
 	// Update global for validation webhook
-	flowslatest.CurrentClusterInfo = info
 	flowslatest.OperatorNamespace = opcfg.Namespace
 
 	this := &Manager{

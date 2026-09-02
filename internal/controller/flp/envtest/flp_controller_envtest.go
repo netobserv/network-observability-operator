@@ -23,6 +23,7 @@ import (
 	. "github.com/netobserv/netobserv-operator/internal/controller/envtest"
 	"github.com/netobserv/netobserv-operator/internal/pkg/resources"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
+	"github.com/netobserv/netobserv-operator/internal/pkg/tlsconfig"
 )
 
 const (
@@ -245,11 +246,27 @@ func ControllerSpecs(env test.Environment, ctxGetter test.ContextGetter) {
 					ContainerPort: 7891,
 					Protocol:      "TCP",
 				}))
-				g.Expect(cnt.Env).To(Equal([]v1.EnvVar{
-					{Name: "GOGC", Value: "400"},
-					{Name: "GOMAXPROCS", Value: "33"},
-					{Name: "GODEBUG", Value: "http2server=0"},
-				}))
+				if env == test.EnvOpenShift {
+					// On OpenShift, TLS settings are also relayed as env vars; only check
+					// the user-provided vars plus TLS var presence (not their exact values,
+					// which depend on the platform's default TLS security profile).
+					g.Expect(cnt.Env).To(ContainElements(
+						v1.EnvVar{Name: "GOGC", Value: "400"},
+						v1.EnvVar{Name: "GOMAXPROCS", Value: "33"},
+						v1.EnvVar{Name: "GODEBUG", Value: "http2server=0"},
+					))
+					var envNames []string
+					for _, e := range cnt.Env {
+						envNames = append(envNames, e.Name)
+					}
+					g.Expect(envNames).To(ContainElements(tlsconfig.EnvTLSMinVersion, tlsconfig.EnvTLSCipherSuites))
+				} else {
+					g.Expect(cnt.Env).To(Equal([]v1.EnvVar{
+						{Name: "GOGC", Value: "400"},
+						{Name: "GOMAXPROCS", Value: "33"},
+						{Name: "GODEBUG", Value: "http2server=0"},
+					}))
+				}
 
 				By("Allocating the proper toleration to allow its placement in the master nodes")
 				g.Expect(ds.Spec.Template.Spec.Tolerations).

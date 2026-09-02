@@ -69,6 +69,7 @@ func (b *monolithBuilder) daemonSet(annotations map[string]string) *appsv1.Daemo
 		netType,
 		annotations,
 		b.info.ClusterInfo.IsOpenShift(),
+		b.info.TLSConfig,
 	)
 	return &appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
@@ -100,6 +101,7 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 		svc,
 		annotations,
 		b.info.ClusterInfo.IsOpenShift(),
+		b.info.TLSConfig,
 	)
 	replicas := b.desired.Processor.GetFLPReplicas()
 	return &appsv1.Deployment{
