@@ -424,7 +424,7 @@ func createAzureStorageBlobContainer(accountName, accountKey, containerName stri
 	return emptyAzureBlobContainer(container)
 }
 
-// deleteAzureStorageBlobContainer deletes azure storage container
+// deleteAzureStorageBlobContainer deletes azure storage container with retry logic for transient errors
 func deleteAzureStorageBlobContainer(accountName, accountKey, containerName string) error {
 	container, err := newAzureContainerClient(accountName, accountKey, containerName)
 	if err != nil {
@@ -433,22 +433,37 @@ func deleteAzureStorageBlobContainer(accountName, accountKey, containerName stri
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	err = emptyAzureBlobContainer(container)
-	if err != nil {
-		return err
+
+	var lastErr error
+	for attempt := 1; attempt <= 3; attempt++ {
+		// Remove all blobs first
+		err = emptyAzureBlobContainer(container)
+		if err != nil {
+			lastErr = err
+			e2e.Logf("attempt %d/3: failed to empty container %s: %v", attempt, containerName, err)
+			time.Sleep(time.Duration(attempt) * 5 * time.Second)
+			continue
+		}
+
+		// Delete the container
+		_, err = container.Delete(ctx, azblob.ContainerAccessConditions{})
+		if err != nil {
+			lastErr = err
+			e2e.Logf("attempt %d/3: failed to delete container %s: %v", attempt, containerName, err)
+			time.Sleep(time.Duration(attempt) * 5 * time.Second)
+			continue
+		}
+		e2e.Logf("Azure storage container %s is deleted", containerName)
+		return nil
 	}
-	_, err = container.Delete(ctx, azblob.ContainerAccessConditions{})
-	if err != nil {
-		return fmt.Errorf("error deleting container: %v", err)
-	}
-	e2e.Logf("Azure storage container is deleted")
-	return nil
+	return fmt.Errorf("failed to delete Azure storage container %s after 3 attempts: %v", containerName, lastErr)
 }
 
 // emptyAzureBlobContainer removes all the files in azure storage container
 func emptyAzureBlobContainer(container azblob.ContainerURL) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	var errs []string
 	for marker := (azblob.Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
 		// Get a result segment starting with the blob indicated by the current Marker.
 		listBlob, err := container.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{})
@@ -465,9 +480,13 @@ func emptyAzureBlobContainer(container azblob.ContainerURL) error {
 			blobURL := container.NewBlockBlobURL(blobInfo.Name)
 			_, err := blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
 			if err != nil {
-				return fmt.Errorf("error deleting blob %s: %v", blobInfo.Name, err)
+				e2e.Logf("WARNING: failed to delete blob %q in container: %v", blobInfo.Name, err)
+				errs = append(errs, fmt.Sprintf("Blob(%q).Delete: %v", blobInfo.Name, err))
 			}
 		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to delete %d blob(s) in container: %s", len(errs), strings.Join(errs, "; "))
 	}
 	e2e.Logf("deleted all blob items in the container.")
 	return nil
