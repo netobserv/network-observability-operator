@@ -46,7 +46,9 @@ func (r *operatorReconciler) reconcileNetpol(ctx context.Context) error {
 
 	np := r.buildNetworkPolicy(cni)
 	if np == nil {
-		r.Managed.TryDelete(ctx, r.netpol)
+		if err := r.Managed.TryDelete(ctx, r.netpol); err != nil {
+			return err
+		}
 		return nil
 	}
 	nsname := helper.NamespacedName(np)
