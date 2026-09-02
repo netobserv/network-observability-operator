@@ -2,6 +2,7 @@ package ebpf
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
@@ -21,14 +22,21 @@ func (c *AgentController) reconcileMetricsService(ctx context.Context, target *f
 	defer report.LogIfNeeded(ctx)
 
 	if !target.IsEBPFMetricsEnabled() {
-		c.Managed.TryDelete(ctx, c.promSvc)
+		var errs []error
+		if err := c.Managed.TryDelete(ctx, c.promSvc); err != nil {
+			errs = append(errs, err)
+		}
 		if c.ClusterInfo.HasSvcMonitor() {
-			c.Managed.TryDelete(ctx, c.serviceMonitor)
+			if err := c.Managed.TryDelete(ctx, c.serviceMonitor); err != nil {
+				errs = append(errs, err)
+			}
 		}
 		if c.ClusterInfo.HasPromRule() {
-			c.Managed.TryDelete(ctx, c.prometheusRule)
+			if err := c.Managed.TryDelete(ctx, c.prometheusRule); err != nil {
+				errs = append(errs, err)
+			}
 		}
-		return nil
+		return errors.Join(errs...)
 	}
 
 	if err := c.ReconcileService(ctx, c.promSvc, c.promService(target), &report); err != nil {

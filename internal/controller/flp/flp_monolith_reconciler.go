@@ -74,14 +74,12 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 
 	if desired.Spec.OnHold() {
 		r.Status.SetUnused("FlowCollector is on hold")
-		r.Managed.TryDeleteAll(ctx)
-		return nil
+		return r.Managed.TryDeleteAll(ctx)
 	}
 
 	if desired.Spec.UseKafka() {
 		r.Status.SetUnused("Monolith only used without Kafka")
-		r.Managed.TryDeleteAll(ctx)
-		return nil
+		return r.Managed.TryDeleteAll(ctx)
 	}
 
 	builder, err := newMonolithBuilder(r.Instance, &desired.Spec, flowMetrics, fcSlices, detectedSubnets)
@@ -140,15 +138,23 @@ func (r *monolithReconciler) reconcile(ctx context.Context, desired *flowslatest
 		return err
 	}
 
-	if desired.Spec.UseHostNetwork() {
+	return r.reconcileWorkload(ctx, &desired.Spec, &builder, annotations)
+}
+
+func (r *monolithReconciler) reconcileWorkload(ctx context.Context, spec *flowslatest.FlowCollectorSpec, builder *monolithBuilder, annotations map[string]string) error {
+	if spec.UseHostNetwork() {
 		// Use DaemonSet
-		r.Managed.TryDelete(ctx, r.deployment)
+		if err := r.Managed.TryDelete(ctx, r.deployment); err != nil {
+			return err
+		}
 		return r.reconcileDaemonSet(ctx, builder.daemonSet(annotations))
 	}
 
 	// Use Deployment
-	r.Managed.TryDelete(ctx, r.daemonSet)
-	return r.reconcileDeployment(ctx, &desired.Spec.Processor, &builder, annotations)
+	if err := r.Managed.TryDelete(ctx, r.daemonSet); err != nil {
+		return err
+	}
+	return r.reconcileDeployment(ctx, &spec.Processor, builder, annotations)
 }
 
 func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, newDCM *corev1.ConfigMap) error {
@@ -169,8 +175,7 @@ func (r *monolithReconciler) reconcileDynamicConfigMap(ctx context.Context, newD
 // k8scache has its own dedicated service managed by the informer reconciler.
 func (r *monolithReconciler) reconcileOrDeleteService(ctx context.Context, desired *flowslatest.FlowCollectorSpec, builder *monolithBuilder) error {
 	if desired.UseHostNetwork() {
-		r.Managed.TryDelete(ctx, r.service)
-		return nil
+		return r.Managed.TryDelete(ctx, r.service)
 	}
 	return r.reconcileService(ctx, builder)
 }

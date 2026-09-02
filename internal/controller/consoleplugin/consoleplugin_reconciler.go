@@ -139,7 +139,9 @@ func (r *CPReconciler) reconcile(ctx context.Context, desired *flowslatest.FlowC
 		}
 	} else {
 		// delete any existing owned object
-		r.Managed.TryDeleteAll(ctx)
+		if err := r.Managed.TryDeleteAll(ctx); err != nil {
+			return err
+		}
 		if desired.Spec.OnHold() {
 			r.Status.SetUnused("FlowCollector is on hold")
 		} else {
