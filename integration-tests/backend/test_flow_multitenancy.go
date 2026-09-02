@@ -92,6 +92,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 			}
 		}
 
+		// DeferCleanup #1: operator (registered first = cleaned up last)
+		g.DeferCleanup(func() {
+			if !Lokiexisting {
+				LO.uninstallOperator()
+			}
+		})
+
 		g.By("Deploy lokiStack")
 		sc, err := getStorageClassName()
 		if err != nil || len(sc) == 0 {
@@ -105,6 +112,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 
 		err = createNamespace(lokiStackNS)
 		o.Expect(err).NotTo(o.HaveOccurred())
+
+		// DeferCleanup #2: namespace (cleaned up after objectStorage/lokiStack, before operator)
+		g.DeferCleanup(func() {
+			deleteNamespace(lokiStackNS)
+		})
 
 		ls = &lokiStack{
 			Name:          "lokistack",
@@ -128,10 +140,24 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 			g.Skip("Skipping test since LokiStack resources were not deployed")
 		}
 
+		// DeferCleanup #3: object storage (cleaned up after lokiStack, before namespace)
+		g.DeferCleanup(func() {
+			if ls != nil {
+				ls.removeObjectStorage()
+			}
+		})
+
 		err = ls.deployLokiStack()
 		if err != nil {
 			g.Skip("Skipping test since LokiStack was not deployed")
 		}
+
+		// DeferCleanup #4: lokiStack (registered last = cleaned up first)
+		g.DeferCleanup(func() {
+			if ls != nil {
+				ls.removeLokiStack()
+			}
+		})
 
 		lokiStackResource := Resource{"lokistack", ls.Name, ls.Namespace}
 		err = lokiStackResource.WaitForResourceToAppear()
@@ -148,16 +174,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 		g.By("Create secret-watcher RoleBinding in LokiStack namespace")
 		createSecretWatcherRB(lokiStackNS)
 
-		g.DeferCleanup(func() {
-			if ls != nil {
-				ls.removeLokiStack()
-				ls.removeObjectStorage()
-			}
-			if !Lokiexisting {
-				LO.uninstallOperator()
-			}
-			deleteNamespace(lokiStackNS)
-		})
 	})
 
 	g.BeforeEach(func() {
