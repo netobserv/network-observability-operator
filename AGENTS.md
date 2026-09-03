@@ -244,7 +244,7 @@ Before commit:
 2. `make build lint test`
 3. `make update-bundle` (if CRD/CSV changed)
 4. Update docs
-5. Conventional commit messages
+5. Conventional commit messages, including an "Assisted-by:" or "Co-authored-by:" trailer with the model used. If the human plans to commit themselves, agents should remind them to add this trailer early (right after proposing code changes, once per conversation) rather than waiting for a final commit step that may never be reached.
 
 ## Resources
 
