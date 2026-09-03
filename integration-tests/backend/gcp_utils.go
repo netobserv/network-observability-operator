@@ -3,6 +3,8 @@ package e2etests
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
@@ -47,6 +49,7 @@ func emptyGCSBucket(client storage.Client, bucketName string) error {
 
 	bucket := client.Bucket(bucketName)
 	it := bucket.Objects(ctx, nil)
+	var errs []string
 	for {
 		objAttrs, err := it.Next()
 		if err != nil && err != iterator.Done {
@@ -56,8 +59,12 @@ func emptyGCSBucket(client storage.Client, bucketName string) error {
 			break
 		}
 		if err := bucket.Object(objAttrs.Name).Delete(ctx); err != nil {
-			return fmt.Errorf("Object(%q).Delete: %v", objAttrs.Name, err)
+			e2e.Logf("WARNING: failed to delete object %q in bucket %s: %v", objAttrs.Name, bucketName, err)
+			errs = append(errs, fmt.Sprintf("Object(%q).Delete: %v", objAttrs.Name, err))
 		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to delete %d object(s) in bucket %s: %s", len(errs), bucketName, strings.Join(errs, "; "))
 	}
 	e2e.Logf("deleted all object items in the bucket %s.", bucketName)
 	return nil
@@ -102,7 +109,7 @@ func createGCSBucket(projectID, bucketName string) error {
 	return nil
 }
 
-// deleteGCSBucket deletes a GCS bucket
+// deleteGCSBucket deletes a GCS bucket with retry logic for transient errors
 func deleteGCSBucket(bucketName string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -113,17 +120,27 @@ func deleteGCSBucket(bucketName string) error {
 	}
 	defer client.Close()
 
-	// Remove all objects first
-	err = emptyGCSBucket(*client, bucketName)
-	if err != nil {
-		return err
-	}
+	var lastErr error
+	for attempt := 1; attempt <= 3; attempt++ {
+		// Remove all objects first
+		err = emptyGCSBucket(*client, bucketName)
+		if err != nil {
+			lastErr = err
+			e2e.Logf("attempt %d/3: failed to empty bucket %s: %v", attempt, bucketName, err)
+			time.Sleep(time.Duration(attempt) * 5 * time.Second)
+			continue
+		}
 
-	// Delete the bucket
-	bucket := client.Bucket(bucketName)
-	if err := bucket.Delete(ctx); err != nil {
-		return fmt.Errorf("Bucket(%q).Delete: %v", bucketName, err)
+		// Delete the bucket
+		bucket := client.Bucket(bucketName)
+		if err := bucket.Delete(ctx); err != nil {
+			lastErr = err
+			e2e.Logf("attempt %d/3: failed to delete bucket %s: %v", attempt, bucketName, err)
+			time.Sleep(time.Duration(attempt) * 5 * time.Second)
+			continue
+		}
+		e2e.Logf("GCS Bucket %v is deleted", bucketName)
+		return nil
 	}
-	e2e.Logf("GCS Bucket %v is deleted", bucketName)
-	return nil
+	return fmt.Errorf("failed to delete GCS bucket %s after 3 attempts: %v", bucketName, lastErr)
 }

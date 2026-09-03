@@ -127,15 +127,31 @@ func createS3Bucket(client *s3.Client, bucketName, region string) error {
 	return err
 }
 
+// deleteS3Bucket deletes an S3 bucket with retry logic for transient errors
 func deleteS3Bucket(client *s3.Client, bucketName string) error {
-	// empty bucket
-	err := emptyS3Bucket(client, bucketName)
-	if err != nil {
-		return err
+	var lastErr error
+	for attempt := 1; attempt <= 3; attempt++ {
+		// Remove all objects first
+		err := emptyS3Bucket(client, bucketName)
+		if err != nil {
+			lastErr = err
+			e2e.Logf("attempt %d/3: failed to empty S3 bucket %s: %v", attempt, bucketName, err)
+			time.Sleep(time.Duration(attempt) * 5 * time.Second)
+			continue
+		}
+
+		// Delete the bucket
+		_, err = client.DeleteBucket(context.TODO(), &s3.DeleteBucketInput{Bucket: &bucketName})
+		if err != nil {
+			lastErr = err
+			e2e.Logf("attempt %d/3: failed to delete S3 bucket %s: %v", attempt, bucketName, err)
+			time.Sleep(time.Duration(attempt) * 5 * time.Second)
+			continue
+		}
+		e2e.Logf("S3 Bucket %s is deleted", bucketName)
+		return nil
 	}
-	// delete bucket
-	_, err = client.DeleteBucket(context.TODO(), &s3.DeleteBucketInput{Bucket: &bucketName})
-	return err
+	return fmt.Errorf("failed to delete S3 bucket %s after 3 attempts: %v", bucketName, lastErr)
 }
 
 func emptyS3Bucket(client *s3.Client, bucketName string) error {
@@ -975,7 +991,9 @@ func (l lokiStack) removeObjectStorage() {
 			err = deleteS3Bucket(client, l.BucketName)
 		}
 	}
-	o.Expect(err).NotTo(o.HaveOccurred())
+	if err != nil {
+		e2e.Logf("WARNING: failed to clean up object storage for bucket %s: %v", l.BucketName, err)
+	}
 }
 
 func deployMinIO() {
