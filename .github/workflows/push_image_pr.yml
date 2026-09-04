@@ -5,27 +5,36 @@ on:
     types:
       - completed
 
-permissions:
-  pull-requests: write
+permissions: {}
 
 env:
-  WF_REGISTRY_USER: netobserv+github_ci
+  WF_REGISTRY_USER: netobserv+operator_github_ci
   WF_REGISTRY: quay.io/netobserv
   WF_IMAGE: network-observability-operator
 
 jobs:
-  push-pr-image:
+  extract-data:
+    permissions:
+      pull-requests: read
     if: >
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success'
-    name: push PR image
+    name: extract and validate PR data
     runs-on: ubuntu-latest
+    outputs:
+      pr_id: ${{ steps.extract.outputs.pr_id }}
+      main_image: ${{ steps.extract.outputs.main_image }}
+      bundle_image: ${{ steps.extract.outputs.bundle_image }}
+      catalog_image: ${{ steps.extract.outputs.catalog_image }}
     steps:
       - name: extract PR data
+        id: extract
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR: ${{ github.event.workflow_run.head_repository.owner.login }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
-          pr_json=$(gh api "repos/${{ github.repository }}/pulls?state=open&head=${{ github.event.workflow_run.head_repository.owner.login }}:${{ github.event.workflow_run.head_branch }}")
+          pr_json=$(gh api --method GET "repos/$GITHUB_REPOSITORY/pulls" -f state=open -f "head=$AUTHOR:$BRANCH")
           len=$(echo ${pr_json} | jq '. | length')
           if [[ "$len" != "1" ]]; then
             echo "::error::Could not get a unique PR, aborting"
@@ -36,18 +45,22 @@ jobs:
             echo "::error::PR does not have the ok-to-test label, aborting"
             exit 1
           fi
-          echo "pr_id=$(echo ${pr_json} | jq '.[0].number')" >> $GITHUB_ENV
           head_sha=$(echo ${pr_json} | jq -r '.[0].head.sha')
-          echo "short_sha=$(echo ${head_sha::8})" >> $GITHUB_ENV
-          echo "main_image=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}:${head_sha::8}" >> $GITHUB_ENV
-          echo "bundle_image=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-bundle:v0.0.0-sha-${head_sha::8}" >> $GITHUB_ENV
-          echo "catalog_image=${{ env.WF_REGISTRY }}/${{ env.WF_IMAGE }}-catalog:v0.0.0-sha-${head_sha::8}" >> $GITHUB_ENV
+          echo "pr_id=$(echo ${pr_json} | jq '.[0].number')" >> $GITHUB_OUTPUT
+          echo "main_image=${WF_REGISTRY}/${WF_IMAGE}:${head_sha::8}" >> $GITHUB_OUTPUT
+          echo "bundle_image=${WF_REGISTRY}/${WF_IMAGE}-bundle:v0.0.0-sha-${head_sha::8}" >> $GITHUB_OUTPUT
+          echo "catalog_image=${WF_REGISTRY}/${WF_IMAGE}-catalog:v0.0.0-sha-${head_sha::8}" >> $GITHUB_OUTPUT
+  push:
+    needs: extract-data
+    name: push PR image
+    runs-on: ubuntu-latest
+    steps:
       - name: download artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: pr
-          run-id: ${{github.event.workflow_run.id }}
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: load images
         run: |
           docker load --input ./operator.tar
@@ -60,24 +73,42 @@ jobs:
           password: ${{ secrets.QUAY_SECRET }}
           registry: quay.io
       - name: push operator, bundle and catalog
+        env:
+          MAIN_IMAGE: ${{ needs.extract-data.outputs.main_image }}
+          BUNDLE_IMAGE: ${{ needs.extract-data.outputs.bundle_image }}
+          CATALOG_IMAGE: ${{ needs.extract-data.outputs.catalog_image }}
         run: |
-          DOCKER_BUILDKIT=1 docker push ${{ env.main_image }}
-          DOCKER_BUILDKIT=1 docker push ${{ env.bundle_image }}
-          DOCKER_BUILDKIT=1 docker push ${{ env.catalog_image }}
+          DOCKER_BUILDKIT=1 docker push "$MAIN_IMAGE"
+          DOCKER_BUILDKIT=1 docker push "$BUNDLE_IMAGE"
+          DOCKER_BUILDKIT=1 docker push "$CATALOG_IMAGE"
+  comment:
+    permissions:
+      pull-requests: write
+    needs: [extract-data, push]
+    name: comment on PR
+    runs-on: ubuntu-latest
+    steps:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        env:
+          MAIN_IMAGE: ${{ needs.extract-data.outputs.main_image }}
+          BUNDLE_IMAGE: ${{ needs.extract-data.outputs.bundle_image }}
+          CATALOG_IMAGE: ${{ needs.extract-data.outputs.catalog_image }}
+          PR_ID: ${{ needs.extract-data.outputs.pr_id }}
         with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            var fs = require('fs');
+            const mainImage = process.env.MAIN_IMAGE;
+            const bundleImage = process.env.BUNDLE_IMAGE;
+            const catalogImage = process.env.CATALOG_IMAGE;
             github.rest.issues.createComment({
-              issue_number: ${{ env.pr_id }},
+              issue_number: parseInt(process.env.PR_ID, 10),
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `New images:
             \`\`\`bash
-            ${{ env.main_image }}
-            ${{ env.bundle_image }}
-            ${{ env.catalog_image }}
+            ${mainImage}
+            ${bundleImage}
+            ${catalogImage}
             \`\`\`
 
             They will expire in two weeks.
@@ -85,10 +116,10 @@ jobs:
             To deploy this build:
             \`\`\`bash
             # Direct deployment, from operator repo
-            IMAGE=${{ env.main_image }} make deploy
+            IMAGE=${mainImage} make deploy
 
             # Or using operator-sdk
-            operator-sdk run bundle ${{ env.bundle_image }}
+            operator-sdk run bundle ${bundleImage}
             \`\`\`
 
             Or as a Catalog Source:
@@ -100,7 +131,7 @@ jobs:
               namespace: openshift-marketplace
             spec:
               sourceType: grpc
-              image: ${{ env.catalog_image }}
+              image: ${catalogImage}
               displayName: NetObserv development catalog
               publisher: Me
               updateStrategy:

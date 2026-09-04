@@ -4,7 +4,7 @@ on:
     branches: [ main, release-*, workflow-test ]
 
 env:
-  WF_REGISTRY_USER: netobserv+github_ci
+  WF_REGISTRY_USER: netobserv+operator_github_ci
   WF_REGISTRY: quay.io/netobserv
   WF_IMAGE: network-observability-operator
   WF_ORG: netobserv
