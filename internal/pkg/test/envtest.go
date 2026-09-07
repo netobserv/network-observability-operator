@@ -227,7 +227,7 @@ func PrepareEnvTest(env Environment, controllers []manager.Registerer, opNamespa
 	Expect(err).ToNot(HaveOccurred())
 	Expect(k8sManager).NotTo(BeNil())
 
-	err = helper.SetCRDForTests(filepath.Join(basePath))
+	err = helper.SetCRDForTests(basePath)
 	Expect(err).NotTo(HaveOccurred())
 
 	createFakeController(ctx, k8sClient, opNamespace)

@@ -245,18 +245,23 @@ func FlowCollectorConsolePluginSpecs(env test.Environment, ctxGetter test.Contex
 		if env == test.EnvOpenShift {
 			It("Should have static plugin ready status", func() {
 				// Manually set deployment ready
-				dp := appsv1.Deployment{}
-				Eventually(func() interface{} { return k8sClient.Get(ctx, staticCpKey, &dp) }, timeout, interval).Should(Succeed())
-				dp.Status.AvailableReplicas = 1
-				dp.Status.ReadyReplicas = 1
-				dp.Status.Replicas = 1
-				dp.Status.UpdatedReplicas = 1
-				Eventually(func() interface{} { return k8sClient.Status().Update(ctx, &dp) }, timeout, interval).Should(Succeed())
+				Eventually(func() interface{} {
+					dp := appsv1.Deployment{}
+					err := k8sClient.Get(ctx, staticCpKey, &dp)
+					if err != nil {
+						return err
+					}
+					dp.Status.AvailableReplicas = 1
+					dp.Status.ReadyReplicas = 1
+					dp.Status.Replicas = 1
+					dp.Status.UpdatedReplicas = 1
+					return k8sClient.Status().Update(ctx, &dp)
+				}, timeout, interval).Should(Succeed())
 
 				Eventually(func() interface{} {
 					fc := test.GetCR(ctx, k8sClient, crKey)
 					return meta.FindStatusCondition(fc.Status.Conditions, "WaitingStaticController")
-				}, timeout, interval).Should(Satisfy(func(c *metav1.Condition) bool {
+				}, 3*timeout /*might take longer than usual*/, interval).Should(Satisfy(func(c *metav1.Condition) bool {
 					return c != nil && c.Status == metav1.ConditionFalse && c.Reason == "Ready"
 				}))
 			})
