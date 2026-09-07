@@ -29,6 +29,7 @@ var (
 			Verb:     "create",
 			Group:    "loki.grafana.com",
 			Resource: "network",
+			Name:     "logs",
 		},
 		FLPInformersRole: {
 			Verb:     "watch",
