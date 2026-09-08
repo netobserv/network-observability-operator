@@ -125,4 +125,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 )
 
-replace github.com/netobserv/flowlogs-pipeline => github.com/jpinsonneau/flowlogs-pipeline v0.0.0-20260810105004-c02344765ab4
+replace github.com/netobserv/flowlogs-pipeline => github.com/jpinsonneau/flowlogs-pipeline v0.1.9-rc1.0.20260810105004-c02344765ab4
