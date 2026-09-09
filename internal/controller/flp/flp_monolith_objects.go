@@ -131,6 +131,7 @@ func (b *monolithBuilder) deployment(annotations map[string]string) *appsv1.Depl
 func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.ConfigMap, error) {
 	pipeline, err := createPipeline(
 		b.desired,
+		b.info.Namespace,
 		b.flowMetrics,
 		b.fcSlices,
 		b.detectedSubnets,
@@ -144,7 +145,7 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 	}
 
 	// Get static and dynamic CM
-	static, dynamic, err := getJSONConfigs(b.desired, &b.volumes, b.promTLS, pipeline, monoDynConfigMap)
+	static, dynamic, err := getJSONConfigs(b.desired, b.info.Namespace, &b.volumes, b.promTLS, pipeline, monoDynConfigMap)
 	if err != nil {
 		return nil, "", nil, err
 	}
