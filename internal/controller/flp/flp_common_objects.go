@@ -397,7 +397,7 @@ func serviceMonitor(desired *flowslatest.FlowCollectorSpec, smName, svcName, nam
 	}
 	interval := "15s"
 	if desired.Processor.Metrics.Server.ScrapeInterval != nil {
-		interval = desired.Processor.Metrics.Server.ScrapeInterval.String()
+		interval = desired.Processor.Metrics.Server.ScrapeInterval.Duration.String()
 	}
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{

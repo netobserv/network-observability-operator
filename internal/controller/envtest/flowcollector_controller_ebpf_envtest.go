@@ -4,9 +4,11 @@ package envtest
 import (
 	"context"
 	"fmt"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -32,9 +34,10 @@ func FlowCollectorEBPFSpecs(env test.Environment, ctxGetter test.ContextGetter) 
 	// we need either to cleanup all created resources manually, or to use different namespaces between tests
 	// For simplicity, we'll use a different namespace
 	operatorNamespace := "namespace-ebpf-specs"
+	privilegedNamespace := operatorNamespace + "-privileged"
 	agentKey := types.NamespacedName{
 		Name:      "netobserv-ebpf-agent",
-		Namespace: operatorNamespace + "-privileged",
+		Namespace: privilegedNamespace,
 	}
 	crKey := types.NamespacedName{Name: "cluster"}
 	saKey := types.NamespacedName{
@@ -43,7 +46,7 @@ func FlowCollectorEBPFSpecs(env test.Environment, ctxGetter test.ContextGetter) 
 	}
 	promSvcKey := types.NamespacedName{
 		Name:      constants.EBPFAgentMetricsSvcName,
-		Namespace: operatorNamespace + "-privileged",
+		Namespace: privilegedNamespace,
 	}
 	nsKey := types.NamespacedName{Name: agentKey.Namespace}
 
@@ -75,6 +78,11 @@ func FlowCollectorEBPFSpecs(env test.Environment, ctxGetter test.ContextGetter) 
 							},
 							Metrics: flowslatest.EBPFMetrics{
 								Enable: ptr.To(true),
+								Server: flowslatest.MetricsServerConfig{
+									ScrapeInterval: &metav1.Duration{
+										Duration: time.Minute,
+									},
+								},
 							},
 						},
 					},
@@ -154,6 +162,20 @@ func FlowCollectorEBPFSpecs(env test.Environment, ctxGetter test.ContextGetter) 
 			Eventually(func() interface{} {
 				return k8sClient.Get(ctx, promSvcKey, &v1.Service{})
 			}).WithTimeout(timeout).WithPolling(interval).Should(Succeed())
+
+			// No ServiceMonitor expected in VanillaNaked
+			if env != test.EnvVanillaNaked {
+				By("expecting ServiceMonitor")
+				sm := monitoringv1.ServiceMonitor{}
+				Eventually(func() interface{} {
+					return k8sClient.Get(ctx, types.NamespacedName{
+						Name:      "ebpf-agent-svc-monitor",
+						Namespace: privilegedNamespace,
+					}, &sm)
+				}, timeout, interval).Should(Succeed())
+				Expect(sm.Spec.Endpoints).To(HaveLen(1))
+				Expect(sm.Spec.Endpoints[0].Interval).To(Equal(monitoringv1.Duration("1m0s")))
+			}
 		})
 
 		It("Should update fields that have changed", func() {
