@@ -99,7 +99,7 @@ func (c *AgentController) promServiceMonitoring(target *flowslatest.FlowCollecto
 	}
 	interval := "30s"
 	if target.Metrics.Server.ScrapeInterval != nil {
-		interval = target.Metrics.Server.ScrapeInterval.String()
+		interval = target.Metrics.Server.ScrapeInterval.Duration.String()
 	}
 	return &monitoringv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
