@@ -273,7 +273,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 		time.Sleep(60 * time.Second)
 
 		g.By("get flowlogs from loki")
-		lokiParams := []string{`SrcK8S_OwnerName="nginx-service"`}
+		lokiParams := []string{"SrcK8S_OwnerName=\"nginx-service\""}
 		flowRecords, err := lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords > 0")
@@ -443,7 +443,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 			DstK8SNamespace: testNSA,
 			FlowDirection:   "0",
 		}
-		lokiParams := []string{`SrcK8S_OwnerName="nginx-service"`}
+		lokiParams := []string{"SrcK8S_OwnerName=\"nginx-service\""}
 		flowRecords, err := lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected testuser to see flows from test-a namespace")

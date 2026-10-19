@@ -161,8 +161,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability with VMs", g.Ordered, 
 			DstK8SNamespace: testNS,
 		}
 		lokiParams := []string{
-			fmt.Sprintf(`SrcK8S_OwnerName=%q`, testVM2.Name),
-			fmt.Sprintf(`DstK8S_OwnerName=%q`, testVM1.Name),
+			fmt.Sprintf("SrcK8S_OwnerName=%q", testVM2.Name),
+			fmt.Sprintf("DstK8S_OwnerName=%q", testVM1.Name),
 			`DstAddr="10.10.10.15"`, `SrcAddr="10.10.10.14"`,
 		}
 
@@ -282,8 +282,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability with VMs", g.Ordered, 
 
 		g.By("Verify flows are written to loki")
 		lokiParams := []string{
-			fmt.Sprintf(`SrcK8S_OwnerName=%q`, testVM4.Name),
-			fmt.Sprintf(`DstK8S_OwnerName=%q`, testVM3.Name),
+			fmt.Sprintf("SrcK8S_OwnerName=%q", testVM4.Name),
+			fmt.Sprintf("DstK8S_OwnerName=%q", testVM3.Name),
 		}
 		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
@@ -457,8 +457,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability with VMs", g.Ordered, 
 		}
 
 		lokiParams := []string{
-			fmt.Sprintf(`SrcK8S_OwnerName=%q`, testVM6.Name),
-			fmt.Sprintf(`DstK8S_OwnerName=%q`, testVM5.Name),
+			fmt.Sprintf("SrcK8S_OwnerName=%q", testVM6.Name),
+			fmt.Sprintf("DstK8S_OwnerName=%q", testVM5.Name),
 		}
 		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
