@@ -145,7 +145,7 @@ func (b *monolithBuilder) configMaps() (*corev1.ConfigMap, string, *corev1.Confi
 	}
 
 	// Get static and dynamic CM
-	static, dynamic, err := getJSONConfigs(b.desired, b.info.Namespace, &b.volumes, b.promTLS, pipeline, monoDynConfigMap)
+	static, dynamic, err := getConfigs(b.desired, b.info.Namespace, &b.volumes, b.promTLS, pipeline, monoDynConfigMap)
 	if err != nil {
 		return nil, "", nil, err
 	}

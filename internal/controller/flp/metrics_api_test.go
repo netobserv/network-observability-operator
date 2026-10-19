@@ -1,7 +1,6 @@
 package flp
 
 import (
-	"encoding/json"
 	"errors"
 	"testing"
 
@@ -16,11 +15,12 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
+	"sigs.k8s.io/yaml"
 )
 
 func getConfiguredMetrics(cm *corev1.ConfigMap) (api.MetricsItems, error) {
 	var cfs config.Root
-	err := json.Unmarshal([]byte(cm.Data[configFile]), &cfs)
+	err := yaml.Unmarshal([]byte(cm.Data[configFile]), &cfs)
 	if err != nil {
 		return nil, err
 	}

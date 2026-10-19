@@ -15,16 +15,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 )
 
 // This function validate that each stage has its matching parameter
 func validatePipelineConfig(t *testing.T, staticCm *corev1.ConfigMap, dynamicCm *corev1.ConfigMap) (*config.Root, string) {
 	var cfs config.Root
-	err := json.Unmarshal([]byte(staticCm.Data[configFile]), &cfs)
+	err := yaml.Unmarshal([]byte(staticCm.Data[configFile]), &cfs)
 	assert.NoError(t, err)
 
 	var dynCfs config.HotReloadStruct
-	err = json.Unmarshal([]byte(dynamicCm.Data[configFile]), &dynCfs)
+	err = yaml.Unmarshal([]byte(dynamicCm.Data[configFile]), &dynCfs)
 	assert.NoError(t, err)
 
 	// Rearrange static+dynamic parameters with their correct index
