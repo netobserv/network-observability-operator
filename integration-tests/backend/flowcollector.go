@@ -174,10 +174,6 @@ type Lokilabels struct {
 	DstK8SNamespace string `loki:"DstK8S_Namespace"`
 	RecordType      string `loki:"_RecordType"`
 	FlowDirection   string `loki:"FlowDirection"`
-	// Owner names can be JSON fields rather than Loki stream labels. The query
-	// helper filters them after parsing the JSON line.
-	SrcK8SOwnerName string `loki:"-"`
-	DstK8SOwnerName string `loki:"-"`
 	K8SClusterName  string `loki:"K8S_ClusterName"`
 	K8SFlowLayer    string `loki:"K8S_FlowLayer"`
 	SrcK8SType      string `loki:"SrcK8S_Type"`
