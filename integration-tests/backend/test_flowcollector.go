@@ -667,14 +667,14 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify HeartbeatConnection Records from loki")
 		lokilabels.RecordType = "heartbeat"
-		heartbeatConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		heartbeatConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(heartbeatConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of heartbeatConnectionRecords > 0")
 		verifyConversationRecordTime(heartbeatConnectionRecords)
 
 		g.By("Verify EndConnection Records from loki")
 		lokilabels.RecordType = "endConnection"
-		endConnectionRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		endConnectionRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(endConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of endConnectionRecords > 0")
 		verifyConversationRecordTime(endConnectionRecords)
@@ -2606,7 +2606,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify HTTPS flows with TLSVersion 1.2")
-		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.2\""}
+		lokiParams = []string{
+			"SrcK8S_OwnerName=\"tls-server-service\"",
+			"DstK8S_OwnerName=\"tls-client\"",
+			"Proto=\"6\"",
+			"SrcPort=\"443\"",
+			"TLSVersion=\"TLS 1.2\"",
+		}
 		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.2 > 0")
@@ -2618,7 +2624,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify HTTPS flows with TLSVersion 1.1")
-		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.1\""}
+		lokiParams = []string{
+			"SrcK8S_OwnerName=\"tls-server-service\"",
+			"DstK8S_OwnerName=\"tls-client\"",
+			"Proto=\"6\"",
+			"SrcPort=\"443\"",
+			"TLSVersion=\"TLS 1.1\"",
+		}
 		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.1 > 0")
