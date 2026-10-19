@@ -70,6 +70,7 @@ type Flowlog struct {
 	SrcK8SType      string `json:"SrcK8S_Type,omitempty"`
 	SrcK8SName      string `json:"SrcK8S_Name,omitempty"`
 	SrcK8SHostName  string `json:"SrcK8S_HostName,omitempty"`
+	SrcK8SOwnerName string `json:"SrcK8S_OwnerName,omitempty"`
 	SrcK8SOwnerType string `json:"SrcK8S_OwnerType,omitempty"`
 	SrcAddr         string
 	SrcMac          string
@@ -79,6 +80,7 @@ type Flowlog struct {
 	DstK8SType      string `json:"DstK8S_Type,omitempty"`
 	DstK8SName      string `json:"DstK8S_Name,omitempty"`
 	DstK8SHostName  string `json:"DstK8S_HostName,omitempty"`
+	DstK8SOwnerName string `json:"DstK8S_OwnerName,omitempty"`
 	DstK8SOwnerType string `json:"DstK8S_OwnerType,omitempty"`
 	DstAddr         string
 	DstMac          string
@@ -172,8 +174,10 @@ type Lokilabels struct {
 	DstK8SNamespace string `loki:"DstK8S_Namespace"`
 	RecordType      string `loki:"_RecordType"`
 	FlowDirection   string `loki:"FlowDirection"`
-	SrcK8SOwnerName string `loki:"SrcK8S_OwnerName"`
-	DstK8SOwnerName string `loki:"DstK8S_OwnerName"`
+	// Owner names can be JSON fields rather than Loki stream labels. The query
+	// helper filters them after parsing the JSON line.
+	SrcK8SOwnerName string `loki:"-"`
+	DstK8SOwnerName string `loki:"-"`
 	K8SClusterName  string `loki:"K8S_ClusterName"`
 	K8SFlowLayer    string `loki:"K8S_FlowLayer"`
 	SrcK8SType      string `loki:"SrcK8S_Type"`

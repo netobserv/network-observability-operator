@@ -77,6 +77,12 @@ func getFlowRecords(lokiValues [][]string, stream lokiStream) ([]FlowRecord, err
 		if flowlog.DstK8SType == "" && stream.DstK8SType != "" {
 			flowlog.DstK8SType = stream.DstK8SType
 		}
+		if flowlog.SrcK8SOwnerName == "" && stream.SrcK8SOwnerName != "" {
+			flowlog.SrcK8SOwnerName = stream.SrcK8SOwnerName
+		}
+		if flowlog.DstK8SOwnerName == "" && stream.DstK8SOwnerName != "" {
+			flowlog.DstK8SOwnerName = stream.DstK8SOwnerName
+		}
 		if flowlog.SrcK8SZone == "" && stream.SrcK8SZone != "" {
 			flowlog.SrcK8SZone = stream.SrcK8SZone
 		}
@@ -304,8 +310,18 @@ func (lokilabels Lokilabels) getLokiQueryLabels() string {
 
 func (lokilabels Lokilabels) getLokiJSONfilterQuery(parameters ...string) string {
 	lokiQuery := lokilabels.getLokiQueryLabels()
-	if len(parameters) != 0 {
+	ownerNameFilters := make([]string, 0, 2)
+	if lokilabels.SrcK8SOwnerName != "" {
+		ownerNameFilters = append(ownerNameFilters, fmt.Sprintf("SrcK8S_OwnerName=%s", strconv.Quote(lokilabels.SrcK8SOwnerName)))
+	}
+	if lokilabels.DstK8SOwnerName != "" {
+		ownerNameFilters = append(ownerNameFilters, fmt.Sprintf("DstK8S_OwnerName=%s", strconv.Quote(lokilabels.DstK8SOwnerName)))
+	}
+	if len(parameters)+len(ownerNameFilters) != 0 {
 		lokiQuery += " | json"
+		for _, filter := range ownerNameFilters {
+			lokiQuery += fmt.Sprintf(" | %s", filter)
+		}
 		for _, p := range parameters {
 			if strings.Contains(p, "Flags") {
 				lokiQuery += fmt.Sprintf(" %s | json", p)
