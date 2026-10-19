@@ -573,7 +573,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		time.Sleep(120 * time.Second)
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, `SrcK8S_OwnerName="nginx-service"`)
+		lokiParams := []string{`SrcK8S_OwnerName="nginx-service"`}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords > 0")
 
@@ -640,7 +641,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify endConnection Records from loki")
-		endConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, `DstK8S_OwnerName="nginx-service"`)
+		lokiParams := []string{`DstK8S_OwnerName="nginx-service"`}
+		endConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(endConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of endConnectionRecords > 0")
 		verifyConversationRecordTime(endConnectionRecords)
@@ -658,7 +660,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify NewConnection Records from loki")
 		lokilabels.RecordType = "newConnection"
 
-		newConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, `DstK8S_OwnerName="nginx-service"`)
+		newConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(newConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of newConnectionRecords > 0")
 		verifyConversationRecordTime(newConnectionRecords)
@@ -1305,7 +1307,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify flows are written to loki")
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, `SrcK8S_OwnerName="nginx-service"`)
+		lokiParams := []string{`SrcK8S_OwnerName="nginx-service"`}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows written to loki > 0")
 
@@ -1935,9 +1938,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SNamespace: cudnNS[0],
 		}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime,
+		lokiParams := []string{
 			fmt.Sprintf(`DstK8S_OwnerName=%q`, CUDNpods[1].name),
-			fmt.Sprintf(`SrcK8S_OwnerName=%q`, CUDNpods[0].name))
+			fmt.Sprintf(`SrcK8S_OwnerName=%q`, CUDNpods[0].name),
+		}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of CUDN flows > 0")
 		for _, r := range flowRecords {
@@ -1953,9 +1958,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SNamespace: udnNS,
 		}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime,
+		lokiParams = []string{
 			fmt.Sprintf(`DstK8S_OwnerName=%q`, UDNpods[1].name),
-			fmt.Sprintf(`SrcK8S_OwnerName=%q`, UDNpods[0].name))
+			fmt.Sprintf(`SrcK8S_OwnerName=%q`, UDNpods[0].name),
+		}
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of UDN flows > 0")
 		for _, r := range flowRecords {
@@ -2089,8 +2096,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SNamespace: cudnNS[0],
 		}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime,
-			`DstK8S_OwnerName="hello"`, `SrcK8S_OwnerName="hello"`)
+		lokiParams := []string{`DstK8S_OwnerName="hello"`, `SrcK8S_OwnerName="hello"`}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of CUDN Localnet flows > 0")
 		for _, r := range flowRecords {
