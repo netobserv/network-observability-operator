@@ -64,11 +64,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			// verify custom metrics queries
 			for _, query := range cmc.Queries {
 				metricsQuery := strings.Replace(query, "$METRIC", "netobserv_"+cmc.MetricName, 1)
-				if cmc.MetricName == "service_ports_total_bytes" {
-					// Focus on monitoring traffic while keeping the chart's per-port
-					// grouping; pollMetrics reads the first matching series.
-					metricsQuery = strings.Replace(query, "$METRIC", `netobserv_service_ports_total_bytes{DstK8S_Namespace="openshift-monitoring"}`, 1)
-				}
 				metricVal := pollMetrics(metricsQuery)
 				e2e.Logf("metricsQuery %f for query %s", metricVal, metricsQuery)
 			}
