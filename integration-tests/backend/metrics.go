@@ -159,7 +159,7 @@ func verifyEBPFFilterMetrics(reason string) {
 func verifyEBPFFeatureMetrics(feature string) {
 	query := fmt.Sprintf(`sum(netobserv_agent_buffer_size{name="%s"})`, feature)
 	metrics := pollMetrics(query)
-	// The exact map size is nondeterministic; only require evidence of entries.
+	// making sure it's simply greater than 0 because we don't know the deteministic value to expect.
 	o.Expect(metrics).Should(o.BeNumerically(">", 0), fmt.Sprintf("%s metrics is 0", feature))
 }
 
