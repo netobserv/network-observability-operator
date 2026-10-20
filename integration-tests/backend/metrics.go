@@ -157,9 +157,11 @@ func verifyEBPFFilterMetrics(reason string) {
 
 // verify eBPF feature metrics
 func verifyEBPFFeatureMetrics(feature string) {
-	query := fmt.Sprintf(`sum(rate(netobserv_agent_buffer_size{name="%s"}[1m]))`, feature)
+	// buffer_size is a gauge, so rate() can be zero whenever the map size is
+	// stable. Check whether any agent had entries in this map recently instead.
+	query := fmt.Sprintf(`max(max_over_time(netobserv_agent_buffer_size{name="%s"}[10m]))`, feature)
 	metrics := pollMetrics(query)
-	// making sure it's simply greater than 0 because we don't know the deteministic value to expect.
+	// The exact map size is nondeterministic; only require evidence of entries.
 	o.Expect(metrics).Should(o.BeNumerically(">", 0), fmt.Sprintf("%s metrics is 0", feature))
 }
 
