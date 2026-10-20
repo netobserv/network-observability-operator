@@ -674,7 +674,7 @@ func TestScopeFilteringWithLoki(t *testing.T) {
 	assert.Contains(t, frontend.Scopes[3].Groups, "networks+namespaces")
 }
 
-func TestScopeFilteringNoLoki(t *testing.T) {
+func TestScopeFilteringNoLoki_NamespaceMetrics(t *testing.T) {
 	scopeIDs := func(scopes []config.ScopeConfig) []string {
 		var ids []string
 		for i := range scopes {
@@ -722,4 +722,47 @@ func TestScopeFilteringNoLoki(t *testing.T) {
 	assert.Empty(t, frontend.Scopes[0].Groups)
 	assert.Equal(t, []string{"zones"}, frontend.Scopes[1].Groups)
 	assert.Equal(t, []string{"zones"}, frontend.Scopes[2].Groups)
+}
+
+func TestScopeFilteringNoLoki_WorkloadMetrics(t *testing.T) {
+	scopeIDs := func(scopes []config.ScopeConfig) []string {
+		var ids []string
+		for i := range scopes {
+			ids = append(ids, scopes[i].ID)
+		}
+		return ids
+	}
+	plugin := getPluginConfig()
+	lokiSpec := flowslatest.FlowCollectorLoki{
+		Enable: ptr.To(false),
+	}
+	loki := helper.NewLokiConfig(&lokiSpec, "any")
+	spec := flowslatest.FlowCollectorSpec{
+		Agent: flowslatest.FlowCollectorAgent{
+			EBPF: flowslatest.FlowCollectorEBPF{
+				Features: []flowslatest.AgentFeature{flowslatest.UDNMapping},
+			},
+		},
+		Processor: flowslatest.FlowCollectorFLP{
+			AddZone: ptr.To(true),
+			Metrics: flowslatest.FLPMetrics{
+				IncludeList: &[]flowslatest.FLPMetric{
+					"node_egress_bytes_total",
+					"workload_egress_bytes_total",
+				},
+			},
+		},
+		ConsolePlugin: plugin,
+		Loki:          lokiSpec,
+	}
+	builder := getBuilder(&spec, &loki)
+	frontend, err := config.GetStaticFrontendConfig()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"cluster", "network", "zone", "host", "namespace", "owner", "resource"}, scopeIDs(frontend.Scopes))
+
+	prom := builder.getPromConfig(context.Background())
+	warning, err := builder.setFrontendConfig(&frontend, prom.Metrics)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"network", "zone", "host", "namespace", "owner"}, scopeIDs(frontend.Scopes))
+	assert.Empty(t, warning)
 }

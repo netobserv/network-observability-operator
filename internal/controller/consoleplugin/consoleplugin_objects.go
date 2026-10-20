@@ -525,7 +525,7 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig, metrics []cfg.Met
 		if len(scope.Feature) == 0 || slices.Contains(fconf.Features, scope.Feature) {
 			if b.desired.UseLoki() {
 				scopes = append(scopes, *scope)
-			} else if valid, warning := isScopeValidForMetrics(scope, metrics); valid {
+			} else if valid, warning := isScopeValidForMetrics(scope, metrics, fconf.Features, fconf.Columns); valid {
 				scopes = append(scopes, *scope)
 			} else if scope.ID != "resource" { // don't trigger warning for "resource" scope, it's a known fact it won't be available
 				warnings = append(warnings, warning)
@@ -535,26 +535,26 @@ func (b *builder) setFrontendConfig(fconf *cfg.FrontendConfig, metrics []cfg.Met
 	if b.desired.UseLoki() {
 		fconf.Scopes = scopes
 	} else {
-		fconf.Scopes = filterScopeGroupsForMetrics(scopes, metrics)
+		fconf.Scopes = filterScopeGroupsForMetrics(scopes, metrics, fconf.Features, fconf.Columns)
 	}
 
 	return strings.Join(warnings, "; "), nil
 }
 
-func isScopeValidForMetrics(scope *cfg.ScopeConfig, metrics []cfg.MetricInfo) (bool, string) {
+func isScopeValidForMetrics(scope *cfg.ScopeConfig, metrics []cfg.MetricInfo, feats []string, cols []cfg.ColumnConfig) (bool, string) {
 	var bestMatch *cfg.MetricInfo
 	var bestMatchMissingLabels []string
 	var candidates []string
 	for i := range metrics {
 		if metrics[i].ValueField == "Bytes" || metrics[i].ValueField == "Packets" {
-			missing := missingLabels(scope.Labels, &metrics[i])
+			missing := missingLabels(scope.Labels, &metrics[i], feats, cols)
 			if len(missing) == 0 {
 				if !metrics[i].Enabled {
 					candidates = append(candidates, metrics[i].Name)
 				} else {
 					return true, ""
 				}
-			} else if bestMatch == nil {
+			} else if bestMatch == nil || len(missing) < len(bestMatchMissingLabels) {
 				bestMatch = &metrics[i]
 				bestMatchMissingLabels = missing
 			}
@@ -569,9 +569,13 @@ func isScopeValidForMetrics(scope *cfg.ScopeConfig, metrics []cfg.MetricInfo) (b
 	return false, fmt.Sprintf("Scope %s invalid for metrics (best match: %s; missing labels: %s)", scope.ID, bestMatch.Name, strings.Join(bestMatchMissingLabels, ", "))
 }
 
-func missingLabels(labels []string, metric *cfg.MetricInfo) []string {
+func missingLabels(labels []string, metric *cfg.MetricInfo, feats []string, cols []cfg.ColumnConfig) []string {
 	var missing []string
 	for _, label := range labels {
+		// Do not consider missing a label from a disabled feature
+		if isLabelForDisabledFeature(label, feats, cols) {
+			continue
+		}
 		if !slices.Contains(metric.Labels, label) {
 			missing = append(missing, label)
 		}
@@ -579,7 +583,16 @@ func missingLabels(labels []string, metric *cfg.MetricInfo) []string {
 	return missing
 }
 
-func filterScopeGroupsForMetrics(scopes []cfg.ScopeConfig, metrics []cfg.MetricInfo) []cfg.ScopeConfig {
+func isLabelForDisabledFeature(label string, feats []string, cols []cfg.ColumnConfig) bool {
+	for i := range cols {
+		if cols[i].Field == label && cols[i].Feature != "" && !slices.Contains(feats, cols[i].Feature) {
+			return true
+		}
+	}
+	return false
+}
+
+func filterScopeGroupsForMetrics(scopes []cfg.ScopeConfig, metrics []cfg.MetricInfo, feats []string, cols []cfg.ColumnConfig) []cfg.ScopeConfig {
 	labelsPerScope := make(map[string][]string)
 	for i := range scopes {
 		labelsPerScope[scopes[i].ID+"s"] = scopes[i].Labels
@@ -603,7 +616,7 @@ func filterScopeGroupsForMetrics(scopes []cfg.ScopeConfig, metrics []cfg.MetricI
 			// Now, verify that all needed labels (for scope AND groups) are ok with metrics
 			for i := range metrics {
 				if metrics[i].Enabled && (metrics[i].ValueField == "Bytes" || metrics[i].ValueField == "Packets") {
-					missing := missingLabels(neededLabels, &metrics[i])
+					missing := missingLabels(neededLabels, &metrics[i], feats, cols)
 					if len(missing) == 0 {
 						// Valid group
 						newGroups = append(newGroups, group)
