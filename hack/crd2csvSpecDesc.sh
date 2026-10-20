@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 version="$1"
 
@@ -13,70 +14,67 @@ csv="./config/csv/bases/transformed-csv.yaml"
 crdRoot=".spec.versions[] | select(.name==\"$version\").schema.openAPIV3Schema.properties.spec.properties"
 csvRoot=".spec.customresourcedefinitions.owned[] | select(.version==\"$version\").specDescriptors"
 
-process_property() {
-  local yamlPath=$1
-  local logicPath=$2
-  # Ignore some patterns
-  if [[ $logicPath == *"utoscaler" ]] || [[ $logicPath == *".resources" ]] || [[ $logicPath == *".tls" ]] || [[ $logicPath == *".statusTls" ]] ; then
-    # echo "Ignoring entry" >&2
-    false
-    return
-  fi
-  # Lookup in CSV
-  local xDescs=$(cat $csv | ./bin/yq "$csvRoot[] | select(.path==\"$logicPath\").x-descriptors")
-  if [[ $xDescs == *":hidden" ]]; then
-    # echo "Hidden property; ignoring" >&2
-    false
-    return
-  fi
-  local displayName=$(echo $logicPath | sed 's/.*\.//' | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g' )
-  displayName=${displayName,,} # lower case
-  displayName=${displayName^} # first letter capital
-#  local description=$(cat $crd | ./bin/yq "$yamlPath.description" | sed 's/`/"/g' | sed 's/<br>//g')
-  if [[ $(cat $csv | ./bin/yq "$csvRoot[] | select(.path==\"$logicPath\")") != "" ]]; then
-    if [[ $(cat $csv | ./bin/yq "$csvRoot[] | select(.path==\"$logicPath\") | has(\"displayName\")") == false ]]; then
-      # echo "Set display name: $displayName" >&2
-      ./bin/yq -i "($csvRoot[] | select(.path==\"$logicPath\").displayName) = \"$displayName\"" $csv
-    fi
-    # if [[ $(cat $csv | ./bin/yq "$csvRoot[] | select(.path==\"$logicPath\") | has(\"description\")") == false ]]; then
-    #   echo "Set description: $description" >&2
-    #   # ./bin/yq -i "$csvRoot[] | select(.path==\"$logicPath\").description = \"$description\"" $csv
-    # fi
-  else
-    # echo "Creating entry for $displayName" >&2
-    ./bin/yq -i "($csvRoot) += {\"path\":\"$logicPath\",\"displayName\":\"$displayName\"}" $csv
-  fi
-}
+# Load the whole CRD property tree and CSV spec-descriptors once, instead of re-parsing
+# both files on every node of the recursive walk (previously thousands of `yq` invocations).
+crdJsonFile=$(mktemp)
+csvJsonFile=$(mktemp)
+trap 'rm -f "$crdJsonFile" "$csvJsonFile"' EXIT
+./bin/yq -o=json e "$crdRoot" "$crd" >"$crdJsonFile"
+./bin/yq -o=json e "$csvRoot" "$csv" >"$csvJsonFile"
 
-process_properties() {
-  local yamlPath=$1
-  local logicPath=$2
-  local props=$(cat $crd | ./bin/yq "$yamlPath | keys | @tsv")
-  for prop in $props; do
-    if [[ $logicPath != "" ]]; then
-      local propLogicPath="$logicPath.$prop"
+mutations=$(jq -n -r --slurpfile crdArr "$crdJsonFile" --slurpfile csvArr "$csvJsonFile" '
+  $crdArr[0] as $crd | $csvArr[0] as $csv |
+  def dispName($path):
+    ($path | sub(".*\\."; "")) as $last
+    | ($last | gsub("(?<a>[a-z])(?<b>[A-Z])"; "\(.a) \(.b)") | ascii_downcase) as $lower
+    | ($lower[0:1] | ascii_upcase) + $lower[1:];
+
+  def ignored($path):
+    ($path | test("utoscaler$"))
+    or ($path | test("\\.resources$"))
+    or ($path | test("\\.tls$"))
+    or ($path | test("\\.statusTls$"));
+
+  def walkProps($node; $prefix):
+    ($node // {}) | to_entries[] |
+    ($prefix + (if $prefix == "" then "" else "." end) + .key) as $path |
+    if ignored($path) then empty
     else
-      local propLogicPath="$prop"
-    fi
-    # echo "Checking property $propLogicPath" >&2
-    if process_property "$yamlPath.$prop" $propLogicPath; then
-      local type=$(cat $crd | ./bin/yq "$yamlPath.$prop.type")
-      if [[ "$type" == "object" ]]; then
-        # echo "it's an object" >&2
-        if [[ $(cat $crd | ./bin/yq "$yamlPath.$prop | has(\"properties\")") == true ]]; then
-          process_properties "$yamlPath.$prop.properties" $propLogicPath
-        # else
-          # echo "Skipping: no properties." >&2
-        fi
-      # else
-      #   if [[ "$type" == "array" ]]; then
-      #     echo "it's an array" >&2
-      #   # else
-      #     # echo "it's a leaf" >&2
-      #   fi
-      fi
-    fi
-  done
-}
+      .value as $schema
+      | (first($csv[] | select(.path == $path)) // null) as $entry
+      | (($entry["x-descriptors"] // []) | last // "" | test(":hidden$")) as $hidden
+      | if $hidden then empty
+        else
+          (if $entry == null then
+            {type: "add", path: $path, displayName: dispName($path)}
+          elif ($entry | has("displayName") | not) then
+            {type: "set", path: $path, displayName: dispName($path)}
+          else empty
+          end),
+          (if $schema.type == "object" and ($schema | has("properties")) then
+            walkProps($schema.properties; $path)
+          else empty
+          end)
+        end
+    end;
 
-process_properties "$crdRoot" ""
+  walkProps($crd; "") | [.type, .path, .displayName] | @tsv
+')
+
+exprParts=()
+while IFS=$'\t' read -r mtype mpath mdisp; do
+  [[ -z $mtype ]] && continue
+  if [[ $mtype == "add" ]]; then
+    exprParts+=("($csvRoot) += {\"path\":\"$mpath\",\"displayName\":\"$mdisp\"}")
+  else
+    exprParts+=("($csvRoot[] | select(.path==\"$mpath\").displayName) = \"$mdisp\"")
+  fi
+done <<<"$mutations"
+
+if [[ ${#exprParts[@]} -gt 0 ]]; then
+  bigExpr="${exprParts[0]}"
+  for part in "${exprParts[@]:1}"; do
+    bigExpr="$bigExpr | $part"
+  done
+  ./bin/yq -i "$bigExpr" "$csv"
+fi
