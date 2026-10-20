@@ -567,14 +567,14 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			App:             "netobserv-flowcollector",
 			SrcK8SNamespace: testServer.ServerNS,
 			DstK8SNamespace: testClient.ClientNS,
-			SrcK8SOwnerName: "nginx-service",
 			FlowDirection:   "0",
 		}
 
 		g.By("Wait for 2 mins before logs gets collected and written to loki")
 		time.Sleep(120 * time.Second)
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		lokiParams := []string{"SrcK8S_OwnerName=\"nginx-service\""}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords > 0")
 
@@ -638,11 +638,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			SrcK8SNamespace: testClientTemplate.ClientNS,
 			DstK8SNamespace: testClientTemplate.ServerNS,
 			RecordType:      "endConnection",
-			DstK8SOwnerName: "nginx-service",
 		}
 
 		g.By("Verify endConnection Records from loki")
-		endConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		lokiParams := []string{"DstK8S_OwnerName=\"nginx-service\""}
+		endConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(endConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of endConnectionRecords > 0")
 		verifyConversationRecordTime(endConnectionRecords)
@@ -660,21 +660,21 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify NewConnection Records from loki")
 		lokilabels.RecordType = "newConnection"
 
-		newConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		newConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(newConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of newConnectionRecords > 0")
 		verifyConversationRecordTime(newConnectionRecords)
 
 		g.By("Verify HeartbeatConnection Records from loki")
 		lokilabels.RecordType = "heartbeat"
-		heartbeatConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		heartbeatConnectionRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(heartbeatConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of heartbeatConnectionRecords > 0")
 		verifyConversationRecordTime(heartbeatConnectionRecords)
 
 		g.By("Verify EndConnection Records from loki")
 		lokilabels.RecordType = "endConnection"
-		endConnectionRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		endConnectionRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(endConnectionRecords)).Should(o.BeNumerically(">", 0), "expected number of endConnectionRecords > 0")
 		verifyConversationRecordTime(endConnectionRecords)
@@ -1303,12 +1303,12 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			App:             "netobserv-flowcollector",
 			SrcK8SNamespace: testClientTemplate.ServerNS,
 			DstK8SNamespace: testClientTemplate.ClientNS,
-			SrcK8SOwnerName: "nginx-service",
 			FlowDirection:   "0",
 		}
 
 		g.By("Verify flows are written to loki")
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		lokiParams := []string{"SrcK8S_OwnerName=\"nginx-service\""}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flows written to loki > 0")
 
@@ -1524,10 +1524,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify Packet Translation flows")
 		lokilabels = Lokilabels{
 			App:             "netobserv-flowcollector",
-			DstK8SOwnerName: "nginx-service",
 			DstK8SNamespace: testClientTemplate.ServerNS,
 			SrcK8SNamespace: testClientTemplate.ClientNS,
-			SrcK8SOwnerName: "client",
 		}
 
 		ipStackType := checkIPStackType()
@@ -1536,6 +1534,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		g.By("Verify PacketTranslation flows")
 		lokiParams = []string{
+			"DstK8S_OwnerName=\"nginx-service\"",
+			"SrcK8S_OwnerName=\"client\"",
 			fmt.Sprintf(`XlatDstAddr="%s"`, clientServiceInfo["server"]["ip"]),
 			fmt.Sprintf(`XlatDstK8S_Name="%s"`, clientServiceInfo["server"]["name"]),
 			`XlatDstK8S_Type="Pod"`,
@@ -1600,14 +1600,14 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 
 		lokilabels := Lokilabels{
 			App:             "netobserv-flowcollector",
-			DstK8SOwnerName: "nginx-service",
 			DstK8SNamespace: testClientTemplate.ServerNS,
 			SrcK8SNamespace: testClientTemplate.ClientNS,
-			SrcK8SOwnerName: "client",
 		}
 
 		g.By("Verify PacketTranslation flows")
 		lokiParams := []string{
+			"DstK8S_OwnerName=\"nginx-service\"",
+			"SrcK8S_OwnerName=\"client\"",
 			fmt.Sprintf(`XlatDstAddr="%s"`, clientServiceInfo["server"]["ip"]),
 			fmt.Sprintf(`XlatDstK8S_Name="%s"`, clientServiceInfo["server"]["name"]),
 			`XlatDstK8S_Type="Pod"`,
@@ -1935,12 +1935,14 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		lokilabels := Lokilabels{
 			App:             "netobserv-flowcollector",
 			DstK8SNamespace: cudnNS[1],
-			DstK8SOwnerName: CUDNpods[1].name,
 			SrcK8SNamespace: cudnNS[0],
-			SrcK8SOwnerName: CUDNpods[0].name,
 		}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		lokiParams := []string{
+			fmt.Sprintf("DstK8S_OwnerName=%q", CUDNpods[1].name),
+			fmt.Sprintf("SrcK8S_OwnerName=%q", CUDNpods[0].name),
+		}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of CUDN flows > 0")
 		for _, r := range flowRecords {
@@ -1953,12 +1955,14 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		lokilabels = Lokilabels{
 			App:             "netobserv-flowcollector",
 			DstK8SNamespace: udnNS,
-			DstK8SOwnerName: UDNpods[1].name,
 			SrcK8SNamespace: udnNS,
-			SrcK8SOwnerName: UDNpods[0].name,
 		}
 
-		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		lokiParams = []string{
+			fmt.Sprintf("DstK8S_OwnerName=%q", UDNpods[1].name),
+			fmt.Sprintf("SrcK8S_OwnerName=%q", UDNpods[0].name),
+		}
+		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of UDN flows > 0")
 		for _, r := range flowRecords {
@@ -2089,12 +2093,14 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		lokilabels := Lokilabels{
 			App:             "netobserv-flowcollector",
 			DstK8SNamespace: cudnNS[1],
-			DstK8SOwnerName: "hello",
 			SrcK8SNamespace: cudnNS[0],
-			SrcK8SOwnerName: "hello",
 		}
 
-		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime)
+		lokiParams := []string{
+			"DstK8S_OwnerName=\"hello\"",
+			"SrcK8S_OwnerName=\"hello\"",
+		}
+		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of CUDN Localnet flows > 0")
 		for _, r := range flowRecords {
@@ -2564,12 +2570,15 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 			App:             "netobserv-flowcollector",
 			SrcK8SNamespace: testClientTemplate.ServerNS,
 			DstK8SNamespace: testClientTemplate.ClientNS,
-			DstK8SOwnerName: "tls-client",
-			SrcK8SOwnerName: "tls-server-service",
 		}
 
 		g.By("Verify HTTP flows")
-		lokiParams := []string{"Proto=\"6\"", "SrcPort=\"80\""}
+		lokiParams := []string{
+			"SrcK8S_OwnerName=\"tls-server-service\"",
+			"DstK8S_OwnerName=\"tls-client\"",
+			"Proto=\"6\"",
+			"SrcPort=\"80\"",
+		}
 		flowRecords, err := lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTP flows > 0")
@@ -2579,7 +2588,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify HTTPS flows with TLSVersion 1.3")
-		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.3\""}
+		lokiParams = []string{
+			"SrcK8S_OwnerName=\"tls-server-service\"",
+			"DstK8S_OwnerName=\"tls-client\"",
+			"Proto=\"6\"",
+			"SrcPort=\"443\"",
+			"TLSVersion=\"TLS 1.3\"",
+		}
 		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.3 > 0")
@@ -2591,7 +2606,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify HTTPS flows with TLSVersion 1.2")
-		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.2\""}
+		lokiParams = []string{
+			"SrcK8S_OwnerName=\"tls-server-service\"",
+			"DstK8S_OwnerName=\"tls-client\"",
+			"Proto=\"6\"",
+			"SrcPort=\"443\"",
+			"TLSVersion=\"TLS 1.2\"",
+		}
 		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.2 > 0")
@@ -2603,7 +2624,13 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		}
 
 		g.By("Verify HTTPS flows with TLSVersion 1.1")
-		lokiParams = []string{"Proto=\"6\"", "SrcPort=\"443\"", "TLSVersion=\"TLS 1.1\""}
+		lokiParams = []string{
+			"SrcK8S_OwnerName=\"tls-server-service\"",
+			"DstK8S_OwnerName=\"tls-client\"",
+			"Proto=\"6\"",
+			"SrcPort=\"443\"",
+			"TLSVersion=\"TLS 1.1\"",
+		}
 		flowRecords, err = lokilabels.GetMonolithicLokiFlowLogs(flow.MonolithicLokiURL, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of HTTPS flows with TLSv1.1 > 0")
