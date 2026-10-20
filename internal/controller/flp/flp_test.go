@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
 	flowslatest "github.com/netobserv/netobserv-operator/api/flowcollector/v1beta2"
@@ -585,6 +586,17 @@ func TestServiceMonitorChanged(t *testing.T) {
 
 	report = helper.NewChangeReport("")
 	assert.True(helper.ServiceMonitorChanged(third, fourth, &report))
+	assert.Contains(report.String(), "ServiceMonitor spec changed")
+
+	// Check scrape interval changed
+	assert.Equal(v1.Duration("15s"), fourth.Spec.Endpoints[0].Interval)
+	cfg.Processor.Metrics.Server.ScrapeInterval = &metav1.Duration{Duration: time.Hour}
+	b, _ = newMonolithBuilder(info.NewInstance(image2, status.Instance{}), &cfg, b.flowMetrics, nil, nil)
+	fifth := b.serviceMonitor()
+	assert.Equal(v1.Duration("1h0m0s"), fifth.Spec.Endpoints[0].Interval)
+
+	report = helper.NewChangeReport("")
+	assert.True(helper.ServiceMonitorChanged(fourth, fifth, &report))
 	assert.Contains(report.String(), "ServiceMonitor spec changed")
 }
 
