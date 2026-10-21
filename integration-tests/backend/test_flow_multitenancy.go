@@ -261,7 +261,6 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 			App:             "netobserv-flowcollector",
 			SrcK8SNamespace: testUserServerNS,
 			DstK8SNamespace: testUserClientNS,
-			SrcK8SOwnerName: "nginx-service",
 			FlowDirection:   "0",
 		}
 
@@ -274,7 +273,8 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 		time.Sleep(60 * time.Second)
 
 		g.By("get flowlogs from loki")
-		flowRecords, err := lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime)
+		lokiParams := []string{"SrcK8S_OwnerName=\"nginx-service\""}
+		flowRecords, err := lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected number of flowRecords > 0")
 
@@ -283,11 +283,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 			App:             "netobserv-flowcollector",
 			SrcK8SNamespace: testClientTemplate.ServerNS,
 			DstK8SNamespace: testClientTemplate.ClientNS,
-			SrcK8SOwnerName: "nginx-service",
 			FlowDirection:   "0",
 			AllowEmpty:      true,
 		}
-		flowRecords, err = lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime)
+		flowRecords, err = lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime, lokiParams...)
 		if err != nil {
 			o.Expect(err.Error()).To(o.ContainSubstring("permission"), "expected permission error for unauthorized namespace access, got: %v", err)
 		} else {
@@ -442,10 +441,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 			App:             "netobserv-flowcollector",
 			SrcK8SNamespace: testServerTemplateA.ServerNS,
 			DstK8SNamespace: testNSA,
-			SrcK8SOwnerName: "nginx-service",
 			FlowDirection:   "0",
 		}
-		flowRecords, err := lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime)
+		lokiParams := []string{"SrcK8S_OwnerName=\"nginx-service\""}
+		flowRecords, err := lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime, lokiParams...)
 		o.Expect(err).NotTo(o.HaveOccurred())
 		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "expected testuser to see flows from test-a namespace")
 
@@ -498,11 +497,10 @@ var _ = g.Describe("[sig-netobserv] Network_Observability Multi-Tenancy", g.Orde
 			App:             "netobserv-flowcollector",
 			SrcK8SNamespace: testServerTemplateB.ServerNS,
 			DstK8SNamespace: testNSB,
-			SrcK8SOwnerName: "nginx-service",
 			FlowDirection:   "0",
 			AllowEmpty:      true,
 		}
-		flowRecords, err = lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime)
+		flowRecords, err = lokilabels.getLokiFlowLogs(user0token, ls.Route, startTime, lokiParams...)
 		if err != nil {
 			o.Expect(err.Error()).Should(o.ContainSubstring("permission"), "expected permission error for unauthorized namespace access, got: %v", err)
 		} else {

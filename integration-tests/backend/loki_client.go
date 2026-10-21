@@ -86,8 +86,6 @@ type lokiStream struct {
 	DstK8SNamespace string `json:"DstK8S_Namespace"`
 	FlowDirection   string `json:"FlowDirection"`
 	SrcK8SNamespace string `json:"SrcK8S_Namespace"`
-	SrcK8SOwnerName string `json:"SrcK8S_OwnerName"`
-	DstK8SOwnerName string `json:"DstK8S_OwnerName"`
 	SrcK8SType      string `json:"SrcK8S_Type"`
 	DstK8SType      string `json:"DstK8S_Type"`
 	SrcK8SZone      string `json:"SrcK8S_Zone"`
