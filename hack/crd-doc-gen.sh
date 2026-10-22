@@ -13,22 +13,22 @@ mkdir -p _tmp
 for bundle in bundles/*; do
   for crd in "flows.netobserv.io_flowcollectors.yaml" "flows.netobserv.io_flowmetrics.yaml" "flows.netobserv.io_flowcollectorslices.yaml"; do
     cp $bundle/manifests/$crd _tmp/
-    $YQ -i 'del(.spec.conversion)' _tmp/$crd
-    $YQ -i 'del(.spec.versions[] | select(.deprecated == true))' _tmp/$crd
+    $YQ -i 'del(.spec.conversion) | del(.spec.versions[] | select(.deprecated == true))' _tmp/$crd
   done
 
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ipfix)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.resources.properties.claims)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.scheduling.properties.affinity.properties)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.scheduling.properties.tolerations.items)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.resources.properties.claims)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.advanced.properties.scheduling.properties.affinity.properties)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.advanced.properties.scheduling.properties.tolerations.items)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.resources.properties.claims)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.autoscaler.properties)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.advanced.properties.scheduling.properties.affinity.properties)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.advanced.properties.scheduling.properties.tolerations.items)' _tmp/flows.netobserv.io_flowcollectors.yaml
-  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.properties)' _tmp/flows.netobserv.io_flowcollectors.yaml
+  $YQ -i 'del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ipfix)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.resources.properties.claims)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.scheduling.properties.affinity.properties)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.agent.properties.ebpf.properties.advanced.properties.scheduling.properties.tolerations.items)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.resources.properties.claims)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.advanced.properties.scheduling.properties.affinity.properties)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.advanced.properties.scheduling.properties.tolerations.items)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.resources.properties.claims)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.autoscaler.properties)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.advanced.properties.scheduling.properties.affinity.properties)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.consolePlugin.properties.advanced.properties.scheduling.properties.tolerations.items)
+    | del(.spec.versions[].schema.openAPIV3Schema.properties.spec.properties.processor.properties.kafkaConsumerAutoscaler.properties)
+    '  _tmp/flows.netobserv.io_flowcollectors.yaml
 
   target=$(basename $bundle)
   if [[ $target == "k8s" ]]; then
