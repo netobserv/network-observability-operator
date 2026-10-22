@@ -306,7 +306,7 @@ func TestNetworkEventsOVNMount(t *testing.T) {
 		Spec: flowslatest.FlowCollectorSpec{
 			Agent: flowslatest.FlowCollectorAgent{
 				EBPF: flowslatest.FlowCollectorEBPF{
-					Privileged: true,
+					Privileged: false,
 					Features:   []flowslatest.AgentFeature{flowslatest.NetworkEvents},
 				},
 			},
@@ -321,17 +321,22 @@ func TestNetworkEventsOVNMount(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, ds)
 
-	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[2].Name)
+	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[1].Name)
+	assert.Equal(t, "/var/run/openvswitch", ds.Spec.Template.Spec.Volumes[1].HostPath.Path)
+	assert.Equal(t, "var-run-ovs", ds.Spec.Template.Spec.Volumes[2].Name)
 	assert.Equal(t, "/var/run/openvswitch", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
 
 	// OpenShift OVN
 	info.ClusterInfo = cluster.Mock(cluster.WithOpenShiftVersion("4.20.0"), cluster.WithCNI(flowslatest.OVNKubernetes))
+	info.Vendor = constants.VendorOpenShiftDownstream
 	ds, err = agent.desired(context.Background(), &fc)
 	assert.NoError(t, err)
 	assert.NotNil(t, ds)
 
-	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[2].Name)
-	assert.Equal(t, "/var/run/ovn-ic", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
+	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[1].Name)
+	assert.Equal(t, "/var/run/ovn-ic", ds.Spec.Template.Spec.Volumes[1].HostPath.Path)
+	assert.Equal(t, "var-run-ovs", ds.Spec.Template.Spec.Volumes[2].Name)
+	assert.Equal(t, "/var/run/openvswitch", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
 
 	// Custom
 	fc.Spec.Agent.EBPF.Advanced = &flowslatest.AdvancedAgentConfig{
@@ -343,6 +348,53 @@ func TestNetworkEventsOVNMount(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, ds)
 
-	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[2].Name)
-	assert.Equal(t, "/foo/bar", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
+	assert.Equal(t, "var-run-ovn", ds.Spec.Template.Spec.Volumes[1].Name)
+	assert.Equal(t, "/foo/bar", ds.Spec.Template.Spec.Volumes[1].HostPath.Path)
+	assert.Equal(t, "var-run-ovs", ds.Spec.Template.Spec.Volumes[2].Name)
+	assert.Equal(t, "/var/run/openvswitch", ds.Spec.Template.Spec.Volumes[2].HostPath.Path)
+}
+
+func TestNetNSMount(t *testing.T) {
+	fc := flowslatest.FlowCollector{
+		Spec: flowslatest.FlowCollectorSpec{
+			Agent: flowslatest.FlowCollectorAgent{
+				EBPF: flowslatest.FlowCollectorEBPF{
+					Features: []flowslatest.AgentFeature{flowslatest.SecondaryNetworks},
+				},
+			},
+		},
+	}
+
+	info := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &cluster.Info{}}
+	inst := info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: "ebpf-agent"}, status.Instance{})
+	agent := NewAgentController(inst)
+	ds, err := agent.desired(context.Background(), &fc)
+	assert.NoError(t, err)
+	assert.NotNil(t, ds)
+
+	assert.Equal(t, "var-run-netns", ds.Spec.Template.Spec.Volumes[1].Name)
+	assert.Equal(t, "/var/run/netns", ds.Spec.Template.Spec.Volumes[1].HostPath.Path)
+}
+
+func TestPrivilegedMount(t *testing.T) {
+	fc := flowslatest.FlowCollector{
+		Spec: flowslatest.FlowCollectorSpec{
+			Agent: flowslatest.FlowCollectorAgent{
+				EBPF: flowslatest.FlowCollectorEBPF{
+					Privileged: true,
+				},
+			},
+		},
+	}
+
+	info := reconcilers.Common{Namespace: "netobserv", ClusterInfo: &cluster.Info{}}
+	inst := info.NewInstance(map[reconcilers.ImageRef]string{reconcilers.MainImage: "ebpf-agent"}, status.Instance{})
+	agent := NewAgentController(inst)
+	ds, err := agent.desired(context.Background(), &fc)
+	assert.NoError(t, err)
+	assert.NotNil(t, ds)
+
+	// For backward compatibility, privileged=true implictly enables netns
+	assert.Equal(t, "var-run-netns", ds.Spec.Template.Spec.Volumes[1].Name)
+	assert.Equal(t, "/var/run/netns", ds.Spec.Template.Spec.Volumes[1].HostPath.Path)
 }
