@@ -323,9 +323,10 @@ func TestPipelineWithExporter(t *testing.T) {
 	cfg.Exporters = append(cfg.Exporters, &flowslatest.FlowCollectorExporter{
 		Type: flowslatest.IpfixExporter,
 		IPFIX: flowslatest.FlowCollectorIPFIXReceiver{
-			TargetHost: "ipfix-receiver-test",
-			TargetPort: 9999,
-			Transport:  "TCP",
+			TargetHost:   "ipfix-receiver-test",
+			TargetPort:   9999,
+			Transport:    "TCP",
+			EnterpriseID: 12345,
 		},
 	})
 
@@ -344,6 +345,7 @@ func TestPipelineWithExporter(t *testing.T) {
 	assert.Equal("ipfix-receiver-test", cfs.Parameters[7].Write.Ipfix.TargetHost)
 	assert.Equal(9999, cfs.Parameters[7].Write.Ipfix.TargetPort)
 	assert.Equal("tcp", cfs.Parameters[7].Write.Ipfix.Transport)
+	assert.Equal(12345, cfs.Parameters[7].Write.Ipfix.EnterpriseID)
 }
 
 func TestPipelineWithoutLoki(t *testing.T) {

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net"
+	"net/netip"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -203,10 +205,13 @@ func convertIPFIXToFlowlog(dataFields map[string]interface{}) Flowlog {
 	if flowlog.SrcAddr == "" {
 		flowlog.SrcAddr = getString("sourceIPv6Address")
 	}
+	flowlog.SrcMac = getString("sourceMacAddress")
 	flowlog.DstAddr = getString("destinationIPv4Address")
 	if flowlog.DstAddr == "" {
 		flowlog.DstAddr = getString("destinationIPv6Address")
 	}
+	flowlog.DstMac = getString("destinationMacAddress")
+	flowlog.Etype = getInt("ethernetType")
 	flowlog.SrcPort = getInt("sourceTransportPort")
 	flowlog.DstPort = getInt("destinationTransportPort")
 	flowlog.Proto = getInt("protocolIdentifier")
@@ -261,6 +266,24 @@ func (flowlog *Flowlog) verifyIPFIXFields() {
 	// Verify IPFIX standard fields are present and valid
 	o.Expect(flowlog.SrcAddr).NotTo(o.BeEmpty(), flow)
 	o.Expect(flowlog.DstAddr).NotTo(o.BeEmpty(), flow)
+	srcIP, srcIPErr := netip.ParseAddr(flowlog.SrcAddr)
+	o.Expect(srcIPErr).NotTo(o.HaveOccurred(), flow)
+	dstIP, dstIPErr := netip.ParseAddr(flowlog.DstAddr)
+	o.Expect(dstIPErr).NotTo(o.HaveOccurred(), flow)
+	srcMAC, srcMACErr := net.ParseMAC(flowlog.SrcMac)
+	o.Expect(srcMACErr).NotTo(o.HaveOccurred(), flow)
+	o.Expect(srcMAC).To(o.HaveLen(6), flow)
+	dstMAC, dstMACErr := net.ParseMAC(flowlog.DstMac)
+	o.Expect(dstMACErr).NotTo(o.HaveOccurred(), flow)
+	o.Expect(dstMAC).To(o.HaveLen(6), flow)
+	o.Expect([]int{0x0800, 0x86DD}).To(o.ContainElement(flowlog.Etype), flow)
+	if flowlog.Etype == 0x0800 {
+		o.Expect(srcIP.Is4()).To(o.BeTrue(), flow)
+		o.Expect(dstIP.Is4()).To(o.BeTrue(), flow)
+	} else if flowlog.Etype == 0x86DD {
+		o.Expect(srcIP.Is6()).To(o.BeTrue(), flow)
+		o.Expect(dstIP.Is6()).To(o.BeTrue(), flow)
+	}
 	o.Expect(flowlog.SrcPort).Should(o.BeNumerically(">=", 0), flow)
 	o.Expect(flowlog.DstPort).Should(o.BeNumerically(">=", 0), flow)
 	o.Expect(flowlog.Proto).Should(o.BeNumerically(">", 0), flow)

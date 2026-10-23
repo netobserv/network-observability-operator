@@ -59,12 +59,9 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		o.Expect(err).NotTo(o.HaveOccurred())
 		_ = setNamespacePrivileged(IPFIXns)
 
-		g.By("Deploy IPFIX collector")
+		g.By("Deploy IPFIX collector and wait for its TCP listener")
 		createResourceFromFile(IPFIXns, ipfixCollectorTemplatePath)
 		WaitForPodsReadyWithLabel(IPFIXns, "app=ipfix-collector")
-
-		g.By("Wait for IPFIX collector TCP listener to initialize")
-		time.Sleep(10 * time.Second)
 
 		IPFIXconfig := map[string]any{
 			"ipfix": map[string]any{
@@ -98,24 +95,34 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 		g.By("Verify flowcollector is deployed with IPFIX exporter")
 		fcObj, err := getDynamicResource("flowcollector", "cluster", "")
 		o.Expect(err).ToNot(o.HaveOccurred())
-		exporters, _, _ := unstructured.NestedSlice(fcObj.Object, "spec", "exporters")
+		exporters, found, err := unstructured.NestedSlice(fcObj.Object, "spec", "exporters")
+		o.Expect(err).NotTo(o.HaveOccurred())
+		o.Expect(found).To(o.BeTrue())
 		o.Expect(exporters).NotTo(o.BeEmpty())
 		exporter0 := exporters[0].(map[string]interface{})
 		o.Expect(exporter0["type"]).To(o.Equal("IPFIX"))
+		ipfixConfig, ok := exporter0["ipfix"].(map[string]interface{})
+		o.Expect(ok).To(o.BeTrue())
+		o.Expect(ipfixConfig["targetHost"]).To(o.Equal("ipfix-collector.ipfix.svc.cluster.local"))
+		o.Expect(ipfixConfig["targetPort"]).To(o.BeEquivalentTo(2055))
+		o.Expect(ipfixConfig["transport"]).To(o.Equal("TCP"))
 
 		g.By("Get IPFIX collector pod")
 		collectorPod, err := getPodNameWithLabel(IPFIXns, "app=ipfix-collector")
 		o.Expect(err).NotTo(o.HaveOccurred())
 
-		g.By("Wait for IPFIX flows to be collected")
-		time.Sleep(60 * time.Second)
+		g.By("Wait for IPFIX flow records to arrive at the collector")
+		var flowRecords []FlowRecord
+		o.Eventually(func() (int, error) {
+			var err error
+			flowRecords, err = getIPFIXFlowRecordsFromAPI(IPFIXns, collectorPod)
+			if err != nil {
+				return 0, err
+			}
+			return len(flowRecords), nil
+		}, "60s", "5s").Should(o.BeNumerically(">", 0), "No IPFIX flow records found")
 
-		g.By("Retrieve and parse IPFIX flow records from collector API")
-		flowRecords, err := getIPFIXFlowRecordsFromAPI(IPFIXns, collectorPod)
-		o.Expect(err).NotTo(o.HaveOccurred())
-		o.Expect(len(flowRecords)).Should(o.BeNumerically(">", 0), "No IPFIX flow records found in collector")
-
-		g.By("Verify all IPFIX fields are present and valid")
+		g.By("Verify decoded IPFIX addresses, MACs, and standard counters")
 		for _, record := range flowRecords {
 			record.Flowlog.verifyIPFIXFields()
 		}
