@@ -43,8 +43,9 @@ const (
 	ConnTrackType   = "conntrack"
 	NoneType        = "none"
 
-	TagYaml = "yaml"
-	TagDoc  = "doc"
+	TagYaml         = "yaml"
+	TagDoc          = "doc"
+	TagDocTypeAlias = "doctypealias"
 )
 
 // Note: items beginning with doc: "## title" are top level items that get divided into sections inside api.md.

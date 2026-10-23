@@ -27,19 +27,21 @@ import (
 )
 
 type WriteLoki struct {
-	URL            string                       `yaml:"url,omitempty" json:"url,omitempty" doc:"the address of an existing Loki service to push the flows to"`
-	TenantID       string                       `yaml:"tenantID,omitempty" json:"tenantID,omitempty" doc:"identifies the tenant for the request"`
-	BatchWait      string                       `yaml:"batchWait,omitempty" json:"batchWait,omitempty" doc:"maximum amount of time to wait before sending a batch"`
-	BatchSize      int                          `yaml:"batchSize,omitempty" json:"batchSize,omitempty" doc:"maximum batch size (in bytes) of logs to accumulate before sending"`
-	Timeout        string                       `yaml:"timeout,omitempty" json:"timeout,omitempty" doc:"maximum time to wait for a server to respond to a request"`
-	MinBackoff     string                       `yaml:"minBackoff,omitempty" json:"minBackoff,omitempty" doc:"initial backoff time for client connection between retries"`
-	MaxBackoff     string                       `yaml:"maxBackoff,omitempty" json:"maxBackoff,omitempty" doc:"maximum backoff time for client connection between retries"`
-	MaxRetries     int                          `yaml:"maxRetries,omitempty" json:"maxRetries,omitempty" doc:"maximum number of retries for client connections"`
-	Labels         []string                     `yaml:"labels,omitempty" json:"labels,omitempty" doc:"map of record fields to be used as labels"`
-	StaticLabels   model.LabelSet               `yaml:"staticLabels,omitempty" json:"staticLabels,omitempty" doc:"map of common labels to set on each flow"`
-	IgnoreList     []string                     `yaml:"ignoreList,omitempty" json:"ignoreList,omitempty" doc:"map of record fields to be removed from the record"`
-	ClientConfig   *promConfig.HTTPClientConfig `yaml:"clientConfig,omitempty" json:"clientConfig,omitempty" doc:"Loki client configuration, which follows the same structure as the Prometheus HTTP client config described here: https://pkg.go.dev/github.com/prometheus/common/config#HTTPClientConfig"`
-	TimestampLabel model.LabelName              `yaml:"timestampLabel,omitempty" json:"timestampLabel,omitempty" doc:"label to use for time indexing"`
+	URL              string                       `yaml:"url,omitempty" json:"url,omitempty" doc:"the address of an existing Loki service to push the flows to"`
+	TenantID         string                       `yaml:"tenantID,omitempty" json:"tenantID,omitempty" doc:"identifies the tenant for the request"`
+	BatchWait        string                       `yaml:"batchWait,omitempty" json:"batchWait,omitempty" doc:"maximum amount of time to wait before sending a batch"`
+	BatchSize        int                          `yaml:"batchSize,omitempty" json:"batchSize,omitempty" doc:"maximum batch size (in bytes) of logs to accumulate before sending"`
+	Timeout          string                       `yaml:"timeout,omitempty" json:"timeout,omitempty" doc:"maximum time to wait for a server to respond to a request"`
+	MinBackoff       string                       `yaml:"minBackoff,omitempty" json:"minBackoff,omitempty" doc:"initial backoff time for client connection between retries"`
+	MaxBackoff       string                       `yaml:"maxBackoff,omitempty" json:"maxBackoff,omitempty" doc:"maximum backoff time for client connection between retries"`
+	MaxRetries       int                          `yaml:"maxRetries,omitempty" json:"maxRetries,omitempty" doc:"maximum number of retries for client connections"`
+	Labels           []string                     `yaml:"labels,omitempty" json:"labels,omitempty" doc:"map of record fields to be used as labels"`
+	StaticLabels     model.LabelSet               `yaml:"staticLabels,omitempty" json:"staticLabels,omitempty" doc:"map of common labels to set on each flow"`
+	IgnoreList       []string                     `yaml:"ignoreList,omitempty" json:"ignoreList,omitempty" doc:"map of record fields to be removed from the record"`
+	ClientConfig     *promConfig.HTTPClientConfig `yaml:"clientConfig,omitempty" json:"clientConfig,omitempty" doc:"Loki client configuration, which follows the same structure as the Prometheus HTTP client config described here: https://pkg.go.dev/github.com/prometheus/common/config#HTTPClientConfig"`
+	EnableHTTP2      *bool                        `yaml:"enableHttp2,omitempty" json:"enableHttp2,omitempty" doc:"enable HTTP/2 when pushing to Loki (default: false)"`
+	EnableKeepAlives *bool                        `yaml:"enableKeepAlives,omitempty" json:"enableKeepAlives,omitempty" doc:"reuse TCP connections between pushes, rather than opening a new one per batch (default: true)"`
+	TimestampLabel   model.LabelName              `yaml:"timestampLabel,omitempty" json:"timestampLabel,omitempty" doc:"label to use for time indexing"`
 	// TimestampScale provides the scale in time of the units from the timestamp
 	// E.g. UNIX timescale is '1s' (one second) while other clock sources might have
 	// scales of '1ms' (one millisecond) or just '1' (one nanosecond)
