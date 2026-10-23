@@ -184,23 +184,20 @@ rules:
   - endpoints
   - namespaces
   - nodes
-  - pods
   - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
   verbs:
   - get
   - list
   - patch
   - watch
-- apiGroups:
-  - monitoring.coreos.com
-  resourceNames:
-  - k8s
-  resources:
-  - prometheuses/api
-  verbs:
-  - get
-  - create
-  - update
 - apiGroups:
   - apps
   resources:
@@ -218,4 +215,20 @@ rules:
   - cluster
   verbs:
   - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: flowcapture-monitoring
+rules:
+- apiGroups:
+  - monitoring.coreos.com
+  resourceNames:
+  - k8s
+  resources:
+  - prometheuses/api
+  verbs:
+  - get
+  - create
+  - update
 ---

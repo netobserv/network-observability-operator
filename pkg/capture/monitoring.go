@@ -75,8 +75,8 @@ func BuildMetricsServiceMonitor(namespace string) *monitoringv1.ServiceMonitor {
 	}
 }
 
-func intstrFromInt(value int) intstr.IntOrString {
-	return intstr.FromInt(value)
+func intstrFromInt(value int32) intstr.IntOrString {
+	return intstr.FromInt32(value)
 }
 
 func stringPtr(value string) *string { return &value }

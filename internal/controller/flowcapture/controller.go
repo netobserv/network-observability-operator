@@ -75,6 +75,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		controllerutil.RemoveFinalizer(&fc, flowCaptureFinalizer)
 		return ctrl.Result{}, r.Update(ctx, &fc)
 	}
+	if fc.Status.CompletionTime != nil {
+		return ctrl.Result{}, nil
+	}
 	if !controllerutil.ContainsFinalizer(&fc, flowCaptureFinalizer) {
 		controllerutil.AddFinalizer(&fc, flowCaptureFinalizer)
 		if err := r.Update(ctx, &fc); err != nil {
@@ -275,6 +278,9 @@ func (r *Reconciler) reconcileCapturePermissions(ctx context.Context, namespace,
 	} {
 		var binding rbacv1.ClusterRoleBinding
 		if err := r.Get(ctx, client.ObjectKey{Name: roleName}, &binding); err != nil {
+			if remove && errors.IsNotFound(err) {
+				continue
+			}
 			return fmt.Errorf("cannot get preinstalled ClusterRoleBinding %q: %w", roleName, err)
 		}
 		subject := rbacv1.Subject{Kind: "ServiceAccount", Name: serviceAccount, Namespace: namespace}
