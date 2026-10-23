@@ -1,6 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  creationTimestamp: null
   name: netobserv-flowcapture
 rules:
 - apiGroups:
@@ -17,15 +18,6 @@ rules:
   - patch
   - watch
 - apiGroups:
-  - apps
-  resources:
-  - deployments
-  - replicasets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
   - monitoring.coreos.com
   resourceNames:
   - k8s
@@ -35,6 +27,15 @@ rules:
   - get
   - create
   - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - replicasets
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - config.openshift.io
   resourceNames:

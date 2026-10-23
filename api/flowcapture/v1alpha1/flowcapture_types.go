@@ -79,6 +79,7 @@ type FlowCaptureStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
+// FlowCapture requests a short-lived capture of flows, packets, or metrics.
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced,shortName=fcap
 // +kubebuilder:subresource:status

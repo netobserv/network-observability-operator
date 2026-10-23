@@ -19,6 +19,8 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
+        description: FlowCapture requests a short-lived capture of flows, packets,
+          or metrics.
         properties:
           apiVersion:
             description: |-
@@ -150,6 +152,9 @@ spec:
                 format: date-time
                 type: string
               conditions:
+                description: |-
+                  Conditions records the lifecycle transitions of the capture in order,
+                  including Starting, Running, Completed, or Failed.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.

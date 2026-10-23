@@ -27,12 +27,8 @@ rules:
   - nodes
   - pods
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - ""
@@ -145,7 +141,6 @@ rules:
   - flowcollectors
   - flowcollectorslices
   - flowmetrics
-  - flowcaptures
   verbs:
   - create
   - delete
@@ -158,7 +153,6 @@ rules:
   - flows.netobserv.io
   resources:
   - flowcollectors/finalizers
-  - flowcaptures/finalizers
   verbs:
   - update
 - apiGroups:
@@ -167,7 +161,6 @@ rules:
   - flowcollectors/status
   - flowcollectorslices/status
   - flowmetrics/status
-  - flowcaptures/status
   verbs:
   - get
   - patch
@@ -229,10 +222,6 @@ rules:
   - netobserv-flp-extra-reader
   - netobserv-hostnetwork
   - netobserv-informers
-  - netobserv-flowcapture-hostnetwork
-  - netobserv-flowcapture-informers
-  - netobserv-flowcapture-monitoring
-  - netobserv-flowcapture
   - netobserv-loki-writer
   - netobserv-token-review
   resources:
@@ -248,13 +237,23 @@ rules:
   - netobserv-flp-extra-reader
   - netobserv-hostnetwork
   - netobserv-informers
-  - netobserv-flowcapture
   - netobserv-loki-writer
   - netobserv-token-review
   resources:
   - clusterroles
   verbs:
   - bind
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - update
+  - watch
 - apiGroups:
   - security.openshift.io
   resources:
@@ -267,14 +266,6 @@ rules:
   - security.openshift.io
   resourceNames:
   - hostnetwork
-  resources:
-  - securitycontextconstraints
-  verbs:
-  - use
-- apiGroups:
-  - security.openshift.io
-  resourceNames:
-  - netobserv-flowcapture
   resources:
   - securitycontextconstraints
   verbs:
