@@ -29,6 +29,11 @@ spec:
             - containerPort: 8080
               protocol: TCP
               name: http
+          readinessProbe:
+            tcpSocket:
+              port: ipfix
+            periodSeconds: 2
+            failureThreshold: 30
           imagePullPolicy: IfNotPresent
 ---
 apiVersion: v1
