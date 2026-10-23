@@ -13,19 +13,19 @@ func TestBuildCollectorResources(t *testing.T) {
 		t.Fatalf("unexpected collector service: %#v", service)
 	}
 
-	pod := BuildCollectorPod(CollectorPodOptions{Name: "collector", Namespace: "capture", ServiceAccount: "capture", Image: "cli", Command: []string{"flows"}})
+	pod := BuildCollectorPod(&CollectorPodOptions{Name: "collector", Namespace: "capture", ServiceAccount: "capture", Image: "cli", Command: []string{"flows"}})
 	if pod.Spec.Containers[0].Command[0] != "flows" || pod.Spec.ServiceAccountName != "capture" {
 		t.Fatalf("unexpected collector pod: %#v", pod)
 	}
 
-	ds := BuildAgentDaemonSet(AgentOptions{Name: "capture", Namespace: "capture", ServiceAccount: "capture", Image: "agent", TargetHost: "collector"})
+	ds := BuildAgentDaemonSet(&AgentOptions{Name: "capture", Namespace: "capture", ServiceAccount: "capture", Image: "agent", TargetHost: "collector"})
 	if ds.Spec.Template.Spec.Containers[0].Env[1].Value != "collector" {
 		t.Fatalf("unexpected agent target: %#v", ds.Spec.Template.Spec.Containers[0].Env)
 	}
 }
 
 func TestBuildAgentDaemonSetFeatures(t *testing.T) {
-	ds := BuildAgentDaemonSet(AgentOptions{
+	ds := BuildAgentDaemonSet(&AgentOptions{
 		Name: "capture", Namespace: "capture", ServiceAccount: "capture", Image: "agent", TargetHost: "collector",
 		Features: []Feature{DNSTracking, FlowRTT, TLSTracking},
 	})
@@ -42,7 +42,7 @@ func TestBuildAgentDaemonSetFeatures(t *testing.T) {
 }
 
 func TestBuildAgentDaemonSetNormalizesFilters(t *testing.T) {
-	ds := BuildAgentDaemonSet(AgentOptions{
+	ds := BuildAgentDaemonSet(&AgentOptions{
 		Name: "capture", Namespace: "capture", ServiceAccount: "capture", Image: "agent", TargetHost: "collector",
 		Filters: []FlowFilter{{Protocol: "TCP"}},
 	})
@@ -70,7 +70,7 @@ func TestValidateFeaturesForPacketCapture(t *testing.T) {
 }
 
 func TestBuildAgentDaemonSetPrivilegedFeature(t *testing.T) {
-	ds := BuildAgentDaemonSet(AgentOptions{
+	ds := BuildAgentDaemonSet(&AgentOptions{
 		Name: "capture", Namespace: "capture", ServiceAccount: "capture", Image: "agent", TargetHost: "collector",
 		Features: []Feature{PacketDrop},
 	})

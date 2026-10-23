@@ -95,7 +95,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 	if err := r.ensureNamespaceAvailable(ctx, &fc); err != nil {
 		if statusErr := r.setConflictStatus(ctx, &fc, err.Error()); statusErr != nil {
-			return ctrl.Result{}, fmt.Errorf("%w (also failed to update status: %v)", err, statusErr)
+			return ctrl.Result{}, fmt.Errorf("%w (also failed to update status: %w)", err, statusErr)
 		}
 		return ctrl.Result{}, err
 	}
@@ -229,6 +229,8 @@ func statusForPod(pod *corev1.Pod) (phase, reason, message string) {
 		return phaseCompleted, "CaptureCompleted", copyOutputMessage(pod)
 	}
 	switch pod.Status.Phase {
+	case corev1.PodPending, corev1.PodUnknown:
+		return phasePending, "CollectorPending", "collector pod is not scheduled yet"
 	case corev1.PodRunning:
 		return phaseRunning, "CaptureRunning", "capture is running"
 	case corev1.PodSucceeded:
@@ -333,7 +335,8 @@ func desiredCollector(fc *flowcapturev1alpha1.FlowCapture, image string, names s
 		maxTime = fc.Spec.MaxTime.Duration.String()
 	}
 	args := sharedcapture.CollectorCommand(sharedcapture.Type(fc.Spec.Type), fc.Namespace, "info", maxTime, fc.Spec.MaxBytes, "background|managed")
-	pod := sharedcapture.BuildCollectorPod(sharedcapture.CollectorPodOptions{Name: names.CollectorPod, Namespace: fc.Namespace, ServiceAccount: names.AgentDaemonSet, Image: image, Command: args})
+	podOptions := &sharedcapture.CollectorPodOptions{Name: names.CollectorPod, Namespace: fc.Namespace, ServiceAccount: names.AgentDaemonSet, Image: image, Command: args}
+	pod := sharedcapture.BuildCollectorPod(podOptions)
 	pod.Labels["flowcapture"] = fc.Name
 	pod.Labels["component"] = "collector"
 	pod.Labels["part-of"] = constants.OperatorName
@@ -354,5 +357,6 @@ func desiredAgent(fc *flowcapturev1alpha1.FlowCapture, image string) *appsv1.Dae
 	if sharedcapture.Type(fc.Spec.Type) == sharedcapture.Metrics {
 		pipeline = sharedcapture.MetricsPipelineConfig()
 	}
-	return sharedcapture.BuildAgentDaemonSet(sharedcapture.AgentOptions{Name: names.AgentDaemonSet, Namespace: fc.Namespace, ServiceAccount: names.AgentDaemonSet, Image: image, TargetHost: names.CollectorService, NodeSelector: fc.Spec.NodeSelector, Sampling: sampling, Interfaces: fc.Spec.Interfaces, ExcludeInterfaces: fc.Spec.ExcludeInterfaces, Features: features, Filters: fc.Spec.Filters, Type: sharedcapture.Type(fc.Spec.Type), PipelineConfig: pipeline})
+	options := &sharedcapture.AgentOptions{Name: names.AgentDaemonSet, Namespace: fc.Namespace, ServiceAccount: names.AgentDaemonSet, Image: image, TargetHost: names.CollectorService, NodeSelector: fc.Spec.NodeSelector, Sampling: sampling, Interfaces: fc.Spec.Interfaces, ExcludeInterfaces: fc.Spec.ExcludeInterfaces, Features: features, Filters: fc.Spec.Filters, Type: sharedcapture.Type(fc.Spec.Type), PipelineConfig: pipeline}
+	return sharedcapture.BuildAgentDaemonSet(options)
 }

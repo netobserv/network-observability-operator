@@ -79,6 +79,8 @@ func FeaturesRequirePrivilege(features []Feature) bool {
 		switch feature {
 		case PacketDrop, NetworkEvents, UDNMapping:
 			return true
+		case DNSTracking, FlowRTT, PacketTranslation, EbpfManager, IPSec, TLSTracking:
+			// These features do not require privileged mode.
 		}
 	}
 	return false
@@ -163,7 +165,7 @@ func BuildCollectorService(name, namespace string, selector map[string]string) *
 	}
 }
 
-func BuildCollectorPod(options CollectorPodOptions) *corev1.Pod {
+func BuildCollectorPod(options *CollectorPodOptions) *corev1.Pod {
 	return &corev1.Pod{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: metav1.ObjectMeta{Name: options.Name, Namespace: options.Namespace, Labels: map[string]string{"run": options.Name}},
@@ -198,7 +200,7 @@ type AgentOptions struct {
 	PipelineConfig                                     *flpconfig.Root
 }
 
-func BuildAgentDaemonSet(options AgentOptions) *appsv1.DaemonSet {
+func BuildAgentDaemonSet(options *AgentOptions) *appsv1.DaemonSet {
 	labels := options.Labels
 	if labels == nil {
 		labels = map[string]string{"flowcapture": options.Name, "component": "agent"}
@@ -242,7 +244,7 @@ func BuildAgentDaemonSet(options AgentOptions) *appsv1.DaemonSet {
 	}}
 }
 
-func agentEnvironment(options AgentOptions) []corev1.EnvVar {
+func agentEnvironment(options *AgentOptions) []corev1.EnvVar {
 	envs := []corev1.EnvVar{{Name: "EXPORT", Value: "direct-flp"}, {Name: "TARGET_HOST", Value: options.TargetHost}, {Name: "TARGET_PORT", Value: "9999"}, {Name: "METRICS_ENABLE", Value: "false"}, {Name: "LOG_LEVEL", Value: "info"}, {Name: "SAMPLING", Value: strconv.Itoa(options.Sampling)}, {Name: "INTERFACES", Value: strings.Join(options.Interfaces, ",")}, {Name: "EXCLUDE_INTERFACES", Value: strings.Join(options.ExcludeInterfaces, ",")}, {Name: "TC_ATTACH_MODE", Value: "any"}}
 	if options.Type == Flows {
 		envs = append(envs, corev1.EnvVar{Name: "CACHE_ACTIVE_TIMEOUT", Value: "1s"}, corev1.EnvVar{Name: "PREFERRED_INTERFACE_FOR_MAC_PREFIX", Value: "0a:58=eth0"})
@@ -259,9 +261,9 @@ func agentVolumes(kind Type) ([]corev1.Volume, []corev1.VolumeMount) {
 	if kind == Flows {
 		for _, volume := range []struct {
 			name, path string
-			type_      corev1.HostPathType
+			typeValue  corev1.HostPathType
 		}{{"var-run-ovn", "/var/run/ovn-ic", corev1.HostPathDirectoryOrCreate}, {"var-run-ovs", "/var/run/openvswitch", corev1.HostPathDirectoryOrCreate}, {"var-run-netns", "/var/run/netns", corev1.HostPathDirectory}} {
-			volumes = append(volumes, corev1.Volume{Name: volume.name, VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: volume.path, Type: hostPathType(volume.type_)}}})
+			volumes = append(volumes, corev1.Volume{Name: volume.name, VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: volume.path, Type: hostPathType(volume.typeValue)}}})
 			mounts = append(mounts, corev1.VolumeMount{Name: volume.name, MountPath: volume.path, MountPropagation: mountPropagation(corev1.MountPropagationHostToContainer)})
 		}
 	}
