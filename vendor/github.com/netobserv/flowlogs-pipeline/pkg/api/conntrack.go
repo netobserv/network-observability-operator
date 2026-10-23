@@ -18,7 +18,9 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"sort"
 )
 
 const (
@@ -34,6 +36,8 @@ type ConnTrack struct {
 	Scheduling            []ConnTrackSchedulingGroup      `yaml:"scheduling,omitempty" json:"scheduling,omitempty" doc:"list of timeouts and intervals to apply per selector"`
 	MaxConnectionsTracked int                             `yaml:"maxConnectionsTracked,omitempty" json:"maxConnectionsTracked,omitempty" doc:"maximum number of connections we keep in our cache (0 means no limit)"`
 	TCPFlags              ConnTrackTCPFlags               `yaml:"tcpFlags,omitempty" json:"tcpFlags,omitempty" doc:"settings for handling TCP flags"`
+	ProtoFieldName        string                          `yaml:"protoFieldName,omitempty" json:"protoFieldName,omitempty" doc:"name of the protocol field name (default: Proto)"`
+	DuplicateFieldName    string                          `yaml:"duplicateFieldName,omitempty" json:"duplicateFieldName,omitempty" doc:"name of the duplicate field name (default: Duplicate)"`
 }
 
 type ConnTrackOutputRecordTypeEnum string
@@ -89,10 +93,82 @@ const (
 )
 
 type ConnTrackSchedulingGroup struct {
-	Selector             map[string]interface{} `yaml:"selector,omitempty" json:"selector,omitempty" doc:"key-value map to match against connection fields to apply this scheduling"`
-	EndConnectionTimeout Duration               `yaml:"endConnectionTimeout,omitempty" json:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
-	TerminatingTimeout   Duration               `yaml:"terminatingTimeout,omitempty" json:"terminatingTimeout,omitempty" doc:"duration of time to wait from detected FIN flag to end a connection"`
-	HeartbeatInterval    Duration               `yaml:"heartbeatInterval,omitempty" json:"heartbeatInterval,omitempty" doc:"duration of time to wait between heartbeat reports of a connection"`
+	Selector             Selectors  `yaml:"selector,omitempty" json:"selector,omitempty" doctypealias:"SelectorDocAlias" doc:"list of key-value pairs to match against connection fields to apply this scheduling. For backward compatibility, a key-value map is also accepted, but this form is deprecated."`
+	SelectorDocAlias     []Selector `yaml:"-" json:"-"` // nolint:unused
+	EndConnectionTimeout Duration   `yaml:"endConnectionTimeout,omitempty" json:"endConnectionTimeout,omitempty" doc:"duration of time to wait from the last flow log to end a connection"`
+	TerminatingTimeout   Duration   `yaml:"terminatingTimeout,omitempty" json:"terminatingTimeout,omitempty" doc:"duration of time to wait from detected FIN flag to end a connection"`
+	HeartbeatInterval    Duration   `yaml:"heartbeatInterval,omitempty" json:"heartbeatInterval,omitempty" doc:"duration of time to wait between heartbeat reports of a connection"`
+}
+
+// Selectors have specific (un)marshaling to handle two variants: either defined
+// as a map or as a list of key/value pairs. The map form is deprecated and only
+// the list form may be supported in the future.
+type Selectors map[string]any
+
+type Selector struct {
+	Key   string `yaml:"key" json:"key" doc:"name of the field to look for in the flow"`
+	Value any    `yaml:"value" json:"value" doc:"value of the field to look for in the flow"`
+}
+
+func (s Selectors) toList() []Selector {
+	keys := make([]string, 0, len(s))
+	for k := range s {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys) // deterministic output
+	list := make([]Selector, 0, len(s))
+	for _, k := range keys {
+		list = append(list, Selector{Key: k, Value: s[k]})
+	}
+	return list
+}
+
+func fromList(list []Selector) Selectors {
+	s := make(Selectors, len(list))
+	for _, item := range list {
+		s[item.Key] = item.Value
+	}
+	return s
+}
+
+func (s Selectors) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.toList())
+}
+
+func (s *Selectors) UnmarshalJSON(b []byte) error {
+	// Preferred form: a list of key-value pairs.
+	var list []Selector
+	if err := json.Unmarshal(b, &list); err == nil {
+		*s = fromList(list)
+		return nil
+	}
+	// Legacy form (deprecated): a key-value map.
+	var m map[string]any
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+	*s = m
+	return nil
+}
+
+func (s Selectors) MarshalYAML() (any, error) {
+	return s.toList(), nil
+}
+
+func (s *Selectors) UnmarshalYAML(unmarshal func(any) error) error {
+	// Preferred form: a list of key-value pairs.
+	var list []Selector
+	if err := unmarshal(&list); err == nil {
+		*s = fromList(list)
+		return nil
+	}
+	// Legacy form (deprecated): a key-value map.
+	var m map[string]any
+	if err := unmarshal(&m); err != nil {
+		return err
+	}
+	*s = m
+	return nil
 }
 
 type ConnTrackTCPFlags struct {
@@ -313,4 +389,13 @@ func (err conntrackInvalidError) Error() string {
 func (err conntrackInvalidError) Is(target error) bool {
 	err.msg = nil
 	return err == target
+}
+
+func (ct *ConnTrack) Preprocess() {
+	if ct.DuplicateFieldName == "" {
+		ct.DuplicateFieldName = "Duplicate"
+	}
+	if ct.ProtoFieldName == "" {
+		ct.ProtoFieldName = "Proto"
+	}
 }

@@ -3,7 +3,6 @@ package envtest
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"sort"
 
@@ -26,6 +25,7 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper/cardinality"
 	"github.com/netobserv/netobserv-operator/internal/pkg/test"
+	"sigs.k8s.io/yaml"
 )
 
 // nolint:cyclop
@@ -246,7 +246,7 @@ func ControllerFlowMetricsSpecs(ctxGetter test.ContextGetter) {
 
 func getConfiguredMetrics(cm *v1.ConfigMap) (api.MetricsItems, error) {
 	var cfs config.Root
-	err := json.Unmarshal([]byte(cm.Data["config.json"]), &cfs)
+	err := yaml.Unmarshal([]byte(cm.Data["config.yaml"]), &cfs)
 	if err != nil {
 		return nil, err
 	}

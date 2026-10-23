@@ -2,7 +2,6 @@ package flp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -26,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 )
 
 var rs = corev1.ResourceRequirements{
@@ -648,7 +648,7 @@ func TestPrometheusRuleChanged(t *testing.T) {
 	assert.Contains(report.String(), "PrometheusRule labels changed")
 }
 
-func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
+func TestConfigMapShouldDeserializeAsYAMLWithLokiManual(t *testing.T) {
 	assert := assert.New(t)
 
 	ns := "namespace"
@@ -666,7 +666,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	assert.True(ok)
 
 	var decoded config.Root
-	err = json.Unmarshal([]byte(data), &decoded)
+	err = yaml.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
 	assert.Equal("trace", decoded.LogLevel)
@@ -696,7 +696,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 	assert.Equal(*cfg.Processor.Metrics.Server.Port, int32(decoded.MetricsSettings.Port))
 }
 
-func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
+func TestConfigMapShouldDeserializeAsYAMLWithLokiStack(t *testing.T) {
 	assert := assert.New(t)
 
 	ns := "namespace"
@@ -711,7 +711,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert.True(ok)
 
 	var decoded config.Root
-	err = json.Unmarshal([]byte(data), &decoded)
+	err = yaml.Unmarshal([]byte(data), &decoded)
 
 	assert.Nil(err)
 	assert.Equal("trace", decoded.LogLevel)

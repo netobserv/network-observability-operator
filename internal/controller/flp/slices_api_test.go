@@ -1,7 +1,6 @@
 package flp
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
@@ -19,6 +18,7 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/cluster"
 	"github.com/netobserv/netobserv-operator/internal/pkg/helper"
 	"github.com/netobserv/netobserv-operator/internal/pkg/manager/status"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -73,7 +73,7 @@ var (
 
 func getConfiguredFiltersAndSubnets(cm *corev1.ConfigMap) ([]api.TransformFilterRule, []api.NetworkTransformSubnetLabel) {
 	var cfs config.Root
-	err := json.Unmarshal([]byte(cm.Data[configFile]), &cfs)
+	err := yaml.Unmarshal([]byte(cm.Data[configFile]), &cfs)
 	if err != nil {
 		return nil, nil
 	}

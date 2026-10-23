@@ -2,7 +2,6 @@ package flp
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"strconv"
@@ -19,12 +18,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/yaml"
 )
 
 const (
 	configVolume            = "config-volume"
 	configPath              = "/etc/flowlogs-pipeline"
-	configFile              = "config.json"
+	configFile              = "config.yaml"
 	healthPortName          = "health"
 	prometheusPortName      = "prometheus"
 	profilePortName         = "pprof"
@@ -319,7 +319,7 @@ func addK8sCacheArgs(desired *flowslatest.FlowCollectorSpec, vols *volumes.Build
 	}
 }
 
-func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, ns string, vol *volumes.Builder, promTLS *flowslatest.CertificateReference, pipeline *PipelineBuilder, dynCMName string) (string, string, error) {
+func getConfigs(desired *flowslatest.FlowCollectorSpec, ns string, vol *volumes.Builder, promTLS *flowslatest.CertificateReference, pipeline *PipelineBuilder, dynCMName string) (string, string, error) {
 	metricsSettings := metricsSettings(desired, vol, promTLS)
 	advancedConfig := helper.GetAdvancedProcessorConfig(desired)
 	static, dynamic := pipeline.GetSplitStageParams()
@@ -341,7 +341,7 @@ func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, ns string, vol *volu
 		// Use "localhost" for ipv4+ipv6 cases, restricted to the local loop
 		config["pprofAddr"] = fmt.Sprintf("localhost:%d", *advancedConfig.ProfilePort)
 	}
-	jsonStatic, err := json.Marshal(config)
+	yamlStatic, err := yaml.Marshal(config)
 	if err != nil {
 		return "", "", err
 	}
@@ -349,11 +349,11 @@ func getJSONConfigs(desired *flowslatest.FlowCollectorSpec, ns string, vol *volu
 	config = map[string]interface{}{
 		"parameters": dynamic,
 	}
-	jsonDynamic, err := json.Marshal(config)
+	yamlDynamic, err := yaml.Marshal(config)
 	if err != nil {
 		return "", "", err
 	}
-	return string(jsonStatic), string(jsonDynamic), nil
+	return string(yamlStatic), string(yamlDynamic), nil
 }
 
 func promService(desired *flowslatest.FlowCollectorSpec, svcName, namespace, appLabel string) *corev1.Service {
